@@ -1,0 +1,311 @@
+<?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Dietetic_consultations_model extends App_Model
+{
+    private $table = 'dietic_consultations';
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Get consultation by ID
+     *
+     * @param int $id
+     * @return object|null
+     */
+    public function get($id)
+    {
+        $this->db->select(db_prefix() . $this->table . '.*, ' .
+            db_prefix() . 'clients.company as client_name, ' .
+            'CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name');
+        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
+        $this->db->join('tblstaff', 'tblstaff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->where(db_prefix() . $this->table . '.id', $id);
+
+        return $this->db->get(db_prefix() . $this->table)->row();
+    }
+
+    /**
+     * Get all consultations with filters
+     *
+     * @param array $where
+     * @return array
+     */
+    public function get_all($where = [])
+    {
+        $this->db->select(db_prefix() . $this->table . '.*, ' .
+            db_prefix() . 'clients.company as client_name, ' .
+            'CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name');
+        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
+        $this->db->join('tblstaff', 'tblstaff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+
+        if (!empty($where)) {
+            $this->db->where($where);
+        }
+
+        // Apply staff permissions
+        if (!is_admin()) {
+            $this->db->where(db_prefix() . $this->table . '.dietitian_id', get_staff_user_id());
+        }
+
+        $this->db->order_by(db_prefix() . $this->table . '.consultation_date', 'DESC');
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
+     * Get consultations by patient
+     *
+     * @param int $patient_id
+     * @param int $limit
+     * @return array
+     */
+    public function get_by_patient($patient_id, $limit = null)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->order_by('consultation_date', 'DESC');
+
+        if ($limit) {
+            $this->db->limit($limit);
+        }
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
+     * Get upcoming consultations
+     *
+     * @param int $limit
+     * @return array
+     */
+    public function get_upcoming($limit = 10)
+    {
+        $this->db->select(db_prefix() . $this->table . '.*, ' .
+            db_prefix() . 'clients.company as client_name, ' .
+            'CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name');
+        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
+        $this->db->join('tblstaff', 'tblstaff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->where(db_prefix() . $this->table . '.consultation_date >=', date('Y-m-d H:i:s'));
+        $this->db->where(db_prefix() . $this->table . '.status', 'scheduled');
+
+        if (!is_admin()) {
+            $this->db->where(db_prefix() . $this->table . '.dietitian_id', get_staff_user_id());
+        }
+
+        $this->db->order_by(db_prefix() . $this->table . '.consultation_date', 'ASC');
+        $this->db->limit($limit);
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
+     * Add new consultation
+     *
+     * @param array $data
+     * @return int|bool
+     */
+    public function add($data)
+    {
+        $data['created_at'] = date('Y-m-d H:i:s');
+
+        if ($this->db->insert(db_prefix() . $this->table, $data)) {
+            $consultation_id = $this->db->insert_id();
+
+            // Create reminder for this consultation
+            if ($data['status'] == 'scheduled') {
+                $this->create_consultation_reminder($consultation_id);
+            }
+
+            log_activity('New Consultation Created [ID: ' . $consultation_id . ']');
+            return $consultation_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update consultation
+     *
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
+    public function update($id, $data)
+    {
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
+        $this->db->where('id', $id);
+
+        if ($this->db->update(db_prefix() . $this->table, $data)) {
+            // Update reminder if date or status changed
+            if (isset($data['consultation_date']) || isset($data['status'])) {
+                $this->update_consultation_reminder($id);
+            }
+
+            log_activity('Consultation Updated [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete consultation
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function delete($id)
+    {
+        // Delete associated reminders
+        $this->db->where('reminder_type', 'appointment');
+        $this->db->where('related_id', $id);
+        $this->db->delete(db_prefix() . 'dietic_reminders');
+
+        $this->db->where('id', $id);
+        return $this->db->delete(db_prefix() . $this->table);
+    }
+
+    /**
+     * Get consultations for a date range
+     *
+     * @param string $start_date
+     * @param string $end_date
+     * @param int $dietitian_id
+     * @return array
+     */
+    public function get_by_date_range($start_date, $end_date, $dietitian_id = null)
+    {
+        $this->db->select(db_prefix() . $this->table . '.*, ' .
+            db_prefix() . 'clients.company as client_name');
+        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
+        $this->db->where(db_prefix() . $this->table . '.consultation_date >=', $start_date);
+        $this->db->where(db_prefix() . $this->table . '.consultation_date <=', $end_date);
+
+        if ($dietitian_id) {
+            $this->db->where(db_prefix() . $this->table . '.dietitian_id', $dietitian_id);
+        } elseif (!is_admin()) {
+            $this->db->where(db_prefix() . $this->table . '.dietitian_id', get_staff_user_id());
+        }
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
+     * Get consultation statistics
+     *
+     * @return object
+     */
+    public function get_statistics()
+    {
+        $stats = new stdClass();
+
+        // Total consultations
+        if (!is_admin()) {
+            $this->db->where('dietitian_id', get_staff_user_id());
+        }
+        $stats->total_consultations = $this->db->count_all_results(db_prefix() . $this->table);
+
+        // Scheduled consultations
+        $this->db->where('status', 'scheduled');
+        if (!is_admin()) {
+            $this->db->where('dietitian_id', get_staff_user_id());
+        }
+        $stats->scheduled = $this->db->count_all_results(db_prefix() . $this->table);
+
+        // Completed this month
+        $this->db->where('status', 'completed');
+        $this->db->where('MONTH(consultation_date)', date('m'));
+        $this->db->where('YEAR(consultation_date)', date('Y'));
+        if (!is_admin()) {
+            $this->db->where('dietitian_id', get_staff_user_id());
+        }
+        $stats->completed_this_month = $this->db->count_all_results(db_prefix() . $this->table);
+
+        // Average satisfaction
+        $this->db->select_avg('satisfaction_score');
+        $this->db->where('satisfaction_score IS NOT NULL');
+        if (!is_admin()) {
+            $this->db->where('dietitian_id', get_staff_user_id());
+        }
+        $result = $this->db->get(db_prefix() . $this->table)->row();
+        $stats->avg_satisfaction = $result->satisfaction_score ? round($result->satisfaction_score, 1) : 0;
+
+        return $stats;
+    }
+
+    /**
+     * Create reminder for consultation
+     *
+     * @param int $consultation_id
+     * @return bool
+     */
+    private function create_consultation_reminder($consultation_id)
+    {
+        $consultation = $this->get($consultation_id);
+
+        if (!$consultation) {
+            return false;
+        }
+
+        // Load patient to get contact info
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($consultation->patient_id);
+
+        if (!$patient) {
+            return false;
+        }
+
+        $hours_before = dietetic_get_option('reminder_before_appointment_hours', 24);
+        $reminder_time = date('Y-m-d H:i:s', strtotime($consultation->consultation_date . " -{$hours_before} hours"));
+
+        $message = sprintf(
+            _l('dietetic_reminder_consultation_message'),
+            $consultation->client_name,
+            _dt($consultation->consultation_date)
+        );
+
+        $reminder_data = [
+            'patient_id'     => $consultation->patient_id,
+            'reminder_type'  => 'appointment',
+            'related_id'     => $consultation_id,
+            'send_via'       => 'both',
+            'recipient'      => $patient->email,
+            'subject'        => _l('dietetic_reminder_consultation_subject'),
+            'message'        => $message,
+            'scheduled_date' => $reminder_time,
+            'status'         => 'pending',
+            'created_at'     => date('Y-m-d H:i:s'),
+        ];
+
+        $this->db->insert(db_prefix() . 'dietic_reminders', $reminder_data);
+
+        return true;
+    }
+
+    /**
+     * Update consultation reminder
+     *
+     * @param int $consultation_id
+     * @return bool
+     */
+    private function update_consultation_reminder($consultation_id)
+    {
+        // Delete old reminder
+        $this->db->where('reminder_type', 'appointment');
+        $this->db->where('related_id', $consultation_id);
+        $this->db->where('status', 'pending');
+        $this->db->delete(db_prefix() . 'dietic_reminders');
+
+        // Create new reminder
+        return $this->create_consultation_reminder($consultation_id);
+    }
+}

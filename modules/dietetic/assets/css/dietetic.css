@@ -1,0 +1,336 @@
+/**
+ * Dietetic Module CSS
+ */
+
+/* General */
+.dietetic-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.dietetic-stat-box {
+    text-align: center;
+    padding: 20px;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.dietetic-stat-box h3 {
+    margin: 0 0 10px 0;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dietetic-stat-box p {
+    margin: 0;
+    color: #777;
+}
+
+/* Patient Profile */
+.patient-header {
+    background: #3498db;
+    color: #fff;
+    padding: 20px;
+    border-radius: 4px 4px 0 0;
+}
+
+.patient-header h2 {
+    margin: 0;
+    color: #fff;
+}
+
+.patient-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.patient-info-item {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.patient-info-item label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.patient-info-item .value {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Measurements */
+.measurement-table {
+    width: 100%;
+}
+
+.measurement-table th {
+    background: #3498db;
+    color: #fff;
+    padding: 10px;
+}
+
+.measurement-table td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Meal Plans */
+.meal-plan-day {
+    margin-bottom: 30px;
+    page-break-inside: avoid;
+}
+
+.meal-plan-day-header {
+    background: #3498db;
+    color: #fff;
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.meal-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.meal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.meal-type {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.meal-time {
+    color: #666;
+    font-size: 14px;
+}
+
+.meal-foods {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.meal-foods li {
+    padding: 5px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.food-name {
+    flex: 1;
+}
+
+.food-quantity {
+    color: #666;
+    margin-right: 15px;
+}
+
+.food-calories {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.meal-nutrition-summary {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.meal-instructions {
+    font-style: italic;
+    color: #666;
+    margin-top: 10px;
+    padding: 10px;
+    background: #fffacd;
+    border-left: 3px solid #ffc107;
+}
+
+/* Food Database */
+.food-item {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: box-shadow 0.3s;
+}
+
+.food-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.food-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.food-category {
+    display: inline-block;
+    background: #3498db;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-right: 5px;
+}
+
+.food-nutrition {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+}
+
+.food-nutrition-item {
+    display: flex;
+    align-items: center;
+}
+
+.food-nutrition-item strong {
+    margin-right: 5px;
+}
+
+/* Consultation Calendar */
+.fc-event {
+    cursor: pointer;
+}
+
+/* Progress Bar */
+.weight-progress-bar {
+    height: 30px;
+    background: #ecf0f1;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.weight-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    transition: width 0.5s ease;
+}
+
+.weight-progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 30px;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Badges */
+.badge-active {
+    background-color: #2ecc71;
+}
+
+.badge-inactive {
+    background-color: #95a5a6;
+}
+
+.badge-scheduled {
+    background-color: #3498db;
+}
+
+.badge-completed {
+    background-color: #27ae60;
+}
+
+.badge-cancelled {
+    background-color: #e74c3c;
+}
+
+/* Portal Styles */
+.portal-welcome {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.portal-welcome h2 {
+    margin: 0 0 10px 0;
+    color: #fff;
+}
+
+.portal-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.portal-stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.portal-stat-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 32px;
+    color: #3498db;
+}
+
+.portal-stat-card p {
+    margin: 0;
+    color: #777;
+}
+
+/* Print Styles */
+@media print {
+    .meal-plan-day {
+        page-break-inside: avoid;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .patient-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .food-nutrition {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .portal-stat-cards {
+        grid-template-columns: 1fr;
+    }
+}
