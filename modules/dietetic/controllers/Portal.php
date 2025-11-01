@@ -8,6 +8,11 @@ class Portal extends ClientsController
     {
         parent::__construct();
 
+        // Load Perfex models
+        $this->load->model('clients_model');
+        $this->load->model('staff_model');
+
+        // Load dietetic models
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_programs_model');
@@ -48,6 +53,9 @@ class Portal extends ClientsController
 
         // Get weight progress
         $data['weight_progress'] = $this->dietetic_measurements_model->get_weight_progress($patient->id);
+
+        // Get weight evolution for chart
+        $data['weight_evolution'] = $this->dietetic_patients_model->get_weight_evolution($patient->id, 12);
 
         // Get upcoming consultations
         $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id, 3);
