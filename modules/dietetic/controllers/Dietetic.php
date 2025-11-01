@@ -35,31 +35,67 @@ class Dietetic extends AdminController
     {
         $data['title'] = _l('dietetic_dashboard');
 
-        // Get statistics
-        $data['patient_stats'] = $this->dietetic_patients_model->get_statistics();
-        $data['consultation_stats'] = $this->dietetic_consultations_model->get_statistics();
-        $data['program_stats'] = $this->dietetic_programs_model->get_statistics();
-        $data['reminder_stats'] = $this->dietetic_reminders_model->get_statistics();
+        // Initialize stats with safe defaults
+        $data['patient_stats'] = new stdClass();
+        $data['consultation_stats'] = new stdClass();
+        $data['program_stats'] = new stdClass();
+        $data['reminder_stats'] = new stdClass();
 
-        // Get recent patients
-        $all_patients = $this->dietetic_patients_model->get_all();
-        $data['recent_patients'] = array_slice($all_patients, 0, 5);
+        try {
+            // Get statistics safely
+            $data['patient_stats'] = $this->dietetic_patients_model->get_statistics();
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard patient stats error: ' . $e->getMessage());
+            $data['patient_stats']->active_patients = 0;
+            $data['patient_stats']->total_patients = 0;
+        }
 
-        // Get upcoming consultations
-        $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_upcoming(5);
+        try {
+            $data['consultation_stats'] = $this->dietetic_consultations_model->get_statistics();
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard consultation stats error: ' . $e->getMessage());
+            $data['consultation_stats']->scheduled = 0;
+            $data['consultation_stats']->avg_satisfaction = 0;
+        }
 
-        // Get active programs ending soon
-        $data['programs_ending_soon'] = $this->dietetic_programs_model->get_all([
-            db_prefix() . 'dietic_programs.status' => 'active',
-            db_prefix() . 'dietic_programs.end_date <=' => date('Y-m-d', strtotime('+7 days')),
-            db_prefix() . 'dietic_programs.end_date >=' => date('Y-m-d'),
-        ]);
+        try {
+            $data['program_stats'] = $this->dietetic_programs_model->get_statistics();
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard program stats error: ' . $e->getMessage());
+            $data['program_stats']->active_programs = 0;
+        }
+
+        try {
+            $data['reminder_stats'] = $this->dietetic_reminders_model->get_statistics();
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard reminder stats error: ' . $e->getMessage());
+            $data['reminder_stats']->pending = 0;
+        }
+
+        // Get recent patients safely
+        try {
+            $all_patients = $this->dietetic_patients_model->get_all();
+            $data['recent_patients'] = array_slice($all_patients, 0, 5);
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard recent patients error: ' . $e->getMessage());
+            $data['recent_patients'] = [];
+        }
+
+        // Get upcoming consultations safely
+        try {
+            $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_upcoming(5);
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard upcoming consultations error: ' . $e->getMessage());
+            $data['upcoming_consultations'] = [];
+        }
 
         // Chart data for patient growth
-        $data['patient_growth_chart'] = $this->get_patient_growth_chart_data();
-
-        // Chart data for consultation types
-        $data['consultation_types_chart'] = $this->get_consultation_types_chart_data();
+        try {
+            $data['patient_growth_chart'] = $this->get_patient_growth_chart_data();
+        } catch (Exception $e) {
+            log_message('error', 'Dietetic dashboard chart error: ' . $e->getMessage());
+            $data['patient_growth_chart'] = ['labels' => [], 'data' => []];
+        }
 
         $this->load->view('admin/dashboard', $data);
     }

@@ -178,48 +178,6 @@ class Patients extends AdminController
     }
 
     /**
-     * Add measurement via AJAX
-     */
-    public function add_measurement()
-    {
-        if (!dietetic_has_permission('edit')) {
-            ajax_access_denied();
-        }
-
-        if ($this->input->post()) {
-            $data = $this->input->post();
-            $data['added_by'] = get_staff_user_id();
-            $data['added_by_type'] = 'staff';
-
-            $measurement_id = $this->dietetic_measurements_model->add($data);
-
-            if ($measurement_id) {
-                echo json_encode(['success' => true, 'message' => _l('added_successfully')]);
-            } else {
-                echo json_encode(['success' => false, 'message' => _l('dietetic_error_add_failed')]);
-            }
-        }
-    }
-
-    /**
-     * Delete measurement via AJAX
-     *
-     * @param int $id
-     */
-    public function delete_measurement($id)
-    {
-        if (!dietetic_has_permission('delete')) {
-            ajax_access_denied();
-        }
-
-        if ($this->dietetic_measurements_model->delete($id)) {
-            echo json_encode(['success' => true, 'message' => _l('deleted')]);
-        } else {
-            echo json_encode(['success' => false, 'message' => _l('dietetic_error_delete_failed')]);
-        }
-    }
-
-    /**
      * Search patients via AJAX
      */
     public function search()

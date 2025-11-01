@@ -242,86 +242,43 @@
                         <?php if (!empty($measurements)) { ?>
                             <?php foreach (array_slice($measurements, 0, 5) as $measurement) { ?>
                                 <div class="mtop10">
-                                    <strong><?php echo _d($measurement->measurement_date); ?></strong><br />
-                                    Weight: <?php echo $measurement->weight; ?> kg | BMI: <?php echo $measurement->bmi; ?>
-                                    <?php if ($measurement->notes) { ?>
-                                        <br /><small class="text-muted"><?php echo $measurement->notes; ?></small>
-                                    <?php } ?>
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <strong><?php echo _d($measurement->measurement_date); ?></strong><br />
+                                            Weight: <?php echo $measurement->weight; ?> kg | BMI: <?php echo $measurement->bmi; ?>
+                                            <?php if ($measurement->notes) { ?>
+                                                <br /><small class="text-muted"><?php echo $measurement->notes; ?></small>
+                                            <?php } ?>
+                                        </div>
+                                        <div class="col-md-3 text-right">
+                                            <?php if (dietetic_has_permission('edit')) { ?>
+                                                <a href="<?php echo admin_url('dietetic/measurements/edit/' . $measurement->id); ?>" class="btn btn-default btn-xs">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                            <?php } ?>
+                                            <?php if (dietetic_has_permission('delete')) { ?>
+                                                <a href="<?php echo admin_url('dietetic/measurements/delete/' . $measurement->id); ?>"
+                                                   class="btn btn-danger btn-xs _delete"
+                                                   onclick="return confirm('<?php echo _l('confirm_action_prompt'); ?>');">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                    <hr />
                                 </div>
-                                <hr />
                             <?php } ?>
                         <?php } else { ?>
                             <p class="text-muted"><?php echo _l('dietetic_no_data'); ?></p>
                         <?php } ?>
 
                         <?php if (dietetic_has_permission('create')) { ?>
-                            <button type="button" class="btn btn-info btn-sm btn-block" data-toggle="modal" data-target="#addMeasurementModal">
+                            <a href="<?php echo admin_url('dietetic/measurements/create?patient_id=' . $patient->id); ?>" class="btn btn-info btn-sm btn-block">
                                 <i class="fa fa-plus"></i> <?php echo _l('dietetic_add_measurement'); ?>
-                            </button>
+                            </a>
                         <?php } ?>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Measurement Modal -->
-<div class="modal fade" id="addMeasurementModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                <h4 class="modal-title"><?php echo _l('dietetic_add_measurement'); ?></h4>
-            </div>
-            <div class="modal-body">
-                <form id="add_measurement_form">
-                    <input type="hidden" name="patient_id" value="<?php echo $patient->id; ?>" />
-
-                    <div class="form-group">
-                        <label for="measurement_date"><?php echo _l('dietetic_date'); ?></label>
-                        <input type="date" class="form-control" name="measurement_date" value="<?php echo date('Y-m-d'); ?>" required />
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="weight"><?php echo _l('dietetic_weight'); ?> (kg)</label>
-                                <input type="number" step="0.1" class="form-control" name="weight" required />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="body_fat"><?php echo _l('dietetic_body_fat'); ?> (%)</label>
-                                <input type="number" step="0.1" class="form-control" name="body_fat" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="waist"><?php echo _l('dietetic_waist'); ?> (cm)</label>
-                                <input type="number" step="0.1" class="form-control" name="waist" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="hips"><?php echo _l('dietetic_hips'); ?> (cm)</label>
-                                <input type="number" step="0.1" class="form-control" name="hips" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="notes"><?php echo _l('dietetic_notes'); ?></label>
-                        <textarea class="form-control" name="notes" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('close'); ?></button>
-                <button type="button" class="btn btn-info" onclick="dietetic.addMeasurement()"><?php echo _l('submit'); ?></button>
             </div>
         </div>
     </div>
