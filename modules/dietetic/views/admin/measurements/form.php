@@ -93,17 +93,16 @@
 
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="water_percentage" class="control-label">
-                                        <?php echo _l('dietetic_water_percentage'); ?> (%)
+                                    <label for="arms" class="control-label">
+                                        Arms (cm)
                                     </label>
                                     <input type="number"
-                                           id="water_percentage"
-                                           name="water_percentage"
+                                           id="arms"
+                                           name="arms"
                                            class="form-control"
                                            step="0.1"
                                            min="0"
-                                           max="100"
-                                           value="<?php echo isset($measurement) && $measurement->water_percentage ? $measurement->water_percentage : ''; ?>" />
+                                           value="<?php echo isset($measurement) && $measurement->arms ? $measurement->arms : ''; ?>" />
                                 </div>
                             </div>
                         </div>

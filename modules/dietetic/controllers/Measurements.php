@@ -55,11 +55,11 @@ class Measurements extends AdminController
                 'weight' => $this->input->post('weight'),
                 'body_fat' => $this->input->post('body_fat'),
                 'muscle_mass' => $this->input->post('muscle_mass'),
-                'water_percentage' => $this->input->post('water_percentage'),
                 'waist' => $this->input->post('waist'),
                 'hips' => $this->input->post('hips'),
                 'chest' => $this->input->post('chest'),
-                'thigh' => $this->input->post('thigh'),
+                'arms' => $this->input->post('arms'),
+                'thighs' => $this->input->post('thigh'),
                 'notes' => $this->input->post('notes'),
                 'added_by' => get_staff_user_id(),
                 'added_by_type' => 'staff'
