@@ -268,25 +268,4 @@ INSERT INTO `tbldietic_settings` (`setting_key`, `setting_value`, `setting_type`
 ('enable_client_booking', '1', 'boolean', 'Allow clients to book appointments from portal'),
 ('enable_client_measurements', '1', 'boolean', 'Allow clients to add measurements from portal');
 
--- Create indexes for foreign key relationships
-ALTER TABLE `tbldietic_patients` ADD CONSTRAINT `fk_diet_patients_client` FOREIGN KEY (`client_id`) REFERENCES `tblclients`(`userid`) ON DELETE CASCADE;
-ALTER TABLE `tbldietic_patients` ADD CONSTRAINT `fk_diet_patients_staff` FOREIGN KEY (`dietitian_id`) REFERENCES `tblstaff`(`staffid`) ON DELETE RESTRICT;
-
-ALTER TABLE `tbldietic_measurements` ADD CONSTRAINT `fk_diet_measurements_patient` FOREIGN KEY (`patient_id`) REFERENCES `tbldietic_patients`(`id`) ON DELETE CASCADE;
-
-ALTER TABLE `tbldietic_consultations` ADD CONSTRAINT `fk_diet_consultations_patient` FOREIGN KEY (`patient_id`) REFERENCES `tbldietic_patients`(`id`) ON DELETE CASCADE;
-ALTER TABLE `tbldietic_consultations` ADD CONSTRAINT `fk_diet_consultations_staff` FOREIGN KEY (`dietitian_id`) REFERENCES `tblstaff`(`staffid`) ON DELETE RESTRICT;
-
-ALTER TABLE `tbldietic_programs` ADD CONSTRAINT `fk_diet_programs_patient` FOREIGN KEY (`patient_id`) REFERENCES `tbldietic_patients`(`id`) ON DELETE CASCADE;
-ALTER TABLE `tbldietic_programs` ADD CONSTRAINT `fk_diet_programs_staff` FOREIGN KEY (`dietitian_id`) REFERENCES `tblstaff`(`staffid`) ON DELETE RESTRICT;
-
-ALTER TABLE `tbldietic_meal_plans` ADD CONSTRAINT `fk_diet_meal_plans_program` FOREIGN KEY (`program_id`) REFERENCES `tbldietic_programs`(`id`) ON DELETE CASCADE;
-
-ALTER TABLE `tbldietic_meals` ADD CONSTRAINT `fk_diet_meals_plan` FOREIGN KEY (`meal_plan_id`) REFERENCES `tbldietic_meal_plans`(`id`) ON DELETE CASCADE;
-
-ALTER TABLE `tbldietic_meal_foods` ADD CONSTRAINT `fk_diet_meal_foods_meal` FOREIGN KEY (`meal_id`) REFERENCES `tbldietic_meals`(`id`) ON DELETE CASCADE;
-ALTER TABLE `tbldietic_meal_foods` ADD CONSTRAINT `fk_diet_meal_foods_food` FOREIGN KEY (`food_id`) REFERENCES `tbldietic_foods`(`id`) ON DELETE RESTRICT;
-
-ALTER TABLE `tbldietic_reminders` ADD CONSTRAINT `fk_diet_reminders_patient` FOREIGN KEY (`patient_id`) REFERENCES `tbldietic_patients`(`id`) ON DELETE CASCADE;
-
-ALTER TABLE `tbldietic_documents` ADD CONSTRAINT `fk_diet_documents_patient` FOREIGN KEY (`patient_id`) REFERENCES `tbldietic_patients`(`id`) ON DELETE CASCADE;
+-- Foreign key relationships will be added by install.php with proper db_prefix()
