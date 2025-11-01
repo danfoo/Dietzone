@@ -197,8 +197,8 @@ function dietetic_add_portal_menu()
 
     if ($patient) {
         echo '<li class="customers-nav-item-dietetic">
-                <a href="' . site_url('dietetic/portal') . '">
-                    <i class="fa fa-heartbeat"></i> ' . _l('dietetic_my_program') . '
+                <a href="' . site_url('clients/dietetic') . '">
+                    <i class="fa fa-heartbeat"></i> My Program
                 </a>
               </li>';
     }

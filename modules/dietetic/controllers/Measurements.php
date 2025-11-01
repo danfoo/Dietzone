@@ -27,37 +27,60 @@ class Measurements extends AdminController
      */
     public function create()
     {
-        if (!dietetic_has_permission('create')) {
+        // Simplified permission check
+        if (!is_admin() && !has_permission('dietetic', '', 'create')) {
             access_denied('dietetic');
         }
 
-        $patient_id = $this->input->get('patient_id');
+        $patient_id = $this->input->get('patient_id') ?: $this->input->post('patient_id');
+
         if (!$patient_id) {
-            show_404();
+            set_alert('danger', 'Patient ID is required');
+            redirect(admin_url('dietetic/patients'));
+            return;
         }
 
         $data['patient'] = $this->dietetic_patients_model->get($patient_id);
+
         if (!$data['patient']) {
-            show_404();
+            set_alert('danger', 'Patient not found');
+            redirect(admin_url('dietetic/patients'));
+            return;
         }
 
         if ($this->input->post()) {
-            $post_data = $this->input->post();
-            $post_data['added_by'] = get_staff_user_id();
-            $post_data['added_by_type'] = 'staff';
+            $post_data = [
+                'patient_id' => $this->input->post('patient_id'),
+                'measurement_date' => $this->input->post('measurement_date'),
+                'weight' => $this->input->post('weight'),
+                'body_fat' => $this->input->post('body_fat'),
+                'muscle_mass' => $this->input->post('muscle_mass'),
+                'water_percentage' => $this->input->post('water_percentage'),
+                'waist' => $this->input->post('waist'),
+                'hips' => $this->input->post('hips'),
+                'chest' => $this->input->post('chest'),
+                'thigh' => $this->input->post('thigh'),
+                'notes' => $this->input->post('notes'),
+                'added_by' => get_staff_user_id(),
+                'added_by_type' => 'staff'
+            ];
 
-            $measurement_id = $this->dietetic_measurements_model->add($post_data);
+            try {
+                $measurement_id = $this->dietetic_measurements_model->add($post_data);
 
-            if ($measurement_id) {
-                set_alert('success', _l('added_successfully'));
-            } else {
-                set_alert('danger', _l('dietetic_error_add_failed'));
+                if ($measurement_id) {
+                    set_alert('success', 'Measurement added successfully');
+                    redirect(admin_url('dietetic/patients/view/' . $patient_id));
+                    return;
+                } else {
+                    set_alert('danger', 'Failed to add measurement');
+                }
+            } catch (Exception $e) {
+                set_alert('danger', 'Error: ' . $e->getMessage());
             }
-
-            redirect(admin_url('dietetic/patients/view/' . $patient_id));
         }
 
-        $data['title'] = _l('dietetic_add_measurement');
+        $data['title'] = 'Add Measurement';
         $this->load->view('admin/measurements/form', $data);
     }
 
