@@ -9,6 +9,10 @@ class Dietetic_programs_model extends App_Model
     public function __construct()
     {
         parent::__construct();
+
+        // Load required Perfex models
+        $this->load->model('clients_model');
+        $this->load->model('staff_model');
     }
 
     /**
@@ -21,10 +25,10 @@ class Dietetic_programs_model extends App_Model
     {
         $this->db->select(db_prefix() . $this->table . '.*, ' .
             db_prefix() . 'clients.company as client_name, ' .
-            'CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name');
+            'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
         $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
         $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
-        $this->db->join('tblstaff', 'tblstaff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
         $this->db->where(db_prefix() . $this->table . '.id', $id);
 
         $program = $this->db->get(db_prefix() . $this->table)->row();
@@ -48,10 +52,10 @@ class Dietetic_programs_model extends App_Model
     {
         $this->db->select(db_prefix() . $this->table . '.*, ' .
             db_prefix() . 'clients.company as client_name, ' .
-            'CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name');
+            'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
         $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
         $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
-        $this->db->join('tblstaff', 'tblstaff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
 
         if (!empty($where)) {
             $this->db->where($where);

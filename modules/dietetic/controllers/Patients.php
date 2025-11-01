@@ -8,6 +8,11 @@ class Patients extends AdminController
     {
         parent::__construct();
 
+        // Load Perfex models
+        $this->load->model('clients_model');
+        $this->load->model('staff_model');
+
+        // Load Dietetic models
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_consultations_model');
