@@ -42,7 +42,8 @@ class Dietetic extends AdminController
         $data['reminder_stats'] = $this->dietetic_reminders_model->get_statistics();
 
         // Get recent patients
-        $data['recent_patients'] = $this->dietetic_patients_model->get_all(['limit' => 5]);
+        $all_patients = $this->dietetic_patients_model->get_all();
+        $data['recent_patients'] = array_slice($all_patients, 0, 5);
 
         // Get upcoming consultations
         $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_upcoming(5);

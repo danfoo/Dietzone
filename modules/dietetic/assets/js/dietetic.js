@@ -130,15 +130,28 @@
         var form = $('#add_measurement_form');
         var formData = form.serialize();
 
-        $.post(admin_url + 'dietetic/patients/add_measurement', formData, function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-                $('#addMeasurementModal').modal('hide');
-                location.reload();
-            } else {
-                alert_float('danger', response.message);
+        $.ajax({
+            url: admin_url + 'dietetic/patients/add_measurement',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    $('#addMeasurementModal').modal('hide');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert_float('danger', response.message || 'An error occurred');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                console.error('Response:', xhr.responseText);
+                alert_float('danger', 'Failed to save measurement. Please check console for details.');
             }
-        }, 'json');
+        });
     }
 
     /**
