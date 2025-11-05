@@ -168,8 +168,8 @@
             var totalItems = $items.length;
             var totalPages = Math.ceil(totalItems / itemsPerPage);
 
-            if (totalPages <= 1) {
-                return; // No pagination needed
+            if (totalItems === 0) {
+                return; // No items to paginate
             }
 
             function showPage(page) {

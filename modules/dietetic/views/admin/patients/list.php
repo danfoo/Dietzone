@@ -82,6 +82,7 @@ $(document).ready(function() {
     $('#patients-table').DataTable({
         "order": [[6, "desc"]], // Sort by created_at desc
         "pageLength": 10,
+        "lengthChange": false,
         "language": {
             "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
         }
