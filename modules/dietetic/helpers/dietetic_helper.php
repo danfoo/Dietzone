@@ -390,6 +390,55 @@ function dietetic_handle_file_upload($file, $subdir = 'documents', $allowed_type
 }
 
 /**
+ * Notify dietitian about patient measurement update
+ *
+ * @param int $patient_id Patient ID
+ * @param int $dietitian_id Dietitian staff ID
+ * @param string $patient_name Patient name
+ * @param float $weight New weight
+ * @return bool
+ */
+function dietetic_notify_measurement_added($patient_id, $dietitian_id, $patient_name, $weight)
+{
+    $CI = &get_instance();
+
+    // Create notification link
+    $link = admin_url('dietetic/patients/view/' . $patient_id);
+
+    // Notification description
+    $description = sprintf(
+        'Le patient %s a enregistré une nouvelle mesure (Poids: %.1f kg)',
+        $patient_name,
+        $weight
+    );
+
+    // Use Perfex notification system if available
+    if (function_exists('add_notification')) {
+        $notification_data = [
+            'description'     => $description,
+            'touserid'        => $dietitian_id,
+            'link'            => $link,
+            'additional_data' => serialize([
+                'patient_id' => $patient_id,
+                'weight'     => $weight,
+            ]),
+        ];
+
+        return add_notification($notification_data);
+    }
+
+    // Fallback: Log activity
+    log_activity(sprintf(
+        'Patient Measurement Added [Patient ID: %d, Dietitian ID: %d, Weight: %.1f kg]',
+        $patient_id,
+        $dietitian_id,
+        $weight
+    ));
+
+    return true;
+}
+
+/**
  * Send SMS via LAM API
  *
  * @param string $phone

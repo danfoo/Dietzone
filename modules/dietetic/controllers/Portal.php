@@ -215,6 +215,22 @@ class Portal extends App_Controller
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
                 if ($measurement_id) {
+                    // Send notification to dietitian
+                    if ($patient->dietitian_id) {
+                        // Get client info for patient name
+                        $this->load->model('clients_model');
+                        $client = $this->clients_model->get($patient->client_id);
+                        $patient_name = $client ? $client->company : 'Patient';
+
+                        // Notify dietitian about new measurement
+                        dietetic_notify_measurement_added(
+                            $patient->id,
+                            $patient->dietitian_id,
+                            $patient_name,
+                            $weight
+                        );
+                    }
+
                     // Return JSON for AJAX requests
                     if ($this->input->is_ajax_request()) {
                         echo json_encode(['success' => true, 'message' => 'Measurement added successfully!']);

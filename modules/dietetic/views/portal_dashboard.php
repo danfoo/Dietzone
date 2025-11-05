@@ -58,7 +58,7 @@
         .stat-box.weight::before { background: #3498db; }
         .stat-box.target::before { background: #2ecc71; }
         .stat-box.bmi::before { background: #f39c12; }
-        .stat-box.progress::before { background: #9b59b6; }
+        .stat-box.weight-progress::before { background: #9b59b6; }
 
         .stat-box .icon {
             font-size: 36px;
@@ -67,7 +67,7 @@
         .stat-box.weight .icon { color: #3498db; }
         .stat-box.target .icon { color: #2ecc71; }
         .stat-box.bmi .icon { color: #f39c12; }
-        .stat-box.progress .icon { color: #9b59b6; }
+        .stat-box.weight-progress .icon { color: #9b59b6; }
 
         .stat-box h2 {
             margin: 10px 0;
@@ -227,7 +227,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="stat-box progress">
+                <div class="stat-box weight-progress">
                     <div class="icon"><i class="fa fa-line-chart"></i></div>
                     <h2 class="<?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
                         <?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change !== null ? ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1) : '-'; ?>
