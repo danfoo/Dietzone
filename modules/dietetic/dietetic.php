@@ -189,18 +189,24 @@ hooks()->add_action('customers_navigation_start', 'dietetic_add_portal_menu');
 
 function dietetic_add_portal_menu()
 {
+    if (!is_client_logged_in()) {
+        return;
+    }
+
     $CI = &get_instance();
-
-    // Check if client has a dietetic patient record
     $CI->load->model('dietetic/dietetic_patients_model');
-    $patient = $CI->dietetic_patients_model->get_by_client(get_client_user_id());
 
-    if ($patient) {
-        echo '<li class="customers-nav-item-dietetic">
-                <a href="' . site_url('clients/dietetic') . '">
-                    <i class="fa fa-heartbeat"></i> My Program
-                </a>
-              </li>';
+    try {
+        $patient = $CI->dietetic_patients_model->get_by_client(get_client_user_id());
+        if ($patient) {
+            echo '<li class="customers-nav-item-dietetic">
+                    <a href="' . site_url('dietetic/portal') . '">
+                        <i class="fa fa-heartbeat"></i> My Program
+                    </a>
+                  </li>';
+        }
+    } catch (Exception $e) {
+        // Silently fail if error
     }
 }
 
