@@ -48,12 +48,25 @@ $lang['dietetic_day'] = 'Jour';
 // Meals
 $lang['dietetic_meal'] = 'Repas';
 $lang['dietetic_meals'] = 'Repas';
+$lang['dietetic_edit_meal'] = 'Modifier Repas';
+$lang['dietetic_add_meal_to'] = 'Ajouter un Repas à';
 $lang['dietetic_meal_breakfast'] = 'Petit-déjeuner';
 $lang['dietetic_meal_snack_am'] = 'Collation Matinale';
 $lang['dietetic_meal_lunch'] = 'Déjeuner';
 $lang['dietetic_meal_snack_pm'] = 'Collation Après-midi';
 $lang['dietetic_meal_dinner'] = 'Dîner';
 $lang['dietetic_meal_snack_evening'] = 'Collation Soirée';
+$lang['dietetic_meal_type'] = 'Type de Repas';
+$lang['dietetic_meal_name'] = 'Nom du Repas';
+$lang['dietetic_meal_placeholder'] = 'ex., Poulet Grillé avec Riz';
+$lang['dietetic_instructions_preparation'] = 'Instructions / Préparation';
+$lang['dietetic_foods_in_meal'] = 'Aliments dans ce Repas';
+$lang['dietetic_add_food_to_meal'] = 'Ajouter un Aliment au Repas';
+$lang['dietetic_no_foods_yet'] = 'Aucun aliment ajouté à ce repas pour le moment.';
+$lang['dietetic_save_meal'] = 'Enregistrer le Repas';
+$lang['dietetic_update_meal'] = 'Mettre à Jour le Repas';
+$lang['dietetic_back_to_meal_plan'] = 'Retour au Plan Alimentaire';
+$lang['dietetic_after_creating_meal'] = 'Après avoir créé le repas, vous pourrez y ajouter des aliments.';
 
 // Foods
 $lang['dietetic_foods'] = 'Base de Données Alimentaire';
@@ -62,6 +75,14 @@ $lang['dietetic_new_food'] = 'Nouvel Aliment';
 $lang['dietetic_edit_food'] = 'Modifier Aliment';
 $lang['dietetic_import_foods'] = 'Importer Aliments';
 $lang['dietetic_export_foods'] = 'Exporter Aliments';
+$lang['dietetic_select_food'] = 'Sélectionner un Aliment';
+$lang['dietetic_choose_food'] = 'Choisir un aliment...';
+$lang['dietetic_nutritional_info_per_serving'] = 'Informations Nutritionnelles (par portion) :';
+$lang['dietetic_calculated_nutrition'] = 'Nutrition Calculée pour ce repas :';
+$lang['dietetic_amount_to_use'] = 'Quantité à utiliser dans ce repas';
+$lang['dietetic_add_to_meal'] = 'Ajouter au Repas';
+$lang['dietetic_update'] = 'Mettre à Jour';
+$lang['dietetic_remove_food_confirm'] = 'Supprimer cet aliment ?';
 
 // Food Categories
 $lang['dietetic_category_vegetables'] = 'Légumes';
@@ -160,6 +181,19 @@ $lang['dietetic_serving_size'] = 'Portion';
 $lang['dietetic_quantity'] = 'Quantité';
 $lang['dietetic_unit'] = 'Unité';
 $lang['dietetic_total'] = 'Total';
+$lang['dietetic_serving'] = 'Portion';
+$lang['dietetic_actions'] = 'Actions';
+$lang['dietetic_cancel'] = 'Annuler';
+$lang['dietetic_select_day'] = 'Sélectionner un jour...';
+$lang['dietetic_select_type'] = 'Sélectionner un type...';
+
+// Units
+$lang['dietetic_unit_grams'] = 'Grammes (g)';
+$lang['dietetic_unit_ml'] = 'Millilitres (ml)';
+$lang['dietetic_unit_unit'] = 'Unité';
+$lang['dietetic_unit_cup'] = 'Tasse';
+$lang['dietetic_unit_tbsp'] = 'Cuillère à soupe';
+$lang['dietetic_unit_tsp'] = 'Cuillère à café';
 
 // Status
 $lang['dietetic_status_active'] = 'Actif';

@@ -8,9 +8,9 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <h4>
-                            <?php echo isset($meal_food) ? 'Edit Food' : 'Add Food to Meal'; ?>
+                            <?php echo isset($meal_food) ? _l('dietetic_edit_food') : _l('dietetic_add_food_to_meal'); ?>
                         </h4>
-                        <p><?php echo $meal->meal_name ? $meal->meal_name : ucfirst($meal->meal_type); ?> - Day <?php echo $days[$meal->day_number]; ?></p>
+                        <p><?php echo $meal->meal_name ? $meal->meal_name : ucfirst($meal->meal_type); ?> - <?php echo _l('dietetic_day'); ?> <?php echo $days[$meal->day_number]; ?></p>
                         <hr>
 
                         <?php echo form_open(admin_url('dietetic/programs/meal_food/' . (isset($meal_food) ? 'edit/' . $meal_food->id : 'create'))); ?>
@@ -20,9 +20,9 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label>Select Food *</label>
+                                    <label><?php echo _l('dietetic_select_food'); ?> *</label>
                                     <select name="food_id" class="form-control selectpicker" data-live-search="true" required <?php echo isset($meal_food) ? 'disabled' : ''; ?>>
-                                        <option value="">Choose a food...</option>
+                                        <option value=""><?php echo _l('dietetic_choose_food'); ?></option>
                                         <?php foreach ($foods as $food) { ?>
                                             <option value="<?php echo $food->id; ?>"
                                                     data-calories="<?php echo $food->calories; ?>"
@@ -44,27 +44,34 @@
                         </div>
 
                         <div id="foodInfo" style="display: none;" class="alert alert-info">
-                            <strong>Nutritional Info (per serving):</strong><br>
+                            <strong><?php echo _l('dietetic_nutritional_info_per_serving'); ?></strong><br>
                             <span id="foodDetails"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Quantity *</label>
+                                    <label><?php echo _l('dietetic_quantity'); ?> *</label>
                                     <input type="number" name="quantity" class="form-control" step="0.1" min="0"
                                            value="<?php echo isset($meal_food) ? $meal_food->quantity : ''; ?>"
                                            id="quantityInput" required>
-                                    <small class="text-muted">Amount to use in this meal</small>
+                                    <small class="text-muted"><?php echo _l('dietetic_amount_to_use'); ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Unit *</label>
+                                    <label><?php echo _l('dietetic_unit'); ?> *</label>
                                     <select name="unit" class="form-control" required>
                                         <?php
-                                        $units = ['g' => 'Grams (g)', 'ml' => 'Milliliters (ml)', 'unit' => 'Unit', 'cup' => 'Cup', 'tbsp' => 'Tablespoon', 'tsp' => 'Teaspoon'];
+                                        $units = [
+                                            'g' => _l('dietetic_unit_grams'),
+                                            'ml' => _l('dietetic_unit_ml'),
+                                            'unit' => _l('dietetic_unit_unit'),
+                                            'cup' => _l('dietetic_unit_cup'),
+                                            'tbsp' => _l('dietetic_unit_tbsp'),
+                                            'tsp' => _l('dietetic_unit_tsp')
+                                        ];
                                         foreach ($units as $value => $label) {
                                             $selected = (isset($meal_food) && $meal_food->unit == $value) ? 'selected' : '';
                                             echo "<option value='$value' $selected>$label</option>";
@@ -76,17 +83,17 @@
                         </div>
 
                         <div id="calculatedNutrition" style="display: none;" class="alert alert-success">
-                            <strong>Calculated Nutrition for this meal:</strong><br>
+                            <strong><?php echo _l('dietetic_calculated_nutrition'); ?></strong><br>
                             <div id="calcDetails"></div>
                         </div>
 
                         <hr>
                         <div class="btn-bottom-toolbar">
                             <a href="<?php echo admin_url('dietetic/programs/meal/edit/' . $meal->id); ?>" class="btn btn-default">
-                                Cancel
+                                <?php echo _l('dietetic_cancel'); ?>
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <?php echo isset($meal_food) ? 'Update' : 'Add to Meal'; ?>
+                                <?php echo isset($meal_food) ? _l('dietetic_update') : _l('dietetic_add_to_meal'); ?>
                             </button>
                         </div>
 
@@ -112,11 +119,11 @@ $(document).ready(function() {
             var serving = selected.data('serving');
 
             $('#foodDetails').html(
-                'Serving: ' + serving + '<br>' +
-                'Calories: ' + calories + ' kcal | ' +
-                'Protein: ' + protein + 'g | ' +
-                'Carbs: ' + carbs + 'g | ' +
-                'Fats: ' + fats + 'g'
+                '<?php echo _l('dietetic_serving'); ?>: ' + serving + '<br>' +
+                '<?php echo _l('dietetic_calories'); ?>: ' + calories + ' kcal | ' +
+                '<?php echo _l('dietetic_protein'); ?>: ' + protein + 'g | ' +
+                '<?php echo _l('dietetic_carbs'); ?>: ' + carbs + 'g | ' +
+                '<?php echo _l('dietetic_fats'); ?>: ' + fats + 'g'
             );
             $('#foodInfo').show();
 
