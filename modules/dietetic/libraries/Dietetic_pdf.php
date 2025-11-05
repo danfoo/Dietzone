@@ -52,7 +52,7 @@ class Dietetic_pdf extends App_pdf
         $pdf->SetFont('Arial', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_patient') . ':', 0, 0);
         $pdf->SetFont('Arial', 'B', 11);
-        $client_name = isset($patient->client_name) ? $patient->client_name : 'N/A';
+        $client_name = (isset($patient->client) && isset($patient->client->company)) ? $patient->client->company : 'N/A';
         $pdf->Cell(0, 6, $client_name, 0, 1);
 
         $pdf->SetFont('Arial', '', 11);
