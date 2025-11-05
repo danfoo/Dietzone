@@ -122,13 +122,22 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
+        // Dietitians (with ratings)
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-dietitians',
+            'name'     => 'Diététiciens',
+            'icon'     => 'fa fa-user-md',
+            'href'     => admin_url('dietetic/dietitians'),
+            'position' => 5,
+        ]);
+
         // Foods Database
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-foods',
             'name'     => _l('dietetic_foods'),
             'icon'     => 'fa fa-cutlery',
             'href'     => admin_url('dietetic/foods'),
-            'position' => 5,
+            'position' => 6,
         ]);
 
         // Settings
