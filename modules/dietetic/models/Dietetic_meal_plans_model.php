@@ -113,6 +113,24 @@ class Dietetic_meal_plans_model extends App_Model
     }
 
     /**
+     * Get single meal
+     *
+     * @param int $id
+     * @return object|null
+     */
+    public function get_meal($id)
+    {
+        $this->db->where('id', $id);
+        $meal = $this->db->get(db_prefix() . 'dietic_meals')->row();
+
+        if ($meal) {
+            $meal->foods = $this->get_meal_foods($meal->id);
+        }
+
+        return $meal;
+    }
+
+    /**
      * Get foods for a meal
      *
      * @param int $meal_id
@@ -136,6 +154,28 @@ class Dietetic_meal_plans_model extends App_Model
         $this->db->order_by('display_order', 'ASC');
 
         return $this->db->get(db_prefix() . 'dietic_meal_foods')->result();
+    }
+
+    /**
+     * Get single meal food
+     *
+     * @param int $id
+     * @return object|null
+     */
+    public function get_meal_food($id)
+    {
+        $this->db->select(db_prefix() . 'dietic_meal_foods.*, ' .
+            db_prefix() . 'dietic_foods.food_name, ' .
+            db_prefix() . 'dietic_foods.calories, ' .
+            db_prefix() . 'dietic_foods.protein, ' .
+            db_prefix() . 'dietic_foods.carbs, ' .
+            db_prefix() . 'dietic_foods.fats, ' .
+            db_prefix() . 'dietic_foods.serving_size, ' .
+            db_prefix() . 'dietic_foods.serving_unit');
+        $this->db->join(db_prefix() . 'dietic_foods', db_prefix() . 'dietic_foods.id = ' . db_prefix() . 'dietic_meal_foods.food_id', 'left');
+        $this->db->where(db_prefix() . 'dietic_meal_foods.id', $id);
+
+        return $this->db->get(db_prefix() . 'dietic_meal_foods')->row();
     }
 
     /**
@@ -223,6 +263,14 @@ class Dietetic_meal_plans_model extends App_Model
     {
         $this->db->where('id', $id);
         return $this->db->update(db_prefix() . 'dietic_meal_foods', $data);
+    }
+
+    /**
+     * Alias for update_meal_food
+     */
+    public function update_food_in_meal($id, $data)
+    {
+        return $this->update_meal_food($id, $data);
     }
 
     /**
