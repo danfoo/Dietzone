@@ -183,6 +183,7 @@ class Dietetic_patients_model extends App_Model
     {
         $this->db->where('patient_id', $patient_id);
         $this->db->order_by('measurement_date', 'DESC');
+        $this->db->order_by('id', 'DESC'); // Secondary sort by ID to get most recently added
         $this->db->limit(1);
 
         return $this->db->get(db_prefix() . 'dietic_measurements')->row();

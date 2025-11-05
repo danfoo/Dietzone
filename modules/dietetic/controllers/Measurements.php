@@ -86,6 +86,11 @@ class Measurements extends AdminController
                 $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
             }
 
+            // Helper function to convert empty strings to NULL for numeric fields
+            $numeric_or_null = function($value) {
+                return ($value === '' || $value === null) ? null : $value;
+            };
+
             // Filter and prepare data
             $post_data = [
                 'patient_id' => $this->input->post('patient_id'),
@@ -94,11 +99,11 @@ class Measurements extends AdminController
                 'bmi' => $bmi,
                 'body_fat' => $body_fat,
                 'muscle_mass' => $muscle_mass,
-                'waist' => $this->input->post('waist'),
-                'hips' => $this->input->post('hips'),
-                'chest' => $this->input->post('chest'),
-                'arms' => $this->input->post('arms'),
-                'thighs' => $this->input->post('thigh'),
+                'waist' => $numeric_or_null($this->input->post('waist')),
+                'hips' => $numeric_or_null($this->input->post('hips')),
+                'chest' => $numeric_or_null($this->input->post('chest')),
+                'arms' => $numeric_or_null($this->input->post('arms')),
+                'thighs' => $numeric_or_null($this->input->post('thigh')),
                 'notes' => $this->input->post('notes'),
                 'added_by' => get_staff_user_id(),
                 'added_by_type' => 'staff'
@@ -180,6 +185,11 @@ class Measurements extends AdminController
                 $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
             }
 
+            // Helper function to convert empty strings to NULL for numeric fields
+            $numeric_or_null = function($value) {
+                return ($value === '' || $value === null) ? null : $value;
+            };
+
             // Filter POST data to only include valid fields
             $update_data = [
                 'measurement_date' => $this->input->post('measurement_date'),
@@ -187,11 +197,11 @@ class Measurements extends AdminController
                 'bmi' => $bmi,
                 'body_fat' => $body_fat,
                 'muscle_mass' => $muscle_mass,
-                'waist' => $this->input->post('waist'),
-                'hips' => $this->input->post('hips'),
-                'chest' => $this->input->post('chest'),
-                'arms' => $this->input->post('arms'),
-                'thighs' => $this->input->post('thigh'),
+                'waist' => $numeric_or_null($this->input->post('waist')),
+                'hips' => $numeric_or_null($this->input->post('hips')),
+                'chest' => $numeric_or_null($this->input->post('chest')),
+                'arms' => $numeric_or_null($this->input->post('arms')),
+                'thighs' => $numeric_or_null($this->input->post('thigh')),
                 'notes' => $this->input->post('notes'),
             ];
 
