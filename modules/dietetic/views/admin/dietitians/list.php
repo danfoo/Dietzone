@@ -187,6 +187,13 @@
             </h1>
         </div>
 
+        <!-- Error Message -->
+        <?php if (isset($error)) { ?>
+            <div class="alert alert-danger" style="padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <i class="fa fa-exclamation-triangle"></i> <?php echo $error; ?>
+            </div>
+        <?php } ?>
+
         <!-- Dietitians List -->
         <?php if (!empty($dietitians)) { ?>
             <?php foreach ($dietitians as $dietitian) { ?>

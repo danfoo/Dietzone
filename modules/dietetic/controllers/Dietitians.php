@@ -25,7 +25,14 @@ class Dietitians extends AdminController
     public function index()
     {
         $data['title'] = 'Diététiciens';
-        $data['dietitians'] = $this->dietetic_ratings_model->get_all_dietitians_with_ratings();
+
+        try {
+            $data['dietitians'] = $this->dietetic_ratings_model->get_all_dietitians_with_ratings();
+        } catch (Exception $e) {
+            // If ratings table doesn't exist yet, show error message
+            $data['dietitians'] = [];
+            $data['error'] = 'La table des notes n\'existe pas encore. Veuillez appliquer la migration SQL. <a href="' . base_url('modules/dietetic/migrations/apply_migrations.php') . '" target="_blank">Cliquez ici pour appliquer la migration</a>';
+        }
 
         $this->load->view('admin/dietitians/list', $data);
     }

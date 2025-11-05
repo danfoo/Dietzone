@@ -470,14 +470,18 @@ class Portal extends App_Controller
         // Get current dietitian
         $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
 
-        // Get dietitian's average rating
-        $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
-
-        // Check if patient has already rated this dietitian
-        $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
-
-        // Check if patient can rate (has completed consultations)
-        $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+        // Get dietitian's average rating (with error handling for missing table)
+        try {
+            $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+            $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+            $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+        } catch (Exception $e) {
+            // Table doesn't exist yet
+            $data['dietitian_rating'] = null;
+            $data['my_rating'] = null;
+            $data['can_rate'] = false;
+            $data['error'] = 'Le système de notation n\'est pas encore activé. Contactez l\'administrateur.';
+        }
 
         $this->load->view('portal_my_dietitians', $data);
     }
