@@ -29,7 +29,7 @@
 
                         <div class="clearfix"></div>
 
-                        <table class="table table-striped dietetic-table">
+                        <table class="table table-striped dietetic-table" id="foods-table">
                             <thead>
                                 <tr>
                                     <th><?php echo _l('dietetic_food'); ?></th>
@@ -77,5 +77,17 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('#foods-table').DataTable({
+        "order": [[0, "asc"]], // Sort by food_name asc
+        "pageLength": 25,
+        "language": {
+            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
+        }
+    });
+});
+</script>
 
 <?php init_tail(); ?>

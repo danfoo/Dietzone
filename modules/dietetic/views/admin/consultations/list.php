@@ -17,7 +17,7 @@
                         <?php } ?>
                         <div class="clearfix"></div>
 
-                        <table class="table table-striped dietetic-table">
+                        <table class="table table-striped dietetic-table" id="consultations-table">
                             <thead>
                                 <tr>
                                     <th><?php echo _l('dietetic_patient'); ?></th>
@@ -56,5 +56,17 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('#consultations-table').DataTable({
+        "order": [[2, "desc"]], // Sort by consultation_date desc
+        "pageLength": 25,
+        "language": {
+            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
+        }
+    });
+});
+</script>
 
 <?php init_tail(); ?>
