@@ -38,9 +38,9 @@ class Dietetic_pdf extends App_pdf
         $pdf->AddPage();
 
         // Logo
-        $logo_path = dietetic_get_option('pdf_logo_path');
-        if (!empty($logo_path) && file_exists($logo_path)) {
-            $pdf->Image($logo_path, 10, 10, 30);
+        $company_logo = get_option('company_logo');
+        if ($company_logo && file_exists(FCPATH . 'uploads/company/' . $company_logo)) {
+            $pdf->Image(FCPATH . 'uploads/company/' . $company_logo, 10, 10, 30);
         }
 
         // Header
@@ -52,7 +52,8 @@ class Dietetic_pdf extends App_pdf
         $pdf->SetFont('Arial', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_patient') . ':', 0, 0);
         $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, $patient->client->company, 0, 1);
+        $client_name = isset($patient->client_name) ? $patient->client_name : 'N/A';
+        $pdf->Cell(0, 6, $client_name, 0, 1);
 
         $pdf->SetFont('Arial', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_program') . ':', 0, 0);
@@ -195,17 +196,27 @@ class Dietetic_pdf extends App_pdf
         $pdf->Cell(0, 10, get_option('companyname') . ' | ' . _l('dietetic_generated_on') . ' ' . date('Y-m-d H:i'), 0, 0, 'C');
 
         // Output
-        $filename = 'meal_plan_' . $meal_plan->id . '_' . date('Ymd') . '.pdf';
+        $filename = 'plan_alimentaire_' . $meal_plan->id . '_' . date('Ymd') . '.pdf';
+
+        // Ensure upload directory exists
+        $upload_dir = dietetic_upload_path('meal_plans');
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
 
         // Save to uploads folder
-        $save_path = dietetic_upload_path('meal_plans') . '/' . $filename;
-        $pdf->Output($save_path, 'F');
+        $save_path = $upload_dir . '/' . $filename;
+        try {
+            $pdf->Output($save_path, 'F');
 
-        // Update meal plan with PDF path
-        $this->CI->load->model('dietetic/dietetic_meal_plans_model');
-        $this->CI->dietetic_meal_plans_model->update($meal_plan->id, [
-            'pdf_path' => 'meal_plans/' . $filename,
-        ]);
+            // Update meal plan with PDF path
+            $this->CI->load->model('dietetic/dietetic_meal_plans_model');
+            $this->CI->dietetic_meal_plans_model->update($meal_plan->id, [
+                'pdf_path' => 'meal_plans/' . $filename,
+            ]);
+        } catch (Exception $e) {
+            log_activity('PDF generation error: ' . $e->getMessage());
+        }
 
         // Download
         $pdf->Output($filename, 'D');
