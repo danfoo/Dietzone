@@ -55,17 +55,23 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    $('#programs-table').DataTable({
-        "order": [[2, "desc"]], // Sort by start_date desc
-        "pageLength": 10,
-        "lengthChange": false,
-        "searching": true,
-        "info": true,
-        "language": {
-            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
-        }
-    });
+$(window).on('load', function() {
+    // Ensure DataTables is loaded
+    if ($.fn.DataTable) {
+        $('#programs-table').DataTable({
+            "order": [[2, "desc"]], // Sort by start_date desc
+            "pageLength": 10,
+            "lengthChange": false,
+            "searching": true,
+            "info": true,
+            "paging": true,
+            "language": {
+                "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
+            }
+        });
+    } else {
+        console.error('DataTables not loaded');
+    }
 });
 </script>
 

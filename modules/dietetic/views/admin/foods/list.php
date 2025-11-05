@@ -99,23 +99,29 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    var table = $('#foods-table').DataTable({
-        "order": [[1, "asc"]], // Sort by food_name asc (column 1 now, because we added checkbox column)
-        "pageLength": 10,
-        "lengthChange": false,
-        "searching": true,
-        "info": true,
-        "columnDefs": [
-            {
-                "orderable": false,
-                "targets": 0 // Disable sorting on checkbox column
+$(window).on('load', function() {
+    // Ensure DataTables is loaded
+    if ($.fn.DataTable) {
+        var table = $('#foods-table').DataTable({
+            "order": [[1, "asc"]], // Sort by food_name asc (column 1 now, because we added checkbox column)
+            "pageLength": 10,
+            "lengthChange": false,
+            "searching": true,
+            "info": true,
+            "paging": true,
+            "columnDefs": [
+                {
+                    "orderable": false,
+                    "targets": 0 // Disable sorting on checkbox column
+                }
+            ],
+            "language": {
+                "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
             }
-        ],
-        "language": {
-            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
-        }
-    });
+        });
+    } else {
+        console.error('DataTables not loaded');
+    }
 
     // Select all checkboxes
     $('#select-all').on('click', function() {
