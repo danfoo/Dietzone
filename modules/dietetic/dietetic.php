@@ -82,7 +82,6 @@ function dietetic_module_init_menu_items()
     if (has_permission('dietetic', '', 'view')) {
         $CI->app_menu->add_sidebar_menu_item('dietetic', [
             'name'     => _l('dietetic'),
-            'href'     => admin_url('dietetic'),
             'icon'     => 'fa fa-heartbeat',
             'position' => 15,
         ]);
