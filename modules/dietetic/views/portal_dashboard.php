@@ -476,6 +476,7 @@
                 padding: 15px;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                 gap: 5px;
+                z-index: 1000;
             }
 
             .portal-nav.show {
@@ -554,10 +555,6 @@
         }
 
         @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
             .portal-logo img {
                 max-height: 40px;
             }
