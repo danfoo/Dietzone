@@ -301,6 +301,162 @@ class Programs extends AdminController
     }
 
     /**
+     * Meal management - Create/Edit meal (dedicated pages, not AJAX)
+     */
+    public function meal($action = 'create', $id = null)
+    {
+        if ($action == 'create') {
+            if (!dietetic_has_permission('create')) {
+                access_denied('dietetic');
+            }
+
+            $meal_plan_id = $this->input->get('meal_plan_id') ?: $this->input->post('meal_plan_id');
+
+            if (!$meal_plan_id) {
+                set_alert('danger', 'Meal plan ID required');
+                redirect(admin_url('dietetic/programs'));
+                return;
+            }
+
+            $data['meal_plan'] = $this->dietetic_meal_plans_model->get($meal_plan_id);
+            if (!$data['meal_plan']) {
+                show_404();
+            }
+
+            $data['program'] = $this->dietetic_programs_model->get($data['meal_plan']->program_id);
+
+            if ($this->input->post()) {
+                $meal_data = $this->input->post();
+                $meal_id = $this->dietetic_meal_plans_model->add_meal($meal_data);
+
+                if ($meal_id) {
+                    set_alert('success', 'Meal created successfully');
+                    redirect(admin_url('dietetic/programs/meal/edit/' . $meal_id));
+                } else {
+                    set_alert('danger', 'Failed to create meal');
+                }
+            }
+
+            $data['title'] = 'Add Meal';
+            $this->load->view('admin/programs/meal_form', $data);
+
+        } elseif ($action == 'edit') {
+            if (!dietetic_has_permission('edit')) {
+                access_denied('dietetic');
+            }
+
+            $data['meal'] = $this->dietetic_meal_plans_model->get_meal($id);
+            if (!$data['meal']) {
+                show_404();
+            }
+
+            $data['meal_plan'] = $this->dietetic_meal_plans_model->get($data['meal']->meal_plan_id);
+            $data['program'] = $this->dietetic_programs_model->get($data['meal_plan']->program_id);
+            $data['meal_foods'] = $this->dietetic_meal_plans_model->get_meal_foods($id);
+
+            if ($this->input->post()) {
+                $meal_data = $this->input->post();
+                if ($this->dietetic_meal_plans_model->update_meal($id, $meal_data)) {
+                    set_alert('success', 'Meal updated successfully');
+                } else {
+                    set_alert('danger', 'Failed to update meal');
+                }
+                redirect(admin_url('dietetic/programs/meal/edit/' . $id));
+            }
+
+            $data['title'] = 'Edit Meal';
+            $this->load->view('admin/programs/meal_form', $data);
+        }
+    }
+
+    /**
+     * Meal food management - Add/Edit food in meal
+     */
+    public function meal_food($action = 'create', $id = null)
+    {
+        if ($action == 'create') {
+            if (!dietetic_has_permission('create')) {
+                access_denied('dietetic');
+            }
+
+            $meal_id = $this->input->get('meal_id') ?: $this->input->post('meal_id');
+
+            if (!$meal_id) {
+                set_alert('danger', 'Meal ID required');
+                redirect(admin_url('dietetic/programs'));
+                return;
+            }
+
+            $data['meal'] = $this->dietetic_meal_plans_model->get_meal($meal_id);
+            if (!$data['meal']) {
+                show_404();
+            }
+
+            $data['foods'] = $this->dietetic_foods_model->get_all();
+            $data['days'] = ['1' => 'Monday', '2' => 'Tuesday', '3' => 'Wednesday', '4' => 'Thursday', '5' => 'Friday', '6' => 'Saturday', '7' => 'Sunday'];
+
+            if ($this->input->post()) {
+                $food_data = $this->input->post();
+                $food_id = $this->dietetic_meal_plans_model->add_food_to_meal($food_data);
+
+                if ($food_id) {
+                    set_alert('success', 'Food added to meal successfully');
+                    redirect(admin_url('dietetic/programs/meal/edit/' . $meal_id));
+                } else {
+                    set_alert('danger', 'Failed to add food');
+                }
+            }
+
+            $data['title'] = 'Add Food to Meal';
+            $this->load->view('admin/programs/meal_food_form', $data);
+
+        } elseif ($action == 'edit') {
+            if (!dietetic_has_permission('edit')) {
+                access_denied('dietetic');
+            }
+
+            $data['meal_food'] = $this->dietetic_meal_plans_model->get_meal_food($id);
+            if (!$data['meal_food']) {
+                show_404();
+            }
+
+            $data['meal'] = $this->dietetic_meal_plans_model->get_meal($data['meal_food']->meal_id);
+            $data['foods'] = $this->dietetic_foods_model->get_all();
+            $data['days'] = ['1' => 'Monday', '2' => 'Tuesday', '3' => 'Wednesday', '4' => 'Thursday', '5' => 'Friday', '6' => 'Saturday', '7' => 'Sunday'];
+
+            if ($this->input->post()) {
+                $food_data = $this->input->post();
+                if ($this->dietetic_meal_plans_model->update_food_in_meal($id, $food_data)) {
+                    set_alert('success', 'Food updated successfully');
+                } else {
+                    set_alert('danger', 'Failed to update food');
+                }
+                redirect(admin_url('dietetic/programs/meal/edit/' . $data['meal']->id));
+            }
+
+            $data['title'] = 'Edit Food in Meal';
+            $this->load->view('admin/programs/meal_food_form', $data);
+
+        } elseif ($action == 'delete') {
+            if (!dietetic_has_permission('delete')) {
+                access_denied('dietetic');
+            }
+
+            $meal_food = $this->dietetic_meal_plans_model->get_meal_food($id);
+            if ($meal_food) {
+                if ($this->dietetic_meal_plans_model->remove_food_from_meal($id)) {
+                    set_alert('success', 'Food removed from meal');
+                } else {
+                    set_alert('danger', 'Failed to remove food');
+                }
+                redirect(admin_url('dietetic/programs/meal/edit/' . $meal_food->meal_id));
+            } else {
+                show_404();
+            }
+        }
+    }
+
+    /**
      * Generate PDF for meal plan
      *
      * @param int $id
