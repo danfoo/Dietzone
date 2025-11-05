@@ -32,6 +32,27 @@ class Programs extends AdminController
         $data['title'] = _l('dietetic_programs');
         $data['programs'] = $this->dietetic_programs_model->get_all();
 
+        // Calculate statistics
+        $all_programs = $data['programs'];
+        $data['total_count'] = count($all_programs);
+        $data['active_count'] = 0;
+        $data['completed_count'] = 0;
+        $data['this_month_count'] = 0;
+
+        $current_month = date('Y-m');
+
+        foreach ($all_programs as $program) {
+            if ($program->status == 'active') {
+                $data['active_count']++;
+            } elseif ($program->status == 'completed') {
+                $data['completed_count']++;
+            }
+
+            if (substr($program->start_date, 0, 7) == $current_month) {
+                $data['this_month_count']++;
+            }
+        }
+
         $this->load->view('admin/programs/list', $data);
     }
 
