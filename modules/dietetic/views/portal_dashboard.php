@@ -254,7 +254,7 @@
                 </a>
             </div>
             <div class="col-md-4">
-                <a href="<?php echo site_url('clients/profile'); ?>" class="action-btn consultations" style="display: block; text-decoration: none;">
+                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn consultations" style="display: block; text-decoration: none;">
                     <div class="icon"><i class="fa fa-calendar-check-o"></i></div>
                     <h4>Mes Consultations</h4>
                     <p>Gérez vos rendez-vous</p>

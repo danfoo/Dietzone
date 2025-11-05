@@ -100,12 +100,49 @@ class Portal extends App_Controller
         $data['patient'] = $patient;
 
         if ($this->input->post()) {
+            $weight = $this->input->post('weight');
+            $body_fat_input = $this->input->post('body_fat');
+            $muscle_mass_input = $this->input->post('muscle_mass');
+
+            // Calculate BMI if height is available
+            $bmi = null;
+            if ($patient->height && $weight) {
+                $height_m = $patient->height / 100; // Convert cm to meters
+                $bmi = $weight / ($height_m * $height_m);
+            }
+
+            // Auto-calculate body fat percentage if not provided
+            $body_fat = $body_fat_input;
+            if (empty($body_fat) && $bmi && $patient->birth_date) {
+                // Calculate age
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $today->diff($birth_date)->y;
+
+                // Gender: 1 for male, 0 for female
+                $gender = ($patient->gender === 'male') ? 1 : 0;
+
+                // Body Fat % = (1.20 × BMI) + (0.23 × Age) − (10.8 × Gender) − 5.4
+                $body_fat = (1.20 * $bmi) + (0.23 * $age) - (10.8 * $gender) - 5.4;
+                $body_fat = max(0, min(100, $body_fat)); // Clamp between 0-100
+            }
+
+            // Auto-calculate muscle mass if not provided
+            $muscle_mass = $muscle_mass_input;
+            if (empty($muscle_mass) && $weight && $body_fat) {
+                // Muscle Mass = Weight − (Weight × Body Fat % / 100)
+                $body_fat_kg = $weight * ($body_fat / 100);
+                $muscle_mass = (($weight - $body_fat_kg) / $weight) * 100;
+                $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
+            }
+
             $measurement_data = [
                 'patient_id' => $patient->id,
                 'measurement_date' => $this->input->post('measurement_date'),
-                'weight' => $this->input->post('weight'),
-                'body_fat' => $this->input->post('body_fat'),
-                'muscle_mass' => $this->input->post('muscle_mass'),
+                'weight' => $weight,
+                'bmi' => $bmi,
+                'body_fat' => $body_fat,
+                'muscle_mass' => $muscle_mass,
                 'waist' => $this->input->post('waist'),
                 'hips' => $this->input->post('hips'),
                 'chest' => $this->input->post('chest'),
@@ -239,5 +276,43 @@ class Portal extends App_Controller
         $data['nutrition_totals'] = $this->dietetic_meal_plans_model->calculate_plan_nutrition($meal_plan_id);
 
         $this->load->view('portal_meal_plan_view', $data);
+    }
+
+    /**
+     * View consultations
+     */
+    public function consultations()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Consultations';
+
+        // Get all consultations for this patient
+        try {
+            $data['consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id);
+        } catch (Exception $e) {
+            $data['consultations'] = [];
+        }
+
+        $this->load->view('portal_consultations', $data);
     }
 }
