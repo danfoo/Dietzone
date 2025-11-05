@@ -124,7 +124,20 @@ class Patients extends AdminController
         }
 
         if ($this->input->post()) {
-            $update_data = $this->input->post();
+            // Filter POST data to only include valid patient fields
+            $allowed_fields = [
+                'dietitian_id', 'status', 'gender', 'birth_date', 'phone', 'email',
+                'emergency_contact', 'emergency_phone', 'medical_conditions', 'allergies',
+                'medications', 'lifestyle_notes', 'dietary_preferences', 'activity_level',
+                'initial_weight', 'target_weight', 'height', 'objective'
+            ];
+
+            $update_data = [];
+            foreach ($allowed_fields as $field) {
+                if ($this->input->post($field) !== null) {
+                    $update_data[$field] = $this->input->post($field);
+                }
+            }
 
             if ($this->dietetic_patients_model->update($id, $update_data)) {
                 set_alert('success', _l('updated_successfully'));

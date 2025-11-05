@@ -69,13 +69,20 @@ class Portal extends App_Controller
             $data['upcoming_consultations'] = [];
         }
 
+        // Get weight evolution for chart
+        try {
+            $data['weight_evolution'] = $this->dietetic_patients_model->get_weight_evolution($patient->id);
+        } catch (Exception $e) {
+            $data['weight_evolution'] = [];
+        }
+
         $this->load->view('portal_dashboard', $data);
     }
 
     /**
-     * Add measurement from portal - dedicated page
+     * View all measurements
      */
-    public function add_measurement()
+    public function measurements()
     {
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
@@ -98,7 +105,58 @@ class Portal extends App_Controller
 
         $data = [];
         $data['patient'] = $patient;
+        $data['title'] = 'Mes Mesures';
 
+        // Get all measurements
+        try {
+            $data['measurements'] = $this->dietetic_measurements_model->get_by_patient($patient->id);
+        } catch (Exception $e) {
+            $data['measurements'] = [];
+        }
+
+        // Get weight evolution for chart
+        try {
+            $data['weight_evolution'] = $this->dietetic_patients_model->get_weight_evolution($patient->id);
+        } catch (Exception $e) {
+            $data['weight_evolution'] = [];
+        }
+
+        $this->load->view('portal/measurements', $data);
+    }
+
+    /**
+     * Add measurement from portal - supports both AJAX and regular form submission
+     */
+    public function add_measurement()
+    {
+        if (!is_client_logged_in()) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Not logged in']);
+                return;
+            }
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Patient not found']);
+                return;
+            }
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Handle form submission (both AJAX and regular)
         if ($this->input->post()) {
             $weight = $this->input->post('weight');
             $body_fat_input = $this->input->post('body_fat');
@@ -157,15 +215,40 @@ class Portal extends App_Controller
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
                 if ($measurement_id) {
+                    // Return JSON for AJAX requests
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => true, 'message' => 'Measurement added successfully!']);
+                        return;
+                    }
+
+                    // For regular form submission, set success message
                     $data['success'] = 'Mesure ajoutée avec succès!';
+                    $data['patient'] = $patient;
+                    $this->load->view('portal_add_measurement', $data);
+                    return;
                 } else {
+                    // Return JSON for AJAX requests
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => false, 'message' => 'Failed to save measurement']);
+                        return;
+                    }
+
                     $data['error'] = 'Échec de l\'enregistrement de la mesure.';
                 }
             } catch (Exception $e) {
+                // Return JSON for AJAX requests
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+                    return;
+                }
+
                 $data['error'] = 'Erreur: ' . $e->getMessage();
             }
         }
 
+        // Display form for GET requests
+        $data = [];
+        $data['patient'] = $patient;
         $this->load->view('portal_add_measurement', $data);
     }
 
