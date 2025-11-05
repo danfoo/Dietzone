@@ -229,4 +229,62 @@ class Dietetic_foods_model extends App_Model
 
         return ['success' => $success_count, 'errors' => $errors];
     }
+
+    /**
+     * Remove duplicate food entries based on food_name and food_name_fr
+     * Keeps the oldest entry (lowest ID) and removes the rest
+     *
+     * @return int Number of duplicates removed
+     */
+    public function remove_duplicates()
+    {
+        $removed_count = 0;
+
+        // Find duplicates based on food_name
+        $sql = "
+            SELECT food_name, food_name_fr, MIN(id) as keep_id, COUNT(*) as count
+            FROM " . db_prefix() . $this->table . "
+            GROUP BY food_name, food_name_fr
+            HAVING count > 1
+        ";
+
+        $duplicates = $this->db->query($sql)->result();
+
+        foreach ($duplicates as $duplicate) {
+            // Get all IDs for this duplicate group
+            $this->db->where('food_name', $duplicate->food_name);
+            if ($duplicate->food_name_fr) {
+                $this->db->where('food_name_fr', $duplicate->food_name_fr);
+            } else {
+                $this->db->where('food_name_fr IS NULL');
+            }
+            $this->db->where('id !=', $duplicate->keep_id); // Don't delete the one we want to keep
+            $all_duplicates = $this->db->get(db_prefix() . $this->table)->result();
+
+            // Delete each duplicate (except the oldest one)
+            foreach ($all_duplicates as $dup) {
+                // Check if this food is used in any meals
+                $this->db->where('food_id', $dup->id);
+                $usage_count = $this->db->count_all_results(db_prefix() . 'dietic_meal_foods');
+
+                if ($usage_count > 0) {
+                    // If used, update the meal_foods references to point to the kept food
+                    $this->db->where('food_id', $dup->id);
+                    $this->db->update(db_prefix() . 'dietic_meal_foods', ['food_id' => $duplicate->keep_id]);
+                }
+
+                // Delete the duplicate
+                $this->db->where('id', $dup->id);
+                if ($this->db->delete(db_prefix() . $this->table)) {
+                    $removed_count++;
+                }
+            }
+        }
+
+        if ($removed_count > 0) {
+            log_activity('Removed ' . $removed_count . ' duplicate food entries');
+        }
+
+        return $removed_count;
+    }
 }

@@ -105,24 +105,33 @@ foreach ($foreign_keys as $fk_sql) {
     }
 }
 
-// Load sample data
+// Load sample data only if foods table is empty
 $sample_data_file = __DIR__ . '/sample_data.sql';
 if (file_exists($sample_data_file)) {
-    $sample_sql = file_get_contents($sample_data_file);
+    // Check if we already have foods in the database
+    $existing_foods_count = $CI->db->count_all(db_prefix() . 'dietic_foods');
 
-    // Replace table prefix
-    $sample_sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sample_sql);
+    // Only load sample data if the foods table is empty
+    if ($existing_foods_count == 0) {
+        $sample_sql = file_get_contents($sample_data_file);
 
-    $statements = array_filter(array_map('trim', explode(';', $sample_sql)));
+        // Replace table prefix
+        $sample_sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sample_sql);
 
-    foreach ($statements as $statement) {
-        if (!empty($statement)) {
-            try {
-                $CI->db->query($statement);
-            } catch (Exception $e) {
-                // Sample data might already exist, that's OK
+        $statements = array_filter(array_map('trim', explode(';', $sample_sql)));
+
+        foreach ($statements as $statement) {
+            if (!empty($statement)) {
+                try {
+                    $CI->db->query($statement);
+                } catch (Exception $e) {
+                    // Sample data might already exist, that's OK
+                    log_activity('Dietetic sample data: ' . substr($e->getMessage(), 0, 200));
+                }
             }
         }
+
+        log_activity('Dietetic Module: Sample food data loaded');
     }
 }
 

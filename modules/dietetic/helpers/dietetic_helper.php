@@ -201,6 +201,30 @@ function dietetic_get_food_categories()
 }
 
 /**
+ * Get localized food name based on system language
+ *
+ * @param object $food Food object with food_name and food_name_fr fields
+ * @return string Localized food name
+ */
+function dietetic_get_food_name($food)
+{
+    if (!$food) {
+        return '';
+    }
+
+    // Get current language
+    $CI = &get_instance();
+    $language = $CI->config->item('language');
+
+    // Default to French if food_name_fr exists, otherwise use food_name
+    if (!empty($food->food_name_fr)) {
+        return $food->food_name_fr;
+    }
+
+    return $food->food_name;
+}
+
+/**
  * Get day of week name
  *
  * @param int $day 1-7 (Monday-Sunday)

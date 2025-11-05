@@ -140,9 +140,12 @@ class Foods extends AdminController
 
         $formatted = [];
         foreach ($results as $food) {
+            // Show French name if available, otherwise English name
+            $display_name = !empty($food->food_name_fr) ? $food->food_name_fr : $food->food_name;
+
             $formatted[] = [
                 'id'   => $food->id,
-                'text' => $food->food_name . ' (' . $food->calories . ' kcal/' . $food->serving_size . $food->serving_unit . ')',
+                'text' => $display_name . ' (' . $food->calories . ' kcal/' . $food->serving_size . $food->serving_unit . ')',
                 'data' => $food,
             ];
         }
@@ -271,5 +274,26 @@ class Foods extends AdminController
 
         fclose($output);
         exit;
+    }
+
+    /**
+     * Remove duplicate food entries (keep the oldest one)
+     * Can be called manually by admin to clean up duplicates
+     */
+    public function cleanup_duplicates()
+    {
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $removed_count = $this->dietetic_foods_model->remove_duplicates();
+
+        if ($removed_count > 0) {
+            set_alert('success', sprintf('Successfully removed %d duplicate food entries.', $removed_count));
+        } else {
+            set_alert('info', 'No duplicate food entries found.');
+        }
+
+        redirect(admin_url('dietetic/foods'));
     }
 }

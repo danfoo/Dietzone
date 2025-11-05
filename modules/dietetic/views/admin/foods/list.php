@@ -46,9 +46,9 @@
                                 <?php foreach ($foods as $food) { ?>
                                     <tr>
                                         <td>
-                                            <strong><?php echo $food->food_name; ?></strong>
-                                            <?php if ($food->food_name_fr) { ?>
-                                                <br /><small class="text-muted"><?php echo $food->food_name_fr; ?></small>
+                                            <strong><?php echo dietetic_get_food_name($food); ?></strong>
+                                            <?php if ($food->food_name_fr && $food->food_name) { ?>
+                                                <br /><small class="text-muted"><?php echo $food->food_name; ?></small>
                                             <?php } ?>
                                         </td>
                                         <td><span class="label label-info"><?php echo ucfirst($food->category); ?></span></td>
