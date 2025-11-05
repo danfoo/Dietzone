@@ -49,12 +49,51 @@ class Measurements extends AdminController
         }
 
         if ($this->input->post()) {
+            $weight = $this->input->post('weight');
+            $body_fat_input = $this->input->post('body_fat');
+            $muscle_mass_input = $this->input->post('muscle_mass');
+            $patient = $data['patient'];
+
+            // Calculate BMI if height is available
+            $bmi = null;
+            if ($patient->height && $weight) {
+                $height_m = $patient->height / 100; // Convert cm to meters
+                $bmi = $weight / ($height_m * $height_m);
+            }
+
+            // Auto-calculate body fat percentage if not provided
+            $body_fat = $body_fat_input;
+            if (empty($body_fat) && $bmi && $patient->birth_date) {
+                // Calculate age
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $today->diff($birth_date)->y;
+
+                // Gender: 1 for male, 0 for female
+                $gender = ($patient->gender === 'male') ? 1 : 0;
+
+                // Body Fat % = (1.20 × BMI) + (0.23 × Age) − (10.8 × Gender) − 5.4
+                $body_fat = (1.20 * $bmi) + (0.23 * $age) - (10.8 * $gender) - 5.4;
+                $body_fat = max(0, min(100, $body_fat)); // Clamp between 0-100
+            }
+
+            // Auto-calculate muscle mass if not provided
+            $muscle_mass = $muscle_mass_input;
+            if (empty($muscle_mass) && $weight && $body_fat) {
+                // Muscle Mass = Weight − (Weight × Body Fat % / 100)
+                $body_fat_kg = $weight * ($body_fat / 100);
+                $muscle_mass = (($weight - $body_fat_kg) / $weight) * 100;
+                $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
+            }
+
+            // Filter and prepare data
             $post_data = [
                 'patient_id' => $this->input->post('patient_id'),
                 'measurement_date' => $this->input->post('measurement_date'),
-                'weight' => $this->input->post('weight'),
-                'body_fat' => $this->input->post('body_fat'),
-                'muscle_mass' => $this->input->post('muscle_mass'),
+                'weight' => $weight,
+                'bmi' => $bmi,
+                'body_fat' => $body_fat,
+                'muscle_mass' => $muscle_mass,
                 'waist' => $this->input->post('waist'),
                 'hips' => $this->input->post('hips'),
                 'chest' => $this->input->post('chest'),
@@ -104,9 +143,59 @@ class Measurements extends AdminController
         }
 
         if ($this->input->post()) {
-            $post_data = $this->input->post();
+            $weight = $this->input->post('weight');
+            $body_fat_input = $this->input->post('body_fat');
+            $muscle_mass_input = $this->input->post('muscle_mass');
+            $patient = $data['patient'];
 
-            if ($this->dietetic_measurements_model->update($id, $post_data)) {
+            // Calculate BMI if height is available
+            $bmi = null;
+            if ($patient->height && $weight) {
+                $height_m = $patient->height / 100; // Convert cm to meters
+                $bmi = $weight / ($height_m * $height_m);
+            }
+
+            // Auto-calculate body fat percentage if not provided
+            $body_fat = $body_fat_input;
+            if (empty($body_fat) && $bmi && $patient->birth_date) {
+                // Calculate age
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $today->diff($birth_date)->y;
+
+                // Gender: 1 for male, 0 for female
+                $gender = ($patient->gender === 'male') ? 1 : 0;
+
+                // Body Fat % = (1.20 × BMI) + (0.23 × Age) − (10.8 × Gender) − 5.4
+                $body_fat = (1.20 * $bmi) + (0.23 * $age) - (10.8 * $gender) - 5.4;
+                $body_fat = max(0, min(100, $body_fat)); // Clamp between 0-100
+            }
+
+            // Auto-calculate muscle mass if not provided
+            $muscle_mass = $muscle_mass_input;
+            if (empty($muscle_mass) && $weight && $body_fat) {
+                // Muscle Mass = Weight − (Weight × Body Fat % / 100)
+                $body_fat_kg = $weight * ($body_fat / 100);
+                $muscle_mass = (($weight - $body_fat_kg) / $weight) * 100;
+                $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
+            }
+
+            // Filter POST data to only include valid fields
+            $update_data = [
+                'measurement_date' => $this->input->post('measurement_date'),
+                'weight' => $weight,
+                'bmi' => $bmi,
+                'body_fat' => $body_fat,
+                'muscle_mass' => $muscle_mass,
+                'waist' => $this->input->post('waist'),
+                'hips' => $this->input->post('hips'),
+                'chest' => $this->input->post('chest'),
+                'arms' => $this->input->post('arms'),
+                'thighs' => $this->input->post('thigh'),
+                'notes' => $this->input->post('notes'),
+            ];
+
+            if ($this->dietetic_measurements_model->update($id, $update_data)) {
                 set_alert('success', _l('updated_successfully'));
             } else {
                 set_alert('danger', _l('dietetic_error_update_failed'));

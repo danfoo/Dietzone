@@ -64,6 +64,7 @@
                                 <div class="form-group">
                                     <label for="body_fat" class="control-label">
                                         <?php echo _l('dietetic_body_fat'); ?> (%)
+                                        <small class="text-muted"><i class="fa fa-magic"></i> <?php echo _l('dietetic_auto_calculated'); ?></small>
                                     </label>
                                     <input type="number"
                                            id="body_fat"
@@ -72,14 +73,17 @@
                                            step="0.1"
                                            min="0"
                                            max="100"
+                                           placeholder="<?php echo _l('dietetic_leave_blank_auto'); ?>"
                                            value="<?php echo isset($measurement) && $measurement->body_fat ? $measurement->body_fat : ''; ?>" />
+                                    <small class="text-muted"><?php echo _l('dietetic_calculated_from_bmi_age_gender'); ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="muscle_mass" class="control-label">
-                                        <?php echo _l('dietetic_muscle_mass'); ?> (kg)
+                                        <?php echo _l('dietetic_muscle_mass'); ?> (%)
+                                        <small class="text-muted"><i class="fa fa-magic"></i> <?php echo _l('dietetic_auto_calculated'); ?></small>
                                     </label>
                                     <input type="number"
                                            id="muscle_mass"
@@ -87,7 +91,9 @@
                                            class="form-control"
                                            step="0.1"
                                            min="0"
+                                           placeholder="<?php echo _l('dietetic_leave_blank_auto'); ?>"
                                            value="<?php echo isset($measurement) && $measurement->muscle_mass ? $measurement->muscle_mass : ''; ?>" />
+                                    <small class="text-muted"><?php echo _l('dietetic_calculated_from_weight_body_fat'); ?></small>
                                 </div>
                             </div>
 
