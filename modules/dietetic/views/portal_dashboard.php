@@ -113,9 +113,94 @@
                 </ul>
             </div>
         <?php } ?>
+
+        <!-- Add Measurement Button -->
+        <div class="program-box">
+            <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#addMeasurementModal">
+                <i class="fa fa-plus"></i> Add New Measurement
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Measurement Modal -->
+    <div class="modal fade" id="addMeasurementModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Add Measurement</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="measurementForm" action="<?php echo site_url('dietetic/portal/add_measurement'); ?>" method="POST">
+                        <div class="form-group">
+                            <label>Date *</label>
+                            <input type="date" name="measurement_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Weight (kg) *</label>
+                                    <input type="number" name="weight" class="form-control" step="0.1" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Body Fat (%)</label>
+                                    <input type="number" name="body_fat" class="form-control" step="0.1" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Waist (cm)</label>
+                                    <input type="number" name="waist" class="form-control" step="0.1" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Hips (cm)</label>
+                                    <input type="number" name="hips" class="form-control" step="0.1" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveMeasurementBtn">Save Measurement</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+    $('#saveMeasurementBtn').click(function() {
+        var form = $('#measurementForm');
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert('Measurement added successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (response.message || 'Failed to add measurement'));
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+    </script>
 </body>
 </html>
