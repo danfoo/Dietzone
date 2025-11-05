@@ -59,6 +59,7 @@
         .stat-box.target::before { background: #2ecc71; }
         .stat-box.bmi::before { background: #f39c12; }
         .stat-box.weight-progress::before { background: #9b59b6; }
+        .stat-box.body-fat::before { background: #e74c3c; }
 
         .stat-box .icon {
             font-size: 36px;
@@ -68,6 +69,7 @@
         .stat-box.target .icon { color: #2ecc71; }
         .stat-box.bmi .icon { color: #f39c12; }
         .stat-box.weight-progress .icon { color: #9b59b6; }
+        .stat-box.body-fat .icon { color: #e74c3c; }
 
         .stat-box h2 {
             margin: 10px 0;
@@ -227,33 +229,50 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <div class="stat-box weight-progress">
-                    <div class="icon"><i class="fa fa-line-chart"></i></div>
-                    <h2 class="<?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
-                        <?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change !== null ? ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1) : '-'; ?>
+                <div class="stat-box body-fat">
+                    <div class="icon"><i class="fa fa-pie-chart"></i></div>
+                    <h2><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></h2>
+                    <p>Masse Grasse</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="stat-box weight-progress" style="padding: 15px;">
+                    <div class="icon" style="display: inline-block; font-size: 24px; margin-right: 10px;"><i class="fa fa-line-chart"></i></div>
+                    <h2 style="display: inline-block; margin: 0; font-size: 28px;" class="<?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
+                        <?php echo isset($weight_progress->weight_change) && $weight_progress->weight_change !== null ? ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1) : '-'; ?> kg
                     </h2>
-                    <p>Progression (kg)</p>
+                    <p style="display: inline-block; margin: 0 0 0 10px;">Progression</p>
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-btn measurement" style="display: block; text-decoration: none;">
                     <div class="icon"><i class="fa fa-plus-circle"></i></div>
                     <h4>Ajouter une Mesure</h4>
                     <p>Suivez votre évolution</p>
                 </a>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="action-btn consultations" style="display: block; text-decoration: none;">
+                    <div class="icon"><i class="fa fa-history"></i></div>
+                    <h4>Historique des Mesures</h4>
+                    <p>Consultez vos mesures</p>
+                </a>
+            </div>
+            <div class="col-md-3">
                 <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="action-btn meals" style="display: block; text-decoration: none;">
                     <div class="icon"><i class="fa fa-cutlery"></i></div>
                     <h4>Mes Plans Alimentaires</h4>
                     <p>Consultez vos repas</p>
                 </a>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn consultations" style="display: block; text-decoration: none;">
                     <div class="icon"><i class="fa fa-calendar-check-o"></i></div>
                     <h4>Mes Consultations</h4>

@@ -71,7 +71,7 @@
                     <?php } ?>
 
                     <form method="POST" action="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-                        <?php echo form_hidden('csrf_token_name', $this->security->get_csrf_hash()); ?>
+                        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
                         <div class="form-group">
                             <label>Date *</label>
                             <input type="date" name="measurement_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
