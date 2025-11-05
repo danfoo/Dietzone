@@ -151,8 +151,9 @@
                 <?php } ?>
 
                 <!-- Measurements List -->
+                <div id="measurements-list">
                 <?php foreach ($measurements as $measurement) { ?>
-                    <div class="measurement-item">
+                    <div class="measurement-item measurement-card">
                         <div class="measurement-date">
                             <i class="fa fa-calendar"></i>
                             <?php echo date('d/m/Y', strtotime($measurement->measurement_date)); ?>
@@ -229,6 +230,8 @@
                         <?php } ?>
                     </div>
                 <?php } ?>
+                </div>
+                <div id="measurements-pagination" class="text-center" style="margin-top: 20px;"></div>
 
             <?php } else { ?>
                 <div class="alert alert-info">
@@ -249,6 +252,70 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+    <script>
+    function paginateItems(containerId, paginationId, itemsPerPage) {
+        var $container = $('#' + containerId);
+        var $items = $container.find('.measurement-card');
+        var $pagination = $('#' + paginationId);
+        var totalItems = $items.length;
+        var totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        if (totalPages <= 1) {
+            return; // No pagination needed
+        }
+
+        function showPage(page) {
+            $items.hide();
+            var start = (page - 1) * itemsPerPage;
+            var end = start + itemsPerPage;
+            $items.slice(start, end).show();
+
+            // Update pagination buttons
+            $pagination.empty();
+            var paginationHtml = '<ul class="pagination" style="margin: 0;">';
+
+            // Previous button
+            if (page > 1) {
+                paginationHtml += '<li><a href="#" data-page="' + (page - 1) + '"><i class="fa fa-chevron-left"></i></a></li>';
+            } else {
+                paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-left"></i></span></li>';
+            }
+
+            // Page numbers
+            for (var i = 1; i <= totalPages; i++) {
+                if (i === page) {
+                    paginationHtml += '<li class="active"><span>' + i + '</span></li>';
+                } else {
+                    paginationHtml += '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
+                }
+            }
+
+            // Next button
+            if (page < totalPages) {
+                paginationHtml += '<li><a href="#" data-page="' + (page + 1) + '"><i class="fa fa-chevron-right"></i></a></li>';
+            } else {
+                paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-right"></i></span></li>';
+            }
+
+            paginationHtml += '</ul>';
+            $pagination.html(paginationHtml);
+
+            // Bind click events
+            $pagination.find('a').on('click', function(e) {
+                e.preventDefault();
+                var newPage = parseInt($(this).data('page'));
+                showPage(newPage);
+                // Scroll to top of section
+                $('html, body').animate({
+                    scrollTop: $container.offset().top - 100
+                }, 300);
+            });
+        }
+
+        showPage(1);
+    }
+    </script>
 
     <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
     <script>
@@ -293,6 +360,16 @@
                 }
             }
         });
+
+        // Add pagination to measurements list
+        paginateItems('measurements-list', 'measurements-pagination', 10);
+    });
+    </script>
+    <?php } else { ?>
+    <script>
+    $(document).ready(function() {
+        // Add pagination to measurements list
+        paginateItems('measurements-list', 'measurements-pagination', 10);
     });
     </script>
     <?php } ?>

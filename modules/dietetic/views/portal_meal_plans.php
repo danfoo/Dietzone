@@ -120,9 +120,9 @@
             </div>
 
             <?php if (!empty($meal_plans)) { ?>
-                <div class="row">
+                <div class="row" id="meal-plans-list">
                     <?php foreach ($meal_plans as $plan) { ?>
-                        <div class="col-md-6">
+                        <div class="col-md-6 meal-plan-item">
                             <div class="meal-plan-card">
                                 <span class="week-badge"><i class="fa fa-calendar"></i> Semaine <?php echo $plan->week_number; ?></span>
                                 <h3><?php echo htmlspecialchars($plan->plan_name); ?></h3>
@@ -139,6 +139,7 @@
                         </div>
                     <?php } ?>
                 </div>
+                <div id="meal-plans-pagination" class="text-center" style="margin-top: 20px;"></div>
             <?php } else { ?>
                 <div class="alert alert-warning">
                     <i class="fa fa-exclamation-triangle"></i> Aucun plan alimentaire créé pour ce programme.
@@ -159,5 +160,72 @@
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        function paginateItems(containerId, paginationId, itemsPerPage) {
+            var $container = $('#' + containerId);
+            var $items = $container.find('.meal-plan-item');
+            var $pagination = $('#' + paginationId);
+            var totalItems = $items.length;
+            var totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (totalPages <= 1) {
+                return; // No pagination needed
+            }
+
+            function showPage(page) {
+                $items.hide();
+                var start = (page - 1) * itemsPerPage;
+                var end = start + itemsPerPage;
+                $items.slice(start, end).show();
+
+                // Update pagination buttons
+                $pagination.empty();
+                var paginationHtml = '<ul class="pagination" style="margin: 0;">';
+
+                // Previous button
+                if (page > 1) {
+                    paginationHtml += '<li><a href="#" data-page="' + (page - 1) + '"><i class="fa fa-chevron-left"></i></a></li>';
+                } else {
+                    paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-left"></i></span></li>';
+                }
+
+                // Page numbers
+                for (var i = 1; i <= totalPages; i++) {
+                    if (i === page) {
+                        paginationHtml += '<li class="active"><span>' + i + '</span></li>';
+                    } else {
+                        paginationHtml += '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
+                    }
+                }
+
+                // Next button
+                if (page < totalPages) {
+                    paginationHtml += '<li><a href="#" data-page="' + (page + 1) + '"><i class="fa fa-chevron-right"></i></a></li>';
+                } else {
+                    paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-right"></i></span></li>';
+                }
+
+                paginationHtml += '</ul>';
+                $pagination.html(paginationHtml);
+
+                // Bind click events
+                $pagination.find('a').on('click', function(e) {
+                    e.preventDefault();
+                    var newPage = parseInt($(this).data('page'));
+                    showPage(newPage);
+                    // Scroll to top of section
+                    $('html, body').animate({
+                        scrollTop: $container.offset().top - 100
+                    }, 300);
+                });
+            }
+
+            showPage(1);
+        }
+
+        $(document).ready(function() {
+            paginateItems('meal-plans-list', 'meal-plans-pagination', 10);
+        });
+    </script>
 </body>
 </html>

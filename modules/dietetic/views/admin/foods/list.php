@@ -82,7 +82,7 @@
 $(document).ready(function() {
     $('#foods-table').DataTable({
         "order": [[0, "asc"]], // Sort by food_name asc
-        "pageLength": 25,
+        "pageLength": 10,
         "language": {
             "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
         }

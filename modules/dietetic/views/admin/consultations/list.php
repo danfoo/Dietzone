@@ -61,7 +61,7 @@
 $(document).ready(function() {
     $('#consultations-table').DataTable({
         "order": [[2, "desc"]], // Sort by consultation_date desc
-        "pageLength": 25,
+        "pageLength": 10,
         "language": {
             "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
         }
