@@ -86,6 +86,7 @@ function dietetic_module_init_menu_items()
             'position' => 15,
         ]);
 
+        // Dashboard
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-dashboard',
             'name'     => _l('dietetic_dashboard'),
@@ -94,6 +95,7 @@ function dietetic_module_init_menu_items()
             'position' => 1,
         ]);
 
+        // Patients
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-patients',
             'name'     => _l('dietetic_patients'),
@@ -102,6 +104,7 @@ function dietetic_module_init_menu_items()
             'position' => 2,
         ]);
 
+        // Consultations
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-consultations',
             'name'     => _l('dietetic_consultations'),
@@ -110,6 +113,7 @@ function dietetic_module_init_menu_items()
             'position' => 3,
         ]);
 
+        // Programs
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-programs',
             'name'     => _l('dietetic_programs'),
@@ -118,6 +122,7 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
+        // Foods Database
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-foods',
             'name'     => _l('dietetic_foods'),
@@ -126,6 +131,7 @@ function dietetic_module_init_menu_items()
             'position' => 5,
         ]);
 
+        // Settings
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-settings',
             'name'     => _l('settings'),
