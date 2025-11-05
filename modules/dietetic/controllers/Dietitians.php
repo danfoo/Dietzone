@@ -179,6 +179,131 @@ class Dietitians extends AdminController
     }
 
     /**
+     * Install patient-dietitian assignments system (many-to-many)
+     */
+    public function install_assignments()
+    {
+        if (!is_admin()) {
+            access_denied('Dietetic - Install Assignments');
+        }
+
+        $data['title'] = 'Installation Système Multi-Diététiciens';
+
+        // Check if table already exists
+        $table_name = db_prefix() . 'dietic_patient_dietitians';
+        $data['table_exists'] = $this->db->table_exists($table_name);
+
+        if ($data['table_exists']) {
+            $data['message'] = 'La table existe déjà dans votre base de données.';
+            $data['message_type'] = 'warning';
+        } else {
+            // If POST request, perform installation
+            if ($this->input->post('confirm_install')) {
+                $result = $this->perform_assignments_installation();
+                $data['installation_result'] = $result;
+                $data['table_exists'] = $this->db->table_exists($table_name);
+            }
+        }
+
+        $this->load->view('admin/dietitians/install_assignments', $data);
+    }
+
+    /**
+     * Perform the patient-dietitian assignments installation
+     */
+    private function perform_assignments_installation()
+    {
+        $result = [
+            'success' => false,
+            'messages' => [],
+            'errors' => []
+        ];
+
+        $table_name = db_prefix() . 'dietic_patient_dietitians';
+
+        try {
+            // Create table
+            $sql = "CREATE TABLE IF NOT EXISTS `{$table_name}` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `patient_id` int(11) NOT NULL COMMENT 'Reference to dietic_patients.id',
+                `dietitian_id` int(11) NOT NULL COMMENT 'Reference to staff.staffid',
+                `is_primary` tinyint(1) DEFAULT 0 COMMENT 'Diététicien principal pour ce patient',
+                `assigned_date` datetime NOT NULL COMMENT 'Date d\\'assignation',
+                `assigned_by` int(11) DEFAULT NULL COMMENT 'Staff ID who assigned',
+                `notes` text DEFAULT NULL COMMENT 'Notes sur cette assignation',
+                `status` varchar(20) DEFAULT 'active' COMMENT 'active, inactive',
+                `created_at` datetime NOT NULL,
+                `updated_at` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unique_patient_dietitian` (`patient_id`, `dietitian_id`),
+                KEY `idx_patient` (`patient_id`),
+                KEY `idx_dietitian` (`dietitian_id`),
+                KEY `idx_status` (`status`),
+                KEY `idx_primary` (`is_primary`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=" . $this->db->char_set . " COLLATE=" . $this->db->dbcollat;
+
+            if ($this->db->query($sql)) {
+                $result['messages'][] = 'Table créée avec succès';
+            } else {
+                $result['errors'][] = 'Erreur lors de la création de la table';
+                return $result;
+            }
+
+            // Add foreign keys
+            try {
+                $fk_patient = "ALTER TABLE `{$table_name}`
+                    ADD CONSTRAINT `fk_patient_diet_patient`
+                    FOREIGN KEY (`patient_id`) REFERENCES `" . db_prefix() . "dietic_patients`(`id`) ON DELETE CASCADE";
+                $this->db->query($fk_patient);
+                $result['messages'][] = 'Clé étrangère patient ajoutée';
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate') === false) {
+                    $result['errors'][] = 'Clé étrangère patient: ' . $e->getMessage();
+                }
+            }
+
+            try {
+                $fk_staff = "ALTER TABLE `{$table_name}`
+                    ADD CONSTRAINT `fk_patient_diet_staff`
+                    FOREIGN KEY (`dietitian_id`) REFERENCES `" . db_prefix() . "staff`(`staffid`) ON DELETE CASCADE";
+                $this->db->query($fk_staff);
+                $result['messages'][] = 'Clé étrangère diététicien ajoutée';
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate') === false) {
+                    $result['errors'][] = 'Clé étrangère diététicien: ' . $e->getMessage();
+                }
+            }
+
+            // Migrate existing data from dietic_patients.dietitian_id
+            try {
+                $migrate_sql = "INSERT INTO `{$table_name}` (patient_id, dietitian_id, is_primary, assigned_date, created_at)
+                    SELECT
+                        id as patient_id,
+                        dietitian_id,
+                        1 as is_primary,
+                        created_at as assigned_date,
+                        created_at
+                    FROM `" . db_prefix() . "dietic_patients`
+                    WHERE dietitian_id IS NOT NULL
+                    ON DUPLICATE KEY UPDATE is_primary = 1";
+
+                $this->db->query($migrate_sql);
+                $affected = $this->db->affected_rows();
+                $result['messages'][] = "Migration des données existantes: {$affected} assignations créées";
+            } catch (Exception $e) {
+                $result['errors'][] = 'Migration des données: ' . $e->getMessage();
+            }
+
+            $result['success'] = true;
+
+        } catch (Exception $e) {
+            $result['errors'][] = 'Erreur: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
      * View dietitian profile with detailed ratings
      *
      * @param int $id Staff ID

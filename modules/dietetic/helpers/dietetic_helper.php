@@ -481,3 +481,125 @@ function dietetic_send_sms($phone, $message)
 
     return ['success' => false, 'message' => 'Failed to send SMS: ' . $response];
 }
+
+/**
+ * Check if current user is admin or has full dietetic access
+ *
+ * @return bool
+ */
+function dietetic_is_admin()
+{
+    return is_admin() || has_permission('dietetic', '', 'view');
+}
+
+/**
+ * Get current staff user ID
+ *
+ * @return int|null
+ */
+function dietetic_get_staff_user_id()
+{
+    return get_staff_user_id();
+}
+
+/**
+ * Check if a dietitian has access to a patient
+ *
+ * @param int $patient_id
+ * @param int $dietitian_id If null, uses current staff user
+ * @return bool
+ */
+function dietetic_can_access_patient($patient_id, $dietitian_id = null)
+{
+    // Admins can access all patients
+    if (dietetic_is_admin()) {
+        return true;
+    }
+
+    if ($dietitian_id === null) {
+        $dietitian_id = dietetic_get_staff_user_id();
+    }
+
+    if (!$dietitian_id) {
+        return false;
+    }
+
+    $CI = &get_instance();
+    $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+    return $CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id);
+}
+
+/**
+ * Apply dietitian filter to database query if not admin
+ * This filters patients to only show those assigned to current dietitian
+ *
+ * @param object $db CI database object
+ * @param string $table_alias Alias for patient_dietitians table
+ * @return void
+ */
+function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
+{
+    // Admins see all patients
+    if (dietetic_is_admin()) {
+        return;
+    }
+
+    $staff_id = dietetic_get_staff_user_id();
+
+    if ($staff_id) {
+        // Join with patient_dietitians table and filter by current staff
+        $db->join(db_prefix() . 'dietic_patient_dietitians ' . $table_alias,
+                  $table_alias . '.patient_id = p.id', 'inner');
+        $db->where($table_alias . '.dietitian_id', $staff_id);
+        $db->where($table_alias . '.status', 'active');
+    } else {
+        // No staff user = no access
+        $db->where('1', '0'); // Always false
+    }
+}
+
+/**
+ * Get list of patient IDs accessible to current dietitian
+ *
+ * @param int $dietitian_id If null, uses current staff user
+ * @return array Array of patient IDs
+ */
+function dietetic_get_accessible_patient_ids($dietitian_id = null)
+{
+    // Admins see all patients
+    if (dietetic_is_admin()) {
+        return null; // null means "all patients"
+    }
+
+    if ($dietitian_id === null) {
+        $dietitian_id = dietetic_get_staff_user_id();
+    }
+
+    if (!$dietitian_id) {
+        return []; // Empty array = no patients
+    }
+
+    $CI = &get_instance();
+    $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+    $assignments = $CI->dietetic_patient_dietitians_model->get_dietitian_patients($dietitian_id, 'active');
+    $patient_ids = [];
+
+    foreach ($assignments as $assignment) {
+        $patient_ids[] = $assignment->patient_id;
+    }
+
+    return $patient_ids;
+}
+
+/**
+ * Check if current user can manage patient assignments
+ * Only admins can assign/remove dietitians to patients
+ *
+ * @return bool
+ */
+function dietetic_can_manage_assignments()
+{
+    return is_admin();
+}
