@@ -17,68 +17,91 @@
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
-            padding-bottom: 30px;
         }
 
-        /* Modern Navbar - Same as Dashboard */
-        .navbar-modern {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: none;
-            border-radius: 0;
-            margin-bottom: 0;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        /* Header Uniforme Perfex */
+        .portal-header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .navbar-modern .navbar-brand {
-            color: #2c3e50;
-            font-weight: 700;
-            font-size: 20px;
-            padding: 15px;
+        .portal-header .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .portal-header-content {
             display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
-        .navbar-modern .navbar-brand img {
-            max-height: 35px;
-            margin-right: 10px;
+        .portal-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
         }
 
-        .navbar-modern .navbar-brand i {
-            margin-right: 8px;
-            color: #667eea;
+        .portal-logo img {
+            max-height: 50px;
+            max-width: 200px;
         }
 
-        .navbar-modern .navbar-nav > li > a {
+        .portal-logo-text {
+            font-size: 24px;
+            font-weight: 700;
             color: #2c3e50;
-            font-weight: 600;
-            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .portal-logo-text i {
+            color: #667eea;
+        }
+
+        .portal-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .portal-nav a {
+            padding: 10px 20px;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .navbar-modern .navbar-nav > li > a:hover {
-            background: rgba(102, 126, 234, 0.1);
+        .portal-nav a:hover {
+            background: #f8f9fa;
             color: #667eea;
         }
 
-        .navbar-modern .navbar-nav > li.active > a {
-            background: rgba(102, 126, 234, 0.15);
-            color: #667eea;
+        .portal-nav a.active {
+            background: #667eea;
+            color: white;
         }
 
-        .navbar-modern .navbar-toggle {
-            border-color: #667eea;
-            margin-top: 12px;
-        }
-
-        .navbar-modern .navbar-toggle .icon-bar {
-            background-color: #667eea;
+        .portal-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #495057;
+            cursor: pointer;
+            padding: 5px 10px;
         }
 
         /* Container */
@@ -91,32 +114,39 @@
         /* Page Header */
         .page-header-modern {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 25px 30px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
         }
 
         .page-header-modern h1 {
             color: #2c3e50;
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header-modern h1 i {
+            color: #667eea;
         }
 
         .page-header-modern p {
-            color: #7f8c8d;
+            color: #6c757d;
             margin: 0;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         /* Dietitian Profile Card */
         .dietitian-card {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 35px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             margin-bottom: 30px;
         }
 
@@ -442,6 +472,36 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .portal-nav {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 15px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                gap: 5px;
+            }
+
+            .portal-nav.show {
+                display: flex;
+            }
+
+            .portal-nav a {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .portal-menu-toggle {
+                display: block;
+            }
+
+            .portal-header-content {
+                position: relative;
+            }
+
             .content-container {
                 padding: 20px 10px;
             }
@@ -452,7 +512,7 @@
             }
 
             .page-header-modern h1 {
-                font-size: 24px;
+                font-size: 22px;
             }
 
             .dietitian-card {
@@ -654,43 +714,54 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-modern">
+    <!-- Header Uniforme -->
+    <div class="portal-header">
         <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
-                    <span class="sr-only">Menu</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="<?php echo site_url('dietetic/portal'); ?>">
+            <div class="portal-header-content">
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
                     $logo_path = get_option('company_logo');
                     if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                     ?>
-                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="Logo">
+                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
                     <?php } else { ?>
-                        <i class="fa fa-heartbeat"></i> Programme Diététique
+                        <div class="portal-logo-text">
+                            <i class="fa fa-heartbeat"></i>
+                            <?php echo get_option('companyname') ? get_option('companyname') : 'Programme Diététique'; ?>
+                        </div>
                     <?php } ?>
                 </a>
-            </div>
-            <div class="collapse navbar-collapse" id="navbar-collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="<?php echo site_url('dietetic/portal'); ?>"><i class="fa fa-home"></i> Accueil</a></li>
-                    <li><a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>"><i class="fa fa-cutlery"></i> Repas</a></li>
-                    <li class="active"><a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>"><i class="fa fa-user-md"></i> Diététicien</a></li>
-                    <li><a href="<?php echo site_url('clients/profile'); ?>"><i class="fa fa-user"></i> Profil</a></li>
-                    <li><a href="<?php echo site_url('authentication/logout'); ?>"><i class="fa fa-sign-out"></i> Sortir</a></li>
-                </ul>
+
+                <button class="portal-menu-toggle" onclick="toggleMenu()">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <nav class="portal-nav" id="portalNav">
+                    <a href="<?php echo site_url('dietetic/portal'); ?>">
+                        <i class="fa fa-home"></i> Accueil
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
+                        <i class="fa fa-cutlery"></i> Repas
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="active">
+                        <i class="fa fa-user-md"></i> Mon Diététicien
+                    </a>
+                    <a href="<?php echo site_url('clients/profile'); ?>">
+                        <i class="fa fa-user"></i> Profil
+                    </a>
+                    <a href="<?php echo site_url('authentication/logout'); ?>">
+                        <i class="fa fa-sign-out"></i> Déconnexion
+                    </a>
+                </nav>
             </div>
         </div>
-    </nav>
+    </div>
 
     <div class="content-container">
         <!-- Page Header -->
         <div class="page-header-modern animate-in">
             <h1><i class="fa fa-user-md"></i> Mon Diététicien</h1>
-            <p>Votre accompagnateur nutrition et santé</p>
+            <p>Consultez les informations de votre diététicien et laissez votre avis</p>
         </div>
 
         <!-- Dietitian Profile Card -->
@@ -835,5 +906,20 @@
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        function toggleMenu() {
+            var nav = document.getElementById('portalNav');
+            nav.classList.toggle('show');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            var nav = document.getElementById('portalNav');
+            var toggle = document.querySelector('.portal-menu-toggle');
+            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+                nav.classList.remove('show');
+            }
+        });
+    </script>
 </body>
 </html>
