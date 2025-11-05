@@ -4,18 +4,45 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Dietitians extends AdminController
 {
+    private $ratings_model_loaded = false;
+
     public function __construct()
     {
         parent::__construct();
 
         // Load models
         $this->load->model('staff_model');
-        $this->load->model('dietetic/dietetic_ratings_model');
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
             access_denied('dietetic');
+        }
+    }
+
+    /**
+     * Lazy load ratings model - only load when needed and check if table exists
+     *
+     * @return bool True if model loaded successfully
+     */
+    private function load_ratings_model()
+    {
+        if ($this->ratings_model_loaded) {
+            return true;
+        }
+
+        try {
+            // Check if table exists first
+            $table_name = db_prefix() . 'dietic_ratings';
+            if (!$this->db->table_exists($table_name)) {
+                return false;
+            }
+
+            $this->load->model('dietetic/dietetic_ratings_model');
+            $this->ratings_model_loaded = true;
+            return true;
+        } catch (Exception $e) {
+            return false;
         }
     }
 
@@ -26,12 +53,17 @@ class Dietitians extends AdminController
     {
         $data['title'] = 'Diététiciens';
 
-        try {
-            $data['dietitians'] = $this->dietetic_ratings_model->get_all_dietitians_with_ratings();
-        } catch (Exception $e) {
-            // If ratings table doesn't exist yet, show error message
+        if ($this->load_ratings_model()) {
+            try {
+                $data['dietitians'] = $this->dietetic_ratings_model->get_all_dietitians_with_ratings();
+            } catch (Exception $e) {
+                $data['dietitians'] = [];
+                $data['error'] = 'Erreur lors du chargement des données: ' . $e->getMessage();
+            }
+        } else {
+            // Ratings table doesn't exist yet
             $data['dietitians'] = [];
-            $data['error'] = 'La table des notes n\'existe pas encore. Veuillez appliquer la migration SQL. <a href="' . base_url('modules/dietetic/migrations/apply_migrations.php') . '" target="_blank">Cliquez ici pour appliquer la migration</a>';
+            $data['error'] = 'Le système de notation n\'est pas encore installé. <a href="' . base_url('modules/dietetic/install_ratings.php') . '" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-download"></i> Installer le système de notation</a>';
         }
 
         $this->load->view('admin/dietitians/list', $data);
@@ -52,9 +84,21 @@ class Dietitians extends AdminController
 
         $data['title'] = $data['dietitian']->firstname . ' ' . $data['dietitian']->lastname;
 
-        // Get ratings
-        $data['ratings'] = $this->dietetic_ratings_model->get_by_dietitian($id, false); // Include all ratings
-        $data['average_ratings'] = $this->dietetic_ratings_model->get_dietitian_average($id);
+        // Get ratings if table exists
+        if ($this->load_ratings_model()) {
+            try {
+                $data['ratings'] = $this->dietetic_ratings_model->get_by_dietitian($id, false); // Include all ratings
+                $data['average_ratings'] = $this->dietetic_ratings_model->get_dietitian_average($id);
+            } catch (Exception $e) {
+                $data['ratings'] = [];
+                $data['average_ratings'] = null;
+                $data['error'] = 'Erreur lors du chargement des notes: ' . $e->getMessage();
+            }
+        } else {
+            $data['ratings'] = [];
+            $data['average_ratings'] = null;
+            $data['error'] = 'Le système de notation n\'est pas encore installé.';
+        }
 
         // Get statistics
         $data['stats'] = $this->get_dietitian_stats($id);
@@ -113,6 +157,11 @@ class Dietitians extends AdminController
             ajax_access_denied();
         }
 
+        if (!$this->load_ratings_model()) {
+            echo json_encode(['success' => false, 'message' => 'Le système de notation n\'est pas installé']);
+            return;
+        }
+
         if ($this->dietetic_ratings_model->delete($id)) {
             echo json_encode(['success' => true, 'message' => 'Note supprimée avec succès']);
         } else {
@@ -129,6 +178,11 @@ class Dietitians extends AdminController
     {
         if (!is_admin()) {
             ajax_access_denied();
+        }
+
+        if (!$this->load_ratings_model()) {
+            echo json_encode(['success' => false, 'message' => 'Le système de notation n\'est pas installé']);
+            return;
         }
 
         $rating = $this->dietetic_ratings_model->get($id);

@@ -4,6 +4,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Portal extends App_Controller
 {
+    private $ratings_model_loaded = false;
+
     public function __construct()
     {
         parent::__construct();
@@ -16,6 +18,32 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_consultations_model');
+    }
+
+    /**
+     * Lazy load ratings model - only load when needed and check if table exists
+     *
+     * @return bool True if model loaded successfully
+     */
+    private function load_ratings_model()
+    {
+        if ($this->ratings_model_loaded) {
+            return true;
+        }
+
+        try {
+            // Check if table exists first
+            $table_name = db_prefix() . 'dietic_ratings';
+            if (!$this->db->table_exists($table_name)) {
+                return false;
+            }
+
+            $this->load->model('dietetic/dietetic_ratings_model');
+            $this->ratings_model_loaded = true;
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function index()
@@ -465,17 +493,23 @@ class Portal extends App_Controller
 
         // Load models
         $this->load->model('staff_model');
-        $this->load->model('dietetic/dietetic_ratings_model');
 
         // Get current dietitian
         $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
 
         // Get dietitian's average rating (with error handling for missing table)
-        try {
-            $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
-            $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
-            $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
-        } catch (Exception $e) {
+        if ($this->load_ratings_model()) {
+            try {
+                $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+                $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+                $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_rating'] = null;
+                $data['my_rating'] = null;
+                $data['can_rate'] = false;
+                $data['error'] = 'Erreur lors du chargement des notes: ' . $e->getMessage();
+            }
+        } else {
             // Table doesn't exist yet
             $data['dietitian_rating'] = null;
             $data['my_rating'] = null;
@@ -519,7 +553,15 @@ class Portal extends App_Controller
         }
 
         // Load ratings model
-        $this->load->model('dietetic/dietetic_ratings_model');
+        if (!$this->load_ratings_model()) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Le système de notation n\'est pas encore installé']);
+                return;
+            }
+            set_alert('danger', 'Le système de notation n\'est pas encore installé. Contactez l\'administrateur.');
+            redirect(site_url('dietetic/portal/my_dietitians'));
+            return;
+        }
 
         // If no dietitian_id provided, use patient's current dietitian
         if (!$dietitian_id) {
