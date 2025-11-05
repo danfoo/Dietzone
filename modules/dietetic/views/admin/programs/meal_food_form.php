@@ -10,7 +10,7 @@
                         <h4>
                             <?php echo isset($meal_food) ? _l('dietetic_edit_food') : _l('dietetic_add_food_to_meal'); ?>
                         </h4>
-                        <p><?php echo $meal->meal_name ? $meal->meal_name : ucfirst($meal->meal_type); ?> - <?php echo _l('dietetic_day'); ?> <?php echo $days[$meal->day_number]; ?></p>
+                        <p><?php echo $meal->meal_name ? $meal->meal_name : ucfirst($meal->meal_type); ?> - <?php echo _l('dietetic_day'); ?> <?php echo $days[$meal->day_of_week]; ?></p>
                         <hr>
 
                         <?php echo form_open(admin_url('dietetic/programs/meal_food/' . (isset($meal_food) ? 'edit/' . $meal_food->id : 'create'))); ?>

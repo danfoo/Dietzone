@@ -326,7 +326,17 @@ class Programs extends AdminController
             $data['program'] = $this->dietetic_programs_model->get($data['meal_plan']->program_id);
 
             if ($this->input->post()) {
-                $meal_data = $this->input->post();
+                // Map form fields to database columns
+                $meal_data = [
+                    'meal_plan_id' => $this->input->post('meal_plan_id'),
+                    'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
+                    'meal_type' => $this->input->post('meal_type'),
+                    'meal_name' => $this->input->post('meal_name'),
+                    'meal_time' => $this->input->post('meal_time'),
+                    'instructions' => $this->input->post('instructions'),
+                    'display_order' => 0
+                ];
+
                 $meal_id = $this->dietetic_meal_plans_model->add_meal($meal_data);
 
                 if ($meal_id) {
@@ -355,7 +365,15 @@ class Programs extends AdminController
             $data['meal_foods'] = $this->dietetic_meal_plans_model->get_meal_foods($id);
 
             if ($this->input->post()) {
-                $meal_data = $this->input->post();
+                // Map form fields to database columns
+                $meal_data = [
+                    'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
+                    'meal_type' => $this->input->post('meal_type'),
+                    'meal_name' => $this->input->post('meal_name'),
+                    'meal_time' => $this->input->post('meal_time'),
+                    'instructions' => $this->input->post('instructions')
+                ];
+
                 if ($this->dietetic_meal_plans_model->update_meal($id, $meal_data)) {
                     set_alert('success', 'Meal updated successfully');
                 } else {

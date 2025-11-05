@@ -34,7 +34,7 @@
                                             '7' => _l('dietetic_sunday')
                                         ];
                                         foreach ($days as $num => $day) {
-                                            $selected = (isset($meal) && $meal->day_number == $num) ? 'selected' : '';
+                                            $selected = (isset($meal) && $meal->day_of_week == $num) ? 'selected' : '';
                                             echo "<option value='$num' $selected>$day</option>";
                                         }
                                         ?>
