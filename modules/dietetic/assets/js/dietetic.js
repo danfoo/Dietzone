@@ -7,16 +7,19 @@
 
     /**
      * Initialize datatables
+     * NOTE: Commented out auto-initialization to allow each page to configure its own DataTable options
+     * Each list page now initializes its own DataTable with specific settings (search, pagination, etc.)
      */
     function initDatatables() {
-        if ($('.dietetic-table').length) {
-            $('.dietetic-table').DataTable({
-                responsive: true,
-                language: {
-                    url: app.lang.datatables
-                }
-            });
-        }
+        // Auto-initialization disabled - each page manages its own DataTable
+        // if ($('.dietetic-table').length) {
+        //     $('.dietetic-table').DataTable({
+        //         responsive: true,
+        //         language: {
+        //             url: app.lang.datatables
+        //         }
+        //     });
+        // }
     }
 
     /**
