@@ -251,4 +251,138 @@ class Patients extends AdminController
             ],
         ]);
     }
+
+    /**
+     * Assign a dietitian to a patient (AJAX)
+     *
+     * @param int $patient_id
+     */
+    public function assign_dietitian($patient_id)
+    {
+        // Only admins can manage assignments
+        if (!is_admin()) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        $dietitian_id = $this->input->post('dietitian_id');
+        $is_primary = $this->input->post('is_primary');
+        $notes = $this->input->post('notes');
+
+        if (!$dietitian_id) {
+            echo json_encode(['success' => false, 'message' => 'Diététicien non spécifié']);
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            echo json_encode(['success' => false, 'message' => 'Le système multi-diététiciens n\'est pas installé. Veuillez installer le système via admin/dietetic/dietitians/install_assignments']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        $assignment_data = [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian_id,
+            'is_primary' => $is_primary ? 1 : 0,
+            'notes' => $notes
+        ];
+
+        $result = $this->dietetic_patient_dietitians_model->assign($assignment_data);
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Diététicien assigné avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'assignation']);
+        }
+    }
+
+    /**
+     * Set a dietitian as primary for a patient (AJAX)
+     *
+     * @param int $patient_id
+     */
+    public function set_primary_dietitian($patient_id)
+    {
+        // Only admins can manage assignments
+        if (!is_admin()) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        $dietitian_id = $this->input->post('dietitian_id');
+
+        if (!$dietitian_id) {
+            echo json_encode(['success' => false, 'message' => 'Diététicien non spécifié']);
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            echo json_encode(['success' => false, 'message' => 'Le système multi-diététiciens n\'est pas installé']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        $result = $this->dietetic_patient_dietitians_model->set_primary($patient_id, $dietitian_id);
+
+        if ($result) {
+            // Also update the main dietitian_id in patients table for compatibility
+            $this->dietetic_patients_model->update($patient_id, ['dietitian_id' => $dietitian_id]);
+
+            echo json_encode(['success' => true, 'message' => 'Diététicien principal défini avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
+        }
+    }
+
+    /**
+     * Remove a dietitian from a patient (AJAX)
+     *
+     * @param int $patient_id
+     */
+    public function remove_dietitian($patient_id)
+    {
+        // Only admins can manage assignments
+        if (!is_admin()) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        $dietitian_id = $this->input->post('dietitian_id');
+
+        if (!$dietitian_id) {
+            echo json_encode(['success' => false, 'message' => 'Diététicien non spécifié']);
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            echo json_encode(['success' => false, 'message' => 'Le système multi-diététiciens n\'est pas installé']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        // Check if this is the primary dietitian
+        $assignment = $this->dietetic_patient_dietitians_model->get_assignment($patient_id, $dietitian_id);
+
+        if ($assignment && $assignment->is_primary) {
+            $count = $this->dietetic_patient_dietitians_model->count_dietitians($patient_id, 'active');
+            if ($count <= 1) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de retirer le seul diététicien assigné. Assignez d\'abord un autre diététicien.']);
+                return;
+            }
+        }
+
+        $result = $this->dietetic_patient_dietitians_model->remove($patient_id, $dietitian_id, false); // Soft delete
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Diététicien retiré avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors du retrait']);
+        }
+    }
 }

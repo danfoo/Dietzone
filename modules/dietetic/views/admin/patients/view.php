@@ -337,6 +337,69 @@
                     </div>
                 </div>
 
+                <!-- Assigned Dietitians -->
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="clearfix">
+                            <h4 class="pull-left" style="border-bottom: 3px solid #16a085; padding-bottom: 10px; margin-bottom: 15px;">
+                                <i class="fa fa-users" style="color: #16a085;"></i> Diététiciens Assignés
+                            </h4>
+                            <?php if (is_admin() && isset($patient->dietitians_count)) { ?>
+                                <button class="btn btn-success btn-xs pull-right" onclick="openAssignDietitianModal()" style="margin-top: 8px;">
+                                    <i class="fa fa-plus"></i> Assigner
+                                </button>
+                            <?php } ?>
+                        </div>
+                        <div class="clearfix"></div>
+
+                        <?php if (isset($patient->dietitians) && !empty($patient->dietitians)) { ?>
+                            <?php foreach ($patient->dietitians as $dietitian) { ?>
+                                <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-left: 4px solid <?php echo $dietitian->is_primary ? '#16a085' : '#95a5a6'; ?>; border-radius: 5px;">
+                                    <div class="row">
+                                        <div class="col-xs-<?php echo is_admin() ? '8' : '12'; ?>">
+                                            <strong style="color: #2c3e50;">
+                                                <i class="fa fa-user-md"></i> <?php echo $dietitian->firstname . ' ' . $dietitian->lastname; ?>
+                                                <?php if ($dietitian->is_primary) { ?>
+                                                    <span class="label label-success">Principal</span>
+                                                <?php } ?>
+                                            </strong><br />
+                                            <span style="font-size: 12px; color: #7f8c8d;">
+                                                <i class="fa fa-envelope"></i> <?php echo $dietitian->email; ?><br />
+                                                <?php if ($dietitian->phonenumber) { ?>
+                                                    <i class="fa fa-phone"></i> <?php echo $dietitian->phonenumber; ?><br />
+                                                <?php } ?>
+                                                <i class="fa fa-calendar"></i> Depuis: <?php echo _dt($dietitian->assigned_date); ?>
+                                            </span>
+                                            <?php if ($dietitian->notes) { ?>
+                                                <br /><small class="text-muted"><i class="fa fa-sticky-note-o"></i> <?php echo $dietitian->notes; ?></small>
+                                            <?php } ?>
+                                        </div>
+                                        <?php if (is_admin()) { ?>
+                                            <div class="col-xs-4 text-right">
+                                                <?php if (!$dietitian->is_primary) { ?>
+                                                    <button class="btn btn-info btn-xs" onclick="setPrimaryDietitian(<?php echo $dietitian->dietitian_id; ?>)" title="Définir comme principal" style="margin-bottom: 3px;">
+                                                        <i class="fa fa-star"></i>
+                                                    </button>
+                                                <?php } ?>
+                                                <button class="btn btn-danger btn-xs" onclick="removeDietitian(<?php echo $dietitian->dietitian_id; ?>)" title="Retirer">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <div class="alert alert-warning">
+                                <i class="fa fa-exclamation-triangle"></i> Aucun diététicien assigné.
+                                <?php if (is_admin()) { ?>
+                                    <a href="#" onclick="openAssignDietitianModal(); return false;">Assigner un diététicien</a>
+                                <?php } ?>
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+
                 <!-- Latest Measurements -->
                 <div class="panel_s">
                     <div class="panel-body">
@@ -389,11 +452,121 @@
     </div>
 </div>
 
+<!-- Modal: Assign Dietitian -->
+<div class="modal fade" id="assignDietitianModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title"><i class="fa fa-user-md"></i> Assigner un Diététicien</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="dietitian_select">Sélectionner un Diététicien</label>
+                    <select class="form-control selectpicker" id="dietitian_select" data-live-search="true">
+                        <option value="">-- Choisir un diététicien --</option>
+                        <?php
+                        // Load all staff members with dietetic role
+                        $this->load->model('staff_model');
+                        $all_staff = $this->staff_model->get('', ['active' => 1]);
+                        foreach ($all_staff as $staff_member) {
+                            echo '<option value="' . $staff_member['staffid'] . '">' . $staff_member['firstname'] . ' ' . $staff_member['lastname'] . '</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="set_as_primary"> Définir comme diététicien principal
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="assignment_notes">Notes (optionnel)</label>
+                    <textarea class="form-control" id="assignment_notes" rows="3" placeholder="Notes sur cette assignation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="assignDietitian()">
+                    <i class="fa fa-check"></i> Assigner
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     $(function() {
         dietetic.loadWeightChart(<?php echo $patient->id; ?>, 'weightChart');
+
+        // Initialize selectpicker if available
+        if ($.fn.selectpicker) {
+            $('.selectpicker').selectpicker();
+        }
     });
+
+    // Open assign dietitian modal
+    function openAssignDietitianModal() {
+        $('#assignDietitianModal').modal('show');
+    }
+
+    // Assign dietitian to patient
+    function assignDietitian() {
+        var dietitian_id = $('#dietitian_select').val();
+        var is_primary = $('#set_as_primary').is(':checked') ? 1 : 0;
+        var notes = $('#assignment_notes').val();
+
+        if (!dietitian_id) {
+            alert('Veuillez sélectionner un diététicien');
+            return;
+        }
+
+        $.post('<?php echo admin_url('dietetic/patients/assign_dietitian/' . $patient->id); ?>', {
+            dietitian_id: dietitian_id,
+            is_primary: is_primary,
+            notes: notes
+        }, function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                location.reload();
+            } else {
+                alert_float('danger', response.message);
+            }
+        }, 'json');
+    }
+
+    // Set dietitian as primary
+    function setPrimaryDietitian(dietitian_id) {
+        if (confirm('Définir ce diététicien comme principal ?')) {
+            $.post('<?php echo admin_url('dietetic/patients/set_primary_dietitian/' . $patient->id); ?>', {
+                dietitian_id: dietitian_id
+            }, function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    location.reload();
+                } else {
+                    alert_float('danger', response.message);
+                }
+            }, 'json');
+        }
+    }
+
+    // Remove dietitian from patient
+    function removeDietitian(dietitian_id) {
+        if (confirm('Retirer ce diététicien du patient ?')) {
+            $.post('<?php echo admin_url('dietetic/patients/remove_dietitian/' . $patient->id); ?>', {
+                dietitian_id: dietitian_id
+            }, function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    location.reload();
+                } else {
+                    alert_float('danger', response.message);
+                }
+            }, 'json');
+        }
+    }
 </script>
 
 <?php init_tail(); ?>
