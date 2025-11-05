@@ -434,4 +434,165 @@ class Portal extends App_Controller
 
         $this->load->view('portal_consultations', $data);
     }
+
+    /**
+     * View my dietitians - shows dietitians that follow this patient
+     */
+    public function my_dietitians()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mon Diététicien';
+
+        // Load models
+        $this->load->model('staff_model');
+        $this->load->model('dietetic/dietetic_ratings_model');
+
+        // Get current dietitian
+        $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
+
+        // Get dietitian's average rating
+        $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+
+        // Check if patient has already rated this dietitian
+        $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+
+        // Check if patient can rate (has completed consultations)
+        $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+
+        $this->load->view('portal_my_dietitians', $data);
+    }
+
+    /**
+     * Rate dietitian - submit or update rating
+     */
+    public function rate_dietitian($dietitian_id = null)
+    {
+        if (!is_client_logged_in()) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Not logged in']);
+                return;
+            }
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Patient not found']);
+                return;
+            }
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Load ratings model
+        $this->load->model('dietetic/dietetic_ratings_model');
+
+        // If no dietitian_id provided, use patient's current dietitian
+        if (!$dietitian_id) {
+            $dietitian_id = $patient->dietitian_id;
+        }
+
+        // Check if patient can rate this dietitian
+        if (!$this->dietetic_ratings_model->can_rate($patient->id, $dietitian_id)) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['success' => false, 'message' => 'Vous devez avoir au moins une consultation complétée pour noter votre diététicien']);
+                return;
+            }
+            set_alert('danger', 'Vous devez avoir au moins une consultation complétée pour noter votre diététicien');
+            redirect(site_url('dietetic/portal/my_dietitians'));
+            return;
+        }
+
+        // Handle form submission
+        if ($this->input->post()) {
+            $rating_data = [
+                'patient_id' => $patient->id,
+                'dietitian_id' => $dietitian_id,
+                'professionalism_rating' => $this->input->post('professionalism_rating'),
+                'listening_rating' => $this->input->post('listening_rating'),
+                'advice_rating' => $this->input->post('advice_rating'),
+                'results_rating' => $this->input->post('results_rating'),
+                'availability_rating' => $this->input->post('availability_rating'),
+                'comment' => $this->input->post('comment'),
+                'is_public' => 1,
+            ];
+
+            try {
+                $rating_id = $this->dietetic_ratings_model->add($rating_data);
+
+                if ($rating_id) {
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => true, 'message' => 'Votre note a été enregistrée avec succès!']);
+                        return;
+                    }
+
+                    set_alert('success', 'Votre note a été enregistrée avec succès!');
+                    redirect(site_url('dietetic/portal/my_dietitians'));
+                    return;
+                } else {
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => false, 'message' => 'Échec de l\'enregistrement de la note']);
+                        return;
+                    }
+
+                    $data['error'] = 'Échec de l\'enregistrement de la note.';
+                }
+            } catch (Exception $e) {
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()]);
+                    return;
+                }
+
+                $data['error'] = 'Erreur: ' . $e->getMessage();
+            }
+        }
+
+        // Display rating form
+        if (!isset($data)) {
+            $data = [];
+        }
+
+        $data['patient'] = $patient;
+        $data['title'] = 'Noter Mon Diététicien';
+
+        // Load staff model to get dietitian info
+        $this->load->model('staff_model');
+        $data['dietitian'] = $this->staff_model->get($dietitian_id);
+
+        // Get existing rating if any
+        $data['existing_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $dietitian_id);
+
+        $this->load->view('portal_rate_dietitian', $data);
+    }
 }
+
