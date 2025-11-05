@@ -63,10 +63,119 @@ class Dietitians extends AdminController
         } else {
             // Ratings table doesn't exist yet
             $data['dietitians'] = [];
-            $data['error'] = 'Le système de notation n\'est pas encore installé. <a href="' . base_url('modules/dietetic/install_ratings.php') . '" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-download"></i> Installer le système de notation</a>';
+            $data['error'] = 'Le système de notation n\'est pas encore installé. <a href="' . admin_url('dietetic/dietitians/install') . '" class="btn btn-primary btn-sm"><i class="fa fa-download"></i> Installer le système de notation</a>';
         }
 
         $this->load->view('admin/dietitians/list', $data);
+    }
+
+    /**
+     * Install ratings system
+     */
+    public function install()
+    {
+        if (!is_admin()) {
+            access_denied('Dietetic - Install Ratings');
+        }
+
+        $data['title'] = 'Installation du Système de Notation';
+
+        // Check if table already exists
+        $table_name = db_prefix() . 'dietic_ratings';
+        $data['table_exists'] = $this->db->table_exists($table_name);
+
+        if ($data['table_exists']) {
+            $data['message'] = 'La table existe déjà dans votre base de données.';
+            $data['message_type'] = 'warning';
+        } else {
+            // If POST request, perform installation
+            if ($this->input->post('confirm_install')) {
+                $result = $this->perform_installation();
+                $data['installation_result'] = $result;
+                $data['table_exists'] = $this->db->table_exists($table_name);
+            }
+        }
+
+        $this->load->view('admin/dietitians/install', $data);
+    }
+
+    /**
+     * Perform the actual installation
+     */
+    private function perform_installation()
+    {
+        $result = [
+            'success' => false,
+            'messages' => [],
+            'errors' => []
+        ];
+
+        $table_name = db_prefix() . 'dietic_ratings';
+
+        try {
+            // Create table
+            $sql = "CREATE TABLE IF NOT EXISTS `{$table_name}` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `patient_id` int(11) NOT NULL COMMENT 'Reference to dietic_patients.id',
+                `dietitian_id` int(11) NOT NULL COMMENT 'Reference to staff.staffid',
+                `overall_rating` decimal(2,1) NOT NULL DEFAULT 0.0 COMMENT 'Overall rating 0.0 to 5.0',
+                `professionalism_rating` int(1) DEFAULT NULL COMMENT 'Rating 1-5',
+                `listening_rating` int(1) DEFAULT NULL COMMENT 'Rating 1-5',
+                `advice_rating` int(1) DEFAULT NULL COMMENT 'Rating 1-5',
+                `results_rating` int(1) DEFAULT NULL COMMENT 'Rating 1-5',
+                `availability_rating` int(1) DEFAULT NULL COMMENT 'Rating 1-5',
+                `comment` text DEFAULT NULL COMMENT 'Written review/comment',
+                `is_public` tinyint(1) DEFAULT 1,
+                `is_verified` tinyint(1) DEFAULT 1,
+                `created_at` datetime NOT NULL,
+                `updated_at` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unique_patient_dietitian` (`patient_id`, `dietitian_id`),
+                KEY `idx_dietitian` (`dietitian_id`),
+                KEY `idx_patient` (`patient_id`),
+                KEY `idx_overall_rating` (`overall_rating`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=" . $this->db->char_set . " COLLATE=" . $this->db->dbcollat;
+
+            if ($this->db->query($sql)) {
+                $result['messages'][] = 'Table créée avec succès';
+            } else {
+                $result['errors'][] = 'Erreur lors de la création de la table';
+                return $result;
+            }
+
+            // Add foreign key for patient_id
+            try {
+                $fk_patient = "ALTER TABLE `{$table_name}`
+                    ADD CONSTRAINT `fk_diet_ratings_patient`
+                    FOREIGN KEY (`patient_id`) REFERENCES `" . db_prefix() . "dietic_patients`(`id`) ON DELETE CASCADE";
+                $this->db->query($fk_patient);
+                $result['messages'][] = 'Clé étrangère patient ajoutée';
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate') === false) {
+                    $result['errors'][] = 'Clé étrangère patient: ' . $e->getMessage();
+                }
+            }
+
+            // Add foreign key for dietitian_id (staff)
+            try {
+                $fk_staff = "ALTER TABLE `{$table_name}`
+                    ADD CONSTRAINT `fk_diet_ratings_staff`
+                    FOREIGN KEY (`dietitian_id`) REFERENCES `" . db_prefix() . "staff`(`staffid`) ON DELETE CASCADE";
+                $this->db->query($fk_staff);
+                $result['messages'][] = 'Clé étrangère diététicien ajoutée';
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate') === false) {
+                    $result['errors'][] = 'Clé étrangère diététicien: ' . $e->getMessage();
+                }
+            }
+
+            $result['success'] = true;
+
+        } catch (Exception $e) {
+            $result['errors'][] = 'Erreur: ' . $e->getMessage();
+        }
+
+        return $result;
     }
 
     /**
