@@ -277,6 +277,42 @@ class Foods extends AdminController
     }
 
     /**
+     * Bulk delete foods
+     */
+    public function bulk_delete()
+    {
+        if (!dietetic_has_permission('delete')) {
+            ajax_access_denied();
+        }
+
+        $ids = $this->input->post('ids');
+
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode(['success' => false, 'message' => 'Aucun aliment sélectionné']);
+            return;
+        }
+
+        $deleted_count = 0;
+        foreach ($ids as $id) {
+            if ($this->dietetic_foods_model->delete($id)) {
+                $deleted_count++;
+            }
+        }
+
+        if ($deleted_count > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => sprintf('%d aliment(s) supprimé(s) avec succès', $deleted_count)
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression'
+            ]);
+        }
+    }
+
+    /**
      * Remove duplicate food entries (keep the oldest one)
      * Can be called manually by admin to clean up duplicates
      */
