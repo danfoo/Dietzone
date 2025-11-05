@@ -13,16 +13,25 @@ class Dietetic_patients_model extends App_Model
         // Load required Perfex models
         $this->load->model('clients_model');
         $this->load->model('staff_model');
+
+        // Load dietetic models for permissions
+        $this->load->helper('dietetic/dietetic');
     }
 
     /**
      * Get patient by ID
      *
      * @param int $id
+     * @param bool $check_access If true, verify user has access to this patient
      * @return object|null
      */
-    public function get($id)
+    public function get($id, $check_access = true)
     {
+        // Check access permissions if not admin
+        if ($check_access && !dietetic_can_access_patient($id)) {
+            return null;
+        }
+
         $this->db->where('id', $id);
         $patient = $this->db->get(db_prefix() . $this->table)->row();
 
@@ -30,8 +39,18 @@ class Dietetic_patients_model extends App_Model
             // Get client info
             $patient->client = $this->clients_model->get($patient->client_id);
 
-            // Get dietitian info
+            // Get dietitian info (primary dietitian)
             $patient->dietitian = $this->staff_model->get($patient->dietitian_id);
+
+            // Get all assigned dietitians (many-to-many)
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+                $this->load->model('dietetic/dietetic_patient_dietitians_model');
+                $patient->dietitians = $this->dietetic_patient_dietitians_model->get_patient_dietitians($id, 'active');
+                $patient->dietitians_count = count($patient->dietitians);
+            } else {
+                $patient->dietitians = [];
+                $patient->dietitians_count = 0;
+            }
 
             // Get latest measurement
             $patient->latest_measurement = $this->get_latest_measurement($id);
@@ -51,24 +70,32 @@ class Dietetic_patients_model extends App_Model
      */
     public function get_all($where = [])
     {
-        $this->db->select(db_prefix() . $this->table . '.*, ' .
-            db_prefix() . 'clients.company as client_name, ' .
-            'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
-        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . $this->table . '.client_id', 'left');
-        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->select('p.*, ' .
+            'c.company as client_name, ' .
+            'CONCAT(s.firstname, " ", s.lastname) as dietitian_name', false);
+        $this->db->from(db_prefix() . $this->table . ' p');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 's.staffid = p.dietitian_id', 'left');
 
         if (!empty($where)) {
             $this->db->where($where);
         }
 
-        // Apply staff permissions
-        if (!is_admin()) {
-            $this->db->where(db_prefix() . $this->table . '.dietitian_id', get_staff_user_id());
+        // Apply staff permissions using new many-to-many system
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            // Use new permission system
+            dietetic_apply_dietitian_filter($this->db, 'pd');
+        } else {
+            // Fallback to old system if table doesn't exist yet
+            if (!is_admin()) {
+                $this->db->where('p.dietitian_id', get_staff_user_id());
+            }
         }
 
-        $this->db->order_by(db_prefix() . $this->table . '.created_at', 'DESC');
+        $this->db->group_by('p.id'); // Group by to avoid duplicates from join
+        $this->db->order_by('p.created_at', 'DESC');
 
-        return $this->db->get(db_prefix() . $this->table)->result();
+        return $this->db->get()->result();
     }
 
     /**
@@ -83,7 +110,8 @@ class Dietetic_patients_model extends App_Model
         $patient = $this->db->get(db_prefix() . $this->table)->row();
 
         if ($patient) {
-            return $this->get($patient->id);
+            // Don't check access for portal patients (they access their own record)
+            return $this->get($patient->id, false);
         }
 
         return null;
@@ -112,6 +140,17 @@ class Dietetic_patients_model extends App_Model
 
         if ($this->db->insert(db_prefix() . $this->table, $data)) {
             $patient_id = $this->db->insert_id();
+
+            // Create dietitian assignment if dietitian_id is provided
+            if (!empty($data['dietitian_id']) && $this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+                $this->load->model('dietetic/dietetic_patient_dietitians_model');
+                $this->dietetic_patient_dietitians_model->assign([
+                    'patient_id' => $patient_id,
+                    'dietitian_id' => $data['dietitian_id'],
+                    'is_primary' => 1, // First dietitian is primary
+                    'notes' => 'Assignation initiale lors de la création du patient'
+                ]);
+            }
 
             // Add initial measurement if weight provided
             if (!empty($data['initial_weight'])) {

@@ -13,25 +13,39 @@ class Dietetic_consultations_model extends App_Model
         // Load required Perfex models
         $this->load->model('clients_model');
         $this->load->model('staff_model');
+
+        // Load dietetic helper for permissions
+        $this->load->helper('dietetic/dietetic');
     }
 
     /**
      * Get consultation by ID
      *
      * @param int $id
+     * @param bool $check_access If true, verify user has access to this consultation
      * @return object|null
      */
-    public function get($id)
+    public function get($id, $check_access = true)
     {
-        $this->db->select(db_prefix() . $this->table . '.*, ' .
-            db_prefix() . 'clients.company as client_name, ' .
-            'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
-        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
-        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
-        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
-        $this->db->where(db_prefix() . $this->table . '.id', $id);
+        $this->db->select('cons.*, ' .
+            'c.company as client_name, ' .
+            'CONCAT(s.firstname, " ", s.lastname) as dietitian_name');
+        $this->db->from(db_prefix() . $this->table . ' cons');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = cons.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 's.staffid = cons.dietitian_id', 'left');
+        $this->db->where('cons.id', $id);
 
-        return $this->db->get(db_prefix() . $this->table)->row();
+        $consultation = $this->db->get()->row();
+
+        if ($consultation && $check_access) {
+            // Check access permissions if not admin
+            if (!dietetic_can_access_patient($consultation->patient_id)) {
+                return null;
+            }
+        }
+
+        return $consultation;
     }
 
     /**
@@ -42,25 +56,33 @@ class Dietetic_consultations_model extends App_Model
      */
     public function get_all($where = [])
     {
-        $this->db->select(db_prefix() . $this->table . '.*, ' .
-            db_prefix() . 'clients.company as client_name, ' .
-            'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
-        $this->db->join(db_prefix() . 'dietic_patients', db_prefix() . 'dietic_patients.id = ' . db_prefix() . $this->table . '.patient_id', 'left');
-        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'dietic_patients.client_id', 'left');
-        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . $this->table . '.dietitian_id', 'left');
+        $this->db->select('cons.*, ' .
+            'c.company as client_name, ' .
+            'CONCAT(s.firstname, " ", s.lastname) as dietitian_name', false);
+        $this->db->from(db_prefix() . $this->table . ' cons');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = cons.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 's.staffid = cons.dietitian_id', 'left');
 
         if (!empty($where)) {
             $this->db->where($where);
         }
 
-        // Apply staff permissions
-        if (!is_admin()) {
-            $this->db->where(db_prefix() . $this->table . '.dietitian_id', get_staff_user_id());
+        // Apply staff permissions using new many-to-many system
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            // Use new permission system
+            dietetic_apply_dietitian_filter($this->db, 'pd');
+        } else {
+            // Fallback to old system if table doesn't exist yet
+            if (!is_admin()) {
+                $this->db->where('cons.dietitian_id', get_staff_user_id());
+            }
         }
 
-        $this->db->order_by(db_prefix() . $this->table . '.consultation_date', 'DESC');
+        $this->db->group_by('cons.id'); // Group by to avoid duplicates from join
+        $this->db->order_by('cons.consultation_date', 'DESC');
 
-        return $this->db->get(db_prefix() . $this->table)->result();
+        return $this->db->get()->result();
     }
 
     /**
