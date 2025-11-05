@@ -104,7 +104,8 @@ $(document).ready(function() {
         "order": [[1, "asc"]], // Sort by food_name asc (column 1 now, because we added checkbox column)
         "pageLength": 10,
         "lengthChange": false,
-        "searching": true, // Enable search
+        "searching": true,
+        "info": true,
         "columnDefs": [
             {
                 "orderable": false,
