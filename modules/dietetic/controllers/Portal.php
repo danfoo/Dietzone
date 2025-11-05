@@ -8,6 +8,10 @@ class Portal extends App_Controller
     {
         parent::__construct();
 
+        // Load helper functions
+        $this->load->helper('dietetic/dietetic');
+
+        // Load models
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_programs_model');
@@ -220,20 +224,25 @@ class Portal extends App_Controller
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
                 if ($measurement_id) {
-                    // Send notification to dietitian
+                    // Send notification to dietitian (wrapped in try-catch to not block measurement creation)
                     if ($patient->dietitian_id) {
-                        // Get client info for patient name
-                        $this->load->model('clients_model');
-                        $client = $this->clients_model->get($patient->client_id);
-                        $patient_name = $client ? $client->company : 'Patient';
+                        try {
+                            // Get client info for patient name
+                            $this->load->model('clients_model');
+                            $client = $this->clients_model->get($patient->client_id);
+                            $patient_name = $client ? $client->company : 'Patient';
 
-                        // Notify dietitian about new measurement
-                        dietetic_notify_measurement_added(
-                            $patient->id,
-                            $patient->dietitian_id,
-                            $patient_name,
-                            $weight
-                        );
+                            // Notify dietitian about new measurement
+                            dietetic_notify_measurement_added(
+                                $patient->id,
+                                $patient->dietitian_id,
+                                $patient_name,
+                                $weight
+                            );
+                        } catch (Exception $e) {
+                            // Log error but don't fail the measurement creation
+                            log_activity('Dietetic notification error: ' . $e->getMessage());
+                        }
                     }
 
                     // Return JSON for AJAX requests
@@ -255,6 +264,7 @@ class Portal extends App_Controller
                     }
 
                     $data['error'] = 'Échec de l\'enregistrement de la mesure.';
+                    $data['patient'] = $patient;
                 }
             } catch (Exception $e) {
                 // Return JSON for AJAX requests
@@ -264,12 +274,17 @@ class Portal extends App_Controller
                 }
 
                 $data['error'] = 'Erreur: ' . $e->getMessage();
+                $data['patient'] = $patient;
             }
         }
 
-        // Display form for GET requests
-        $data = [];
-        $data['patient'] = $patient;
+        // Display form for GET requests or after errors
+        if (!isset($data)) {
+            $data = [];
+        }
+        if (!isset($data['patient'])) {
+            $data['patient'] = $patient;
+        }
         $this->load->view('portal_add_measurement', $data);
     }
 
