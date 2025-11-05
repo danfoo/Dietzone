@@ -144,62 +144,74 @@
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
         }
 
         .stat-card {
             background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
-            border-top: 3px solid transparent;
+            border-left: 4px solid transparent;
         }
 
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
-        .stat-card.weight { border-top-color: #667eea; }
-        .stat-card.target { border-top-color: #11998e; }
-        .stat-card.bmi { border-top-color: #f093fb; }
-        .stat-card.fat { border-top-color: #fa709a; }
+        .stat-card.weight { border-left-color: #667eea; }
+        .stat-card.target { border-left-color: #11998e; }
+        .stat-card.bmi { border-left-color: #f093fb; }
+        .stat-card.fat { border-left-color: #fa709a; }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
 
         .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 15px;
-            font-size: 24px;
+            font-size: 28px;
             color: white;
+            flex-shrink: 0;
         }
 
-        .stat-card.weight .stat-icon { background: #667eea; }
-        .stat-card.target .stat-icon { background: #11998e; }
-        .stat-card.bmi .stat-icon { background: #f093fb; }
-        .stat-card.fat .stat-icon { background: #fa709a; }
+        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stat-card.target .stat-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 10px 0 5px 0;
+        .stat-content {
+            flex: 1;
         }
 
         .stat-label {
             color: #6c757d;
-            font-size: 13px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2c3e50;
+            line-height: 1;
         }
 
         /* Progress Card */
@@ -563,7 +575,12 @@
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    $logo_path = get_option('company_logo');
+                    // Essayer d'abord le logo sombre, puis le logo normal
+                    $logo_path = get_option('company_logo_dark');
+                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
+                        $logo_path = get_option('company_logo');
+                    }
+
                     if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                     ?>
                         <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
@@ -610,24 +627,40 @@
         <!-- Stats Grid -->
         <div class="stats-grid animate-in delay-1">
             <div class="stat-card weight">
-                <div class="stat-icon"><i class="fa fa-balance-scale"></i></div>
-                <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement ? number_format($latest_measurement->weight, 1) : '-'; ?></div>
-                <div class="stat-label">Poids Actuel (kg)</div>
+                <div class="stat-header">
+                    <div class="stat-icon"><i class="fa fa-balance-scale"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Poids Actuel</div>
+                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement ? number_format($latest_measurement->weight, 1) : '-'; ?> <span style="font-size: 20px; color: #6c757d;">kg</span></div>
+                    </div>
+                </div>
             </div>
             <div class="stat-card target">
-                <div class="stat-icon"><i class="fa fa-bullseye"></i></div>
-                <div class="stat-value"><?php echo isset($patient->target_weight) && $patient->target_weight ? number_format($patient->target_weight, 1) : '-'; ?></div>
-                <div class="stat-label">Poids Cible (kg)</div>
+                <div class="stat-header">
+                    <div class="stat-icon"><i class="fa fa-bullseye"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Poids Cible</div>
+                        <div class="stat-value"><?php echo isset($patient->target_weight) && $patient->target_weight ? number_format($patient->target_weight, 1) : '-'; ?> <span style="font-size: 20px; color: #6c757d;">kg</span></div>
+                    </div>
+                </div>
             </div>
             <div class="stat-card bmi">
-                <div class="stat-icon"><i class="fa fa-tachometer"></i></div>
-                <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->bmi) ? number_format($latest_measurement->bmi, 1) : '-'; ?></div>
-                <div class="stat-label">IMC</div>
+                <div class="stat-header">
+                    <div class="stat-icon"><i class="fa fa-tachometer"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Indice de Masse Corporelle</div>
+                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->bmi) ? number_format($latest_measurement->bmi, 1) : '-'; ?></div>
+                    </div>
+                </div>
             </div>
             <div class="stat-card fat">
-                <div class="stat-icon"><i class="fa fa-pie-chart"></i></div>
-                <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></div>
-                <div class="stat-label">Masse Grasse</div>
+                <div class="stat-header">
+                    <div class="stat-icon"><i class="fa fa-pie-chart"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Masse Grasse</div>
+                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></div>
+                    </div>
+                </div>
             </div>
         </div>
 

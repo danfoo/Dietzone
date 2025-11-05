@@ -720,7 +720,12 @@
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    $logo_path = get_option('company_logo');
+                    // Essayer d'abord le logo sombre, puis le logo normal
+                    $logo_path = get_option('company_logo_dark');
+                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
+                        $logo_path = get_option('company_logo');
+                    }
+
                     if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                     ?>
                         <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
