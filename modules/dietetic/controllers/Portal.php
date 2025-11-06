@@ -371,31 +371,41 @@ class Portal extends App_Controller
      */
     public function view_meal_plan($meal_plan_id = null)
     {
+        // Debug logging
+        log_activity('[DIETETIC DEBUG] view_meal_plan called with ID: ' . var_export($meal_plan_id, true));
+
         if (!is_client_logged_in()) {
+            log_activity('[DIETETIC DEBUG] User not logged in, redirecting to login');
             redirect(site_url('authentication/login'));
             return;
         }
 
         // If no meal plan ID provided, redirect to meal plans list
         if (empty($meal_plan_id) || !is_numeric($meal_plan_id)) {
+            log_activity('[DIETETIC DEBUG] Invalid meal plan ID, redirecting to list');
             set_alert('warning', 'Veuillez sélectionner un plan de repas.');
             redirect(site_url('dietetic/portal/meal_plans'));
             return;
         }
 
         $client_id = get_client_user_id();
+        log_activity('[DIETETIC DEBUG] Client ID: ' . $client_id);
 
         // Get patient
         try {
             $patient = $this->dietetic_patients_model->get_by_client($client_id);
         } catch (Exception $e) {
+            log_activity('[DIETETIC DEBUG] Exception getting patient: ' . $e->getMessage());
             $patient = null;
         }
 
         if (!$patient) {
+            log_activity('[DIETETIC DEBUG] No patient found for client');
             $this->load->view('portal_no_access');
             return;
         }
+
+        log_activity('[DIETETIC DEBUG] Patient found: ID = ' . $patient->id);
 
         // Load meal plans model
         $this->load->model('dietetic/dietetic_meal_plans_model');
@@ -404,18 +414,32 @@ class Portal extends App_Controller
         $meal_plan = $this->dietetic_meal_plans_model->get($meal_plan_id);
 
         if (!$meal_plan) {
+            log_activity('[DIETETIC DEBUG] Meal plan not found: ID = ' . $meal_plan_id);
             show_404();
             return;
         }
+
+        log_activity('[DIETETIC DEBUG] Meal plan found: ID = ' . $meal_plan->id . ', program_id = ' . $meal_plan->program_id);
 
         // Get program
         $program = $this->dietetic_programs_model->get($meal_plan->program_id);
 
-        // Verify this meal plan belongs to the patient's program
-        if ($program->patient_id != $patient->id) {
+        if (!$program) {
+            log_activity('[DIETETIC DEBUG] Program not found: ID = ' . $meal_plan->program_id);
             show_404();
             return;
         }
+
+        log_activity('[DIETETIC DEBUG] Program found: ID = ' . $program->id . ', patient_id = ' . $program->patient_id);
+
+        // Verify this meal plan belongs to the patient's program
+        if ($program->patient_id != $patient->id) {
+            log_activity('[DIETETIC DEBUG] Access denied: Program patient_id (' . $program->patient_id . ') != Patient ID (' . $patient->id . ')');
+            show_404();
+            return;
+        }
+
+        log_activity('[DIETETIC DEBUG] Access granted, loading view');
 
         $data = [];
         $data['patient'] = $patient;
