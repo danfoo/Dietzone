@@ -483,13 +483,14 @@ function dietetic_send_sms($phone, $message)
 }
 
 /**
- * Check if current user is admin or has full dietetic access
+ * Check if current user is admin
+ * Note: Only real admins should bypass patient filtering and access restrictions
  *
  * @return bool
  */
 function dietetic_is_admin()
 {
-    return is_admin() || has_permission('dietetic', '', 'view');
+    return is_admin();
 }
 
 /**
