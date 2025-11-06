@@ -234,6 +234,8 @@
             </div>
 
             <form method="POST" action="<?php echo site_url('dietetic/portal/rate_dietitian'); ?>" id="rating-form">
+                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+
                 <!-- Professionalism -->
                 <div class="rating-criterion">
                     <label class="criterion-label">
