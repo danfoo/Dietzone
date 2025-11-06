@@ -497,6 +497,41 @@ class Portal extends App_Controller
     }
 
     /**
+     * Test method to verify routing is working
+     * Access via: /dietetic/portal/test
+     */
+    public function test()
+    {
+        echo "<h1>✓ Routing Test Successful!</h1>";
+        echo "<p>If you see this message, the Portal controller is accessible.</p>";
+        echo "<p>Current URI: " . htmlspecialchars($_SERVER['REQUEST_URI']) . "</p>";
+        echo "<p>Controller: Portal</p>";
+        echo "<p>Method: test()</p>";
+        echo "<hr>";
+        echo "<p><strong>Test URLs:</strong></p>";
+        echo "<ul>";
+        echo "<li><a href='" . site_url('dietetic/portal/test_with_param/123') . "'>Test with parameter</a></li>";
+        echo "<li><a href='" . site_url('dietetic/portal/view_meal_plan/2') . "'>view_meal_plan/2 (original)</a></li>";
+        echo "<li><a href='" . site_url('dietetic/portal/viewmealplan/2') . "'>viewmealplan/2 (no underscore)</a></li>";
+        echo "<li><a href='" . site_url('dietetic/portal/mealplan/2') . "'>mealplan/2 (short)</a></li>";
+        echo "<li><a href='" . site_url('dietetic/portal/meal_plan_view?id=2') . "'>meal_plan_view?id=2 (GET param)</a></li>";
+        echo "</ul>";
+        exit;
+    }
+
+    /**
+     * Test method with parameter
+     */
+    public function test_with_param($id = null)
+    {
+        echo "<h1>✓ Routing with Parameter Test Successful!</h1>";
+        echo "<p>Received parameter: <strong>" . htmlspecialchars($id) . "</strong></p>";
+        echo "<p>If you see this with the correct ID, routing with parameters works.</p>";
+        echo "<p><a href='" . site_url('dietetic/portal/test') . "'>← Back to test menu</a></p>";
+        exit;
+    }
+
+    /**
      * View consultations
      */
     public function consultations()
