@@ -96,12 +96,29 @@ $foreign_keys = [
      FOREIGN KEY (`patient_id`) REFERENCES `" . db_prefix() . "dietic_patients`(`id`) ON DELETE CASCADE",
 ];
 
-// Add foreign keys silently
+// Add foreign keys with better error handling
 foreach ($foreign_keys as $fk_sql) {
     try {
-        $CI->db->query($fk_sql);
+        // Extract constraint name from SQL
+        preg_match('/CONSTRAINT `([^`]+)`/', $fk_sql, $matches);
+        $constraint_name = $matches[1] ?? 'unknown';
+
+        // Check if constraint already exists
+        $check_sql = "SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND CONSTRAINT_NAME = '{$constraint_name}'";
+
+        $exists = $CI->db->query($check_sql)->row();
+
+        if (!$exists) {
+            $CI->db->query($fk_sql);
+            log_activity('Dietetic Module: Added foreign key ' . $constraint_name);
+        }
     } catch (Exception $e) {
-        // FK might exist, that's OK
+        // FK might fail due to existing data or other constraints
+        // Log but continue - the module can work without strict FKs
+        log_activity('Dietetic Module: FK constraint skipped - ' . substr($e->getMessage(), 0, 100));
     }
 }
 
