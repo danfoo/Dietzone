@@ -158,12 +158,18 @@ hooks()->add_action('customer_profile_tabs', 'dietetic_add_customer_profile_tab'
 
 function dietetic_add_customer_profile_tab($client_id)
 {
-    if (has_permission('dietetic', '', 'view')) {
-        echo '<li role="presentation">
-                <a href="' . admin_url('dietetic/patients/client_view/' . $client_id) . '" data-group="dietetic">
-                    <i class="fa fa-heartbeat"></i> ' . _l('dietetic_follow_up') . '
-                </a>
-              </li>';
+    // Only show tab if viewing an existing client (not on create page)
+    if (has_permission('dietetic', '', 'view') && !empty($client_id) && is_numeric($client_id)) {
+        try {
+            echo '<li role="presentation">
+                    <a href="' . admin_url('dietetic/patients/client_view/' . $client_id) . '" data-group="dietetic">
+                        <i class="fa fa-heartbeat"></i> ' . _l('dietetic_follow_up') . '
+                    </a>
+                  </li>';
+        } catch (Exception $e) {
+            // Silently fail if error - don't break client pages
+            log_activity('Dietetic tab error: ' . $e->getMessage());
+        }
     }
 }
 
@@ -209,10 +215,17 @@ function dietetic_add_portal_menu()
     }
 
     $CI = &get_instance();
-    $CI->load->model('dietetic/dietetic_patients_model');
 
     try {
+        // Check if dietetic_patients_model exists before loading
+        if (!file_exists(APPPATH . 'models/dietetic/Dietetic_patients_model.php') &&
+            !file_exists(module_dir_path(DIETETIC_MODULE_NAME, 'models/Dietetic_patients_model.php'))) {
+            return;
+        }
+
+        $CI->load->model('dietetic/dietetic_patients_model');
         $patient = $CI->dietetic_patients_model->get_by_client(get_client_user_id());
+
         if ($patient) {
             echo '<li class="customers-nav-item-dietetic">
                     <a href="' . site_url('dietetic/portal') . '">
@@ -221,7 +234,8 @@ function dietetic_add_portal_menu()
                   </li>';
         }
     } catch (Exception $e) {
-        // Silently fail if error
+        // Silently fail if error - don't break portal
+        log_activity('Dietetic portal menu error: ' . $e->getMessage());
     }
 }
 
