@@ -478,6 +478,25 @@ class Portal extends App_Controller
     }
 
     /**
+     * View meal plan using GET parameter (workaround for routing issues)
+     * Access via: /dietetic/portal/meal_plan_view?id=123
+     * This is a fallback method that uses query parameters instead of URL segments
+     */
+    public function meal_plan_view()
+    {
+        $meal_plan_id = $this->input->get('id');
+
+        if (empty($meal_plan_id)) {
+            // Also check POST in case it's sent that way
+            $meal_plan_id = $this->input->post('id');
+        }
+
+        log_activity('[DIETETIC DEBUG] meal_plan_view (GET method) called with ID: ' . var_export($meal_plan_id, true));
+
+        return $this->view_meal_plan($meal_plan_id);
+    }
+
+    /**
      * View consultations
      */
     public function consultations()
