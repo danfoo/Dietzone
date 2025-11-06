@@ -153,8 +153,9 @@ function dietetic_module_init_menu_items()
 
 /**
  * Add customer profile tab
+ * TEMPORARILY DISABLED TO FIX 404 ERROR
  */
-hooks()->add_action('customer_profile_tabs', 'dietetic_add_customer_profile_tab');
+// hooks()->add_action('customer_profile_tabs', 'dietetic_add_customer_profile_tab');
 
 function dietetic_add_customer_profile_tab($client_id)
 {

@@ -89,6 +89,18 @@ class Dietetic extends AdminController
     }
 
     /**
+     * Diagnostic tool for 404 errors
+     */
+    public function diagnostic()
+    {
+        if (!is_admin()) {
+            access_denied('Diagnostic');
+        }
+
+        $this->load->view('diagnostic_web');
+    }
+
+    /**
      * Settings page
      */
     public function settings()
