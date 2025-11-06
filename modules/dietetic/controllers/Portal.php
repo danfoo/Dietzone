@@ -457,6 +457,15 @@ class Portal extends App_Controller
     }
 
     /**
+     * Alias for view_meal_plan without underscore (for routing testing)
+     * @param int $meal_plan_id
+     */
+    public function viewmealplan($meal_plan_id = null)
+    {
+        return $this->view_meal_plan($meal_plan_id);
+    }
+
+    /**
      * View consultations
      */
     public function consultations()
