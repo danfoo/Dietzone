@@ -787,7 +787,7 @@
             <div class="hero-content">
                 <div class="profile-avatar-large">
                     <?php if (!empty($dietitian->profile_image)) { ?>
-                        <img src="<?php echo base_url('uploads/staff_profile_images/' . $dietitian->staffid . '/' . $dietitian->profile_image); ?>"
+                        <img src="<?php echo staff_profile_image_url($dietitian->staffid); ?>"
                              alt="<?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?>">
                     <?php } else { ?>
                         <div class="avatar-placeholder-large">
