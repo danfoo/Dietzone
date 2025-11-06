@@ -317,13 +317,24 @@ class Portal extends App_Controller
     }
 
     /**
-     * View meal plans
+     * View meal plans - can also display individual plan details
+     * List view: /dietetic/portal/meal_plans
+     * Detail view: /dietetic/portal/meal_plans?view=3
      */
     public function meal_plans()
     {
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
             return;
+        }
+
+        // Check if we're viewing a specific meal plan
+        $view_plan_id = $this->input->get('view');
+
+        if (!empty($view_plan_id) && is_numeric($view_plan_id)) {
+            // Redirect to the view_meal_plan method
+            log_activity('[DIETETIC DEBUG] meal_plans() redirecting to view_meal_plan(' . $view_plan_id . ')');
+            return $this->view_meal_plan($view_plan_id);
         }
 
         $client_id = get_client_user_id();
