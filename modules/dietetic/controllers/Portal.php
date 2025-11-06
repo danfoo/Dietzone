@@ -478,6 +478,23 @@ class Portal extends App_Controller
     }
 
     /**
+     * Simple test method to verify the controller is accessible
+     * Access via: /dietetic/portal/test
+     * Should display "Portal Controller Test OK"
+     */
+    public function test()
+    {
+        log_activity('[DIETETIC DEBUG] test() method called successfully');
+        echo '<h1>✅ Portal Controller Test OK</h1>';
+        echo '<p>Controller: Portal</p>';
+        echo '<p>Method: test()</p>';
+        echo '<p>Time: ' . date('Y-m-d H:i:s') . '</p>';
+        echo '<hr>';
+        echo '<p><a href="' . site_url('dietetic/portal/meal_plans') . '">← Retour aux plans</a></p>';
+        exit;
+    }
+
+    /**
      * View meal plan using GET parameter (workaround for routing issues)
      * Access via: /dietetic/portal/meal_plan_view?id=123
      * This is a fallback method that uses query parameters instead of URL segments
@@ -494,6 +511,16 @@ class Portal extends App_Controller
         log_activity('[DIETETIC DEBUG] meal_plan_view (GET method) called with ID: ' . var_export($meal_plan_id, true));
 
         return $this->view_meal_plan($meal_plan_id);
+    }
+
+    /**
+     * Simple direct method to view a specific meal plan (hardcoded for testing)
+     * Access via: /dietetic/portal/test_view_2
+     */
+    public function test_view_2()
+    {
+        log_activity('[DIETETIC DEBUG] test_view_2() called - will call view_meal_plan(2)');
+        return $this->view_meal_plan(2);
     }
 
     /**
