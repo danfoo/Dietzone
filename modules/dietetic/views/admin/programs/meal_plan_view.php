@@ -182,6 +182,13 @@
     padding: 20px 25px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.day-panel-header-left {
+    display: flex;
+    align-items: center;
     gap: 15px;
 }
 
@@ -191,8 +198,28 @@
     font-weight: 600;
 }
 
-.day-panel-header i {
+.day-panel-header i.fa-calendar {
     font-size: 24px;
+}
+
+.day-share-btn {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.day-share-btn:hover {
+    background: #128C7E;
+    transform: scale(1.05);
 }
 
 .day-panel-body {
@@ -405,6 +432,15 @@
     .bottom-actions {
         flex-direction: column;
     }
+
+    .day-panel-header {
+        flex-wrap: wrap;
+    }
+
+    .day-share-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
 }
 </style>
 
@@ -524,8 +560,13 @@
         ?>
             <div class="day-panel" id="day-<?php echo $day_num; ?>">
                 <div class="day-panel-header">
-                    <i class="fa fa-calendar"></i>
-                    <h4><?php echo $day_name; ?></h4>
+                    <div class="day-panel-header-left">
+                        <i class="fa fa-calendar"></i>
+                        <h4><?php echo $day_name; ?></h4>
+                    </div>
+                    <button type="button" class="day-share-btn" onclick="shareDayViaWhatsApp(<?php echo $day_num; ?>, '<?php echo addslashes($day_name); ?>')">
+                        <i class="fa fa-whatsapp"></i> Partager
+                    </button>
                 </div>
                 <div class="day-panel-body">
                     <?php if (!empty($day_meals)) { ?>
@@ -833,6 +874,122 @@ function shareViaWhatsApp() {
     const encodedMessage = encodeURIComponent(message);
 
     // Get patient phone if available (would need to be passed from backend)
+    <?php if (!empty($patient->phonenumber)) { ?>
+    const phoneNumber = "<?php echo preg_replace('/[^0-9+]/', '', $patient->phonenumber); ?>";
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    <?php } else { ?>
+    const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
+    <?php } ?>
+
+    // Open WhatsApp
+    window.open(whatsappURL, '_blank');
+}
+
+// WhatsApp Share Function for Single Day
+function shareDayViaWhatsApp(dayNum, dayName) {
+    // Build message text for single day
+    let message = "*📋 PLAN DE REPAS DIÉTÉTIQUE*\n\n";
+    message += "*Plan:* <?php echo htmlspecialchars($meal_plan->plan_name); ?>\n";
+    message += "*Semaine:* <?php echo $meal_plan->week_number; ?>\n";
+    message += "*Jour:* " + dayName + "\n";
+    message += "*Patient:* <?php echo htmlspecialchars($patient->client_name); ?>\n";
+    message += "*Programme:* <?php echo htmlspecialchars($program->program_name); ?>\n";
+    message += "\n";
+
+    <?php if ($program->daily_calories || $program->daily_protein) { ?>
+    message += "*🎯 OBJECTIFS QUOTIDIENS*\n";
+    <?php if ($program->daily_calories) { ?>
+    message += "• Calories: <?php echo number_format($program->daily_calories); ?> kcal/jour\n";
+    <?php } ?>
+    <?php if ($program->daily_protein) { ?>
+    message += "• Protéines: <?php echo number_format($program->daily_protein); ?>g/jour\n";
+    <?php } ?>
+    <?php if ($program->daily_carbs) { ?>
+    message += "• Glucides: <?php echo number_format($program->daily_carbs); ?>g/jour\n";
+    <?php } ?>
+    <?php if ($program->daily_fats) { ?>
+    message += "• Lipides: <?php echo number_format($program->daily_fats); ?>g/jour\n";
+    <?php } ?>
+    message += "\n";
+    <?php } ?>
+
+    message += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    message += "*📅 " + dayName.toUpperCase() + "*\n\n";
+
+    <?php
+    $meal_type_fr = [
+        'breakfast' => '☀️ Petit-déjeuner',
+        'morning_snack' => '☕ Collation matinale',
+        'lunch' => '🍽️ Déjeuner',
+        'afternoon_snack' => '🍎 Collation après-midi',
+        'dinner' => '🌙 Dîner',
+        'evening_snack' => '⭐ Collation soirée'
+    ];
+
+    foreach ($days as $day_num => $day_name) {
+        $day_meals = isset($meals_by_day[$day_num]) ? $meals_by_day[$day_num] : [];
+    ?>
+    if (dayNum === <?php echo $day_num; ?>) {
+        <?php if (!empty($day_meals)) { ?>
+            <?php foreach ($day_meals as $meal) {
+                $meal_type_class = str_replace(' ', '_', strtolower($meal->meal_type));
+                $meal_type_label = isset($meal_type_fr[$meal_type_class]) ? $meal_type_fr[$meal_type_class] : ucfirst(str_replace('_', ' ', $meal->meal_type));
+            ?>
+            message += "*<?php echo $meal_type_label; ?>*";
+            <?php if ($meal->meal_time) { ?>
+            message += " (<?php echo substr($meal->meal_time, 0, 5); ?>)";
+            <?php } ?>
+            <?php if ($meal->meal_name) { ?>
+            message += "\n_<?php echo htmlspecialchars($meal->meal_name); ?>_";
+            <?php } ?>
+            message += "\n";
+
+            <?php if (!empty($meal->foods)) {
+                foreach ($meal->foods as $food) {
+            ?>
+            message += "  • <?php echo htmlspecialchars($food->food_name); ?> - <?php echo $food->quantity . ' ' . $food->unit; ?>\n";
+            <?php }
+
+                // Calculate totals
+                $meal_calories = 0;
+                $meal_protein = 0;
+                $meal_carbs = 0;
+                $meal_fats = 0;
+
+                foreach ($meal->foods as $food) {
+                    $ratio = $food->quantity / $food->serving_size;
+                    $meal_calories += $food->calories * $ratio;
+                    $meal_protein += $food->protein * $ratio;
+                    $meal_carbs += $food->carbs * $ratio;
+                    $meal_fats += $food->fats * $ratio;
+                }
+            ?>
+            message += "  _Total: <?php echo round($meal_calories); ?> kcal | P: <?php echo round($meal_protein, 1); ?>g | G: <?php echo round($meal_carbs, 1); ?>g | L: <?php echo round($meal_fats, 1); ?>g_\n";
+            <?php } ?>
+
+            <?php if ($meal->instructions) { ?>
+            message += "  ℹ️ Instructions: <?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], ' ', $meal->instructions)); ?>\n";
+            <?php } ?>
+            message += "\n";
+            <?php } ?>
+        <?php } else { ?>
+            message += "_Aucun repas planifié pour ce jour_\n\n";
+        <?php } ?>
+    }
+    <?php } ?>
+
+    <?php if ($meal_plan->notes) { ?>
+    message += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    message += "*📝 NOTES DU PLAN*\n";
+    message += "<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], '\n', $meal_plan->notes)); ?>\n";
+    <?php } ?>
+
+    message += "\n_Généré par DietSenegal - Programme Diététique_";
+
+    // Encode for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Get patient phone if available
     <?php if (!empty($patient->phonenumber)) { ?>
     const phoneNumber = "<?php echo preg_replace('/[^0-9+]/', '', $patient->phonenumber); ?>";
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
