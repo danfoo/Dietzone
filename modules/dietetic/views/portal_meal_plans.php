@@ -118,7 +118,7 @@
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #f093fb;
+            border-left: 4px solid #667eea;
         }
 
         .page-header-modern h1 {
@@ -132,7 +132,7 @@
         }
 
         .page-header-modern h1 i {
-            color: #f093fb;
+            color: #667eea;
         }
 
         .page-header-modern p {
@@ -143,7 +143,7 @@
 
         /* Program Info */
         .program-info {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 12px;
             padding: 20px 25px;
@@ -191,7 +191,7 @@
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
             transition: all 0.3s ease;
             overflow: hidden;
-            border-left: 5px solid #f093fb;
+            border-left: 5px solid #667eea;
         }
 
         .meal-plan-card:hover {
@@ -209,7 +209,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 6px 16px;
             border-radius: 20px;
@@ -239,7 +239,7 @@
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 3px solid #f093fb;
+            border-left: 3px solid #667eea;
         }
 
         .meal-plan-actions {
@@ -249,7 +249,7 @@
 
         .btn-view-meal {
             flex: 1;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 12px 20px;
             border-radius: 8px;
@@ -404,6 +404,7 @@
                 padding: 15px;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                 gap: 5px;
+                z-index: 1000;
             }
 
             .portal-nav.show {

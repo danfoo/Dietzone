@@ -265,6 +265,7 @@
             position: relative;
             overflow: hidden;
             border-top: 3px solid transparent;
+            cursor: pointer;
         }
 
         .action-card::after {
@@ -523,8 +524,16 @@
                 font-size: 20px;
             }
 
+            .stat-label {
+                font-size: 10px;
+            }
+
             .stat-value {
-                font-size: 26px;
+                font-size: 22px;
+            }
+
+            .stat-value span {
+                font-size: 16px !important;
             }
 
             .progress-card {
@@ -542,6 +551,25 @@
             .action-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
+            }
+
+            .action-card {
+                padding: 20px;
+            }
+
+            .action-icon {
+                width: 55px;
+                height: 55px;
+                font-size: 26px;
+                margin-bottom: 15px;
+            }
+
+            .action-card h4 {
+                font-size: 14px;
+            }
+
+            .action-card p {
+                font-size: 12px;
             }
 
             .info-row {
