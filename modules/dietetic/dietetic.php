@@ -158,16 +158,32 @@ hooks()->add_action('customer_profile_tabs', 'dietetic_add_customer_profile_tab'
 
 function dietetic_add_customer_profile_tab($client_id)
 {
+    // Completely disable any potential errors by wrapping everything
+    if (!function_exists('has_permission') || !function_exists('admin_url') || !function_exists('_l')) {
+        return; // Core Perfex functions not loaded yet
+    }
+
     // Only show tab if viewing an existing client (not on create page)
-    if (has_permission('dietetic', '', 'view') && !empty($client_id) && is_numeric($client_id)) {
-        try {
-            echo '<li role="presentation">
-                    <a href="' . admin_url('dietetic/patients/client_view/' . $client_id) . '" data-group="dietetic">
-                        <i class="fa fa-heartbeat"></i> ' . _l('dietetic_follow_up') . '
-                    </a>
-                  </li>';
-        } catch (Exception $e) {
-            // Silently fail if error - don't break client pages
+    if (!has_permission('dietetic', '', 'view') || empty($client_id) || !is_numeric($client_id)) {
+        return; // No permission or invalid client ID
+    }
+
+    // Use output buffering to prevent any echo from breaking the page
+    ob_start();
+    try {
+        echo '<li role="presentation">
+                <a href="' . admin_url('dietetic/patients/client_view/' . $client_id) . '" data-group="dietetic">
+                    <i class="fa fa-heartbeat"></i> ' . _l('dietetic_follow_up') . '
+                </a>
+              </li>';
+
+        // Flush the buffer if no errors
+        ob_end_flush();
+    } catch (Throwable $e) {
+        // Catch ALL errors (including PHP 7+ errors like TypeError)
+        ob_end_clean(); // Discard any output
+        // Log but don't break the page
+        if (function_exists('log_activity')) {
             log_activity('Dietetic tab error: ' . $e->getMessage());
         }
     }
@@ -210,21 +226,48 @@ hooks()->add_action('customers_navigation_start', 'dietetic_add_portal_menu');
 
 function dietetic_add_portal_menu()
 {
+    // Check all required functions exist
+    if (!function_exists('is_client_logged_in') || !function_exists('get_client_user_id') ||
+        !function_exists('site_url') || !function_exists('module_dir_path')) {
+        return; // Core functions not loaded
+    }
+
     if (!is_client_logged_in()) {
         return;
     }
 
-    $CI = &get_instance();
-
+    // Use output buffering to prevent breaking the page
+    ob_start();
     try {
+        $CI = &get_instance();
+
+        if (!$CI) {
+            ob_end_clean();
+            return;
+        }
+
         // Check if dietetic_patients_model exists before loading
-        if (!file_exists(APPPATH . 'models/dietetic/Dietetic_patients_model.php') &&
-            !file_exists(module_dir_path(DIETETIC_MODULE_NAME, 'models/Dietetic_patients_model.php'))) {
+        $model_path = module_dir_path(DIETETIC_MODULE_NAME, 'models/Dietetic_patients_model.php');
+
+        if (!file_exists($model_path)) {
+            ob_end_clean();
             return;
         }
 
         $CI->load->model('dietetic/dietetic_patients_model');
-        $patient = $CI->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!isset($CI->dietetic_patients_model)) {
+            ob_end_clean();
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        if (empty($client_id)) {
+            ob_end_clean();
+            return;
+        }
+
+        $patient = $CI->dietetic_patients_model->get_by_client($client_id);
 
         if ($patient) {
             echo '<li class="customers-nav-item-dietetic">
@@ -233,9 +276,15 @@ function dietetic_add_portal_menu()
                     </a>
                   </li>';
         }
-    } catch (Exception $e) {
-        // Silently fail if error - don't break portal
-        log_activity('Dietetic portal menu error: ' . $e->getMessage());
+
+        ob_end_flush();
+    } catch (Throwable $e) {
+        // Catch ALL errors including PHP 7+ Errors
+        ob_end_clean();
+        // Log if possible, but don't break
+        if (function_exists('log_activity')) {
+            log_activity('Dietetic portal menu error: ' . $e->getMessage());
+        }
     }
 }
 
