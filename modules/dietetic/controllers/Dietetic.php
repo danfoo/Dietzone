@@ -105,8 +105,8 @@ class Dietetic extends AdminController
      */
     public function settings()
     {
-        // Only admins can access settings
-        if (!is_admin()) {
+        // Check specific permission for settings access
+        if (!dietetic_has_permission('settings')) {
             access_denied('dietetic');
         }
 

@@ -48,12 +48,13 @@ class Foods extends AdminController
 
     /**
      * Create new food
-     * Any staff with view permission can create foods (dietitians need this to build meal plans)
+     * Requires 'manage_foods' permission
      */
     public function create()
     {
-        // View permission is already checked in constructor
-        // No additional permission check needed - all dietitians can create foods
+        if (!dietetic_has_permission('manage_foods')) {
+            access_denied('dietetic');
+        }
 
         if ($this->input->post()) {
             $data = $this->input->post();
@@ -75,14 +76,15 @@ class Foods extends AdminController
 
     /**
      * Edit food
-     * Any staff with view permission can edit foods (dietitians need to update nutrition info)
+     * Requires 'manage_foods' permission
      *
      * @param int $id
      */
     public function edit($id)
     {
-        // View permission is already checked in constructor
-        // No additional permission check needed - all dietitians can edit foods
+        if (!dietetic_has_permission('manage_foods')) {
+            access_denied('dietetic');
+        }
 
         $data['food'] = $this->dietetic_foods_model->get($id);
 

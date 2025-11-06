@@ -48,9 +48,14 @@ class Dietitians extends AdminController
 
     /**
      * List all dietitians with their ratings
+     * Requires 'view_dietitians' permission
      */
     public function index()
     {
+        if (!dietetic_has_permission('view_dietitians')) {
+            access_denied('dietetic');
+        }
+
         $data['title'] = 'Diététiciens';
 
         if ($this->load_ratings_model()) {

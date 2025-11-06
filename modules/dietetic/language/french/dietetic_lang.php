@@ -291,6 +291,9 @@ $lang['dietetic_reminder_renewal_message'] = 'Bonjour %s, votre programme "%s" s
 
 // Permissions
 $lang['permission_dietetic'] = 'Module Diététique';
+$lang['dietetic_permission_settings'] = 'Accéder aux Paramètres';
+$lang['dietetic_permission_manage_foods'] = 'Gérer la Base Alimentaire';
+$lang['dietetic_permission_view_dietitians'] = 'Voir la Liste des Diététiciens';
 
 // Settings
 $lang['dietetic_setting_lam_api_url'] = 'URL API SMS LAM';

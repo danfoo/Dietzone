@@ -123,32 +123,38 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
-        // Dietitians (with ratings)
-        $CI->app_menu->add_sidebar_children_item('dietetic', [
-            'slug'     => 'dietetic-dietitians',
-            'name'     => 'Diététiciens',
-            'icon'     => 'fa fa-user-md',
-            'href'     => admin_url('dietetic/dietitians'),
-            'position' => 5,
-        ]);
+        // Dietitians (with ratings) - requires view_dietitians permission
+        if (has_permission('dietetic', '', 'view_dietitians')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-dietitians',
+                'name'     => 'Diététiciens',
+                'icon'     => 'fa fa-user-md',
+                'href'     => admin_url('dietetic/dietitians'),
+                'position' => 5,
+            ]);
+        }
 
-        // Foods Database
-        $CI->app_menu->add_sidebar_children_item('dietetic', [
-            'slug'     => 'dietetic-foods',
-            'name'     => _l('dietetic_foods'),
-            'icon'     => 'fa fa-cutlery',
-            'href'     => admin_url('dietetic/foods'),
-            'position' => 6,
-        ]);
+        // Foods Database - requires manage_foods permission
+        if (has_permission('dietetic', '', 'manage_foods')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-foods',
+                'name'     => _l('dietetic_foods'),
+                'icon'     => 'fa fa-cutlery',
+                'href'     => admin_url('dietetic/foods'),
+                'position' => 6,
+            ]);
+        }
 
-        // Settings
-        $CI->app_menu->add_sidebar_children_item('dietetic', [
-            'slug'     => 'dietetic-settings',
-            'name'     => _l('settings'),
-            'icon'     => 'fa fa-cog',
-            'href'     => admin_url('dietetic/settings'),
-            'position' => 99,
-        ]);
+        // Settings - requires settings permission
+        if (has_permission('dietetic', '', 'settings')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-settings',
+                'name'     => _l('settings'),
+                'icon'     => 'fa fa-cog',
+                'href'     => admin_url('dietetic/settings'),
+                'position' => 99,
+            ]);
+        }
     }
 }
 
@@ -312,10 +318,13 @@ function dietetic_permissions()
     $capabilities = [];
 
     $capabilities['capabilities'] = [
-        'view'   => _l('permission_view') . '(' . _l('permission_global') . ')',
+        'view'   => _l('permission_view') . ' (' . _l('permission_global') . ')',
         'create' => _l('permission_create'),
         'edit'   => _l('permission_edit'),
         'delete' => _l('permission_delete'),
+        'settings' => _l('dietetic_permission_settings'),
+        'manage_foods' => _l('dietetic_permission_manage_foods'),
+        'view_dietitians' => _l('dietetic_permission_view_dietitians'),
     ];
 
     register_staff_capabilities('dietetic', $capabilities, _l('dietetic'));
