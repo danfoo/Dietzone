@@ -367,7 +367,8 @@ class Portal extends App_Controller
     }
 
     /**
-     * View meal plan details
+     * View meal plans - redirects to list if no ID provided
+     * This method serves as both index and detail view
      */
     public function view_meal_plan($meal_plan_id = null)
     {
@@ -381,9 +382,9 @@ class Portal extends App_Controller
         }
 
         // If no meal plan ID provided, redirect to meal plans list
+        // This handles both /view_meal_plan and /view_meal_plan/
         if (empty($meal_plan_id) || !is_numeric($meal_plan_id)) {
-            log_activity('[DIETETIC DEBUG] Invalid meal plan ID, redirecting to list');
-            set_alert('warning', 'Veuillez sélectionner un plan de repas.');
+            log_activity('[DIETETIC DEBUG] Invalid or missing meal plan ID (' . var_export($meal_plan_id, true) . '), redirecting to list');
             redirect(site_url('dietetic/portal/meal_plans'));
             return;
         }
@@ -458,10 +459,40 @@ class Portal extends App_Controller
 
     /**
      * Alias for view_meal_plan without underscore (for routing testing)
+     * Recommended to use this URL format: /dietetic/portal/viewmealplan/123
      * @param int $meal_plan_id
      */
     public function viewmealplan($meal_plan_id = null)
     {
+        return $this->view_meal_plan($meal_plan_id);
+    }
+
+    /**
+     * Alternative method name for better URL compatibility
+     * Access via: /dietetic/portal/mealplan/123
+     * @param int $meal_plan_id
+     */
+    public function mealplan($meal_plan_id = null)
+    {
+        return $this->view_meal_plan($meal_plan_id);
+    }
+
+    /**
+     * View meal plan using GET parameter (workaround for routing issues)
+     * Access via: /dietetic/portal/meal_plan_view?id=123
+     * This is a fallback method that uses query parameters instead of URL segments
+     */
+    public function meal_plan_view()
+    {
+        $meal_plan_id = $this->input->get('id');
+
+        if (empty($meal_plan_id)) {
+            // Also check POST in case it's sent that way
+            $meal_plan_id = $this->input->post('id');
+        }
+
+        log_activity('[DIETETIC DEBUG] meal_plan_view (GET method) called with ID: ' . var_export($meal_plan_id, true));
+
         return $this->view_meal_plan($meal_plan_id);
     }
 
