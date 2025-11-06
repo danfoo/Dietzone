@@ -760,7 +760,7 @@ $(document).ready(function() {
 // WhatsApp Share Function
 function shareViaWhatsApp() {
     // Build message text
-    let message = "🍽️ *PLAN DE REPAS DIÉTÉTIQUE* 🍽️\n\n";
+    let message = "🍴 *PLAN DE REPAS DIETETIQUE* 🍴\n\n";
     message += "📌 *Plan:* <?php echo htmlspecialchars($meal_plan->plan_name); ?>\n";
     message += "📆 *Semaine:* <?php echo $meal_plan->week_number; ?>\n";
     message += "👤 *Patient:* <?php echo htmlspecialchars($patient->client_name); ?>\n";
@@ -773,7 +773,7 @@ function shareViaWhatsApp() {
     message += "🔥 Calories: *<?php echo number_format($program->daily_calories); ?>* kcal/jour\n";
     <?php } ?>
     <?php if ($program->daily_protein) { ?>
-    message += "💪 Protéines: *<?php echo number_format($program->daily_protein); ?>g*/jour\n";
+    message += "💪 Proteines: *<?php echo number_format($program->daily_protein); ?>g*/jour\n";
     <?php } ?>
     <?php if ($program->daily_carbs) { ?>
     message += "🌾 Glucides: *<?php echo number_format($program->daily_carbs); ?>g*/jour\n";
@@ -784,7 +784,7 @@ function shareViaWhatsApp() {
     message += "\n";
     <?php } ?>
 
-    message += "═══════════════════════\n\n";
+    message += "━━━━━━━━━━━━━━━━━━\n\n";
 
     <?php
     $days_fr = [
@@ -798,12 +798,12 @@ function shareViaWhatsApp() {
     ];
 
     $meal_type_fr = [
-        'breakfast' => '☀️ Petit-déjeuner',
-        'morning_snack' => '🥐 Collation matinale',
-        'lunch' => '🍽️ Déjeuner',
-        'afternoon_snack' => '🍏 Collation après-midi',
-        'dinner' => '🌙 Dîner',
-        'evening_snack' => '🌟 Collation soirée'
+        'breakfast' => '☀️ Petit-dejeuner',
+        'morning_snack' => '☕ Collation matinale',
+        'lunch' => '🍴 Dejeuner',
+        'afternoon_snack' => '🍎 Collation apres-midi',
+        'dinner' => '🌙 Diner',
+        'evening_snack' => '⭐ Collation soiree'
     ];
 
     foreach ($days as $day_num => $day_name) {
@@ -827,7 +827,7 @@ function shareViaWhatsApp() {
     <?php if (!empty($meal->foods)) {
         foreach ($meal->foods as $food) {
     ?>
-    message += "  🔹 <?php echo htmlspecialchars($food->food_name); ?> - <?php echo $food->quantity . ' ' . $food->unit; ?>\n";
+    message += "  • <?php echo htmlspecialchars($food->food_name); ?> - <?php echo $food->quantity . ' ' . $food->unit; ?>\n";
     <?php }
 
         // Calculate totals
@@ -844,11 +844,11 @@ function shareViaWhatsApp() {
             $meal_fats += $food->fats * $ratio;
         }
     ?>
-    message += "  📊 _Total: <?php echo round($meal_calories); ?> kcal | 💪 <?php echo round($meal_protein, 1); ?>g | 🌾 <?php echo round($meal_carbs, 1); ?>g | 🥑 <?php echo round($meal_fats, 1); ?>g_\n";
+    message += "  ✓ _Total: <?php echo round($meal_calories); ?> kcal | P: <?php echo round($meal_protein, 1); ?>g | G: <?php echo round($meal_carbs, 1); ?>g | L: <?php echo round($meal_fats, 1); ?>g_\n";
     <?php } ?>
 
     <?php if ($meal->instructions) { ?>
-    message += "  💡 Instructions: _<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], ' ', $meal->instructions)); ?>_\n";
+    message += "  ℹ️ Instructions: _<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], ' ', $meal->instructions)); ?>_\n";
     <?php } ?>
 
     <?php } ?>
@@ -856,10 +856,10 @@ function shareViaWhatsApp() {
     <?php }
     } ?>
 
-    message += "═══════════════════════\n\n";
+    message += "━━━━━━━━━━━━━━━━━━\n\n";
     message += "📊 *BILAN HEBDOMADAIRE*\n";
     message += "🔥 Calories totales: *<?php echo number_format(round($nutrition_totals->calories)); ?>* kcal\n";
-    message += "💪 Protéines: *<?php echo number_format($nutrition_totals->protein, 1); ?>g*\n";
+    message += "💪 Proteines: *<?php echo number_format($nutrition_totals->protein, 1); ?>g*\n";
     message += "🌾 Glucides: *<?php echo number_format($nutrition_totals->carbs, 1); ?>g*\n";
     message += "🥑 Lipides: *<?php echo number_format($nutrition_totals->fats, 1); ?>g*\n";
 
@@ -868,7 +868,7 @@ function shareViaWhatsApp() {
     message += "<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], '\n', $meal_plan->notes)); ?>\n";
     <?php } ?>
 
-    message += "\n✨ _Généré par DietSenegal - Programme Diététique_ ✨";
+    message += "\n✨ _Genere par DietSenegal - Programme Dietetique_ ✨";
 
     // Encode for URL
     const encodedMessage = encodeURIComponent(message);
@@ -888,7 +888,7 @@ function shareViaWhatsApp() {
 // WhatsApp Share Function for Single Day
 function shareDayViaWhatsApp(dayNum, dayName) {
     // Build message text for single day
-    let message = "🍽️ *PLAN DE REPAS DIÉTÉTIQUE* 🍽️\n\n";
+    let message = "🍴 *PLAN DE REPAS DIETETIQUE* 🍴\n\n";
     message += "📌 *Plan:* <?php echo htmlspecialchars($meal_plan->plan_name); ?>\n";
     message += "📆 *Semaine:* <?php echo $meal_plan->week_number; ?>\n";
     message += "📅 *Jour:* " + dayName + "\n";
@@ -902,7 +902,7 @@ function shareDayViaWhatsApp(dayNum, dayName) {
     message += "🔥 Calories: *<?php echo number_format($program->daily_calories); ?>* kcal/jour\n";
     <?php } ?>
     <?php if ($program->daily_protein) { ?>
-    message += "💪 Protéines: *<?php echo number_format($program->daily_protein); ?>g*/jour\n";
+    message += "💪 Proteines: *<?php echo number_format($program->daily_protein); ?>g*/jour\n";
     <?php } ?>
     <?php if ($program->daily_carbs) { ?>
     message += "🌾 Glucides: *<?php echo number_format($program->daily_carbs); ?>g*/jour\n";
@@ -913,17 +913,17 @@ function shareDayViaWhatsApp(dayNum, dayName) {
     message += "\n";
     <?php } ?>
 
-    message += "═══════════════════════\n\n";
+    message += "━━━━━━━━━━━━━━━━━━\n\n";
     message += "📅 *" + dayName.toUpperCase() + "*\n\n";
 
     <?php
     $meal_type_fr = [
-        'breakfast' => '☀️ Petit-déjeuner',
-        'morning_snack' => '🥐 Collation matinale',
-        'lunch' => '🍽️ Déjeuner',
-        'afternoon_snack' => '🍏 Collation après-midi',
-        'dinner' => '🌙 Dîner',
-        'evening_snack' => '🌟 Collation soirée'
+        'breakfast' => '☀️ Petit-dejeuner',
+        'morning_snack' => '☕ Collation matinale',
+        'lunch' => '🍴 Dejeuner',
+        'afternoon_snack' => '🍎 Collation apres-midi',
+        'dinner' => '🌙 Diner',
+        'evening_snack' => '⭐ Collation soiree'
     ];
 
     foreach ($days as $day_num => $day_name) {
@@ -947,7 +947,7 @@ function shareDayViaWhatsApp(dayNum, dayName) {
             <?php if (!empty($meal->foods)) {
                 foreach ($meal->foods as $food) {
             ?>
-            message += "  🔹 <?php echo htmlspecialchars($food->food_name); ?> - <?php echo $food->quantity . ' ' . $food->unit; ?>\n";
+            message += "  • <?php echo htmlspecialchars($food->food_name); ?> - <?php echo $food->quantity . ' ' . $food->unit; ?>\n";
             <?php }
 
                 // Calculate totals
@@ -964,27 +964,27 @@ function shareDayViaWhatsApp(dayNum, dayName) {
                     $meal_fats += $food->fats * $ratio;
                 }
             ?>
-            message += "  📊 _Total: <?php echo round($meal_calories); ?> kcal | 💪 <?php echo round($meal_protein, 1); ?>g | 🌾 <?php echo round($meal_carbs, 1); ?>g | 🥑 <?php echo round($meal_fats, 1); ?>g_\n";
+            message += "  ✓ _Total: <?php echo round($meal_calories); ?> kcal | P: <?php echo round($meal_protein, 1); ?>g | G: <?php echo round($meal_carbs, 1); ?>g | L: <?php echo round($meal_fats, 1); ?>g_\n";
             <?php } ?>
 
             <?php if ($meal->instructions) { ?>
-            message += "  💡 Instructions: _<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], ' ', $meal->instructions)); ?>_\n";
+            message += "  ℹ️ Instructions: _<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], ' ', $meal->instructions)); ?>_\n";
             <?php } ?>
             message += "\n";
             <?php } ?>
         <?php } else { ?>
-            message += "❌ _Aucun repas planifié pour ce jour_\n\n";
+            message += "✗ _Aucun repas planifie pour ce jour_\n\n";
         <?php } ?>
     }
     <?php } ?>
 
     <?php if ($meal_plan->notes) { ?>
-    message += "═══════════════════════\n\n";
+    message += "━━━━━━━━━━━━━━━━━━\n\n";
     message += "📝 *NOTES DU PLAN*\n";
     message += "<?php echo htmlspecialchars(str_replace(["\r\n", "\n", "\r"], '\n', $meal_plan->notes)); ?>\n";
     <?php } ?>
 
-    message += "\n✨ _Généré par DietSenegal - Programme Diététique_ ✨";
+    message += "\n✨ _Genere par DietSenegal - Programme Dietetique_ ✨";
 
     // Encode for URL
     const encodedMessage = encodeURIComponent(message);
