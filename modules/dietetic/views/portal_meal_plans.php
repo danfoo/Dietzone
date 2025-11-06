@@ -549,9 +549,13 @@
                                     </div>
                                 <?php } ?>
                                 <div class="meal-plan-actions">
-                                    <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-view-meal">
-                                        <i class="fa fa-eye"></i> Voir les Repas
-                                    </a>
+                                    <?php if (!empty($plan->id)) { ?>
+                                        <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-view-meal">
+                                            <i class="fa fa-eye"></i> Voir les Repas
+                                        </a>
+                                    <?php } else { ?>
+                                        <span class="text-muted"><i class="fa fa-info-circle"></i> Plan non disponible</span>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>

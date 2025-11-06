@@ -369,10 +369,17 @@ class Portal extends App_Controller
     /**
      * View meal plan details
      */
-    public function view_meal_plan($meal_plan_id)
+    public function view_meal_plan($meal_plan_id = null)
     {
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
+            return;
+        }
+
+        // If no meal plan ID provided, redirect to meal plans list
+        if (empty($meal_plan_id) || !is_numeric($meal_plan_id)) {
+            set_alert('warning', 'Veuillez sélectionner un plan de repas.');
+            redirect(site_url('dietetic/portal/meal_plans'));
             return;
         }
 
