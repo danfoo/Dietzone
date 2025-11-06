@@ -1,7 +1,15 @@
 # Diagnostic 404 Error - View Meal Plan
 
-## Problème Signalé
-Erreur 404 lors de l'accès à : https://app.dietsenegal.net/dietetic/portal/view_meal_plan/2
+## Problèmes Signalés
+
+### Cas 1 : URL avec ID
+Erreur 404 lors de l'accès à : `https://app.dietsenegal.net/dietetic/portal/view_meal_plan/2`
+
+### Cas 2 : URL sans ID (NOUVEAU)
+Erreur 404 lors de l'accès à : `https://app.dietsenegal.net/dietetic/portal/view_meal_plan/`
+
+**Cause :** L'URL est incomplète. La méthode `view_meal_plan()` nécessite un ID de plan alimentaire.
+**Solution immédiate :** Accéder d'abord à `/dietetic/portal/meal_plans` pour voir la liste, puis cliquer sur un plan.
 
 ## Actions Effectuées
 
@@ -30,19 +38,29 @@ git pull origin claude/build-dietetic-crm-module-011CUg57kDmPcHyfwwy6HAYZ
 
 ### Étape 2 : Tester les URLs
 
-Essayez ces 3 URLs dans l'ordre :
+Essayez ces URLs dans l'ordre :
 
-1. **URL originale avec underscore :**
+1. **Liste des plans (point d'entrée recommandé) :**
+   ```
+   https://app.dietsenegal.net/dietetic/portal/meal_plans
+   ```
+
+2. **URL originale avec underscore :**
    ```
    https://app.dietsenegal.net/dietetic/portal/view_meal_plan/2
    ```
 
-2. **URL alternative sans underscore :**
+3. **URL alternative sans underscore (recommandée) :**
    ```
    https://app.dietsenegal.net/dietetic/portal/viewmealplan/2
    ```
 
-3. **URL avec ID différent (pour tester si c'est spécifique à l'ID 2) :**
+4. **URL courte (nouvelle) :**
+   ```
+   https://app.dietsenegal.net/dietetic/portal/mealplan/2
+   ```
+
+5. **URL avec ID différent (pour tester si c'est spécifique à l'ID) :**
    ```
    https://app.dietsenegal.net/dietetic/portal/view_meal_plan/1
    ```
