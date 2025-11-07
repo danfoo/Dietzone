@@ -198,7 +198,7 @@ function dietetic_add_customer_profile_tab($client_id)
 }
 
 /**
- * Add custom CSS and JS for admin area
+ * Add custom CSS for admin area (in head)
  */
 hooks()->add_action('app_admin_head', 'dietetic_add_head_components');
 
@@ -209,6 +209,20 @@ function dietetic_add_head_components()
 
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<link href="' . $module_path . 'assets/css/dietetic.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
+    }
+}
+
+/**
+ * Add custom JS for admin area (in footer, after jQuery is loaded)
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_add_footer_components');
+
+function dietetic_add_footer_components()
+{
+    $CI = &get_instance();
+    $module_path = module_dir_url(DIETETIC_MODULE_NAME);
+
+    if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<script src="' . $module_path . 'assets/js/dietetic.js?v=' . time() . '"></script>';
     }
 }
