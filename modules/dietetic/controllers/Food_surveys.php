@@ -215,7 +215,7 @@ class Food_surveys extends AdminController
         }
 
         log_activity('DEBUG: About to load view form.php');
-        $this->load->view('admin/food_surveys/form', $data);
+        $this->load->view('admin/food_surveys/form_simple', $data);
         log_activity('DEBUG: View loaded successfully');
     }
 
@@ -257,7 +257,7 @@ class Food_surveys extends AdminController
         $data['programs'] = $this->dietetic_programs_model->get_all();
         $data['staff'] = $this->staff_model->get();
 
-        $this->load->view('admin/food_surveys/form', $data);
+        $this->load->view('admin/food_surveys/form_simple', $data);
     }
 
     /**
