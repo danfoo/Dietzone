@@ -109,7 +109,7 @@ function dietetic_module_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-consultations',
             'name'     => _l('dietetic_consultations'),
-            'icon'     => 'fa fa-calendar-check-o',
+            'icon'     => 'fa fa-stethoscope',
             'href'     => admin_url('dietetic/consultations'),
             'position' => 3,
         ]);
