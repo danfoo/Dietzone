@@ -287,6 +287,18 @@ class Dietetic_food_surveys_model extends App_Model
     }
 
     /**
+     * Delete all beverages for an entry
+     *
+     * @param int $entry_id
+     * @return bool
+     */
+    public function delete_beverages_by_entry($entry_id)
+    {
+        $this->db->where('entry_id', $entry_id);
+        return $this->db->delete($this->table_beverages);
+    }
+
+    /**
      * Get recommendations for an entry
      *
      * @param int $entry_id

@@ -531,8 +531,17 @@
                         <div class="recommendation" data-id="<?php echo $recommendation->id; ?>">
                             <div class="recommendation-header">
                                 <div class="dietitian-avatar">
-                                    <?php if (isset($recommendation->profile_image) && $recommendation->profile_image): ?>
-                                        <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="">
+                                    <?php
+                                    $has_profile_image = false;
+                                    if (!empty($recommendation->profile_image)) {
+                                        $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
+                                        if (file_exists($image_path)) {
+                                            $has_profile_image = true;
+                                        }
+                                    }
+
+                                    if ($has_profile_image): ?>
+                                        <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
                                     <?php else: ?>
                                         <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
                                     <?php endif; ?>

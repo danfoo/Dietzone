@@ -1238,6 +1238,9 @@ class Portal extends App_Controller
             $entry_id = $this->dietetic_food_surveys_model->save_entry($entry_data);
 
             if ($entry_id) {
+                // Delete existing beverages first to prevent duplication
+                $this->dietetic_food_surveys_model->delete_beverages_by_entry($entry_id);
+
                 // Save beverages if provided
                 $beverages = $this->input->post('beverages');
                 if (is_array($beverages) && count($beverages) > 0) {

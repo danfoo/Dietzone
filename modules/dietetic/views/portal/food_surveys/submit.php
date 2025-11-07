@@ -681,15 +681,15 @@
                 </div>
 
                 <!-- Breakfast -->
-                <div class="meal-card" id="breakfastCard">
+                <div class="meal-card <?php echo ($today_entry && $today_entry->breakfast_photo) ? 'has-photo' : ''; ?>" id="breakfastCard">
                     <div class="meal-card-title">
                         <i class="fa fa-coffee"></i>
                         Petit-déjeuner
                     </div>
 
-                    <div class="photo-upload-area" data-meal="breakfast">
+                    <div class="photo-upload-area" data-meal="breakfast" style="<?php echo ($today_entry && $today_entry->breakfast_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="breakfastPhoto" accept="image/*" data-meal="breakfast">
-                        <input type="hidden" name="breakfast_photo" id="breakfast_photo_value">
+                        <input type="hidden" name="breakfast_photo" id="breakfast_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->breakfast_photo) : ''; ?>">
                         <div class="photo-upload-icon">
                             <i class="fa fa-camera"></i>
                         </div>
@@ -697,8 +697,8 @@
                         <div class="photo-upload-hint">JPEG, PNG ou GIF - Max 5MB</div>
                     </div>
 
-                    <div id="breakfastPreview" class="photo-preview" style="display: none;">
-                        <img src="" alt="Petit-déjeuner">
+                    <div id="breakfastPreview" class="photo-preview" style="<?php echo ($today_entry && $today_entry->breakfast_photo) ? '' : 'display: none;'; ?>">
+                        <img src="<?php echo ($today_entry && $today_entry->breakfast_photo) ? base_url('uploads/dietetic/food_surveys/' . $today_entry->breakfast_photo) : ''; ?>" alt="Petit-déjeuner">
                         <button type="button" class="photo-preview-remove" data-meal="breakfast">
                             <i class="fa fa-times"></i>
                         </button>
@@ -722,15 +722,15 @@
                 </div>
 
                 <!-- Lunch -->
-                <div class="meal-card" id="lunchCard">
+                <div class="meal-card <?php echo ($today_entry && $today_entry->lunch_photo) ? 'has-photo' : ''; ?>" id="lunchCard">
                     <div class="meal-card-title">
                         <i class="fa fa-sun-o"></i>
                         Déjeuner
                     </div>
 
-                    <div class="photo-upload-area" data-meal="lunch">
+                    <div class="photo-upload-area" data-meal="lunch" style="<?php echo ($today_entry && $today_entry->lunch_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="lunchPhoto" accept="image/*" data-meal="lunch">
-                        <input type="hidden" name="lunch_photo" id="lunch_photo_value">
+                        <input type="hidden" name="lunch_photo" id="lunch_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->lunch_photo) : ''; ?>">
                         <div class="photo-upload-icon">
                             <i class="fa fa-camera"></i>
                         </div>
@@ -738,8 +738,8 @@
                         <div class="photo-upload-hint">JPEG, PNG ou GIF - Max 5MB</div>
                     </div>
 
-                    <div id="lunchPreview" class="photo-preview" style="display: none;">
-                        <img src="" alt="Déjeuner">
+                    <div id="lunchPreview" class="photo-preview" style="<?php echo ($today_entry && $today_entry->lunch_photo) ? '' : 'display: none;'; ?>">
+                        <img src="<?php echo ($today_entry && $today_entry->lunch_photo) ? base_url('uploads/dietetic/food_surveys/' . $today_entry->lunch_photo) : ''; ?>" alt="Déjeuner">
                         <button type="button" class="photo-preview-remove" data-meal="lunch">
                             <i class="fa fa-times"></i>
                         </button>
@@ -763,15 +763,15 @@
                 </div>
 
                 <!-- Dinner -->
-                <div class="meal-card" id="dinnerCard">
+                <div class="meal-card <?php echo ($today_entry && $today_entry->dinner_photo) ? 'has-photo' : ''; ?>" id="dinnerCard">
                     <div class="meal-card-title">
                         <i class="fa fa-moon-o"></i>
                         Dîner
                     </div>
 
-                    <div class="photo-upload-area" data-meal="dinner">
+                    <div class="photo-upload-area" data-meal="dinner" style="<?php echo ($today_entry && $today_entry->dinner_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="dinnerPhoto" accept="image/*" data-meal="dinner">
-                        <input type="hidden" name="dinner_photo" id="dinner_photo_value">
+                        <input type="hidden" name="dinner_photo" id="dinner_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->dinner_photo) : ''; ?>">
                         <div class="photo-upload-icon">
                             <i class="fa fa-camera"></i>
                         </div>
@@ -779,8 +779,8 @@
                         <div class="photo-upload-hint">JPEG, PNG ou GIF - Max 5MB</div>
                     </div>
 
-                    <div id="dinnerPreview" class="photo-preview" style="display: none;">
-                        <img src="" alt="Dîner">
+                    <div id="dinnerPreview" class="photo-preview" style="<?php echo ($today_entry && $today_entry->dinner_photo) ? '' : 'display: none;'; ?>">
+                        <img src="<?php echo ($today_entry && $today_entry->dinner_photo) ? base_url('uploads/dietetic/food_surveys/' . $today_entry->dinner_photo) : ''; ?>" alt="Dîner">
                         <button type="button" class="photo-preview-remove" data-meal="dinner">
                             <i class="fa fa-times"></i>
                         </button>
