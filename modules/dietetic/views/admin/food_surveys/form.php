@@ -201,7 +201,7 @@
                     </div>
 
                     <div class="form-body">
-                        <?php echo form_open($this->uri->uri_string()); ?>
+                        <?php echo form_open(uri_string()); ?>
 
                         <!-- Survey Name -->
                         <div class="form-group">
