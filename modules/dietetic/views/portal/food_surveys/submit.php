@@ -4,12 +4,16 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#01807B">
     <title><?php echo isset($title) ? htmlspecialchars($title) : 'Soumission Quotidienne'; ?> - <?php echo get_option('companyname'); ?></title>
+    <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
+        <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
+    <?php } ?>
 
-    <!-- Perfex CSS -->
-    <link href="<?php echo base_url('assets/css/bootstrap.min.css'); ?>" rel="stylesheet">
-    <link href="<?php echo base_url('assets/plugins/font-awesome/css/font-awesome.min.css'); ?>" rel="stylesheet">
+    <!-- Bootstrap & Font Awesome from CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <style>
     :root {
@@ -811,9 +815,9 @@
         </div>
     </div>
 
-    <!-- Perfex JS -->
-    <script src="<?php echo base_url('assets/plugins/jquery/jquery.min.js'); ?>"></script>
-    <script src="<?php echo base_url('assets/js/bootstrap.min.js'); ?>"></script>
+    <!-- jQuery & Bootstrap JS from CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <script>
     // Base URL for AJAX calls
