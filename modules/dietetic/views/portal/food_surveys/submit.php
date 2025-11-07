@@ -395,6 +395,14 @@
         font-weight: 600;
         color: var(--text-dark);
         margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label i {
+        color: var(--secondary-color);
+        font-size: 16px;
     }
 
     .form-control {
@@ -411,6 +419,26 @@
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+    }
+
+    .time-input {
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        background: white;
+    }
+
+    .time-input::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(48%) sepia(79%) saturate(346%) hue-rotate(135deg) brightness(95%) contrast(91%);
+    }
+
+    .time-hint {
+        display: block;
+        color: var(--text-light);
+        font-size: 12px;
+        margin-top: 5px;
+        font-style: italic;
     }
 
     textarea.form-control {
@@ -676,9 +704,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="breakfast_time">Heure du repas</label>
-                        <input type="time" class="form-control" name="breakfast_time" id="breakfast_time"
-                               value="<?php echo $today_entry && $today_entry->breakfast_time ? date('H:i', strtotime($today_entry->breakfast_time)) : ''; ?>">
+                        <label class="form-label" for="breakfast_time">
+                            <i class="fa fa-clock-o"></i> Heure du repas
+                        </label>
+                        <input type="time" class="form-control time-input" name="breakfast_time" id="breakfast_time"
+                               value="<?php echo $today_entry && $today_entry->breakfast_time ? date('H:i', strtotime($today_entry->breakfast_time)) : '07:30'; ?>"
+                               placeholder="07:30">
+                        <small class="time-hint">Recommandé: entre 7h et 10h</small>
                     </div>
 
                     <div class="form-group">
@@ -713,9 +745,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="lunch_time">Heure du repas</label>
-                        <input type="time" class="form-control" name="lunch_time" id="lunch_time"
-                               value="<?php echo $today_entry && $today_entry->lunch_time ? date('H:i', strtotime($today_entry->lunch_time)) : ''; ?>">
+                        <label class="form-label" for="lunch_time">
+                            <i class="fa fa-clock-o"></i> Heure du repas
+                        </label>
+                        <input type="time" class="form-control time-input" name="lunch_time" id="lunch_time"
+                               value="<?php echo $today_entry && $today_entry->lunch_time ? date('H:i', strtotime($today_entry->lunch_time)) : '13:00'; ?>"
+                               placeholder="13:00">
+                        <small class="time-hint">Recommandé: entre 12h et 15h</small>
                     </div>
 
                     <div class="form-group">
@@ -750,9 +786,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="dinner_time">Heure du repas</label>
-                        <input type="time" class="form-control" name="dinner_time" id="dinner_time"
-                               value="<?php echo $today_entry && $today_entry->dinner_time ? date('H:i', strtotime($today_entry->dinner_time)) : ''; ?>">
+                        <label class="form-label" for="dinner_time">
+                            <i class="fa fa-clock-o"></i> Heure du repas
+                        </label>
+                        <input type="time" class="form-control time-input" name="dinner_time" id="dinner_time"
+                               value="<?php echo $today_entry && $today_entry->dinner_time ? date('H:i', strtotime($today_entry->dinner_time)) : '20:00'; ?>"
+                               placeholder="20:00">
+                        <small class="time-hint">Recommandé: entre 19h et 22h</small>
                     </div>
 
                     <div class="form-group">

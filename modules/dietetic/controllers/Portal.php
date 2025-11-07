@@ -1398,10 +1398,44 @@ class Portal extends App_Controller
         }
 
         // Check if file was uploaded
-        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+        if (!isset($_FILES['photo'])) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Aucun fichier téléchargé ou erreur lors du téléchargement'
+                'message' => 'Aucun fichier dans la requête'
+            ]);
+            return;
+        }
+
+        if ($_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            $error_message = 'Erreur upload: ';
+            switch ($_FILES['photo']['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                    $error_message .= 'Le fichier dépasse upload_max_filesize';
+                    break;
+                case UPLOAD_ERR_FORM_SIZE:
+                    $error_message .= 'Le fichier dépasse MAX_FILE_SIZE';
+                    break;
+                case UPLOAD_ERR_PARTIAL:
+                    $error_message .= 'Fichier partiellement téléchargé';
+                    break;
+                case UPLOAD_ERR_NO_FILE:
+                    $error_message .= 'Aucun fichier téléchargé';
+                    break;
+                case UPLOAD_ERR_NO_TMP_DIR:
+                    $error_message .= 'Dossier temporaire manquant';
+                    break;
+                case UPLOAD_ERR_CANT_WRITE:
+                    $error_message .= 'Échec écriture sur disque';
+                    break;
+                case UPLOAD_ERR_EXTENSION:
+                    $error_message .= 'Extension PHP a arrêté le téléchargement';
+                    break;
+                default:
+                    $error_message .= 'Erreur inconnue (' . $_FILES['photo']['error'] . ')';
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => $error_message
             ]);
             return;
         }
@@ -1435,7 +1469,25 @@ class Portal extends App_Controller
         // Create upload directory if it doesn't exist
         $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
         if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, true);
+            if (!mkdir($upload_path, 0755, true)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Impossible de créer le dossier d\'upload'
+                ]);
+                return;
+            }
+        }
+
+        // Check directory permissions
+        if (!is_writable($upload_path)) {
+            @chmod($upload_path, 0755);
+            if (!is_writable($upload_path)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le dossier d\'upload n\'est pas accessible en écriture'
+                ]);
+                return;
+            }
         }
 
         // Generate unique filename
@@ -1445,6 +1497,9 @@ class Portal extends App_Controller
 
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $destination)) {
+            // Set correct permissions on uploaded file
+            @chmod($destination, 0644);
+
             // Create thumbnail for faster loading
             $this->create_thumbnail($destination, $upload_path . 'thumb_' . $filename);
 
@@ -1458,7 +1513,7 @@ class Portal extends App_Controller
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'Erreur lors du déplacement du fichier'
+                'message' => 'Erreur: impossible de déplacer le fichier. Vérifiez les permissions du dossier uploads/dietetic/food_surveys/'
             ]);
         }
     }
