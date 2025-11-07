@@ -131,13 +131,14 @@
 <?php
 // Check if food surveys are enabled
 $food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
+$active_surveys = [];
 if ($food_surveys_enabled) {
     $this->load->model('dietetic/dietetic_food_surveys_model');
     $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
 }
 ?>
 
-<?php if ($food_surveys_enabled && !empty($active_surveys)) { ?>
+<?php if ($food_surveys_enabled) { ?>
 <div class="row mtop30">
     <div class="col-md-12">
         <div class="panel panel-default" style="border-left: 4px solid #01807B;">
@@ -147,6 +148,7 @@ if ($food_surveys_enabled) {
                 </h4>
             </div>
             <div class="panel-body">
+                <?php if (!empty($active_surveys)) { ?>
                 <div class="row">
                     <?php foreach ($active_surveys as $survey) {
                         $completion = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
@@ -186,6 +188,13 @@ if ($food_surveys_enabled) {
                     </div>
                     <?php } ?>
                 </div>
+                <?php } else { ?>
+                <div class="alert alert-info" style="margin: 0; border-left: 4px solid #01807B;">
+                    <i class="fa fa-info-circle"></i>
+                    <strong>Aucune enquête alimentaire active</strong>
+                    <p style="margin: 10px 0 0 0;">Votre diététicien ne vous a pas encore assigné d'enquête alimentaire active.</p>
+                </div>
+                <?php } ?>
                 <div class="text-right mtop15">
                     <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn btn-default">
                         <i class="fa fa-list"></i> Voir toutes mes enquêtes

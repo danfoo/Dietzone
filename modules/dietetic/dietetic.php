@@ -301,11 +301,23 @@ function dietetic_add_portal_menu()
         $patient = $CI->dietetic_patients_model->get_by_client($client_id);
 
         if ($patient) {
+            // Check if food surveys are enabled
+            $food_surveys_enabled = $CI->db->table_exists(db_prefix() . 'dietic_food_surveys');
+
             echo '<li class="customers-nav-item-dietetic">
                     <a href="' . site_url('dietetic/portal') . '">
-                        <i class="fa fa-heartbeat"></i> My Program
+                        <i class="fa fa-heartbeat"></i> Mon Programme
                     </a>
                   </li>';
+
+            // Add food surveys menu item if enabled
+            if ($food_surveys_enabled) {
+                echo '<li class="customers-nav-item-dietetic-surveys">
+                        <a href="' . site_url('dietetic/portal/food_surveys') . '">
+                            <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
+                        </a>
+                      </li>';
+            }
         }
 
         ob_end_flush();
