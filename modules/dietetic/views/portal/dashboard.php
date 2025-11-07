@@ -128,11 +128,85 @@
     </div>
 </div>
 
+<?php
+// Check if food surveys are enabled
+$food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
+if ($food_surveys_enabled) {
+    $this->load->model('dietetic/dietetic_food_surveys_model');
+    $active_surveys = $this->dietetic_food_surveys_model->get_by_patient($patient->id, 'active');
+}
+?>
+
+<?php if ($food_surveys_enabled && !empty($active_surveys)) { ?>
+<div class="row mtop30">
+    <div class="col-md-12">
+        <div class="panel panel-default" style="border-left: 4px solid #01807B;">
+            <div class="panel-heading" style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); color: white;">
+                <h4 style="margin: 0;">
+                    <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
+                </h4>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <?php foreach ($active_surveys as $survey) {
+                        $completion = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
+                    ?>
+                    <div class="col-md-6">
+                        <div class="portal-survey-card" style="border: 2px solid #01807B; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                            <h5 style="margin-top: 0; color: #01807B;">
+                                <i class="fa fa-utensils"></i> <?php echo htmlspecialchars($survey->survey_name); ?>
+                            </h5>
+                            <p style="margin: 10px 0;">
+                                <i class="fa fa-calendar"></i>
+                                <?php echo _d($survey->start_date); ?> - <?php echo _d($survey->end_date); ?>
+                            </p>
+                            <div style="margin: 15px 0;">
+                                <small style="color: #666;">Progression: <?php echo round($completion); ?>%</small>
+                                <div class="progress" style="height: 8px; margin-top: 5px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: <?php echo $completion; ?>%; background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);"
+                                         aria-valuenow="<?php echo $completion; ?>"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>"
+                                   class="btn btn-sm"
+                                   style="background: #01807B; border-color: #01807B; color: white;">
+                                    <i class="fa fa-camera"></i> Soumettre aujourd'hui
+                                </a>
+                                <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>"
+                                   class="btn btn-sm btn-default">
+                                    <i class="fa fa-comments"></i> Recommandations
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
+                <div class="text-right mtop15">
+                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn btn-default">
+                        <i class="fa fa-list"></i> Voir toutes mes enquêtes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php } ?>
+
 <?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
     <div class="mtop20">
         <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info">
             <i class="fa fa-plus"></i> <?php echo _l('dietetic_add_measurement'); ?>
         </a>
+        <?php if ($food_surveys_enabled) { ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn" style="background: #01807B; border-color: #01807B; color: white;">
+            <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
+        </a>
+        <?php } ?>
     </div>
 <?php } ?>
 
