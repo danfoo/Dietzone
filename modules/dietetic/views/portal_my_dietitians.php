@@ -228,6 +228,15 @@
             font-size: 28px;
             font-weight: 700;
             flex-shrink: 0;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .dietitian-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .dietitian-info {
@@ -801,7 +810,11 @@
                 <div class="dietitian-card">
                     <div class="dietitian-header">
                         <div class="dietitian-avatar">
-                            <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
+                            <?php if (!empty($dietitian->profile_image)) { ?>
+                                <img src="<?php echo staff_profile_image_url($dietitian->staffid, 'small'); ?>" alt="<?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?>">
+                            <?php } else { ?>
+                                <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
+                            <?php } ?>
                         </div>
                         <div class="dietitian-info">
                             <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>

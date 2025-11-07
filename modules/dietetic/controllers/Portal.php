@@ -115,6 +115,11 @@ class Portal extends App_Controller
         $data['patient'] = $patient;
         $data['title'] = 'My Dietetic Program';
 
+        // Get client info for patient name
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
         // Get active program
         try {
             $data['active_program'] = $this->dietetic_programs_model->get_active_program($patient->id);

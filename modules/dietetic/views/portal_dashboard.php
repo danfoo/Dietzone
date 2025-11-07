@@ -708,7 +708,7 @@
         <!-- Page Header Mobile-Friendly -->
         <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-heartbeat"></i> Mon Programme</h1>
-            <p>Bonjour <?php echo isset($patient->first_name) ? htmlspecialchars($patient->first_name) : 'Patient'; ?> 👋</p>
+            <p>Bonjour <?php echo isset($client->company) && $client->company ? htmlspecialchars($client->company) : 'Patient'; ?> 👋</p>
         </div>
 
         <!-- Stats - Swipeable -->

@@ -522,7 +522,7 @@
             </div>
         <?php } ?>
 
-        <form action="<?php echo site_url('dietetic/portal/save_measurement'); ?>" method="post" class="animate-in delay-1">
+        <form action="<?php echo site_url('dietetic/portal/add_measurement'); ?>" method="post" class="animate-in delay-1">
             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
 
             <div class="form-card">
