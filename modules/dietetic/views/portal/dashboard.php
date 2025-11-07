@@ -133,7 +133,7 @@
 $food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
 if ($food_surveys_enabled) {
     $this->load->model('dietetic/dietetic_food_surveys_model');
-    $active_surveys = $this->dietetic_food_surveys_model->get_by_patient($patient->id, 'active');
+    $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
 }
 ?>
 
