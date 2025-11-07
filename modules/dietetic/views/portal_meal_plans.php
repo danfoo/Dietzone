@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#01807B">
     <title><?php echo isset($title) ? $title : 'Mes Plans Alimentaires'; ?></title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
@@ -70,7 +70,7 @@
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
         /* Desktop Navigation */
@@ -95,11 +95,11 @@
 
         .portal-nav-desktop a:hover {
             background: #f8f9fa;
-            color: #667eea;
+            color: #01807B;
         }
 
         .portal-nav-desktop a.active {
-            background: #667eea;
+            background: #01807B;
             color: white;
         }
 
@@ -141,7 +141,7 @@
         }
 
         .bottom-nav-item.active {
-            color: #667eea;
+            color: #01807B;
         }
 
         .bottom-nav-item i {
@@ -166,7 +166,7 @@
             transform: translateX(-50%);
             width: 32px;
             height: 3px;
-            background: #667eea;
+            background: #01807B;
             border-radius: 0 0 3px 3px;
         }
 
@@ -179,12 +179,12 @@
 
         /* Page Header */
         .page-header-mobile {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
             border-radius: 16px;
             padding: 24px 20px;
             margin-bottom: 24px;
             color: white;
-            box-shadow: 0 8px 16px rgba(240, 147, 251, 0.3);
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
         }
 
         .page-header-mobile h1 {
@@ -204,7 +204,7 @@
 
         /* Program Badge */
         .program-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
             color: white;
             border-radius: 12px;
             padding: 16px 20px;
@@ -212,7 +212,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
         }
 
         .program-badge i {
@@ -252,7 +252,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
             overflow: hidden;
-            border-left: 5px solid #f093fb;
+            border-left: 5px solid #01807B;
         }
 
         .meal-plan-card:active {
@@ -269,7 +269,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
             padding: 6px 14px;
             border-radius: 20px;
@@ -299,7 +299,7 @@
             padding: 14px;
             background: #f8f9fa;
             border-radius: 10px;
-            border-left: 3px solid #f093fb;
+            border-left: 3px solid #01807B;
         }
 
         .meal-plan-actions {
@@ -309,7 +309,7 @@
 
         .btn-view-meal {
             flex: 1;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
             padding: 14px 20px;
             border-radius: 10px;
@@ -330,7 +330,7 @@
         }
 
         .btn-view-meal:hover {
-            box-shadow: 0 6px 16px rgba(240, 147, 251, 0.4);
+            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
             color: white;
             text-decoration: none;
         }
@@ -383,8 +383,8 @@
 
         .btn-back:hover {
             background: #f8f9fa;
-            border-color: #f093fb;
-            color: #f093fb;
+            border-color: #01807B;
+            color: #01807B;
             text-decoration: none;
         }
 

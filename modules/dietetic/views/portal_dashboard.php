@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#01807B">
     <title><?php echo isset($title) ? $title : 'Mon Programme'; ?></title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
@@ -69,7 +69,7 @@
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
         /* Desktop Navigation (Hidden on mobile) */
@@ -94,11 +94,11 @@
 
         .portal-nav-desktop a:hover {
             background: #f8f9fa;
-            color: #667eea;
+            color: #01807B;
         }
 
         .portal-nav-desktop a.active {
-            background: #667eea;
+            background: #01807B;
             color: white;
         }
 
@@ -140,7 +140,7 @@
         }
 
         .bottom-nav-item.active {
-            color: #667eea;
+            color: #01807B;
         }
 
         .bottom-nav-item i {
@@ -166,7 +166,7 @@
             transform: translateX(-50%);
             width: 32px;
             height: 3px;
-            background: #667eea;
+            background: #01807B;
             border-radius: 0 0 3px 3px;
         }
 
@@ -179,12 +179,12 @@
 
         /* Page Header Mobile-Friendly */
         .page-header-mobile {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
             border-radius: 16px;
             padding: 24px 20px;
             margin-bottom: 24px;
             color: white;
-            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
         }
 
         .page-header-mobile h1 {
@@ -232,10 +232,10 @@
             border-left: 4px solid transparent;
         }
 
-        .stat-card.weight { border-left-color: #667eea; }
-        .stat-card.target { border-left-color: #11998e; }
-        .stat-card.bmi { border-left-color: #f093fb; }
-        .stat-card.fat { border-left-color: #fa709a; }
+        .stat-card.weight { border-left-color: #01807B; }
+        .stat-card.target { border-left-color: #F3911D; }
+        .stat-card.bmi { border-left-color: #01807B; }
+        .stat-card.fat { border-left-color: #F3911D; }
 
         .stat-icon {
             width: 48px;
@@ -249,10 +249,10 @@
             margin-bottom: 16px;
         }
 
-        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .stat-card.target .stat-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
+        .stat-card.target .stat-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
+        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
+        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
 
         .stat-label {
             color: #6c757d;
@@ -277,11 +277,11 @@
 
         /* Progress Card - Mobile Optimized */
         .progress-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
             border-radius: 20px;
             padding: 28px 24px;
             color: white;
-            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
             margin-bottom: 24px;
             text-align: center;
         }
@@ -334,11 +334,11 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         }
 
-        .action-card.add-measure { border-left-color: #667eea; }
-        .action-card.history { border-left-color: #11998e; }
-        .action-card.meals { border-left-color: #f093fb; }
-        .action-card.consultations { border-left-color: #fa709a; }
-        .action-card.dietitians { border-left-color: #4facfe; }
+        .action-card.add-measure { border-left-color: #01807B; }
+        .action-card.history { border-left-color: #F3911D; }
+        .action-card.meals { border-left-color: #01807B; }
+        .action-card.consultations { border-left-color: #F3911D; }
+        .action-card.dietitians { border-left-color: #01807B; }
 
         .action-icon {
             width: 56px;
@@ -352,11 +352,11 @@
             flex-shrink: 0;
         }
 
-        .action-card.add-measure .action-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .action-card.history .action-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .action-card.meals .action-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .action-card.consultations .action-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .action-card.dietitians .action-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .action-card.add-measure .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
+        .action-card.history .action-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
+        .action-card.meals .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
+        .action-card.consultations .action-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
+        .action-card.dietitians .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
 
         .action-content {
             flex: 1;
@@ -400,7 +400,7 @@
         }
 
         .info-box h3 i {
-            color: #667eea;
+            color: #01807B;
         }
 
         .info-box hr {
@@ -425,7 +425,7 @@
         }
 
         .info-item i {
-            color: #667eea;
+            color: #01807B;
             font-size: 20px;
             width: 24px;
             text-align: center;
@@ -451,12 +451,12 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #01807B;
         }
 
         .consultation-item i {
             font-size: 24px;
-            color: #667eea;
+            color: #01807B;
         }
 
         .consultation-info {
@@ -485,12 +485,12 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #01807B;
         }
 
         .alert-modern i {
             font-size: 28px;
-            color: #667eea;
+            color: #01807B;
             flex-shrink: 0;
         }
 
@@ -658,7 +658,7 @@
             display: none;
             text-align: center;
             padding: 10px;
-            color: #667eea;
+            color: #01807B;
         }
     </style>
 </head>
@@ -831,7 +831,7 @@
                 </div>
                 <?php if (isset($active_program->objective) && $active_program->objective) { ?>
                     <hr>
-                    <div style="padding: 16px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #667eea;">
+                    <div style="padding: 16px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #01807B;">
                         <strong style="color: #2c3e50; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px;">
                             <i class="fa fa-target"></i> Objectif:
                         </strong>

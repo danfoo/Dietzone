@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#01807B">
     <title>Historique des Mesures</title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
@@ -69,7 +69,7 @@
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
         .portal-nav-desktop {
@@ -93,11 +93,11 @@
 
         .portal-nav-desktop a:hover {
             background: #f8f9fa;
-            color: #667eea;
+            color: #01807B;
         }
 
         .portal-nav-desktop a.active {
-            background: #667eea;
+            background: #01807B;
             color: white;
         }
 
@@ -139,7 +139,7 @@
         }
 
         .bottom-nav-item.active {
-            color: #667eea;
+            color: #01807B;
         }
 
         .bottom-nav-item i {
@@ -163,7 +163,7 @@
             transform: translateX(-50%);
             width: 32px;
             height: 3px;
-            background: #667eea;
+            background: #01807B;
             border-radius: 0 0 3px 3px;
         }
 
@@ -176,12 +176,12 @@
 
         /* Page Header */
         .page-header-mobile {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
             border-radius: 16px;
             padding: 24px 20px;
             margin-bottom: 24px;
             color: white;
-            box-shadow: 0 8px 16px rgba(17, 153, 142, 0.3);
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
         }
 
         .page-header-mobile h1 {
@@ -219,13 +219,13 @@
         }
 
         .chart-box h4 i {
-            color: #11998e;
+            color: #01807B;
         }
 
         /* Measurement Cards */
         .measurement-card {
             background: white;
-            border-left: 4px solid #11998e;
+            border-left: 4px solid #01807B;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 16px;
@@ -240,7 +240,7 @@
         .measurement-date {
             font-size: 18px;
             font-weight: 700;
-            color: #11998e;
+            color: #01807B;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -281,7 +281,7 @@
             padding: 14px;
             background: #f8f9fa;
             border-radius: 10px;
-            border-left: 3px solid #11998e;
+            border-left: 3px solid #01807B;
         }
 
         .measurement-notes strong {
@@ -298,7 +298,7 @@
 
         /* Buttons */
         .btn-add-measure {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
             padding: 14px 24px;
             border-radius: 10px;
@@ -314,7 +314,7 @@
         }
 
         .btn-add-measure:hover {
-            box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
+            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
             color: white;
             text-decoration: none;
         }
@@ -340,8 +340,8 @@
 
         .btn-back:hover {
             background: #f8f9fa;
-            border-color: #11998e;
-            color: #11998e;
+            border-color: #01807B;
+            color: #01807B;
             text-decoration: none;
         }
 
@@ -407,14 +407,14 @@
         }
 
         .pagination a:hover {
-            background: #11998e;
-            border-color: #11998e;
+            background: #01807B;
+            border-color: #01807B;
             color: white;
         }
 
         .pagination li.active span {
-            background: #11998e;
-            border-color: #11998e;
+            background: #01807B;
+            border-color: #01807B;
             color: white;
         }
 
@@ -812,8 +812,8 @@
                             echo $point->weight . ',';
                         } ?>
                     ],
-                    borderColor: '#11998e',
-                    backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                    borderColor: '#01807B',
+                    backgroundColor: 'rgba(1, 128, 123, 0.1)',
                     borderWidth: 3,
                     pointRadius: 5,
                     pointHoverRadius: 7,
