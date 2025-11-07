@@ -349,67 +349,72 @@
     function expandDieteticMenu() {
         // Check if we're on a dietetic module page
         if (window.location.href.indexOf('/admin/dietetic') !== -1) {
-            // Try multiple times to ensure menu is loaded
-            var attempts = 0;
-            var maxAttempts = 10;
+            // Wait for window to fully load (after Perfex's own menu initialization)
+            setTimeout(function() {
+                console.log('Attempting to activate Dietetic menu...');
 
-            var tryExpand = function() {
-                attempts++;
+                // Find the parent Dietetic menu item
+                var $dieteticMenuItem = null;
 
-                // Try different possible selectors
-                var $dieteticMenuItem = $('li.menu-item-dietetic');
+                // Look for the menu item by finding the main Dietetic link
+                $('aside.sidebar-menu a[href*="/admin/dietetic"]').each(function() {
+                    var $link = $(this);
+                    var href = $link.attr('href');
 
-                // If not found, try finding by link href
-                if (!$dieteticMenuItem.length) {
-                    $('aside#aside_menu a[href*="/admin/dietetic"]').each(function() {
-                        var $link = $(this);
-                        var $parent = $link.closest('li.menu-item');
-                        if ($parent.length && $link.attr('href') === admin_url + 'dietetic') {
-                            $dieteticMenuItem = $parent;
-                            return false; // break
+                    // Find the parent menu item (not child)
+                    if (href && (href === admin_url + 'dietetic' || href === admin_url + 'dietetic/')) {
+                        $dieteticMenuItem = $link.closest('li');
+                        console.log('Found Dietetic parent menu item');
+                        return false; // break
+                    }
+                });
+
+                if ($dieteticMenuItem && $dieteticMenuItem.length) {
+                    // Find which child should be active based on current URL
+                    var currentPath = window.location.pathname;
+                    var foundActiveChild = false;
+
+                    // Find all child menu items
+                    $dieteticMenuItem.find('ul li').each(function() {
+                        var $child = $(this);
+                        var $childLink = $child.find('a');
+
+                        if ($childLink.length) {
+                            var childHref = $childLink.attr('href');
+
+                            // Check if this child matches current URL
+                            if (childHref && currentPath.indexOf(childHref.replace(window.location.origin, '')) !== -1) {
+                                // Mark this child as active
+                                $child.addClass('active');
+                                foundActiveChild = true;
+                                console.log('Marked child as active: ' + childHref);
+                            }
                         }
                     });
-                }
 
-                if ($dieteticMenuItem.length) {
-                    console.log('Dietetic menu found, expanding...');
+                    // If we found an active child, now expand the parent
+                    if (foundActiveChild) {
+                        // Mark parent as active
+                        $dieteticMenuItem.addClass('active');
 
-                    // Add active class to parent
-                    $dieteticMenuItem.addClass('active');
-
-                    // Find the parent link and set aria-expanded
-                    var $menuLink = $dieteticMenuItem.find('> a');
-                    if ($menuLink.length) {
-                        $menuLink.attr('aria-expanded', 'true');
-                        console.log('Set aria-expanded on parent link');
-                    }
-
-                    // Find submenu and expand it
-                    var $submenu = $dieteticMenuItem.find('> ul');
-                    if ($submenu.length) {
-                        $submenu.addClass('in').css('display', 'block');
-                        console.log('Submenu expanded');
-                    }
-
-                    // Also mark the active child menu item
-                    var currentUrl = window.location.href;
-                    $dieteticMenuItem.find('li').each(function() {
-                        var $childLink = $(this).find('a');
-                        if ($childLink.length && currentUrl.indexOf($childLink.attr('href')) !== -1) {
-                            $(this).addClass('active');
+                        // Expand the submenu
+                        var $submenu = $dieteticMenuItem.find('> ul');
+                        if ($submenu.length) {
+                            $submenu.addClass('in').show();
+                            console.log('Expanded parent menu');
                         }
-                    });
-                } else if (attempts < maxAttempts) {
-                    // Retry after a short delay
-                    console.log('Dietetic menu not found yet, retrying... (attempt ' + attempts + ')');
-                    setTimeout(tryExpand, 100);
+
+                        // Set aria-expanded on parent link
+                        var $parentLink = $dieteticMenuItem.find('> a');
+                        if ($parentLink.length) {
+                            $parentLink.attr('aria-expanded', 'true');
+                            console.log('Set aria-expanded on parent link');
+                        }
+                    }
                 } else {
-                    console.log('Dietetic menu not found after ' + maxAttempts + ' attempts');
+                    console.log('Could not find Dietetic parent menu item');
                 }
-            };
-
-            // Start trying to expand
-            tryExpand();
+            }, 500); // Wait 500ms to ensure Perfex has initialized its menu
         }
     }
 
