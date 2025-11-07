@@ -20,9 +20,6 @@ class Consultations extends AdminController
         if (!dietetic_has_permission('view')) {
             access_denied('dietetic');
         }
-
-        // Activate parent menu
-        $this->app_menu->active_menu_item('dietetic-consultations');
     }
 
     /**
