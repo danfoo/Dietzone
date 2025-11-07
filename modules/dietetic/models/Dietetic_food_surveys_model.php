@@ -183,10 +183,54 @@ class Dietetic_food_surveys_model extends App_Model
         $existing = $this->get_entry_by_date($data['survey_id'], $data['entry_date']);
 
         if ($existing) {
-            // Update existing entry
-            $data['updated_at'] = date('Y-m-d H:i:s');
+            // Update existing entry - merge with existing data to preserve other meals
+            // Only update fields that have non-empty values
+            $update_data = [];
+
+            // Always update these fields
+            $update_data['updated_at'] = date('Y-m-d H:i:s');
+            $update_data['submitted_at'] = $data['submitted_at'];
+
+            // Breakfast fields - only update if provided
+            if (!empty($data['breakfast_photo'])) {
+                $update_data['breakfast_photo'] = $data['breakfast_photo'];
+            }
+            if (!empty($data['breakfast_time']) || isset($data['breakfast_time'])) {
+                $update_data['breakfast_time'] = $data['breakfast_time'];
+            }
+            if (!empty($data['breakfast_notes']) || isset($data['breakfast_notes'])) {
+                $update_data['breakfast_notes'] = $data['breakfast_notes'];
+            }
+
+            // Lunch fields - only update if provided
+            if (!empty($data['lunch_photo'])) {
+                $update_data['lunch_photo'] = $data['lunch_photo'];
+            }
+            if (!empty($data['lunch_time']) || isset($data['lunch_time'])) {
+                $update_data['lunch_time'] = $data['lunch_time'];
+            }
+            if (!empty($data['lunch_notes']) || isset($data['lunch_notes'])) {
+                $update_data['lunch_notes'] = $data['lunch_notes'];
+            }
+
+            // Dinner fields - only update if provided
+            if (!empty($data['dinner_photo'])) {
+                $update_data['dinner_photo'] = $data['dinner_photo'];
+            }
+            if (!empty($data['dinner_time']) || isset($data['dinner_time'])) {
+                $update_data['dinner_time'] = $data['dinner_time'];
+            }
+            if (!empty($data['dinner_notes']) || isset($data['dinner_notes'])) {
+                $update_data['dinner_notes'] = $data['dinner_notes'];
+            }
+
+            // Water quantity - update if provided
+            if (isset($data['water_quantity_ml']) && $data['water_quantity_ml'] !== '') {
+                $update_data['water_quantity_ml'] = $data['water_quantity_ml'];
+            }
+
             $this->db->where('id', $existing->id);
-            if ($this->db->update($this->table_entries, $data)) {
+            if ($this->db->update($this->table_entries, $update_data)) {
                 return $existing->id;
             }
             return false;
