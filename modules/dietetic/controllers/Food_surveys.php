@@ -187,16 +187,36 @@ class Food_surveys extends AdminController
 
         $data['title'] = 'Nouvelle Enquête Alimentaire';
 
+        log_activity('DEBUG: About to load patients model');
         try {
             $data['patients'] = $this->dietetic_patients_model->get_all();
-            $data['programs'] = $this->dietetic_programs_model->get_all();
-            $data['staff'] = $this->staff_model->get();
+            log_activity('DEBUG: Patients loaded: ' . count($data['patients']));
         } catch (Exception $e) {
-            log_activity('ERROR loading data for form: ' . $e->getMessage());
-            show_error('Erreur lors du chargement des données: ' . $e->getMessage());
+            log_activity('ERROR loading patients: ' . $e->getMessage());
+            show_error('Erreur lors du chargement des patients: ' . $e->getMessage());
         }
 
+        log_activity('DEBUG: About to load programs model');
+        try {
+            $data['programs'] = $this->dietetic_programs_model->get_all();
+            log_activity('DEBUG: Programs loaded: ' . count($data['programs']));
+        } catch (Exception $e) {
+            log_activity('ERROR loading programs: ' . $e->getMessage());
+            show_error('Erreur lors du chargement des programmes: ' . $e->getMessage());
+        }
+
+        log_activity('DEBUG: About to load staff model');
+        try {
+            $data['staff'] = $this->staff_model->get();
+            log_activity('DEBUG: Staff loaded: ' . count($data['staff']));
+        } catch (Exception $e) {
+            log_activity('ERROR loading staff: ' . $e->getMessage());
+            show_error('Erreur lors du chargement du staff: ' . $e->getMessage());
+        }
+
+        log_activity('DEBUG: About to load view form.php');
         $this->load->view('admin/food_surveys/form', $data);
+        log_activity('DEBUG: View loaded successfully');
     }
 
     /**
