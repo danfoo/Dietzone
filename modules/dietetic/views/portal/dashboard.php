@@ -534,7 +534,7 @@ if ($food_surveys_enabled) {
         </a>
     <?php } ?>
 
-    <?php if ($food_surveys_enabled) { ?>
+    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>"
            class="btn btn-lg"
            style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); border-color: #01807B; color: white; flex: 1; min-width: 200px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3); transition: all 0.3s;"
