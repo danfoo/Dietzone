@@ -671,6 +671,7 @@
         <form id="dailyEntryForm">
             <input type="hidden" name="survey_id" value="<?php echo $survey->id; ?>">
             <input type="hidden" name="entry_date" value="<?php echo date('Y-m-d'); ?>">
+            <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <!-- Meals Section -->
             <div class="form-section">
@@ -948,8 +949,11 @@
         const formData = new FormData();
         formData.append('photo', file);
 
+        // Add CSRF token for Perfex CRM
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
         $.ajax({
-            url: site_url + '/dietetic/portal/upload_photo',
+            url: site_url + 'dietetic/portal/upload_photo',
             type: 'POST',
             data: formData,
             processData: false,
@@ -979,8 +983,23 @@
             },
             error: function(xhr, status, error) {
                 $('#loadingOverlay').removeClass('active');
-                console.error('Upload error:', error);
-                showAlert('Erreur lors du téléchargement de la photo', 'danger');
+                console.error('Upload error:', xhr.responseText || error);
+
+                // Show more detailed error message
+                let errorMsg = 'Erreur lors du téléchargement de la photo';
+                if (xhr.status === 419) {
+                    errorMsg = 'Erreur de sécurité (CSRF). Veuillez rafraîchir la page.';
+                } else if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        if (errorData.message) {
+                            errorMsg = errorData.message;
+                        }
+                    } catch (e) {
+                        // Keep default message
+                    }
+                }
+                showAlert(errorMsg, 'danger');
             }
         });
     }
@@ -992,9 +1011,12 @@
         if (filename) {
             // Delete from server
             $.ajax({
-                url: site_url + '/dietetic/portal/delete_photo',
+                url: site_url + 'dietetic/portal/delete_photo',
                 type: 'POST',
-                data: { filename: filename },
+                data: {
+                    filename: filename,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
@@ -1002,7 +1024,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Delete error:', error);
+                    console.error('Delete error:', xhr.responseText || error);
                 }
             });
         }
@@ -1078,10 +1100,27 @@
                     showAlert(response.message, 'danger');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 $('#loadingOverlay').removeClass('active');
                 $('.btn-submit').prop('disabled', false);
-                showAlert('Erreur lors de l\'enregistrement. Veuillez réessayer.', 'danger');
+
+                console.error('Submit error:', xhr.responseText || error);
+
+                // Show more detailed error message
+                let errorMsg = 'Erreur lors de l\'enregistrement. Veuillez réessayer.';
+                if (xhr.status === 419) {
+                    errorMsg = 'Erreur de sécurité (CSRF). Veuillez rafraîchir la page.';
+                } else if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        if (errorData.message) {
+                            errorMsg = errorData.message;
+                        }
+                    } catch (e) {
+                        // Keep default message
+                    }
+                }
+                showAlert(errorMsg, 'danger');
             }
         });
     }
