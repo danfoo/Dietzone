@@ -146,10 +146,17 @@ class Food_surveys extends AdminController
      */
     public function create()
     {
+        // Debug: Log entry to this method
+        log_activity('DEBUG: Entering create() method');
+
         // Check if tables exist, if not redirect to install
         if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            log_activity('DEBUG: Tables do not exist, redirecting to install');
             redirect(admin_url('dietetic/food_surveys'));
+            exit; // Force exit after redirect
         }
+
+        log_activity('DEBUG: Tables exist, proceeding with create');
 
         if (!dietetic_has_permission('create')) {
             access_denied('dietetic');
@@ -163,20 +170,31 @@ class Food_surveys extends AdminController
                 $data['dietitian_id'] = get_staff_user_id();
             }
 
-            $survey_id = $this->dietetic_food_surveys_model->add($data);
+            try {
+                $survey_id = $this->dietetic_food_surveys_model->add($data);
 
-            if ($survey_id) {
-                set_alert('success', 'Enquête alimentaire créée avec succès');
-                redirect(admin_url('dietetic/food_surveys/view/' . $survey_id));
-            } else {
-                set_alert('danger', 'Erreur lors de la création de l\'enquête alimentaire');
+                if ($survey_id) {
+                    set_alert('success', 'Enquête alimentaire créée avec succès');
+                    redirect(admin_url('dietetic/food_surveys/view/' . $survey_id));
+                } else {
+                    set_alert('danger', 'Erreur lors de la création de l\'enquête alimentaire');
+                }
+            } catch (Exception $e) {
+                log_activity('ERROR in create: ' . $e->getMessage());
+                set_alert('danger', 'Erreur: ' . $e->getMessage());
             }
         }
 
         $data['title'] = 'Nouvelle Enquête Alimentaire';
-        $data['patients'] = $this->dietetic_patients_model->get_all();
-        $data['programs'] = $this->dietetic_programs_model->get_all();
-        $data['staff'] = $this->staff_model->get();
+
+        try {
+            $data['patients'] = $this->dietetic_patients_model->get_all();
+            $data['programs'] = $this->dietetic_programs_model->get_all();
+            $data['staff'] = $this->staff_model->get();
+        } catch (Exception $e) {
+            log_activity('ERROR loading data for form: ' . $e->getMessage());
+            show_error('Erreur lors du chargement des données: ' . $e->getMessage());
+        }
 
         $this->load->view('admin/food_surveys/form', $data);
     }
