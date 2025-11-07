@@ -343,12 +343,52 @@
         window.location.href = admin_url + 'dietetic/export/' + type;
     }
 
+    /**
+     * Force expand Diététique menu in admin sidebar
+     */
+    function expandDieteticMenu() {
+        // Check if we're on a dietetic module page
+        if (window.location.href.indexOf('/admin/dietetic') !== -1) {
+            // Find the parent Diététique menu item
+            var $dieteticMenuItem = $('li.menu-item-dietetic');
+
+            if ($dieteticMenuItem.length) {
+                // Add active class to parent
+                $dieteticMenuItem.addClass('active');
+
+                // Find the parent link and set aria-expanded
+                var $menuLink = $dieteticMenuItem.find('> a');
+                if ($menuLink.length) {
+                    $menuLink.attr('aria-expanded', 'true');
+                }
+
+                // Find submenu and expand it
+                var $submenu = $dieteticMenuItem.find('> ul');
+                if ($submenu.length) {
+                    $submenu.addClass('in').css('display', 'block');
+                }
+
+                // Also mark the active child menu item
+                var currentUrl = window.location.href;
+                $dieteticMenuItem.find('li').each(function() {
+                    var $childLink = $(this).find('a');
+                    if ($childLink.length && currentUrl.indexOf($childLink.attr('href')) !== -1) {
+                        $(this).addClass('active');
+                    }
+                });
+            }
+        }
+    }
+
     // Document ready
     $(document).ready(function() {
         initDatatables();
         initSelect2();
         initDatePickers();
         initConsultationCalendar();
+
+        // Force expand Diététique menu on dietetic pages
+        expandDieteticMenu();
 
         // Auto-calculate BMI
         $('#weight, #height').on('input', calculateBMI);
