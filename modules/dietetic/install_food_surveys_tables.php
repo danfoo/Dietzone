@@ -7,11 +7,17 @@
  * Pour exécuter: Visiter https://votre-site.com/modules/dietetic/install_food_surveys_tables.php
  */
 
-// Load Perfex CRM
+// Bootstrap Perfex CRM
+define('ENVIRONMENT', 'production');
+chdir(__DIR__ . '/../../');
+
+// Define BASEPATH before including files
 if (!defined('BASEPATH')) {
-    require_once(__DIR__ . '/../../application/config/database.php');
-    require_once(__DIR__ . '/../../application/libraries/App_db.php');
+    define('BASEPATH', realpath(__DIR__ . '/../../application') . '/');
 }
+
+// Load the CodeIgniter bootstrap
+require_once(BASEPATH . '../index.php');
 
 $CI = &get_instance();
 
