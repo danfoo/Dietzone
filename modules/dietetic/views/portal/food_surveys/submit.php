@@ -827,8 +827,12 @@
 
     // Photo upload handling
     $(document).ready(function() {
-        // Click to upload
-        $('.photo-upload-area').on('click', function() {
+        // Click to upload - éviter la récursion
+        $('.photo-upload-area').on('click', function(e) {
+            // Si on clique sur l'input file lui-même, ne rien faire
+            if ($(e.target).is('input[type="file"]')) {
+                return;
+            }
             const meal = $(this).data('meal');
             $('#' + meal + 'Photo').click();
         });
@@ -841,6 +845,9 @@
             if (file) {
                 uploadPhoto(meal, file);
             }
+        }).on('click', function(e) {
+            // Empêcher la propagation au parent pour éviter la récursion
+            e.stopPropagation();
         });
 
         // Drag and drop
