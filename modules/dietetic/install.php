@@ -122,6 +122,35 @@ foreach ($foreign_keys as $fk_sql) {
     }
 }
 
+// Load food_surveys tables if not exist
+$food_surveys_sql_file = __DIR__ . '/install/food_surveys.sql';
+if (file_exists($food_surveys_sql_file)) {
+    // Check if food_surveys table exists
+    $table_check = $CI->db->query("SHOW TABLES LIKE '" . db_prefix() . "dietic_food_surveys'")->row_array();
+
+    if (!$table_check) {
+        $food_surveys_sql = file_get_contents($food_surveys_sql_file);
+
+        // Replace table prefix
+        $food_surveys_sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $food_surveys_sql);
+
+        $statements = array_filter(array_map('trim', explode(';', $food_surveys_sql)));
+
+        foreach ($statements as $statement) {
+            if (!empty($statement)) {
+                try {
+                    $CI->db->query($statement);
+                } catch (Exception $e) {
+                    // Table might already exist, that's OK
+                    log_activity('Dietetic food_surveys install: ' . substr($e->getMessage(), 0, 200));
+                }
+            }
+        }
+
+        log_activity('Dietetic Module: Food Surveys tables created');
+    }
+}
+
 // Load sample data only if foods table is empty
 $sample_data_file = __DIR__ . '/sample_data.sql';
 if (file_exists($sample_data_file)) {

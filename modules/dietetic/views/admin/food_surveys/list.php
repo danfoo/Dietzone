@@ -2,7 +2,7 @@
 <?php init_head(); ?>
 
 <style>
-/* Modern Consultations List Styles with Mobile-First Approach */
+/* Modern Food Surveys List Styles with Mobile-First Approach */
 :root {
     --primary-color: #01807B;
     --secondary-color: #F3911D;
@@ -17,7 +17,7 @@
 }
 
 /* Page Header */
-.consultations-header {
+.surveys-header {
     background: linear-gradient(135deg, var(--primary-color) 0%, #016663 100%);
     color: white;
     padding: 32px 24px;
@@ -28,7 +28,7 @@
     overflow: hidden;
 }
 
-.consultations-header::before {
+.surveys-header::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -39,7 +39,7 @@
     border-radius: 50%;
 }
 
-.consultations-header h1 {
+.surveys-header h1 {
     margin: 0 0 8px 0;
     font-size: 28px;
     font-weight: 700;
@@ -50,7 +50,7 @@
     z-index: 1;
 }
 
-.consultations-header p {
+.surveys-header p {
     margin: 0;
     opacity: 0.95;
     font-size: 15px;
@@ -58,15 +58,7 @@
     z-index: 1;
 }
 
-.header-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    position: relative;
-    z-index: 1;
-}
-
-.btn-new-consultation {
+.btn-new-survey {
     background: white;
     color: var(--primary-color);
     border: none;
@@ -76,29 +68,13 @@
     font-size: 15px;
     transition: var(--transition);
     box-shadow: var(--shadow-sm);
-    text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
-.btn-new-consultation:hover {
+.btn-new-survey:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    color: var(--primary-color);
-}
-
-.btn-calendar {
-    background: transparent;
-    color: white;
-    border: 2px solid white;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    transition: var(--transition);
-    text-align: center;
-}
-
-.btn-calendar:hover {
-    background: white;
     color: var(--primary-color);
 }
 
@@ -141,12 +117,12 @@
     border-left-color: var(--secondary-color);
 }
 
-.stat-card.green {
-    border-left-color: #27ae60;
+.stat-card.blue {
+    border-left-color: #3498db;
 }
 
-.stat-card.red {
-    border-left-color: #e74c3c;
+.stat-card.green {
+    border-left-color: #27ae60;
 }
 
 .stat-icon {
@@ -167,14 +143,14 @@
     color: var(--secondary-color);
 }
 
+.stat-card.blue .stat-icon {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%);
+    color: #3498db;
+}
+
 .stat-card.green .stat-icon {
     background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
     color: #27ae60;
-}
-
-.stat-card.red .stat-icon {
-    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(231, 76, 60, 0.05) 100%);
-    color: #e74c3c;
 }
 
 .stat-value {
@@ -223,21 +199,21 @@
 }
 
 /* Enhanced Table */
-.consultations-table-wrapper {
+.surveys-table-wrapper {
     padding: 24px;
 }
 
-#consultations-table {
+#surveys-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
 }
 
-#consultations-table thead tr {
+#surveys-table thead tr {
     background: var(--background-light);
 }
 
-#consultations-table thead th {
+#surveys-table thead th {
     padding: 16px 12px;
     font-size: 12px;
     font-weight: 700;
@@ -248,86 +224,41 @@
     white-space: nowrap;
 }
 
-#consultations-table thead th i {
+#surveys-table thead th i {
     margin-right: 4px;
 }
 
-#consultations-table tbody tr {
+#surveys-table tbody tr {
     transition: var(--transition);
     cursor: pointer;
     border-bottom: 1px solid #ecf0f1;
 }
 
-#consultations-table tbody tr:hover {
+#surveys-table tbody tr:hover {
     background: linear-gradient(to right, rgba(1, 128, 123, 0.05) 0%, rgba(243, 145, 29, 0.02) 100%);
     transform: translateX(4px);
 }
 
-#consultations-table tbody td {
+#surveys-table tbody td {
     padding: 16px 12px;
     vertical-align: middle;
     border: none;
+}
+
+.survey-name {
+    font-weight: 600;
+    color: var(--text-dark);
 }
 
 .patient-name {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 600;
-    color: var(--text-dark);
+    color: var(--text-light);
 }
 
 .patient-name i {
     color: var(--primary-color);
-    font-size: 18px;
-}
-
-.dietitian-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-light);
-}
-
-.dietitian-info i {
-    color: var(--secondary-color);
-}
-
-/* Date Badges */
-.date-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.date-badge.today {
-    background: rgba(231, 76, 60, 0.1);
-    color: #e74c3c;
-}
-
-.date-badge.thisweek {
-    background: rgba(243, 145, 29, 0.1);
-    color: var(--secondary-color);
-}
-
-.date-badge.normal {
-    color: var(--text-light);
-}
-
-/* Type Badge */
-.type-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    background: rgba(243, 145, 29, 0.1);
-    color: var(--secondary-color);
-    text-transform: capitalize;
 }
 
 /* Status Badges */
@@ -341,14 +272,14 @@
     letter-spacing: 0.3px;
 }
 
-.status-badge.scheduled {
-    background: rgba(243, 145, 29, 0.1);
-    color: var(--secondary-color);
+.status-badge.active {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
 }
 
 .status-badge.completed {
-    background: rgba(39, 174, 96, 0.1);
-    color: #27ae60;
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
 }
 
 .status-badge.cancelled {
@@ -356,9 +287,30 @@
     color: #e74c3c;
 }
 
-.status-badge.no_show {
-    background: rgba(149, 165, 166, 0.1);
-    color: #95a5a6;
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    max-width: 120px;
+}
+
+.progress {
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 11px;
+    color: var(--text-light);
+    font-weight: 600;
 }
 
 /* Duration Badge */
@@ -370,8 +322,8 @@
     border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
-    background: rgba(1, 128, 123, 0.1);
-    color: var(--primary-color);
+    background: rgba(243, 145, 29, 0.1);
+    color: var(--secondary-color);
 }
 
 /* Action Buttons */
@@ -430,7 +382,6 @@
     padding: 24px;
     border-left: 4px solid var(--primary-color);
     box-shadow: var(--shadow-sm);
-    margin-bottom: 24px;
 }
 
 .quick-actions h5 {
@@ -492,26 +443,6 @@
     color: white;
 }
 
-.action-btn-info {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.action-btn-info:hover {
-    background: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    color: white;
-}
-
 .quick-actions-hint {
     color: var(--text-light);
     font-size: 13px;
@@ -521,89 +452,20 @@
     gap: 6px;
 }
 
-/* Legend Panel */
-.legend-panel {
-    background: white;
-    border-radius: 12px;
-    padding: 20px 24px;
-    box-shadow: var(--shadow-sm);
-}
-
-.legend-panel h5 {
-    margin: 0 0 16px 0;
-    color: var(--text-dark);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.legend-panel h5 i {
-    color: var(--primary-color);
-}
-
-.legend-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* DataTables Custom Styling */
-.dataTables_wrapper .dataTables_filter input {
-    border: 2px solid var(--primary-color) !important;
-    border-radius: 8px;
-    padding: 10px 16px !important;
-    font-size: 14px;
-    transition: var(--transition);
-}
-
-.dataTables_wrapper .dataTables_filter input:focus {
-    border-color: var(--secondary-color) !important;
-    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
-    outline: none;
-}
-
-.dataTables_wrapper .dataTables_length select {
-    border: 2px solid var(--primary-color);
-    border-radius: 8px;
-    padding: 8px 12px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: var(--primary-color) !important;
-    border-color: var(--primary-color) !important;
-    color: white !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: var(--secondary-color) !important;
-    border-color: var(--secondary-color) !important;
-    color: white !important;
-}
-
 /* Responsive Mobile-First */
 @media (max-width: 768px) {
-    .consultations-header {
+    .surveys-header {
         padding: 20px 16px;
     }
 
-    .consultations-header h1 {
+    .surveys-header h1 {
         font-size: 22px;
     }
 
-    .header-actions {
-        margin-top: 12px;
-    }
-
-    .btn-new-consultation,
-    .btn-calendar {
+    .btn-new-survey {
         width: 100%;
+        margin-top: 12px;
+        justify-content: center;
     }
 
     .stats-grid {
@@ -629,16 +491,16 @@
         overflow-x: auto;
     }
 
-    .consultations-table-wrapper {
+    .surveys-table-wrapper {
         padding: 16px;
     }
 
-    #consultations-table {
+    #surveys-table {
         font-size: 13px;
     }
 
-    #consultations-table thead th,
-    #consultations-table tbody td {
+    #surveys-table thead th,
+    #surveys-table tbody td {
         padding: 12px 8px;
     }
 
@@ -647,15 +509,9 @@
     }
 
     .action-btn-primary,
-    .action-btn-secondary,
-    .action-btn-info {
+    .action-btn-secondary {
         width: 100%;
         justify-content: center;
-    }
-
-    .legend-items {
-        flex-direction: column;
-        gap: 12px;
     }
 }
 
@@ -671,27 +527,22 @@
         <!-- Page Header -->
         <div class="row">
             <div class="col-md-12">
-                <div class="consultations-header">
+                <div class="surveys-header">
                     <div class="row">
                         <div class="col-md-8 col-sm-12">
                             <h1>
-                                <i class="fa fa-stethoscope"></i>
-                                Gestion des Consultations
+                                <i class="fa fa-camera"></i>
+                                Enquêtes Alimentaires
                             </h1>
                             <p>
-                                <i class="fa fa-calendar-check-o"></i> Planifiez et suivez toutes vos consultations diététiques
+                                <i class="fa fa-cutlery"></i> Suivez les habitudes alimentaires de vos patients avec photos
                             </p>
                         </div>
                         <div class="col-md-4 col-sm-12">
                             <?php if (dietetic_has_permission('create')) { ?>
-                                <div class="header-actions">
-                                    <a href="<?php echo admin_url('dietetic/consultations/create'); ?>" class="btn btn-new-consultation">
-                                        <i class="fa fa-plus-circle"></i> Nouvelle Consultation
-                                    </a>
-                                    <a href="<?php echo admin_url('dietetic/consultations/calendar'); ?>" class="btn btn-calendar">
-                                        <i class="fa fa-calendar"></i> Voir le Calendrier
-                                    </a>
-                                </div>
+                                <a href="<?php echo admin_url('dietetic/food_surveys/create'); ?>" class="btn btn-new-survey">
+                                    <i class="fa fa-plus-circle"></i> Nouvelle Enquête
+                                </a>
                             <?php } ?>
                         </div>
                     </div>
@@ -703,26 +554,10 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">
-                    <i class="fa fa-calendar"></i>
+                    <i class="fa fa-camera"></i>
                 </div>
-                <div class="stat-value"><?php echo count($consultations); ?></div>
-                <div class="stat-label">Total Consultations</div>
-            </div>
-
-            <div class="stat-card orange">
-                <div class="stat-icon">
-                    <i class="fa fa-clock-o"></i>
-                </div>
-                <div class="stat-value">
-                    <?php
-                    $scheduled_count = 0;
-                    foreach ($consultations as $c) {
-                        if ($c->status === 'scheduled') $scheduled_count++;
-                    }
-                    echo $scheduled_count;
-                    ?>
-                </div>
-                <div class="stat-label">Programmées</div>
+                <div class="stat-value"><?php echo count($surveys); ?></div>
+                <div class="stat-label">Total Enquêtes</div>
             </div>
 
             <div class="stat-card green">
@@ -731,122 +566,132 @@
                 </div>
                 <div class="stat-value">
                     <?php
+                    $active_count = 0;
+                    foreach ($surveys as $s) {
+                        if ($s->status === 'active') $active_count++;
+                    }
+                    echo $active_count;
+                    ?>
+                </div>
+                <div class="stat-label">Actives</div>
+            </div>
+
+            <div class="stat-card blue">
+                <div class="stat-icon">
+                    <i class="fa fa-flag-checkered"></i>
+                </div>
+                <div class="stat-value">
+                    <?php
                     $completed_count = 0;
-                    foreach ($consultations as $c) {
-                        if ($c->status === 'completed') $completed_count++;
+                    foreach ($surveys as $s) {
+                        if ($s->status === 'completed') $completed_count++;
                     }
                     echo $completed_count;
                     ?>
                 </div>
-                <div class="stat-label">Complétées</div>
+                <div class="stat-label">Terminées</div>
             </div>
 
-            <div class="stat-card red">
+            <div class="stat-card orange">
                 <div class="stat-icon">
-                    <i class="fa fa-calendar-o"></i>
+                    <i class="fa fa-users"></i>
                 </div>
                 <div class="stat-value">
                     <?php
-                    $today_count = 0;
-                    foreach ($consultations as $c) {
-                        if (date('Y-m-d', strtotime($c->consultation_date)) === date('Y-m-d')) {
-                            $today_count++;
+                    $patients = array();
+                    foreach ($surveys as $s) {
+                        if (!in_array($s->patient_id, $patients)) {
+                            $patients[] = $s->patient_id;
                         }
                     }
-                    echo $today_count;
+                    echo count($patients);
                     ?>
                 </div>
-                <div class="stat-label">Aujourd'hui</div>
+                <div class="stat-label">Patients Suivis</div>
             </div>
         </div>
 
-        <!-- Consultations Table -->
+        <!-- Surveys Table -->
         <div class="row">
             <div class="col-md-12">
                 <div class="table-container">
                     <div class="table-header">
                         <h4>
                             <i class="fa fa-list"></i>
-                            Liste des Consultations
+                            Liste des Enquêtes Alimentaires
                         </h4>
                     </div>
 
-                    <div class="consultations-table-wrapper">
-                        <table id="consultations-table">
+                    <div class="surveys-table-wrapper">
+                        <table id="surveys-table">
                             <thead>
                                 <tr>
-                                    <th><i class="fa fa-user"></i> <?php echo _l('dietetic_patient'); ?></th>
-                                    <th><i class="fa fa-user-md"></i> <?php echo _l('dietetic_dietitian'); ?></th>
-                                    <th><i class="fa fa-calendar"></i> <?php echo _l('dietetic_date'); ?></th>
-                                    <th><i class="fa fa-tag"></i> <?php echo _l('dietetic_type'); ?></th>
-                                    <th><i class="fa fa-info-circle"></i> <?php echo _l('dietetic_status'); ?></th>
-                                    <th><i class="fa fa-clock-o"></i> <?php echo _l('dietetic_duration'); ?></th>
-                                    <th class="text-center"><i class="fa fa-cog"></i> <?php echo _l('options'); ?></th>
+                                    <th><i class="fa fa-file-text"></i> Nom</th>
+                                    <th><i class="fa fa-user"></i> Patient</th>
+                                    <th><i class="fa fa-user-md"></i> Diététicien</th>
+                                    <th><i class="fa fa-calendar"></i> Période</th>
+                                    <th><i class="fa fa-clock-o"></i> Durée</th>
+                                    <th><i class="fa fa-info-circle"></i> Statut</th>
+                                    <th><i class="fa fa-percent"></i> Progrès</th>
+                                    <th class="text-center"><i class="fa fa-cog"></i> Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($consultations as $consultation) { ?>
-                                    <tr onclick="window.location='<?php echo admin_url('dietetic/consultations/view/' . $consultation->id); ?>'">
+                                <?php foreach ($surveys as $survey) { ?>
+                                    <tr onclick="window.location='<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>'">
+                                        <td>
+                                            <div class="survey-name">
+                                                <?php echo htmlspecialchars($survey->survey_name); ?>
+                                            </div>
+                                        </td>
                                         <td>
                                             <div class="patient-name">
                                                 <i class="fa fa-user-circle"></i>
-                                                <span><?php echo htmlspecialchars($consultation->client_name); ?></span>
+                                                <span><?php echo htmlspecialchars($survey->patient_name); ?></span>
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="dietitian-info">
-                                                <i class="fa fa-stethoscope"></i>
-                                                <span><?php echo htmlspecialchars($consultation->dietitian_name); ?></span>
-                                            </div>
+                                            <small style="color: #7f8c8d;">
+                                                <?php echo htmlspecialchars($survey->dietitian_name); ?>
+                                            </small>
                                         </td>
                                         <td>
-                                            <?php
-                                            $consult_date = strtotime($consultation->consultation_date);
-                                            $today = strtotime(date('Y-m-d'));
-
-                                            if (date('Y-m-d', $consult_date) === date('Y-m-d')) {
-                                                $badge_class = 'today';
-                                                $date_text = '<i class="fa fa-exclamation-circle"></i> Aujourd\'hui ' . date('H:i', $consult_date);
-                                            } elseif ($consult_date > $today && $consult_date <= strtotime('+7 days')) {
-                                                $badge_class = 'thisweek';
-                                                $date_text = '<i class="fa fa-calendar"></i> ' . _dt($consultation->consultation_date);
-                                            } else {
-                                                $badge_class = 'normal';
-                                                $date_text = '<i class="fa fa-calendar-o"></i> ' . _dt($consultation->consultation_date);
-                                            }
-                                            ?>
-                                            <span class="date-badge <?php echo $badge_class; ?>">
-                                                <?php echo $date_text; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="type-badge">
-                                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            $status_class = strtolower(str_replace(' ', '_', $consultation->status));
-                                            ?>
-                                            <span class="status-badge <?php echo $status_class; ?>">
-                                                <?php echo ucfirst($consultation->status); ?>
-                                            </span>
+                                            <small style="color: #7f8c8d;">
+                                                <?php echo date('d/m/Y', strtotime($survey->start_date)); ?> -
+                                                <?php echo date('d/m/Y', strtotime($survey->end_date)); ?>
+                                            </small>
                                         </td>
                                         <td>
                                             <span class="duration-badge">
                                                 <i class="fa fa-hourglass-half"></i>
-                                                <span><?php echo $consultation->duration; ?> min</span>
+                                                <span><?php echo $survey->duration_days; ?> jours</span>
                                             </span>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $status_class = strtolower($survey->status);
+                                            ?>
+                                            <span class="status-badge <?php echo $status_class; ?>">
+                                                <?php echo ucfirst($survey->status); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="progress-container">
+                                                <div class="progress">
+                                                    <div class="progress-bar" style="width: <?php echo $survey->completion_percentage; ?>%"></div>
+                                                </div>
+                                                <div class="progress-text"><?php echo round($survey->completion_percentage); ?>%</div>
+                                            </div>
                                         </td>
                                         <td onclick="event.stopPropagation();">
                                             <div class="action-buttons">
-                                                <a href="<?php echo admin_url('dietetic/consultations/view/' . $consultation->id); ?>"
+                                                <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>"
                                                    class="action-btn view"
                                                    title="Voir">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
                                                 <?php if (dietetic_has_permission('edit')) { ?>
-                                                    <a href="<?php echo admin_url('dietetic/consultations/edit/' . $consultation->id); ?>"
+                                                    <a href="<?php echo admin_url('dietetic/food_surveys/edit/' . $survey->id); ?>"
                                                        class="action-btn edit"
                                                        title="Modifier">
                                                         <i class="fa fa-pencil"></i>
@@ -854,7 +699,7 @@
                                                 <?php } ?>
                                                 <?php if (dietetic_has_permission('delete')) { ?>
                                                     <a href="#"
-                                                       onclick="dietetic.deleteConfirm('<?php echo admin_url('dietetic/consultations/delete/' . $consultation->id); ?>', function() { location.reload(); }); return false;"
+                                                       onclick="dietetic.deleteConfirm('<?php echo admin_url('dietetic/food_surveys/delete/' . $survey->id); ?>', function() { location.reload(); }); return false;"
                                                        class="action-btn delete"
                                                        title="Supprimer">
                                                         <i class="fa fa-trash"></i>
@@ -881,52 +726,19 @@
                     </h5>
                     <div class="action-buttons-group">
                         <?php if (dietetic_has_permission('create')) { ?>
-                            <a href="<?php echo admin_url('dietetic/consultations/create'); ?>" class="action-btn-primary">
+                            <a href="<?php echo admin_url('dietetic/food_surveys/create'); ?>" class="action-btn-primary">
                                 <i class="fa fa-plus-circle"></i>
-                                <span>Nouvelle Consultation</span>
-                            </a>
-                            <a href="<?php echo admin_url('dietetic/consultations/calendar'); ?>" class="action-btn-secondary">
-                                <i class="fa fa-calendar"></i>
-                                <span>Calendrier</span>
+                                <span>Nouvelle Enquête</span>
                             </a>
                         <?php } ?>
-                        <a href="<?php echo admin_url('dietetic/patients'); ?>" class="action-btn-info">
+                        <a href="<?php echo admin_url('dietetic/patients'); ?>" class="action-btn-secondary">
                             <i class="fa fa-users"></i>
                             <span>Voir les Patients</span>
                         </a>
                     </div>
                     <div class="quick-actions-hint">
                         <i class="fa fa-info-circle"></i>
-                        <span>Cliquez sur une ligne pour voir les détails de la consultation</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Legend Panel -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="legend-panel">
-                    <h5>
-                        <i class="fa fa-info-circle"></i>
-                        Légende des Dates
-                    </h5>
-                    <div class="legend-items">
-                        <div class="legend-item">
-                            <span class="date-badge today">
-                                <i class="fa fa-exclamation-circle"></i> Aujourd'hui
-                            </span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="date-badge thisweek">
-                                <i class="fa fa-calendar"></i> Cette semaine (7 jours)
-                            </span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="date-badge normal">
-                                <i class="fa fa-calendar-o"></i> Autres dates
-                            </span>
-                        </div>
+                        <span>Cliquez sur une ligne pour voir les détails de l'enquête</span>
                     </div>
                 </div>
             </div>
@@ -938,18 +750,15 @@
 $(window).on('load', function() {
     // Initialize DataTables
     if ($.fn.DataTable) {
-        $('#consultations-table').DataTable({
-            "order": [[2, "desc"]], // Sort by consultation_date desc
+        $('#surveys-table').DataTable({
+            "order": [[3, "desc"]], // Sort by start_date desc
             "pageLength": 10,
             "lengthChange": false,
             "searching": true,
             "info": true,
             "paging": true,
-            "language": {
-                "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
-            },
             "columnDefs": [
-                { "orderable": false, "targets": 6 } // Disable sorting on actions column
+                { "orderable": false, "targets": 7 } // Disable sorting on actions column
             ]
         });
     } else {

@@ -109,7 +109,7 @@ function dietetic_module_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('dietetic', [
             'slug'     => 'dietetic-consultations',
             'name'     => _l('dietetic_consultations'),
-            'icon'     => 'fa fa-calendar-check-o',
+            'icon'     => 'fa fa-stethoscope',
             'href'     => admin_url('dietetic/consultations'),
             'position' => 3,
         ]);
@@ -123,6 +123,15 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
+        // Food Surveys (Enquêtes Alimentaires)
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-food-surveys',
+            'name'     => 'Enquêtes Alimentaires',
+            'icon'     => 'fa fa-camera',
+            'href'     => admin_url('dietetic/food_surveys'),
+            'position' => 5,
+        ]);
+
         // Dietitians (with ratings) - requires view_dietitians permission
         if (has_permission('dietetic', '', 'view_dietitians')) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
@@ -130,7 +139,7 @@ function dietetic_module_init_menu_items()
                 'name'     => 'Diététiciens',
                 'icon'     => 'fa fa-user-md',
                 'href'     => admin_url('dietetic/dietitians'),
-                'position' => 5,
+                'position' => 6,
             ]);
         }
 
@@ -141,7 +150,7 @@ function dietetic_module_init_menu_items()
                 'name'     => _l('dietetic_foods'),
                 'icon'     => 'fa fa-cutlery',
                 'href'     => admin_url('dietetic/foods'),
-                'position' => 6,
+                'position' => 7,
             ]);
         }
 
@@ -198,7 +207,7 @@ function dietetic_add_customer_profile_tab($client_id)
 }
 
 /**
- * Add custom CSS and JS for admin area
+ * Add custom CSS for admin area (in head)
  */
 hooks()->add_action('app_admin_head', 'dietetic_add_head_components');
 
@@ -209,6 +218,20 @@ function dietetic_add_head_components()
 
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<link href="' . $module_path . 'assets/css/dietetic.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
+    }
+}
+
+/**
+ * Add custom JS for admin area (in footer, after jQuery is loaded)
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_add_footer_components');
+
+function dietetic_add_footer_components()
+{
+    $CI = &get_instance();
+    $module_path = module_dir_url(DIETETIC_MODULE_NAME);
+
+    if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<script src="' . $module_path . 'assets/js/dietetic.js?v=' . time() . '"></script>';
     }
 }
@@ -278,11 +301,23 @@ function dietetic_add_portal_menu()
         $patient = $CI->dietetic_patients_model->get_by_client($client_id);
 
         if ($patient) {
+            // Check if food surveys are enabled
+            $food_surveys_enabled = $CI->db->table_exists(db_prefix() . 'dietic_food_surveys');
+
             echo '<li class="customers-nav-item-dietetic">
                     <a href="' . site_url('dietetic/portal') . '">
-                        <i class="fa fa-heartbeat"></i> My Program
+                        <i class="fa fa-heartbeat"></i> Mon Programme
                     </a>
                   </li>';
+
+            // Add food surveys menu item if enabled
+            if ($food_surveys_enabled) {
+                echo '<li class="customers-nav-item-dietetic-surveys">
+                        <a href="' . site_url('dietetic/portal/food_surveys') . '">
+                            <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
+                        </a>
+                      </li>';
+            }
         }
 
         ob_end_flush();

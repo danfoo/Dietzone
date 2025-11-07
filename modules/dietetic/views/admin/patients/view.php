@@ -313,6 +313,127 @@
                         <?php } ?>
                     </div>
                 </div>
+
+                <!-- Food Surveys -->
+                <?php if (!empty($food_surveys) || $this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="clearfix">
+                            <h4 class="pull-left" style="border-bottom: 3px solid #01807B; padding-bottom: 10px; margin-bottom: 20px;">
+                                <i class="fa fa-clipboard-list" style="color: #01807B;"></i> Enquêtes Alimentaires
+                            </h4>
+                            <?php if (dietetic_has_permission('create')) { ?>
+                                <a href="<?php echo admin_url('dietetic/food_surveys/create?patient_id=' . $patient->id); ?>" class="btn btn-primary pull-right" style="background: #01807B; border-color: #01807B;">
+                                    <i class="fa fa-plus"></i> Nouvelle Enquête
+                                </a>
+                            <?php } ?>
+                        </div>
+                        <div class="clearfix"></div>
+
+                        <?php if (!empty($food_surveys)) { ?>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th><i class="fa fa-tag"></i> Nom de l'enquête</th>
+                                        <th><i class="fa fa-calendar"></i> Période</th>
+                                        <th><i class="fa fa-chart-line"></i> Progression</th>
+                                        <th><i class="fa fa-info-circle"></i> Statut</th>
+                                        <th class="text-center"><i class="fa fa-cog"></i> Options</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($food_surveys as $survey) {
+                                        $start = new DateTime($survey->start_date);
+                                        $end = clone $start;
+                                        $end->modify('+' . ($survey->duration_days - 1) . ' days');
+                                        $today = new DateTime();
+
+                                        // Calculate status
+                                        if ($survey->status == 'completed') {
+                                            $status_badge = '<span class="label label-success"><i class="fa fa-check-circle"></i> Terminée</span>';
+                                        } elseif ($today > $end) {
+                                            $status_badge = '<span class="label label-default"><i class="fa fa-calendar-times"></i> Expirée</span>';
+                                        } elseif ($today < $start) {
+                                            $status_badge = '<span class="label label-info"><i class="fa fa-clock"></i> À venir</span>';
+                                        } else {
+                                            $status_badge = '<span class="label label-warning"><i class="fa fa-hourglass-half"></i> En cours</span>';
+                                        }
+
+                                        // Calculate progress
+                                        $entries_count = isset($survey->entries_count) ? $survey->entries_count : 0;
+                                        $progress_percentage = ($survey->duration_days > 0) ? round(($entries_count / $survey->duration_days) * 100) : 0;
+                                        $progress_color = $progress_percentage >= 80 ? '#2ecc71' : ($progress_percentage >= 50 ? '#f39c12' : '#e74c3c');
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($survey->survey_name); ?></strong>
+                                                <?php if ($survey->program_id) { ?>
+                                                    <br><small class="text-muted">
+                                                        <i class="fa fa-link"></i> Programme: <?php echo htmlspecialchars($survey->program_name); ?>
+                                                    </small>
+                                                <?php } ?>
+                                            </td>
+                                            <td>
+                                                <span style="white-space: nowrap;">
+                                                    <?php echo _d($survey->start_date); ?>
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fa fa-arrow-right"></i> <?php echo _d($end->format('Y-m-d')); ?>
+                                                    <span class="label label-default"><?php echo $survey->duration_days; ?> jours</span>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div style="margin-bottom: 5px;">
+                                                    <strong><?php echo $entries_count; ?>/<?php echo $survey->duration_days; ?></strong>
+                                                    <small class="text-muted">entrées</small>
+                                                </div>
+                                                <div class="progress" style="height: 8px; margin-bottom: 0;">
+                                                    <div class="progress-bar" role="progressbar"
+                                                         style="width: <?php echo $progress_percentage; ?>%; background-color: <?php echo $progress_color; ?>;"
+                                                         aria-valuenow="<?php echo $progress_percentage; ?>"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted"><?php echo $progress_percentage; ?>%</small>
+                                            </td>
+                                            <td><?php echo $status_badge; ?></td>
+                                            <td class="text-center">
+                                                <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>"
+                                                   class="btn btn-info btn-sm"
+                                                   title="Voir les détails">
+                                                    <i class="fa fa-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
+
+                            <?php if (count($food_surveys) > 0) { ?>
+                                <div class="text-right" style="margin-top: 15px;">
+                                    <a href="<?php echo admin_url('dietetic/food_surveys?patient_id=' . $patient->id); ?>" class="btn btn-default btn-sm">
+                                        <i class="fa fa-list"></i> Voir toutes les enquêtes
+                                    </a>
+                                </div>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <div class="alert alert-info" style="border-left: 4px solid #01807B;">
+                                <i class="fa fa-info-circle"></i> Aucune enquête alimentaire pour ce patient.
+                                <?php if (dietetic_has_permission('create')) { ?>
+                                    <br><br>
+                                    <a href="<?php echo admin_url('dietetic/food_surveys/create?patient_id=' . $patient->id); ?>"
+                                       class="btn btn-sm"
+                                       style="background: #01807B; border-color: #01807B; color: white;">
+                                        <i class="fa fa-plus"></i> Créer la première enquête
+                                    </a>
+                                <?php } ?>
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
             </div>
 
             <!-- Right Sidebar -->
@@ -330,9 +451,14 @@
                             <a href="<?php echo admin_url('dietetic/consultations/create?patient_id=' . $patient->id); ?>" class="btn btn-info btn-block btn-lg" style="margin-bottom: 10px;">
                                 <i class="fa fa-calendar-plus-o"></i> Nouvelle Consultation
                             </a>
-                            <a href="<?php echo admin_url('dietetic/programs/create?patient_id=' . $patient->id); ?>" class="btn btn-primary btn-block btn-lg">
+                            <a href="<?php echo admin_url('dietetic/programs/create?patient_id=' . $patient->id); ?>" class="btn btn-primary btn-block btn-lg" style="margin-bottom: 10px;">
                                 <i class="fa fa-file-text-o"></i> Nouveau Programme
                             </a>
+                            <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+                                <a href="<?php echo admin_url('dietetic/food_surveys/create?patient_id=' . $patient->id); ?>" class="btn btn-block btn-lg" style="background: #01807B; border-color: #01807B; color: white;">
+                                    <i class="fa fa-clipboard-list"></i> Nouvelle Enquête Alimentaire
+                                </a>
+                            <?php } ?>
                         <?php } ?>
                     </div>
                 </div>

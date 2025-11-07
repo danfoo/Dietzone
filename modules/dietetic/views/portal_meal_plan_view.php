@@ -2,157 +2,306 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#01807B">
     <title><?php echo isset($title) ? $title : 'Plan Alimentaire'; ?></title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
     <?php } ?>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
             padding-bottom: 80px;
         }
 
-        /* Sticky Header */
-        .header {
+        .portal-header {
             background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid #e9ecef;
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: sticky;
             top: 0;
             z-index: 100;
-            padding: 15px 20px;
         }
 
-        .header-content {
+        .portal-header .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .portal-header-content {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
 
-        .back-btn {
-            background: #f0f0f0;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .portal-logo {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s;
+            text-decoration: none;
         }
 
-        .back-btn:active {
-            transform: scale(0.95);
-            background: #e0e0e0;
+        .portal-logo img {
+            max-height: 40px;
+            max-width: 150px;
         }
 
-        .header-title {
-            flex: 1;
-            text-align: center;
-            padding: 0 10px;
-        }
-
-        .header-title h1 {
-            font-size: 18px;
+        .portal-logo-text {
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .header-title p {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin: 2px 0 0;
+        .portal-logo-text i {
+            color: #01807B;
         }
 
-        .menu-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            color: #333;
-            cursor: pointer;
+        .portal-nav-desktop {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        /* Container */
-        .container {
+        .portal-nav-desktop a {
+            padding: 10px 20px;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+
+        .portal-nav-desktop a:hover {
+            background: #f8f9fa;
+            color: #01807B;
+        }
+
+        .portal-nav-desktop a.active {
+            background: #01807B;
+            color: white;
+        }
+
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
             max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .bottom-nav-item.active {
+            color: #01807B;
+        }
+
+        .bottom-nav-item i {
+            font-size: 24px;
+        }
+
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: #01807B;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .content-container {
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px 15px;
         }
 
-        /* Objectives Card */
+        .page-header-mobile {
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
+        }
+
+        .page-header-mobile h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-header-mobile p {
+            margin: 0;
+            font-size: 15px;
+            opacity: 0.95;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            flex: 1;
+            min-width: 140px;
+            background: white;
+            color: #495057;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+        }
+
+        .btn-action:hover {
+            background: #f8f9fa;
+            border-color: #01807B;
+            color: #01807B;
+            text-decoration: none;
+        }
+
+        .btn-action:active {
+            transform: scale(0.97);
+        }
+
+        .btn-action.primary {
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-action.primary:hover {
+            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
+            color: white;
+        }
+
         .objectives-card {
             background: white;
-            border-radius: 15px;
+            border-left: 4px solid #01807B;
+            border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .objectives-title {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .objectives-title i {
-            color: #667eea;
+            color: #01807B;
+            font-size: 22px;
         }
 
         .objectives-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
         }
 
         .objective-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 12px;
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            padding: 16px;
             border-radius: 10px;
             text-align: center;
             color: white;
         }
 
         .objective-value {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .objective-label {
             font-size: 11px;
-            opacity: 0.9;
+            opacity: 0.95;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
-        /* Day Tabs */
         .day-tabs {
             display: flex;
             overflow-x: auto;
             gap: 10px;
-            padding: 0 15px 15px;
-            margin: 0 -15px 20px;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
@@ -163,29 +312,32 @@
 
         .day-tab {
             background: white;
-            border: none;
-            padding: 12px 20px;
+            border: 2px solid #e9ecef;
+            padding: 12px 24px;
             border-radius: 25px;
             font-size: 14px;
             font-weight: 600;
-            color: #7f8c8d;
+            color: #6c757d;
             white-space: nowrap;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            min-height: 48px;
+            display: flex;
+            align-items: center;
         }
 
         .day-tab.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: #01807B;
+            color: white;
+            border-color: #01807B;
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
         }
 
         .day-tab:active {
             transform: scale(0.95);
         }
 
-        /* Day Content */
         .day-content {
             display: none;
         }
@@ -206,23 +358,29 @@
             }
         }
 
-        /* Meal Card */
         .meal-card {
             background: white;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            border-left: 4px solid #F3911D;
+            border-radius: 12px;
+            margin-bottom: 16px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .meal-card:active {
+            transform: scale(0.98);
         }
 
         .meal-header {
-            padding: 15px 20px;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
             user-select: none;
             background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            min-height: 56px;
         }
 
         .meal-header:active {
@@ -234,30 +392,37 @@
         }
 
         .meal-type {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meal-type i {
+            color: #F3911D;
         }
 
         .meal-time {
             font-size: 13px;
-            color: #7f8c8d;
+            color: #6c757d;
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
         .meal-toggle {
-            width: 32px;
-            height: 32px;
-            background: #667eea;
+            width: 36px;
+            height: 36px;
+            background: #F3911D;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 14px;
+            font-size: 16px;
             transition: transform 0.3s;
         }
 
@@ -272,7 +437,7 @@
         }
 
         .meal-card.expanded .meal-body {
-            max-height: 2000px;
+            max-height: 3000px;
             transition: max-height 0.5s ease-in;
         }
 
@@ -281,39 +446,41 @@
         }
 
         .meal-name {
-            background: #fff3cd;
-            padding: 10px;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+            padding: 12px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             font-style: italic;
-            color: #856404;
+            color: #2c3e50;
             font-size: 14px;
+            font-weight: 600;
+            border-left: 3px solid #01807B;
         }
 
-        /* Food Items */
         .food-items {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .food-item {
             background: #f8f9fa;
-            padding: 12px;
+            padding: 14px;
             border-radius: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            border-left: 3px solid #01807B;
         }
 
         .food-name {
-            font-weight: 600;
+            font-weight: 700;
             color: #2c3e50;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .food-quantity {
-            color: #667eea;
+            color: #01807B;
             font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
         }
 
         .food-nutrition {
@@ -325,91 +492,105 @@
         .nutrition-item {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 13px;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
         }
 
         .nutrition-label {
-            color: #7f8c8d;
+            color: #6c757d;
+            font-weight: 600;
         }
 
         .nutrition-value {
-            font-weight: 600;
+            font-weight: 700;
             color: #2c3e50;
         }
 
-        /* Meal Total */
         .meal-total {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            padding: 12px;
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            padding: 16px;
             border-radius: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            color: white;
         }
 
         .meal-total-title {
             font-weight: 700;
-            color: #155724;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .meal-total-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 10px;
         }
 
         .total-item {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            color: #155724;
+            font-size: 13px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
         }
 
         .total-value {
             font-weight: 700;
         }
 
-        /* Instructions */
         .instructions {
-            background: #e7f3ff;
-            border-left: 4px solid #2196f3;
-            padding: 12px;
+            background: linear-gradient(135deg, rgba(243, 145, 29, 0.1) 0%, rgba(243, 145, 29, 0.05) 100%);
+            border-left: 4px solid #F3911D;
+            padding: 14px;
             border-radius: 0 8px 8px 0;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.6;
-            color: #0c5460;
+            color: #495057;
         }
 
         .instructions-title {
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
+            color: #2c3e50;
         }
 
-        /* Empty State */
+        .instructions-title i {
+            color: #F3911D;
+        }
+
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            color: white;
+            padding: 60px 20px;
+            color: #6c757d;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
 
         .empty-state i {
-            font-size: 48px;
-            opacity: 0.5;
-            margin-bottom: 15px;
+            font-size: 56px;
+            color: #dee2e6;
+            margin-bottom: 16px;
         }
 
         .empty-state p {
             font-size: 16px;
-            opacity: 0.8;
+            color: #6c757d;
         }
 
-        /* Notes Card */
         .notes-card {
             background: white;
-            border-radius: 15px;
+            border-left: 4px solid #F3911D;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -421,20 +602,24 @@
             gap: 10px;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 12px;
-            font-size: 15px;
+            margin-bottom: 14px;
+            font-size: 16px;
+        }
+
+        .notes-title i {
+            color: #F3911D;
         }
 
         .notes-content {
             font-size: 14px;
             line-height: 1.6;
-            color: #555;
+            color: #495057;
         }
 
-        /* Weekly Summary */
         .weekly-summary {
             background: white;
-            border-radius: 15px;
+            border-left: 4px solid #01807B;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -446,8 +631,12 @@
             gap: 10px;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 15px;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .summary-title i {
+            color: #01807B;
         }
 
         .summary-grid {
@@ -458,79 +647,56 @@
 
         .summary-item {
             background: #f8f9fa;
-            padding: 12px;
+            padding: 16px;
             border-radius: 10px;
             text-align: center;
         }
 
         .summary-value {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
-            color: #667eea;
+            color: #01807B;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .summary-label {
             font-size: 11px;
-            color: #7f8c8d;
+            color: #6c757d;
             text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        /* Bottom Nav */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            padding: 10px 0 max(10px, env(safe-area-inset-bottom));
-            z-index: 99;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            color: #7f8c8d;
-            text-decoration: none;
-            font-size: 11px;
-            transition: all 0.3s;
+        .animate-in {
+            animation: fadeInUp 0.5s ease-out forwards;
         }
 
-        .nav-item i {
-            font-size: 20px;
-        }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
 
-        .nav-item.active {
-            color: #667eea;
-        }
-
-        .nav-item:active {
-            transform: scale(0.95);
-        }
-
-        /* Responsive */
-        @media (min-width: 768px) {
+        @media (min-width: 769px) {
             body {
                 padding-bottom: 0;
             }
 
-            .header {
-                position: relative;
-            }
-
-            .header-title h1 {
-                font-size: 22px;
-            }
-
             .bottom-nav {
-                display: none;
+                display: none !important;
+            }
+
+            .portal-nav-desktop {
+                display: flex !important;
             }
 
             .objectives-grid {
@@ -544,35 +710,147 @@
             .summary-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
+
+            .meal-total-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
 
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
+        @media (max-width: 768px) {
+            .portal-nav-desktop {
+                display: none !important;
+            }
+
+            .bottom-nav {
+                display: block;
+            }
+
+            .content-container {
+                padding: 16px 12px 20px;
+            }
+
+            .page-header-mobile {
+                padding: 20px 16px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+            }
+
+            .page-header-mobile h1 {
+                font-size: 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-action {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .portal-logo img {
+                max-height: 32px;
+                max-width: 120px;
+            }
+
+            .portal-logo-text {
+                font-size: 16px;
+            }
+
+            .page-header-mobile h1 {
+                font-size: 18px;
+            }
+        }
+
+        @media print {
+            .portal-header,
+            .bottom-nav,
+            .action-buttons,
+            .day-tabs {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .meal-card {
+                page-break-inside: avoid;
+            }
+
+            .meal-body {
+                max-height: none !important;
+            }
+
+            .meal-card.expanded .meal-body,
+            .meal-body {
+                max-height: none !important;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <button class="back-btn" onclick="window.location.href='<?php echo site_url('dietetic/portal/meal_plans'); ?>'">
-                <i class="fa fa-arrow-left"></i>
-            </button>
-            <div class="header-title">
-                <h1><?php echo htmlspecialchars($meal_plan->plan_name); ?></h1>
-                <p>Semaine <?php echo $meal_plan->week_number; ?></p>
+    <div class="portal-header">
+        <div class="container-fluid">
+            <div class="portal-header-content">
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
+                    <?php
+                    $logo_path = get_option('company_logo_dark');
+                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
+                        $logo_path = get_option('company_logo');
+                    }
+
+                    if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
+                    ?>
+                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
+                    <?php } else { ?>
+                        <div class="portal-logo-text">
+                            <i class="fa fa-heartbeat"></i>
+                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
+                        </div>
+                    <?php } ?>
+                </a>
+
+                <nav class="portal-nav-desktop">
+                    <a href="<?php echo site_url('dietetic/portal'); ?>">
+                        <i class="fa fa-home"></i> Accueil
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="active">
+                        <i class="fa fa-cutlery"></i> Repas
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
+                        <i class="fa fa-user-md"></i> Diététicien
+                    </a>
+                    <a href="<?php echo site_url('clients/profile'); ?>">
+                        <i class="fa fa-user"></i> Profil
+                    </a>
+                </nav>
             </div>
-            <button class="menu-btn" onclick="toggleMenu()">
-                <i class="fa fa-ellipsis-v"></i>
-            </button>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Objectives Card -->
+    <div class="content-container">
+        <div class="page-header-mobile animate-in">
+            <h1><i class="fa fa-cutlery"></i> <?php echo htmlspecialchars($meal_plan->plan_name); ?></h1>
+            <p><?php echo htmlspecialchars($program->program_name); ?> - Semaine <?php echo $meal_plan->week_number; ?></p>
+        </div>
+
+        <div class="action-buttons animate-in delay-1">
+            <button class="btn-action" onclick="window.print()">
+                <i class="fa fa-print"></i> Imprimer
+            </button>
+            <a href="<?php echo site_url('dietetic/portal/download_meal_plan_pdf/' . $meal_plan->id); ?>" class="btn-action">
+                <i class="fa fa-file-pdf-o"></i> Télécharger PDF
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="btn-action primary">
+                <i class="fa fa-arrow-left"></i> Retour
+            </a>
+        </div>
+
         <?php if ($program->daily_calories || $program->daily_protein) { ?>
-            <div class="objectives-card">
+            <div class="objectives-card animate-in delay-2">
                 <div class="objectives-title">
                     <i class="fa fa-bullseye"></i>
                     Objectifs Journaliers
@@ -606,7 +884,6 @@
             </div>
         <?php } ?>
 
-        <!-- Day Tabs -->
         <div class="day-tabs">
             <?php
             $days_fr = [
@@ -751,7 +1028,7 @@
                                             </div>
                                         </div>
                                     <?php } else { ?>
-                                        <p style="color: #7f8c8d; font-style: italic;">Aucun aliment défini pour ce repas.</p>
+                                        <p style="color: #6c757d; font-style: italic; padding: 16px;">Aucun aliment défini pour ce repas.</p>
                                     <?php } ?>
 
                                     <?php if ($meal->instructions) { ?>
@@ -775,7 +1052,6 @@
             </div>
         <?php } ?>
 
-        <!-- Notes -->
         <?php if ($meal_plan->notes) { ?>
             <div class="notes-card">
                 <div class="notes-title">
@@ -788,7 +1064,6 @@
             </div>
         <?php } ?>
 
-        <!-- Weekly Summary -->
         <div class="weekly-summary">
             <div class="summary-title">
                 <i class="fa fa-line-chart"></i>
@@ -815,61 +1090,75 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="nav-item">
-            <i class="fa fa-home"></i>
-            <span>Accueil</span>
-        </a>
-        <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="nav-item active">
-            <i class="fa fa-cutlery"></i>
-            <span>Repas</span>
-        </a>
-        <a href="<?php echo site_url('clients/profile'); ?>" class="nav-item">
-            <i class="fa fa-user"></i>
-            <span>Profil</span>
-        </a>
-    </div>
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item active">
+                <i class="fa fa-cutlery"></i>
+                <span>Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
+                <i class="fa fa-plus-circle"></i>
+                <span>Mesure</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user-md"></i>
+                <span>Contact</span>
+            </a>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user"></i>
+                <span>Profil</span>
+            </a>
+        </div>
+    </nav>
 
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        // Toggle meal expansion
         function toggleMeal(element) {
             element.classList.toggle('expanded');
+
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10);
+            }
         }
 
-        // Show specific day
         function showDay(dayNum) {
-            // Hide all days
             document.querySelectorAll('.day-content').forEach(el => {
                 el.classList.remove('active');
             });
 
-            // Remove active class from all tabs
             document.querySelectorAll('.day-tab').forEach(el => {
                 el.classList.remove('active');
             });
 
-            // Show selected day
             document.getElementById('day-' + dayNum).classList.add('active');
-
-            // Add active class to clicked tab
             event.target.classList.add('active');
 
-            // Scroll to top of container smoothly
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10);
+            }
         }
 
-        // Toggle menu (placeholder for future dropdown menu)
-        function toggleMenu() {
-            alert('Menu options à venir');
-        }
-
-        // Expand first meal of first day by default
         document.addEventListener('DOMContentLoaded', function() {
             const firstMeal = document.querySelector('.day-content.active .meal-card');
             if (firstMeal) {
                 firstMeal.classList.add('expanded');
             }
+        });
+
+        document.querySelectorAll('.meal-card, .bottom-nav-item, .day-tab').forEach(function(element) {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.97)';
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
         });
     </script>
 </body>
