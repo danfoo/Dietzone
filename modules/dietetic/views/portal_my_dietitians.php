@@ -364,6 +364,206 @@
             text-decoration: none;
         }
 
+        .rating-card {
+            background: white;
+            border-left: 4px solid #F3911D;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .rating-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .rating-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .rating-header i {
+            color: #F3911D;
+            font-size: 22px;
+        }
+
+        .average-rating {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .rating-score {
+            font-size: 36px;
+            font-weight: 700;
+            color: #01807B;
+            margin-bottom: 8px;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .rating-stars i {
+            font-size: 24px;
+            color: #F3911D;
+        }
+
+        .rating-stars i.fa-star-o {
+            color: #dee2e6;
+        }
+
+        .rating-count {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .my-rating-section {
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .my-rating-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .my-rating-header i {
+            color: #01807B;
+        }
+
+        .interactive-stars {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .interactive-stars i {
+            font-size: 36px;
+            color: #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-stars i:hover,
+        .interactive-stars i.hover {
+            color: #F3911D;
+            transform: scale(1.15);
+        }
+
+        .interactive-stars i.selected {
+            color: #F3911D;
+        }
+
+        .rating-comment {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 12px;
+            transition: border-color 0.3s ease;
+        }
+
+        .rating-comment:focus {
+            outline: none;
+            border-color: #01807B;
+        }
+
+        .btn-submit-rating {
+            width: 100%;
+            background: linear-gradient(135deg, #F3911D 0%, #d97e0a 100%);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            font-size: 16px;
+        }
+
+        .btn-submit-rating:hover {
+            box-shadow: 0 6px 16px rgba(243, 145, 29, 0.4);
+        }
+
+        .btn-submit-rating:active {
+            transform: scale(0.97);
+        }
+
+        .btn-submit-rating:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .rating-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .rating-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .rating-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .current-rating-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .current-rating-display .rating-stars {
+            margin: 0;
+        }
+
+        .current-rating-text {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -535,6 +735,109 @@
                         <?php } ?>
                     </div>
                 </div>
+
+                <!-- Rating Section -->
+                <div class="rating-card">
+                    <div class="rating-header">
+                        <i class="fa fa-star"></i>
+                        <h3>Évaluation</h3>
+                    </div>
+
+                    <?php if (isset($dietitian_rating) && $dietitian_rating) { ?>
+                    <!-- Average Rating Display -->
+                    <div class="average-rating">
+                        <div class="rating-score">
+                            <?php echo number_format($dietitian_rating->average_rating, 1); ?> / 5
+                        </div>
+                        <div class="rating-stars">
+                            <?php
+                            $avg = round($dietitian_rating->average_rating);
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($i <= $avg) {
+                                    echo '<i class="fa fa-star"></i>';
+                                } else {
+                                    echo '<i class="fa fa-star-o"></i>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        <div class="rating-count">
+                            Basé sur <?php echo $dietitian_rating->total_ratings; ?>
+                            <?php echo $dietitian_rating->total_ratings > 1 ? 'évaluations' : 'évaluation'; ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <?php if (isset($my_rating) && $my_rating) { ?>
+                    <!-- Patient's Current Rating -->
+                    <div class="my-rating-section">
+                        <div class="my-rating-header">
+                            <i class="fa fa-user"></i>
+                            Votre évaluation
+                        </div>
+                        <div class="current-rating-display">
+                            <div class="rating-stars">
+                                <?php
+                                for ($i = 1; $i <= 5; $i++) {
+                                    if ($i <= $my_rating->rating) {
+                                        echo '<i class="fa fa-star"></i>';
+                                    } else {
+                                        echo '<i class="fa fa-star-o"></i>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                            <span class="current-rating-text">
+                                (<?php echo $my_rating->rating; ?>/5)
+                            </span>
+                        </div>
+                        <?php if (!empty($my_rating->comment)) { ?>
+                        <div style="margin-top: 12px; padding: 12px; background: white; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #6c757d; margin-bottom: 6px;">Votre commentaire :</div>
+                            <div style="color: #2c3e50; font-size: 14px; line-height: 1.6;">
+                                <?php echo htmlspecialchars($my_rating->comment); ?>
+                            </div>
+                        </div>
+                        <?php } ?>
+                        <div style="margin-top: 12px; text-align: center; color: #6c757d; font-size: 13px;">
+                            <i class="fa fa-info-circle"></i> Vous avez déjà évalué ce diététicien
+                        </div>
+                    </div>
+                    <?php } elseif (isset($can_rate) && $can_rate) { ?>
+                    <!-- Rating Form -->
+                    <div class="my-rating-section">
+                        <div class="my-rating-header">
+                            <i class="fa fa-pencil"></i>
+                            Évaluez votre diététicien
+                        </div>
+                        <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <div class="interactive-stars" id="starRating">
+                                <i class="fa fa-star-o" data-rating="1"></i>
+                                <i class="fa fa-star-o" data-rating="2"></i>
+                                <i class="fa fa-star-o" data-rating="3"></i>
+                                <i class="fa fa-star-o" data-rating="4"></i>
+                                <i class="fa fa-star-o" data-rating="5"></i>
+                            </div>
+                            <input type="hidden" name="rating" id="ratingValue" value="0" required>
+                            <textarea
+                                name="comment"
+                                class="rating-comment"
+                                placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
+                            ></textarea>
+                            <button type="submit" class="btn-submit-rating" id="submitRatingBtn" disabled>
+                                <i class="fa fa-check"></i>
+                                Envoyer mon évaluation
+                            </button>
+                            <div class="rating-message" id="ratingMessage"></div>
+                        </form>
+                    </div>
+                    <?php } else { ?>
+                    <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px;">
+                        <i class="fa fa-info-circle" style="font-size: 24px; display: block; margin-bottom: 10px; color: #dee2e6;"></i>
+                        L'évaluation n'est pas disponible pour le moment.
+                    </div>
+                    <?php } ?>
+                </div>
             </div>
         <?php } else { ?>
             <div class="empty-state animate-in delay-1">
@@ -596,6 +899,121 @@
             document.querySelectorAll('.btn-contact').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     navigator.vibrate(10);
+                });
+            });
+        }
+
+        // Rating functionality
+        var ratingStars = document.querySelectorAll('#starRating i');
+        var ratingValue = document.getElementById('ratingValue');
+        var submitBtn = document.getElementById('submitRatingBtn');
+        var selectedRating = 0;
+
+        if (ratingStars.length > 0) {
+            ratingStars.forEach(function(star, index) {
+                // Hover effect for desktop
+                star.addEventListener('mouseenter', function() {
+                    var rating = parseInt(this.getAttribute('data-rating'));
+                    highlightStars(rating);
+                });
+
+                // Click/touch to select
+                star.addEventListener('click', function() {
+                    selectedRating = parseInt(this.getAttribute('data-rating'));
+                    ratingValue.value = selectedRating;
+                    highlightStars(selectedRating);
+
+                    // Mark as selected
+                    ratingStars.forEach(function(s) {
+                        s.classList.remove('selected');
+                    });
+                    for (var i = 0; i < selectedRating; i++) {
+                        ratingStars[i].classList.add('selected');
+                    }
+
+                    // Enable submit button
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
+
+                    // Haptic feedback
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(10);
+                    }
+                });
+            });
+
+            // Reset hover effect
+            document.getElementById('starRating').addEventListener('mouseleave', function() {
+                if (selectedRating > 0) {
+                    highlightStars(selectedRating);
+                } else {
+                    resetStars();
+                }
+            });
+
+            function highlightStars(rating) {
+                ratingStars.forEach(function(star, index) {
+                    if (index < rating) {
+                        star.classList.remove('fa-star-o');
+                        star.classList.add('fa-star');
+                        star.classList.add('hover');
+                    } else {
+                        star.classList.remove('fa-star');
+                        star.classList.add('fa-star-o');
+                        star.classList.remove('hover');
+                    }
+                });
+            }
+
+            function resetStars() {
+                ratingStars.forEach(function(star) {
+                    if (!star.classList.contains('selected')) {
+                        star.classList.remove('fa-star');
+                        star.classList.add('fa-star-o');
+                        star.classList.remove('hover');
+                    }
+                });
+            }
+        }
+
+        // Form submission with AJAX
+        var ratingForm = document.getElementById('ratingForm');
+        if (ratingForm) {
+            ratingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var formData = new FormData(this);
+                var messageDiv = document.getElementById('ratingMessage');
+
+                // Disable submit button during submission
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+
+                $.ajax({
+                    url: this.action,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        messageDiv.className = 'rating-message success';
+                        messageDiv.textContent = 'Merci pour votre évaluation !';
+                        messageDiv.style.display = 'block';
+
+                        // Reload page after 2 seconds to show updated rating
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+                    },
+                    error: function() {
+                        messageDiv.className = 'rating-message error';
+                        messageDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                        messageDiv.style.display = 'block';
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fa fa-check"></i> Envoyer mon évaluation';
+                    }
                 });
             });
         }
