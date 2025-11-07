@@ -60,7 +60,7 @@ class Food_surveys extends AdminController
 
         // If form submitted, do the installation
         if ($this->input->post('do_install')) {
-            $sql_file = DIETETIC_MODULE_PATH . 'install/food_surveys.sql';
+            $sql_file = __DIR__ . '/../install/food_surveys.sql';
 
             if (!file_exists($sql_file)) {
                 set_alert('danger', 'Fichier SQL introuvable');
