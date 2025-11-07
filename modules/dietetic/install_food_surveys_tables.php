@@ -7,8 +7,17 @@
  * Pour exécuter: Visiter https://votre-site.com/modules/dietetic/install_food_surveys_tables.php
  */
 
+// Define BASEPATH to bypass security checks
+define('BASEPATH', true);
+
 // Load database configuration
 $app_path = __DIR__ . '/../../application/config/';
+
+// Check if config exists
+if (!file_exists($app_path . 'app-config.php')) {
+    die('Config files not found. Make sure this script is in the correct location: /modules/dietetic/');
+}
+
 require_once($app_path . 'app-config.php');
 
 // Get database credentials
