@@ -277,4 +277,201 @@ class Food_surveys extends AdminController
             ]);
         }
     }
+
+    /**
+     * Upload meal photo
+     * Used by patients to upload photos of their meals
+     */
+    public function upload_photo()
+    {
+        header('Content-Type: application/json');
+
+        // Check if file was uploaded
+        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Aucun fichier téléchargé ou erreur lors du téléchargement'
+            ]);
+            return;
+        }
+
+        $file = $_FILES['photo'];
+
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_types)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Type de fichier non autorisé. Seules les images (JPEG, PNG, GIF) sont acceptées.'
+            ]);
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        $max_size = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $max_size) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Le fichier est trop volumineux. Taille maximale: 5MB.'
+            ]);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'meal_' . uniqid() . '_' . time() . '.' . $extension;
+        $destination = $upload_path . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $destination)) {
+            // Optionally create thumbnail (for faster loading)
+            $this->create_thumbnail($destination, $upload_path . 'thumb_' . $filename);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo téléchargée avec succès',
+                'filename' => $filename,
+                'url' => base_url('uploads/dietetic/food_surveys/' . $filename),
+                'thumbnail_url' => base_url('uploads/dietetic/food_surveys/thumb_' . $filename)
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du déplacement du fichier'
+            ]);
+        }
+    }
+
+    /**
+     * Delete uploaded photo
+     */
+    public function delete_photo()
+    {
+        header('Content-Type: application/json');
+
+        $filename = $this->input->post('filename');
+
+        if (!$filename) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Nom de fichier manquant'
+            ]);
+            return;
+        }
+
+        // Security: prevent directory traversal
+        $filename = basename($filename);
+
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        $file_path = $upload_path . $filename;
+        $thumb_path = $upload_path . 'thumb_' . $filename;
+
+        $success = false;
+
+        // Delete main file
+        if (file_exists($file_path)) {
+            $success = unlink($file_path);
+        }
+
+        // Delete thumbnail
+        if (file_exists($thumb_path)) {
+            unlink($thumb_path);
+        }
+
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo supprimée avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression de la photo'
+            ]);
+        }
+    }
+
+    /**
+     * Create thumbnail from image
+     *
+     * @param string $source Source image path
+     * @param string $destination Destination thumbnail path
+     * @param int $thumb_width Thumbnail width (default 300px)
+     */
+    private function create_thumbnail($source, $destination, $thumb_width = 300)
+    {
+        // Get image info
+        $info = getimagesize($source);
+        if (!$info) {
+            return false;
+        }
+
+        $width = $info[0];
+        $height = $info[1];
+        $mime = $info['mime'];
+
+        // Calculate thumbnail height maintaining aspect ratio
+        $thumb_height = floor($height * ($thumb_width / $width));
+
+        // Create source image resource
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $source_image = imagecreatefromjpeg($source);
+                break;
+            case 'image/png':
+                $source_image = imagecreatefrompng($source);
+                break;
+            case 'image/gif':
+                $source_image = imagecreatefromgif($source);
+                break;
+            default:
+                return false;
+        }
+
+        // Create thumbnail image
+        $thumb_image = imagecreatetruecolor($thumb_width, $thumb_height);
+
+        // Preserve transparency for PNG and GIF
+        if ($mime == 'image/png' || $mime == 'image/gif') {
+            imagealphablending($thumb_image, false);
+            imagesavealpha($thumb_image, true);
+            $transparent = imagecolorallocatealpha($thumb_image, 255, 255, 255, 127);
+            imagefilledrectangle($thumb_image, 0, 0, $thumb_width, $thumb_height, $transparent);
+        }
+
+        // Resize image
+        imagecopyresampled($thumb_image, $source_image, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
+
+        // Save thumbnail
+        $result = false;
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $result = imagejpeg($thumb_image, $destination, 85);
+                break;
+            case 'image/png':
+                $result = imagepng($thumb_image, $destination, 8);
+                break;
+            case 'image/gif':
+                $result = imagegif($thumb_image, $destination);
+                break;
+        }
+
+        // Free memory
+        imagedestroy($source_image);
+        imagedestroy($thumb_image);
+
+        return $result;
+    }
 }
