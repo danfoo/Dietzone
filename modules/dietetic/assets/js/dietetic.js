@@ -370,9 +370,13 @@
                 });
 
                 if ($dieteticMenuItem && $dieteticMenuItem.length) {
-                    // Find which child should be active based on current URL
+                    // Get current URL path
+                    var currentUrl = window.location.href;
                     var currentPath = window.location.pathname;
                     var foundActiveChild = false;
+
+                    console.log('Current URL: ' + currentUrl);
+                    console.log('Current Path: ' + currentPath);
 
                     // Find all child menu items
                     $dieteticMenuItem.find('ul li').each(function() {
@@ -382,34 +386,55 @@
                         if ($childLink.length) {
                             var childHref = $childLink.attr('href');
 
-                            // Check if this child matches current URL
-                            if (childHref && currentPath.indexOf(childHref.replace(window.location.origin, '')) !== -1) {
-                                // Mark this child as active
-                                $child.addClass('active');
-                                foundActiveChild = true;
-                                console.log('Marked child as active: ' + childHref);
+                            if (childHref) {
+                                // Extract path from href (handle both full URLs and paths)
+                                var childPath = childHref;
+                                if (childHref.indexOf('http') === 0) {
+                                    // It's a full URL, extract the path
+                                    try {
+                                        var url = new URL(childHref);
+                                        childPath = url.pathname;
+                                    } catch (e) {
+                                        console.log('Error parsing URL: ' + childHref);
+                                    }
+                                }
+
+                                console.log('Checking child: ' + childPath);
+
+                                // Check if current path matches this child
+                                // Use exact match or startsWith for child routes
+                                if (currentPath === childPath ||
+                                    (childPath !== admin_url + 'dietetic' &&
+                                     childPath !== admin_url + 'dietetic/' &&
+                                     currentPath.indexOf(childPath) === 0)) {
+
+                                    // Mark this child as active
+                                    $child.addClass('active');
+                                    foundActiveChild = true;
+                                    console.log('✓ Marked child as active: ' + childPath);
+                                }
                             }
                         }
                     });
 
-                    // If we found an active child, now expand the parent
-                    if (foundActiveChild) {
-                        // Mark parent as active
-                        $dieteticMenuItem.addClass('active');
+                    // Always expand parent on dietetic pages (not just when child is active)
+                    console.log('Expanding parent menu (foundActiveChild: ' + foundActiveChild + ')');
 
-                        // Expand the submenu
-                        var $submenu = $dieteticMenuItem.find('> ul');
-                        if ($submenu.length) {
-                            $submenu.addClass('in').show();
-                            console.log('Expanded parent menu');
-                        }
+                    // Mark parent as active
+                    $dieteticMenuItem.addClass('active');
 
-                        // Set aria-expanded on parent link
-                        var $parentLink = $dieteticMenuItem.find('> a');
-                        if ($parentLink.length) {
-                            $parentLink.attr('aria-expanded', 'true');
-                            console.log('Set aria-expanded on parent link');
-                        }
+                    // Expand the submenu
+                    var $submenu = $dieteticMenuItem.find('> ul');
+                    if ($submenu.length) {
+                        $submenu.addClass('in').show();
+                        console.log('Expanded parent menu');
+                    }
+
+                    // Set aria-expanded on parent link
+                    var $parentLink = $dieteticMenuItem.find('> a');
+                    if ($parentLink.length) {
+                        $parentLink.attr('aria-expanded', 'true');
+                        console.log('Set aria-expanded on parent link');
                     }
                 } else {
                     console.log('Could not find Dietetic parent menu item');
