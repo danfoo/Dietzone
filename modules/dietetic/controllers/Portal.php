@@ -466,8 +466,9 @@ class Portal extends App_Controller
 
         log_activity('[DIETETIC DEBUG] Meal plan found: ID = ' . $meal_plan->id . ', program_id = ' . $meal_plan->program_id);
 
-        // Get program
-        $program = $this->dietetic_programs_model->get($meal_plan->program_id);
+        // Get program WITHOUT access check (we'll verify patient ownership manually below)
+        // Pass false as second parameter to bypass staff permission checks for client portal
+        $program = $this->dietetic_programs_model->get($meal_plan->program_id, false);
 
         if (!$program) {
             log_activity('[DIETETIC DEBUG] Program not found: ID = ' . $meal_plan->program_id);
