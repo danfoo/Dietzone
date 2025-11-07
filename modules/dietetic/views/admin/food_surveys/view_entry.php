@@ -907,6 +907,7 @@
                 <!-- Add Recommendation Form -->
                 <div class="add-recommendation-form">
                     <form id="addRecommendationForm">
+                        <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                         <input type="hidden" name="entry_id" value="<?php echo $entry->id; ?>">
                         <div class="form-group">
                             <label for="recommendation_text">Nouvelle recommandation</label>
