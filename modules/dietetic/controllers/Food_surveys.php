@@ -187,6 +187,9 @@ class Food_surveys extends AdminController
 
         $data['title'] = 'Nouvelle Enquête Alimentaire';
 
+        // Get pre-selected patient from URL if provided
+        $data['selected_patient_id'] = $this->input->get('patient_id');
+
         log_activity('DEBUG: About to load patients model');
         try {
             $data['patients'] = $this->dietetic_patients_model->get_all();

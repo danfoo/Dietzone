@@ -65,6 +65,13 @@ class Patients extends AdminController
         // Get weight progress
         $data['weight_progress'] = $this->dietetic_measurements_model->get_weight_progress($id);
 
+        // Get food surveys (if installed)
+        $data['food_surveys'] = [];
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            $this->load->model('dietetic/dietetic_food_surveys_model');
+            $data['food_surveys'] = $this->dietetic_food_surveys_model->get_by_patient($id);
+        }
+
         $this->load->view('admin/patients/view', $data);
     }
 
