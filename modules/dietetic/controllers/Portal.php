@@ -32,7 +32,10 @@ class Portal extends App_Controller
      */
     public function _remap($method, $params = [])
     {
-        log_activity('[DIETETIC DEBUG] _remap called - Method: ' . $method . ', Params: ' . json_encode($params));
+        // Debug logging (only in development environment)
+        if (ENVIRONMENT === 'development') {
+            log_activity('[DIETETIC DEBUG] _remap called - Method: ' . $method . ', Params: ' . json_encode($params));
+        }
 
         // List of valid methods in this controller
         $valid_methods = [
@@ -53,13 +56,17 @@ class Portal extends App_Controller
 
         // If method doesn't exist, treat it as index with the method name as a parameter
         if (!in_array($method, $valid_methods)) {
-            log_activity('[DIETETIC DEBUG] Method not found: ' . $method . ', redirecting to index');
+            if (ENVIRONMENT === 'development') {
+                log_activity('[DIETETIC DEBUG] Method not found: ' . $method . ', redirecting to index');
+            }
             // Method not found, call index instead
             return call_user_func_array([$this, 'index'], array_merge([$method], $params));
         }
 
         // Call the requested method with all parameters
-        log_activity('[DIETETIC DEBUG] Calling method: ' . $method . ' with params: ' . json_encode($params));
+        if (ENVIRONMENT === 'development') {
+            log_activity('[DIETETIC DEBUG] Calling method: ' . $method . ' with params: ' . json_encode($params));
+        }
         return call_user_func_array([$this, $method], $params);
     }
 
@@ -415,11 +422,7 @@ class Portal extends App_Controller
      */
     public function view_meal_plan($meal_plan_id = null)
     {
-        // Debug logging
-        log_activity('[DIETETIC DEBUG] view_meal_plan called with ID: ' . var_export($meal_plan_id, true));
-
         if (!is_client_logged_in()) {
-            log_activity('[DIETETIC DEBUG] User not logged in, redirecting to login');
             redirect(site_url('authentication/login'));
             return;
         }
@@ -427,29 +430,26 @@ class Portal extends App_Controller
         // If no meal plan ID provided, redirect to meal plans list
         // This handles both /view_meal_plan and /view_meal_plan/
         if (empty($meal_plan_id) || !is_numeric($meal_plan_id)) {
-            log_activity('[DIETETIC DEBUG] Invalid or missing meal plan ID (' . var_export($meal_plan_id, true) . '), redirecting to list');
             redirect(site_url('dietetic/portal/meal_plans'));
             return;
         }
 
         $client_id = get_client_user_id();
-        log_activity('[DIETETIC DEBUG] Client ID: ' . $client_id);
 
         // Get patient
         try {
             $patient = $this->dietetic_patients_model->get_by_client($client_id);
         } catch (Exception $e) {
-            log_activity('[DIETETIC DEBUG] Exception getting patient: ' . $e->getMessage());
+            if (ENVIRONMENT === 'development') {
+                log_activity('[DIETETIC] Exception getting patient: ' . $e->getMessage());
+            }
             $patient = null;
         }
 
         if (!$patient) {
-            log_activity('[DIETETIC DEBUG] No patient found for client');
             $this->load->view('portal_no_access');
             return;
         }
-
-        log_activity('[DIETETIC DEBUG] Patient found: ID = ' . $patient->id);
 
         // Load meal plans model
         $this->load->model('dietetic/dietetic_meal_plans_model');
@@ -458,32 +458,25 @@ class Portal extends App_Controller
         $meal_plan = $this->dietetic_meal_plans_model->get($meal_plan_id);
 
         if (!$meal_plan) {
-            log_activity('[DIETETIC DEBUG] Meal plan not found: ID = ' . $meal_plan_id);
             show_404();
             return;
         }
-
-        log_activity('[DIETETIC DEBUG] Meal plan found: ID = ' . $meal_plan->id . ', program_id = ' . $meal_plan->program_id);
 
         // Get program
         $program = $this->dietetic_programs_model->get($meal_plan->program_id);
 
         if (!$program) {
-            log_activity('[DIETETIC DEBUG] Program not found: ID = ' . $meal_plan->program_id);
             show_404();
             return;
         }
-
-        log_activity('[DIETETIC DEBUG] Program found: ID = ' . $program->id . ', patient_id = ' . $program->patient_id);
 
         // Verify this meal plan belongs to the patient's program
         if ($program->patient_id != $patient->id) {
-            log_activity('[DIETETIC DEBUG] Access denied: Program patient_id (' . $program->patient_id . ') != Patient ID (' . $patient->id . ')');
+            // Log unauthorized access attempt in production
+            log_activity('Dietetic: Unauthorized meal plan access attempt - Patient ID: ' . $patient->id . ', Meal Plan ID: ' . $meal_plan_id);
             show_404();
             return;
         }
-
-        log_activity('[DIETETIC DEBUG] Access granted, loading view');
 
         $data = [];
         $data['patient'] = $patient;
@@ -533,8 +526,6 @@ class Portal extends App_Controller
             // Also check POST in case it's sent that way
             $meal_plan_id = $this->input->post('id');
         }
-
-        log_activity('[DIETETIC DEBUG] meal_plan_view (GET method) called with ID: ' . var_export($meal_plan_id, true));
 
         return $this->view_meal_plan($meal_plan_id);
     }

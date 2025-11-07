@@ -550,8 +550,7 @@
                                 <?php } ?>
                                 <div class="meal-plan-actions">
                                     <?php if (!empty($plan->id)) { ?>
-                                        <!-- Using GET parameter to workaround routing issues -->
-                                        <a href="<?php echo site_url('dietetic/portal/meal_plan_view?id=' . $plan->id); ?>" class="btn-view-meal">
+                                        <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-view-meal">
                                             <i class="fa fa-eye"></i> Voir les Repas
                                         </a>
                                     <?php } else { ?>
