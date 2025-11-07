@@ -21,6 +21,49 @@ class Portal extends App_Controller
     }
 
     /**
+     * CodeIgniter _remap() method - handles all routing for this controller
+     * This is necessary because Perfex CRM doesn't automatically route URL segments to module controller methods
+     *
+     * URL format: /dietetic/portal/{method}/{param1}/{param2}/...
+     *
+     * Example: /dietetic/portal/view_meal_plan/123
+     *   - $method = "view_meal_plan"
+     *   - $params = [123]
+     */
+    public function _remap($method, $params = [])
+    {
+        log_activity('[DIETETIC DEBUG] _remap called - Method: ' . $method . ', Params: ' . json_encode($params));
+
+        // List of valid methods in this controller
+        $valid_methods = [
+            'index',
+            'measurements',
+            'add_measurement',
+            'meal_plans',
+            'view_meal_plan',
+            'viewmealplan',
+            'mealplan',
+            'meal_plan_view',
+            'consultations',
+            'my_dietitians',
+            'rate_dietitian',
+            'test',
+            'test_with_param'
+        ];
+
+        // If method doesn't exist, treat it as index with the method name as a parameter
+        if (!in_array($method, $valid_methods)) {
+            log_activity('[DIETETIC DEBUG] Method not found: ' . $method . ', redirecting to index');
+            // Method not found, call index instead
+            return call_user_func_array([$this, 'index'], array_merge([$method], $params));
+        }
+
+        // Call the requested method with all parameters
+        log_activity('[DIETETIC DEBUG] Calling method: ' . $method . ' with params: ' . json_encode($params));
+        return call_user_func_array([$this, $method], $params);
+    }
+
+    /**
      * Lazy load ratings model - only load when needed and check if table exists
      *
      * @return bool True if model loaded successfully
