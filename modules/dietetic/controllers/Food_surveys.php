@@ -8,22 +8,27 @@ class Food_surveys extends AdminController
     {
         parent::__construct();
 
-        // Load helper first
-        $this->load->helper('dietetic/dietetic');
+        try {
+            // Load helper first
+            $this->load->helper('dietetic/dietetic');
 
-        // Check permissions
-        if (!dietetic_has_permission('view')) {
-            access_denied('dietetic');
-        }
+            // Check permissions
+            if (!dietetic_has_permission('view')) {
+                access_denied('dietetic');
+            }
 
-        // Always load these models (they come from the main dietetic module)
-        $this->load->model('dietetic/dietetic_patients_model');
-        $this->load->model('dietetic/dietetic_programs_model');
-        $this->load->model('staff_model');
+            // Always load these models (they come from the main dietetic module)
+            $this->load->model('dietetic/dietetic_patients_model');
+            $this->load->model('dietetic/dietetic_programs_model');
+            $this->load->model('staff_model');
 
-        // Only load food surveys model if tables exist
-        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-            $this->load->model('dietetic/dietetic_food_surveys_model');
+            // Only load food surveys model if tables exist
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                $this->load->model('dietetic/dietetic_food_surveys_model');
+            }
+        } catch (Exception $e) {
+            log_activity('Food_surveys constructor error: ' . $e->getMessage());
+            show_error('Erreur lors du chargement du contrôleur: ' . $e->getMessage());
         }
     }
 
