@@ -18,6 +18,7 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_consultations_model');
+        $this->load->model('dietetic/dietetic_food_surveys_model');
     }
 
     /**
@@ -49,7 +50,12 @@ class Portal extends App_Controller
             'rate_dietitian',
             'test',
             'test_with_param',
-            'repair_orphans'
+            'repair_orphans',
+            'food_surveys',
+            'food_survey_submit',
+            'save_daily_entry',
+            'view_recommendations',
+            'add_comment'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -1063,6 +1069,314 @@ class Portal extends App_Controller
 </body>
 </html>
 ";
+    }
+
+    /**
+     * List food surveys for the logged-in patient
+     */
+    public function food_surveys()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Enquêtes Alimentaires';
+
+        // Get client info for patient name
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get all surveys for this patient
+        $data['surveys'] = $this->dietetic_food_surveys_model->get_by_patient($patient->id);
+
+        // Calculate completion percentages
+        foreach ($data['surveys'] as &$survey) {
+            $survey->completion_percentage = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
+        }
+
+        $this->load->view('portal/food_surveys/list', $data);
+    }
+
+    /**
+     * Daily food survey submission form
+     *
+     * @param int $survey_id
+     */
+    public function food_survey_submit($survey_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get survey
+        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+        if (!$survey || $survey->patient_id != $patient->id) {
+            show_404();
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['survey'] = $survey;
+        $data['title'] = 'Soumission Quotidienne - ' . $survey->survey_name;
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get today's entry if it exists
+        $today = date('Y-m-d');
+        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $today);
+
+        // Get existing beverages if entry exists
+        if ($data['today_entry']) {
+            $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($data['today_entry']->id);
+        } else {
+            $data['beverages'] = [];
+        }
+
+        $this->load->view('portal/food_surveys/submit', $data);
+    }
+
+    /**
+     * Save daily entry (AJAX)
+     */
+    public function save_daily_entry()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient non trouvé'
+            ]);
+            return;
+        }
+
+        // Get survey
+        $survey_id = $this->input->post('survey_id');
+        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+        if (!$survey || $survey->patient_id != $patient->id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Enquête non trouvée ou accès refusé'
+            ]);
+            return;
+        }
+
+        // Prepare entry data
+        $entry_data = [
+            'survey_id' => $survey_id,
+            'entry_date' => $this->input->post('entry_date') ?: date('Y-m-d'),
+            'breakfast_photo' => $this->input->post('breakfast_photo'),
+            'breakfast_time' => $this->input->post('breakfast_time'),
+            'breakfast_notes' => $this->input->post('breakfast_notes'),
+            'lunch_photo' => $this->input->post('lunch_photo'),
+            'lunch_time' => $this->input->post('lunch_time'),
+            'lunch_notes' => $this->input->post('lunch_notes'),
+            'dinner_photo' => $this->input->post('dinner_photo'),
+            'dinner_time' => $this->input->post('dinner_time'),
+            'dinner_notes' => $this->input->post('dinner_notes'),
+            'water_quantity_ml' => $this->input->post('water_quantity_ml'),
+            'submitted_at' => date('Y-m-d H:i:s')
+        ];
+
+        // Save entry
+        $entry_id = $this->dietetic_food_surveys_model->save_entry($entry_data);
+
+        if ($entry_id) {
+            // Save beverages if provided
+            $beverages = $this->input->post('beverages');
+            if (is_array($beverages) && count($beverages) > 0) {
+                foreach ($beverages as $beverage) {
+                    if (!empty($beverage['name']) && !empty($beverage['quantity']) && !empty($beverage['time'])) {
+                        $beverage_data = [
+                            'entry_id' => $entry_id,
+                            'beverage_name' => $beverage['name'],
+                            'quantity_ml' => $beverage['quantity'],
+                            'consumption_time' => $beverage['time'],
+                            'notes' => $beverage['notes'] ?? null
+                        ];
+                        $this->dietetic_food_surveys_model->add_beverage($beverage_data);
+                    }
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Entrée enregistrée avec succès',
+                'entry_id' => $entry_id
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'enregistrement de l\'entrée'
+            ]);
+        }
+    }
+
+    /**
+     * View recommendations for a survey
+     *
+     * @param int $survey_id
+     */
+    public function view_recommendations($survey_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get survey
+        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+        if (!$survey || $survey->patient_id != $patient->id) {
+            show_404();
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['survey'] = $survey;
+        $data['title'] = 'Recommandations - ' . $survey->survey_name;
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get all entries with recommendations
+        $entries = $this->dietetic_food_surveys_model->get_entries($survey_id);
+        $data['entries'] = [];
+
+        foreach ($entries as $entry) {
+            if ($entry->has_recommendation) {
+                $entry->recommendations = $this->dietetic_food_surveys_model->get_recommendations($entry->id);
+
+                // Get comments for each recommendation
+                foreach ($entry->recommendations as &$recommendation) {
+                    $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                }
+
+                $data['entries'][] = $entry;
+            }
+        }
+
+        $this->load->view('portal/food_surveys/recommendations', $data);
+    }
+
+    /**
+     * Add comment to a recommendation (AJAX)
+     */
+    public function add_comment()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient non trouvé'
+            ]);
+            return;
+        }
+
+        $recommendation_id = $this->input->post('recommendation_id');
+        $comment_text = $this->input->post('comment_text');
+
+        if (!$recommendation_id || !$comment_text) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Données manquantes'
+            ]);
+            return;
+        }
+
+        // Verify recommendation belongs to patient's survey
+        // (Add security check here if needed)
+
+        $data = [
+            'recommendation_id' => $recommendation_id,
+            'comment_text' => $comment_text
+        ];
+
+        $comment_id = $this->dietetic_food_surveys_model->add_comment($data);
+
+        if ($comment_id) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Commentaire ajouté avec succès',
+                'comment_id' => $comment_id
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'ajout du commentaire'
+            ]);
+        }
     }
 }
 
