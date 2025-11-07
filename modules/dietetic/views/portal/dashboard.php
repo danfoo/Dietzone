@@ -526,18 +526,34 @@ if ($food_surveys_enabled) {
 </div>
 <?php } ?>
 
-<?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
-    <div class="mtop20">
-        <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info">
+<!-- Action Buttons -->
+<div class="mtop20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
+        <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info" style="flex: 1; min-width: 200px;">
             <i class="fa fa-plus"></i> <?php echo _l('dietetic_add_measurement'); ?>
         </a>
-        <?php if ($food_surveys_enabled) { ?>
-        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn" style="background: #01807B; border-color: #01807B; color: white;">
+    <?php } ?>
+
+    <?php if ($food_surveys_enabled) { ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>"
+           class="btn btn-lg"
+           style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); border-color: #01807B; color: white; flex: 1; min-width: 200px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3); transition: all 0.3s;"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(1, 128, 123, 0.4)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(1, 128, 123, 0.3)'">
             <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
         </a>
-        <?php } ?>
-    </div>
-<?php } ?>
+    <?php } ?>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    .mtop20 > a {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+}
+</style>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
