@@ -992,8 +992,12 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
+
 <script>
-$(document).ready(function() {
+(function() {
+    'use strict';
+
     // Add recommendation form submission
     $('#addRecommendationForm').on('submit', function(e) {
         e.preventDefault();
@@ -1001,6 +1005,12 @@ $(document).ready(function() {
         var $form = $(this);
         var $button = $form.find('button[type="submit"]');
         var $textarea = $form.find('textarea');
+
+        // Validation
+        if (!$textarea.val().trim()) {
+            alert_float('warning', 'Veuillez entrer une recommandation');
+            return;
+        }
 
         // Disable button
         $button.prop('disabled', true);
@@ -1015,15 +1025,19 @@ $(document).ready(function() {
                 if (response.success) {
                     alert_float('success', response.message);
                     // Reload page to show new recommendation
-                    location.reload();
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500);
                 } else {
-                    alert_float('danger', response.message);
+                    alert_float('danger', response.message || 'Une erreur est survenue');
                     // Re-enable button
                     $button.prop('disabled', false);
                     $button.html('<i class="fa fa-plus-circle"></i> Ajouter une recommandation');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                console.error('Response:', xhr.responseText);
                 alert_float('danger', 'Une erreur est survenue. Veuillez réessayer.');
                 // Re-enable button
                 $button.prop('disabled', false);
@@ -1031,37 +1045,37 @@ $(document).ready(function() {
             }
         });
     });
-});
 
-function deleteRecommendation(id) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')) {
-        return;
-    }
-
-    $.ajax({
-        url: admin_url + 'dietetic/food_surveys/delete_recommendation/' + id,
-        type: 'POST',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-                // Remove recommendation card
-                $('.recommendation-card[data-id="' + id + '"]').fadeOut(300, function() {
-                    $(this).remove();
-                    // Check if no recommendations left
-                    if ($('.recommendation-card').length === 0) {
-                        $('.recommendations-list').html('<div class="no-recommendations"><i class="fa fa-lightbulb-o"></i><p>Aucune recommandation pour cette entrée</p></div>');
-                    }
-                });
-            } else {
-                alert_float('danger', response.message);
-            }
-        },
-        error: function() {
-            alert_float('danger', 'Une erreur est survenue. Veuillez réessayer.');
+    // Delete recommendation function
+    window.deleteRecommendation = function(id) {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')) {
+            return;
         }
-    });
-}
-</script>
 
-<?php init_tail(); ?>
+        $.ajax({
+            url: admin_url + 'dietetic/food_surveys/delete_recommendation/' + id,
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    // Remove recommendation card
+                    $('.recommendation-card[data-id="' + id + '"]').fadeOut(300, function() {
+                        $(this).remove();
+                        // Check if no recommendations left
+                        if ($('.recommendation-card').length === 0) {
+                            $('.recommendations-list').html('<div class="no-recommendations"><i class="fa fa-lightbulb-o"></i><p>Aucune recommandation pour cette entrée</p></div>');
+                        }
+                    });
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                alert_float('danger', 'Une erreur est survenue. Veuillez réessayer.');
+            }
+        });
+    };
+})();
+</script>
