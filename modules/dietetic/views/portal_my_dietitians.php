@@ -995,6 +995,7 @@
                             Modifier votre évaluation
                         </div>
                         <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                             <?php
                             $form_criteria = [
                                 'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
@@ -1055,6 +1056,7 @@
                             Évaluez votre diététicien
                         </div>
                         <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                             <?php
                             $form_criteria = [
                                 'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
