@@ -2,8 +2,18 @@
  * Dietetic Module JavaScript
  */
 
+// Check if jQuery is available
+if (typeof jQuery === 'undefined') {
+    console.error('DIETETIC.JS: jQuery is not loaded!');
+} else {
+    console.log('DIETETIC.JS: jQuery is loaded, version: ' + jQuery.fn.jquery);
+}
+
 (function($) {
     'use strict';
+
+    // Verify we're inside the closure properly
+    console.log('DIETETIC.JS: Initializing module...');
 
     /**
      * Initialize datatables
@@ -468,4 +478,4 @@
         };
     });
 
-})(jQuery);
+})(window.jQuery || window.$);
