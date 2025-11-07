@@ -7,19 +7,33 @@
  * Pour exécuter: Visiter https://votre-site.com/modules/dietetic/install_food_surveys_tables.php
  */
 
-// Bootstrap Perfex CRM
-define('ENVIRONMENT', 'production');
-chdir(__DIR__ . '/../../');
+// Load database configuration
+$app_path = __DIR__ . '/../../application/config/';
+require_once($app_path . 'app-config.php');
 
-// Define BASEPATH before including files
-if (!defined('BASEPATH')) {
-    define('BASEPATH', realpath(__DIR__ . '/../../application') . '/');
+// Get database credentials
+$db_config_file = $app_path . 'database.php';
+if (!file_exists($db_config_file)) {
+    die('Database config file not found');
 }
 
-// Load the CodeIgniter bootstrap
-require_once(BASEPATH . '../index.php');
+// Parse database config
+$db_config = include($db_config_file);
+$db = $db_config['default'];
 
-$CI = &get_instance();
+// Create PDO connection
+try {
+    $dsn = "mysql:host={$db['hostname']};dbname={$db['database']};charset=utf8mb4";
+    $pdo = new PDO($dsn, $db['username'], $db['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+} catch (PDOException $e) {
+    die('Database connection failed: ' . $e->getMessage());
+}
+
+// Get table prefix from app config
+$db_prefix = defined('APP_DB_PREFIX') ? APP_DB_PREFIX : 'tbl';
 
 echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Installation Tables Food Surveys</title>";
 echo "<style>body{font-family:Arial;padding:40px;background:#f5f5f5;}";
@@ -42,7 +56,7 @@ try {
     $sql = file_get_contents($sql_file);
 
     // Replace table prefix
-    $sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sql);
+    $sql = str_replace('`tbldietic_', '`' . $db_prefix . 'dietic_', $sql);
 
     // Get all CREATE TABLE statements
     preg_match_all('/CREATE TABLE.*?;/is', $sql, $create_statements);
@@ -58,7 +72,8 @@ try {
         $table_name = $table_match[1] ?? 'unknown';
 
         // Check if table exists
-        $exists = $CI->db->query("SHOW TABLES LIKE '{$table_name}'")->row_array();
+        $stmt = $pdo->query("SHOW TABLES LIKE '{$table_name}'");
+        $exists = $stmt->fetch();
 
         if ($exists) {
             echo "<div class='info'>ℹ️ Table existe déjà: {$table_name}</div>";
@@ -66,7 +81,7 @@ try {
         }
 
         try {
-            $CI->db->query($statement);
+            $pdo->exec($statement);
             echo "<div class='success'>✅ Table créée: {$table_name}</div>";
             $created++;
         } catch (Exception $e) {
@@ -86,20 +101,20 @@ try {
     echo "<h2>Ajout des contraintes de clés étrangères...</h2>";
 
     $fk_statements = [
-        "ALTER TABLE `" . db_prefix() . "dietic_food_surveys`
-         ADD CONSTRAINT `fk_food_surveys_patient` FOREIGN KEY (`patient_id`) REFERENCES `" . db_prefix() . "dietic_patients` (`id`) ON DELETE CASCADE",
+        "ALTER TABLE `" . $db_prefix . "dietic_food_surveys`
+         ADD CONSTRAINT `fk_food_surveys_patient` FOREIGN KEY (`patient_id`) REFERENCES `" . $db_prefix . "dietic_patients` (`id`) ON DELETE CASCADE",
 
-        "ALTER TABLE `" . db_prefix() . "dietic_food_survey_entries`
-         ADD CONSTRAINT `fk_survey_entries_survey` FOREIGN KEY (`survey_id`) REFERENCES `" . db_prefix() . "dietic_food_surveys` (`id`) ON DELETE CASCADE",
+        "ALTER TABLE `" . $db_prefix . "dietic_food_survey_entries`
+         ADD CONSTRAINT `fk_survey_entries_survey` FOREIGN KEY (`survey_id`) REFERENCES `" . $db_prefix . "dietic_food_surveys` (`id`) ON DELETE CASCADE",
 
-        "ALTER TABLE `" . db_prefix() . "dietic_food_survey_beverages`
-         ADD CONSTRAINT `fk_survey_beverages_entry` FOREIGN KEY (`entry_id`) REFERENCES `" . db_prefix() . "dietic_food_survey_entries` (`id`) ON DELETE CASCADE",
+        "ALTER TABLE `" . $db_prefix . "dietic_food_survey_beverages`
+         ADD CONSTRAINT `fk_survey_beverages_entry` FOREIGN KEY (`entry_id`) REFERENCES `" . $db_prefix . "dietic_food_survey_entries` (`id`) ON DELETE CASCADE",
 
-        "ALTER TABLE `" . db_prefix() . "dietic_food_survey_recommendations`
-         ADD CONSTRAINT `fk_survey_recommendations_entry` FOREIGN KEY (`entry_id`) REFERENCES `" . db_prefix() . "dietic_food_survey_entries` (`id`) ON DELETE CASCADE",
+        "ALTER TABLE `" . $db_prefix . "dietic_food_survey_recommendations`
+         ADD CONSTRAINT `fk_survey_recommendations_entry` FOREIGN KEY (`entry_id`) REFERENCES `" . $db_prefix . "dietic_food_survey_entries` (`id`) ON DELETE CASCADE",
 
-        "ALTER TABLE `" . db_prefix() . "dietic_food_survey_comments`
-         ADD CONSTRAINT `fk_survey_comments_recommendation` FOREIGN KEY (`recommendation_id`) REFERENCES `" . db_prefix() . "dietic_food_survey_recommendations` (`id`) ON DELETE CASCADE"
+        "ALTER TABLE `" . $db_prefix . "dietic_food_survey_comments`
+         ADD CONSTRAINT `fk_survey_comments_recommendation` FOREIGN KEY (`recommendation_id`) REFERENCES `" . $db_prefix . "dietic_food_survey_recommendations` (`id`) ON DELETE CASCADE"
     ];
 
     $fk_added = 0;
@@ -115,7 +130,8 @@ try {
             WHERE TABLE_SCHEMA = DATABASE()
             AND CONSTRAINT_NAME = '{$constraint_name}'";
 
-        $exists = $CI->db->query($check_sql)->row();
+        $stmt = $pdo->query($check_sql);
+        $exists = $stmt->fetch();
 
         if ($exists) {
             echo "<div class='info'>ℹ️ Contrainte existe déjà: {$constraint_name}</div>";
@@ -123,7 +139,7 @@ try {
         }
 
         try {
-            $CI->db->query($fk_sql);
+            $pdo->exec($fk_sql);
             echo "<div class='success'>✅ Contrainte ajoutée: {$constraint_name}</div>";
             $fk_added++;
         } catch (Exception $e) {

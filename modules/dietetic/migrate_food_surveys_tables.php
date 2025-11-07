@@ -9,19 +9,33 @@
  * Pour exécuter: Visiter https://votre-site.com/modules/dietetic/migrate_food_surveys_tables.php
  */
 
-// Bootstrap Perfex CRM
-define('ENVIRONMENT', 'production');
-chdir(__DIR__ . '/../../');
+// Load database configuration
+$app_path = __DIR__ . '/../../application/config/';
+require_once($app_path . 'app-config.php');
 
-// Define BASEPATH before including files
-if (!defined('BASEPATH')) {
-    define('BASEPATH', realpath(__DIR__ . '/../../application') . '/');
+// Get database credentials
+$db_config_file = $app_path . 'database.php';
+if (!file_exists($db_config_file)) {
+    die('Database config file not found');
 }
 
-// Load the CodeIgniter bootstrap
-require_once(BASEPATH . '../index.php');
+// Parse database config
+$db_config = include($db_config_file);
+$db = $db_config['default'];
 
-$CI = &get_instance();
+// Create PDO connection
+try {
+    $dsn = "mysql:host={$db['hostname']};dbname={$db['database']};charset=utf8mb4";
+    $pdo = new PDO($dsn, $db['username'], $db['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+} catch (PDOException $e) {
+    die('Database connection failed: ' . $e->getMessage());
+}
+
+// Get table prefix from app config
+$db_prefix = defined('APP_DB_PREFIX') ? APP_DB_PREFIX : 'tbl';
 
 echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Migration Tables Food Surveys</title>";
 echo "<style>body{font-family:Arial;padding:40px;background:#f5f5f5;max-width:900px;margin:0 auto;}";
@@ -36,13 +50,13 @@ echo "<h1>🔧 Migration Tables Food Surveys</h1>";
 echo "<p>Ce script va corriger la structure des tables food surveys.</p>";
 
 try {
-    $db_prefix = db_prefix();
     $table_name = $db_prefix . 'dietic_food_survey_entries';
 
     echo "<h2>Étape 1: Vérification de la table</h2>";
 
     // Check if table exists
-    $table_exists = $CI->db->query("SHOW TABLES LIKE '{$table_name}'")->row_array();
+    $stmt = $pdo->query("SHOW TABLES LIKE '{$table_name}'");
+    $table_exists = $stmt->fetch();
 
     if (!$table_exists) {
         echo "<div class='error'>❌ La table {$table_name} n'existe pas. Utilisez le script d'installation d'abord.</div>";
@@ -53,7 +67,8 @@ try {
     echo "<div class='success'>✅ Table trouvée: {$table_name}</div>";
 
     // Get current columns
-    $columns = $CI->db->query("SHOW COLUMNS FROM {$table_name}")->result_array();
+    $stmt = $pdo->query("SHOW COLUMNS FROM {$table_name}");
+    $columns = $stmt->fetchAll();
 
     echo "<h3>Colonnes actuelles:</h3><pre>";
     foreach ($columns as $col) {
@@ -90,7 +105,7 @@ try {
         $rename_sql = "ALTER TABLE `{$table_name}` CHANGE `{$broken_column_name}` `breakfast_photo` VARCHAR(255) DEFAULT NULL";
 
         try {
-            $CI->db->query($rename_sql);
+            $pdo->exec($rename_sql);
             echo "<div class='success'>✅ Colonne renommée: '{$broken_column_name}' → 'breakfast_photo'</div>";
         } catch (Exception $e) {
             echo "<div class='error'>❌ Erreur lors du renommage: " . $e->getMessage() . "</div>";
@@ -105,7 +120,7 @@ try {
         $add_sql = "ALTER TABLE `{$table_name}` ADD COLUMN `breakfast_photo` VARCHAR(255) DEFAULT NULL AFTER `entry_date`";
 
         try {
-            $CI->db->query($add_sql);
+            $pdo->exec($add_sql);
             echo "<div class='success'>✅ Colonne 'breakfast_photo' ajoutée avec succès</div>";
         } catch (Exception $e) {
             echo "<div class='error'>❌ Erreur lors de l'ajout: " . $e->getMessage() . "</div>";
@@ -116,7 +131,8 @@ try {
     echo "<h2>Étape 4: Vérification des autres colonnes photo</h2>";
 
     $required_columns = ['breakfast_photo', 'lunch_photo', 'dinner_photo'];
-    $columns = $CI->db->query("SHOW COLUMNS FROM {$table_name}")->result_array();
+    $stmt = $pdo->query("SHOW COLUMNS FROM {$table_name}");
+    $columns = $stmt->fetchAll();
     $existing_column_names = array_column($columns, 'Field');
 
     $missing_columns = [];
@@ -140,7 +156,7 @@ try {
             $add_sql = "ALTER TABLE `{$table_name}` ADD COLUMN `{$col}` VARCHAR(255) DEFAULT NULL {$position}";
 
             try {
-                $CI->db->query($add_sql);
+                $pdo->exec($add_sql);
                 echo "<div class='success'>✅ Colonne '{$col}' ajoutée</div>";
             } catch (Exception $e) {
                 echo "<div class='error'>❌ Erreur ajout '{$col}': " . $e->getMessage() . "</div>";
@@ -151,7 +167,8 @@ try {
     // Final verification
     echo "<h2>Étape 5: Vérification finale</h2>";
 
-    $final_columns = $CI->db->query("SHOW COLUMNS FROM {$table_name}")->result_array();
+    $stmt = $pdo->query("SHOW COLUMNS FROM {$table_name}");
+    $final_columns = $stmt->fetchAll();
 
     echo "<h3>Structure finale:</h3><pre>";
     foreach ($final_columns as $col) {
