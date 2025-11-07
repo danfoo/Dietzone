@@ -123,6 +123,15 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
+        // Food Surveys (Enquêtes Alimentaires)
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-food-surveys',
+            'name'     => 'Enquêtes Alimentaires',
+            'icon'     => 'fa fa-camera',
+            'href'     => admin_url('dietetic/food_surveys'),
+            'position' => 5,
+        ]);
+
         // Dietitians (with ratings) - requires view_dietitians permission
         if (has_permission('dietetic', '', 'view_dietitians')) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
@@ -130,7 +139,7 @@ function dietetic_module_init_menu_items()
                 'name'     => 'Diététiciens',
                 'icon'     => 'fa fa-user-md',
                 'href'     => admin_url('dietetic/dietitians'),
-                'position' => 5,
+                'position' => 6,
             ]);
         }
 
@@ -141,7 +150,7 @@ function dietetic_module_init_menu_items()
                 'name'     => _l('dietetic_foods'),
                 'icon'     => 'fa fa-cutlery',
                 'href'     => admin_url('dietetic/foods'),
-                'position' => 6,
+                'position' => 7,
             ]);
         }
 
