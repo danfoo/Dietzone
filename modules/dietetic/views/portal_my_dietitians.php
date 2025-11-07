@@ -564,6 +564,106 @@
             color: #6c757d;
         }
 
+        .criteria-ratings {
+            margin-top: 16px;
+        }
+
+        .criterion-item {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .criterion-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .criterion-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .criterion-label i {
+            color: #01807B;
+            font-size: 16px;
+        }
+
+        .criterion-stars {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .criterion-stars i {
+            font-size: 18px;
+            color: #F3911D;
+        }
+
+        .criterion-stars i.fa-star-o {
+            color: #dee2e6;
+        }
+
+        .criterion-stars .criterion-score {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .rating-form-group {
+            margin-bottom: 20px;
+        }
+
+        .rating-form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-form-label i {
+            color: #01807B;
+        }
+
+        .rating-form-label .required {
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        .btn-edit-rating {
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .btn-edit-rating:hover {
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.4);
+        }
+
+        .btn-edit-rating:active {
+            transform: scale(0.97);
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -743,15 +843,15 @@
                         <h3>Évaluation</h3>
                     </div>
 
-                    <?php if (isset($dietitian_rating) && $dietitian_rating) { ?>
+                    <?php if (isset($dietitian_rating) && $dietitian_rating && $dietitian_rating->total_ratings > 0) { ?>
                     <!-- Average Rating Display -->
                     <div class="average-rating">
                         <div class="rating-score">
-                            <?php echo number_format($dietitian_rating->average_rating, 1); ?> / 5
+                            <?php echo number_format($dietitian_rating->avg_overall, 1); ?> / 5
                         </div>
                         <div class="rating-stars">
                             <?php
-                            $avg = round($dietitian_rating->average_rating);
+                            $avg = round($dietitian_rating->avg_overall);
                             for ($i = 1; $i <= 5; $i++) {
                                 if ($i <= $avg) {
                                     echo '<i class="fa fa-star"></i>';
@@ -765,12 +865,53 @@
                             Basé sur <?php echo $dietitian_rating->total_ratings; ?>
                             <?php echo $dietitian_rating->total_ratings > 1 ? 'évaluations' : 'évaluation'; ?>
                         </div>
+
+                        <!-- Criteria Details -->
+                        <div class="criteria-ratings">
+                            <?php
+                            $criteria = [
+                                'professionalism' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($criteria as $key => $info) {
+                                $avg_key = 'avg_' . $key;
+                                if (isset($dietitian_rating->$avg_key) && $dietitian_rating->$avg_key > 0) {
+                                    $criterion_avg = $dietitian_rating->$avg_key;
+                                    $criterion_rounded = round($criterion_avg);
+                            ?>
+                            <div class="criterion-item">
+                                <div class="criterion-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                </div>
+                                <div class="criterion-stars">
+                                    <?php
+                                    for ($i = 1; $i <= 5; $i++) {
+                                        if ($i <= $criterion_rounded) {
+                                            echo '<i class="fa fa-star"></i>';
+                                        } else {
+                                            echo '<i class="fa fa-star-o"></i>';
+                                        }
+                                    }
+                                    ?>
+                                    <span class="criterion-score"><?php echo number_format($criterion_avg, 1); ?>/5</span>
+                                </div>
+                            </div>
+                            <?php
+                                }
+                            }
+                            ?>
+                        </div>
                     </div>
                     <?php } ?>
 
                     <?php if (isset($my_rating) && $my_rating) { ?>
                     <!-- Patient's Current Rating -->
-                    <div class="my-rating-section">
+                    <div class="my-rating-section" id="myRatingDisplay">
                         <div class="my-rating-header">
                             <i class="fa fa-user"></i>
                             Votre évaluation
@@ -778,8 +919,9 @@
                         <div class="current-rating-display">
                             <div class="rating-stars">
                                 <?php
+                                $my_overall = round($my_rating->overall_rating);
                                 for ($i = 1; $i <= 5; $i++) {
-                                    if ($i <= $my_rating->rating) {
+                                    if ($i <= $my_overall) {
                                         echo '<i class="fa fa-star"></i>';
                                     } else {
                                         echo '<i class="fa fa-star-o"></i>';
@@ -788,42 +930,171 @@
                                 ?>
                             </div>
                             <span class="current-rating-text">
-                                (<?php echo $my_rating->rating; ?>/5)
+                                (<?php echo number_format($my_rating->overall_rating, 1); ?>/5)
                             </span>
                         </div>
+
+                        <!-- My Criteria Details -->
+                        <div class="criteria-ratings">
+                            <?php
+                            $my_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($my_criteria as $key => $info) {
+                                if (isset($my_rating->$key) && $my_rating->$key > 0) {
+                                    $my_score = $my_rating->$key;
+                            ?>
+                            <div class="criterion-item">
+                                <div class="criterion-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                </div>
+                                <div class="criterion-stars">
+                                    <?php
+                                    for ($i = 1; $i <= 5; $i++) {
+                                        if ($i <= $my_score) {
+                                            echo '<i class="fa fa-star"></i>';
+                                        } else {
+                                            echo '<i class="fa fa-star-o"></i>';
+                                        }
+                                    }
+                                    ?>
+                                    <span class="criterion-score"><?php echo $my_score; ?>/5</span>
+                                </div>
+                            </div>
+                            <?php
+                                }
+                            }
+                            ?>
+                        </div>
+
                         <?php if (!empty($my_rating->comment)) { ?>
                         <div style="margin-top: 12px; padding: 12px; background: white; border-radius: 8px;">
                             <div style="font-size: 13px; color: #6c757d; margin-bottom: 6px;">Votre commentaire :</div>
                             <div style="color: #2c3e50; font-size: 14px; line-height: 1.6;">
-                                <?php echo htmlspecialchars($my_rating->comment); ?>
+                                <?php echo nl2br(htmlspecialchars($my_rating->comment)); ?>
                             </div>
                         </div>
                         <?php } ?>
-                        <div style="margin-top: 12px; text-align: center; color: #6c757d; font-size: 13px;">
-                            <i class="fa fa-info-circle"></i> Vous avez déjà évalué ce diététicien
+
+                        <button type="button" class="btn-edit-rating" onclick="showEditForm()">
+                            <i class="fa fa-edit"></i>
+                            Modifier mon évaluation
+                        </button>
+                    </div>
+
+                    <!-- Edit Rating Form (Hidden by default) -->
+                    <div class="my-rating-section" id="editRatingForm" style="display: none;">
+                        <div class="my-rating-header">
+                            <i class="fa fa-pencil"></i>
+                            Modifier votre évaluation
                         </div>
+                        <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <?php
+                            $form_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($form_criteria as $key => $info) {
+                                $current_value = isset($my_rating->$key) ? $my_rating->$key : 0;
+                            ?>
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                    <span class="required">*</span>
+                                </div>
+                                <div class="interactive-stars" data-criterion="<?php echo $key; ?>">
+                                    <?php for ($i = 1; $i <= 5; $i++) { ?>
+                                    <i class="fa <?php echo ($i <= $current_value) ? 'fa-star selected' : 'fa-star-o'; ?>" data-rating="<?php echo $i; ?>"></i>
+                                    <?php } ?>
+                                </div>
+                                <input type="hidden" name="<?php echo $key; ?>" class="criterion-value" value="<?php echo $current_value; ?>" required>
+                            </div>
+                            <?php } ?>
+
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa fa-comment"></i>
+                                    Votre commentaire
+                                </div>
+                                <textarea
+                                    name="comment"
+                                    class="rating-comment"
+                                    placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
+                                ><?php echo isset($my_rating->comment) ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn-submit-rating" id="submitRatingBtn">
+                                    <i class="fa fa-check"></i>
+                                    Enregistrer les modifications
+                                </button>
+                                <button type="button" class="btn-back" onclick="cancelEdit()" style="flex: 0; min-width: auto; padding: 14px 20px;">
+                                    <i class="fa fa-times"></i>
+                                    Annuler
+                                </button>
+                            </div>
+                            <div class="rating-message" id="ratingMessage"></div>
+                        </form>
                     </div>
                     <?php } elseif (isset($can_rate) && $can_rate) { ?>
-                    <!-- Rating Form -->
+                    <!-- New Rating Form -->
                     <div class="my-rating-section">
                         <div class="my-rating-header">
                             <i class="fa fa-pencil"></i>
                             Évaluez votre diététicien
                         </div>
                         <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
-                            <div class="interactive-stars" id="starRating">
-                                <i class="fa fa-star-o" data-rating="1"></i>
-                                <i class="fa fa-star-o" data-rating="2"></i>
-                                <i class="fa fa-star-o" data-rating="3"></i>
-                                <i class="fa fa-star-o" data-rating="4"></i>
-                                <i class="fa fa-star-o" data-rating="5"></i>
+                            <?php
+                            $form_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($form_criteria as $key => $info) {
+                            ?>
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                    <span class="required">*</span>
+                                </div>
+                                <div class="interactive-stars" data-criterion="<?php echo $key; ?>">
+                                    <i class="fa fa-star-o" data-rating="1"></i>
+                                    <i class="fa fa-star-o" data-rating="2"></i>
+                                    <i class="fa fa-star-o" data-rating="3"></i>
+                                    <i class="fa fa-star-o" data-rating="4"></i>
+                                    <i class="fa fa-star-o" data-rating="5"></i>
+                                </div>
+                                <input type="hidden" name="<?php echo $key; ?>" class="criterion-value" value="0" required>
                             </div>
-                            <input type="hidden" name="rating" id="ratingValue" value="0" required>
-                            <textarea
-                                name="comment"
-                                class="rating-comment"
-                                placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
-                            ></textarea>
+                            <?php } ?>
+
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa fa-comment"></i>
+                                    Votre commentaire
+                                </div>
+                                <textarea
+                                    name="comment"
+                                    class="rating-comment"
+                                    placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
+                                ></textarea>
+                            </div>
+
                             <button type="submit" class="btn-submit-rating" id="submitRatingBtn" disabled>
                                 <i class="fa fa-check"></i>
                                 Envoyer mon évaluation
@@ -834,7 +1105,11 @@
                     <?php } else { ?>
                     <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px;">
                         <i class="fa fa-info-circle" style="font-size: 24px; display: block; margin-bottom: 10px; color: #dee2e6;"></i>
+                        <?php if (isset($can_rate) && !$can_rate) { ?>
+                        Vous devez avoir au moins une consultation complétée pour évaluer votre diététicien.
+                        <?php } else { ?>
                         L'évaluation n'est pas disponible pour le moment.
+                        <?php } ?>
                     </div>
                     <?php } ?>
                 </div>
@@ -903,38 +1178,53 @@
             });
         }
 
-        // Rating functionality
-        var ratingStars = document.querySelectorAll('#starRating i');
-        var ratingValue = document.getElementById('ratingValue');
-        var submitBtn = document.getElementById('submitRatingBtn');
-        var selectedRating = 0;
+        // Rating functionality for multiple criteria
+        function showEditForm() {
+            document.getElementById('myRatingDisplay').style.display = 'none';
+            document.getElementById('editRatingForm').style.display = 'block';
+        }
 
-        if (ratingStars.length > 0) {
-            ratingStars.forEach(function(star, index) {
-                // Hover effect for desktop
+        function cancelEdit() {
+            document.getElementById('editRatingForm').style.display = 'none';
+            document.getElementById('myRatingDisplay').style.display = 'block';
+        }
+
+        // Initialize rating stars for all criteria
+        var criteriaRatings = {};
+        var submitBtn = document.getElementById('submitRatingBtn');
+
+        document.querySelectorAll('.interactive-stars').forEach(function(starGroup) {
+            var criterion = starGroup.getAttribute('data-criterion');
+            var stars = starGroup.querySelectorAll('i');
+            var input = starGroup.nextElementSibling;
+
+            if (!criterion || !input) return;
+
+            criteriaRatings[criterion] = parseInt(input.value) || 0;
+
+            stars.forEach(function(star) {
+                // Hover effect
                 star.addEventListener('mouseenter', function() {
                     var rating = parseInt(this.getAttribute('data-rating'));
-                    highlightStars(rating);
+                    highlightStars(stars, rating);
                 });
 
                 // Click/touch to select
                 star.addEventListener('click', function() {
-                    selectedRating = parseInt(this.getAttribute('data-rating'));
-                    ratingValue.value = selectedRating;
-                    highlightStars(selectedRating);
+                    var rating = parseInt(this.getAttribute('data-rating'));
+                    criteriaRatings[criterion] = rating;
+                    input.value = rating;
 
                     // Mark as selected
-                    ratingStars.forEach(function(s) {
+                    stars.forEach(function(s) {
                         s.classList.remove('selected');
                     });
-                    for (var i = 0; i < selectedRating; i++) {
-                        ratingStars[i].classList.add('selected');
+                    for (var i = 0; i < rating; i++) {
+                        stars[i].classList.add('selected');
                     }
 
-                    // Enable submit button
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                    }
+                    highlightStars(stars, rating);
+                    checkFormValidity();
 
                     // Haptic feedback
                     if ('vibrate' in navigator) {
@@ -944,37 +1234,37 @@
             });
 
             // Reset hover effect
-            document.getElementById('starRating').addEventListener('mouseleave', function() {
-                if (selectedRating > 0) {
-                    highlightStars(selectedRating);
+            starGroup.addEventListener('mouseleave', function() {
+                var currentRating = criteriaRatings[criterion] || 0;
+                highlightStars(stars, currentRating);
+            });
+        });
+
+        function highlightStars(stars, rating) {
+            stars.forEach(function(star, index) {
+                if (index < rating) {
+                    star.classList.remove('fa-star-o');
+                    star.classList.add('fa-star');
                 } else {
-                    resetStars();
+                    star.classList.remove('fa-star');
+                    star.classList.add('fa-star-o');
+                }
+            });
+        }
+
+        function checkFormValidity() {
+            if (!submitBtn) return;
+
+            var allFilled = true;
+            var requiredCriteria = ['professionalism_rating', 'listening_rating', 'advice_rating', 'results_rating', 'availability_rating'];
+
+            requiredCriteria.forEach(function(criterion) {
+                if (!criteriaRatings[criterion] || criteriaRatings[criterion] === 0) {
+                    allFilled = false;
                 }
             });
 
-            function highlightStars(rating) {
-                ratingStars.forEach(function(star, index) {
-                    if (index < rating) {
-                        star.classList.remove('fa-star-o');
-                        star.classList.add('fa-star');
-                        star.classList.add('hover');
-                    } else {
-                        star.classList.remove('fa-star');
-                        star.classList.add('fa-star-o');
-                        star.classList.remove('hover');
-                    }
-                });
-            }
-
-            function resetStars() {
-                ratingStars.forEach(function(star) {
-                    if (!star.classList.contains('selected')) {
-                        star.classList.remove('fa-star');
-                        star.classList.add('fa-star-o');
-                        star.classList.remove('hover');
-                    }
-                });
-            }
+            submitBtn.disabled = !allFilled;
         }
 
         // Form submission with AJAX
@@ -985,6 +1275,7 @@
 
                 var formData = new FormData(this);
                 var messageDiv = document.getElementById('ratingMessage');
+                var originalBtnText = submitBtn.innerHTML;
 
                 // Disable submit button during submission
                 submitBtn.disabled = true;
@@ -1012,11 +1303,14 @@
                         messageDiv.style.display = 'block';
 
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fa fa-check"></i> Envoyer mon évaluation';
+                        submitBtn.innerHTML = originalBtnText;
                     }
                 });
             });
         }
+
+        // Check initial form validity
+        checkFormValidity();
     </script>
 </body>
 </html>
