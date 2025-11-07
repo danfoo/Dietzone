@@ -37,7 +37,138 @@
         background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
         margin: 0;
         padding: 0;
+        padding-top: 80px;
+        padding-bottom: 80px;
         min-height: 100vh;
+    }
+
+    /* Unified Header */
+    .portal-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 100;
+        padding: 0;
+    }
+
+    .portal-header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .portal-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        text-decoration: none;
+    }
+
+    .portal-logo img {
+        height: 40px;
+        width: auto;
+    }
+
+    .portal-logo-text {
+        font-size: 20px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .portal-nav {
+        display: none;
+        gap: 8px;
+    }
+
+    @media (min-width: 769px) {
+        .portal-nav {
+            display: flex;
+        }
+    }
+
+    .portal-nav-link {
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 15px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .portal-nav-link:hover,
+    .portal-nav-link.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+
+    .portal-nav-link i {
+        font-size: 16px;
+    }
+
+    /* Bottom Mobile Navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+        z-index: 99;
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+    }
+
+    @media (min-width: 769px) {
+        .bottom-nav {
+            display: none;
+        }
+        body {
+            padding-bottom: 20px;
+        }
+    }
+
+    .bottom-nav-item {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        color: #718096;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-height: 56px;
+        justify-content: center;
+    }
+
+    .bottom-nav-item:hover,
+    .bottom-nav-item.active {
+        color: #01807B;
+        background: rgba(1,128,123,0.05);
+    }
+
+    .bottom-nav-item i {
+        font-size: 22px;
+        margin-bottom: 2px;
+    }
+
+    .bottom-nav-item span {
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
     }
 
     .container-fluid {
@@ -46,19 +177,19 @@
         margin: 0 auto;
     }
 
-    /* Header */
+    /* Page header */
     .page-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, #019B95 100%);
         color: white;
-        padding: 30px;
+        padding: 25px;
         border-radius: 12px;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         box-shadow: var(--shadow-lg);
     }
 
     .page-header h1 {
-        margin: 0 0 10px 0;
-        font-size: 26px;
+        margin: 0 0 8px 0;
+        font-size: 24px;
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -67,8 +198,8 @@
 
     .page-header p {
         margin: 0;
-        opacity: 0.9;
-        font-size: 15px;
+        opacity: 0.95;
+        font-size: 14px;
     }
 
     /* Back link */
@@ -85,12 +216,27 @@
         border-radius: 8px;
         box-shadow: var(--shadow);
         transition: var(--transition);
+        font-size: 14px;
     }
 
     .back-link:hover {
         background: var(--primary-color);
         color: white;
         transform: translateX(-3px);
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 20px;
+        }
+
+        .page-header h1 {
+            font-size: 20px;
+        }
+
+        .container-fluid {
+            padding: 15px;
+        }
     }
 
     /* Form sections */
@@ -425,18 +571,6 @@
 
     /* Responsive */
     @media (max-width: 768px) {
-        .container-fluid {
-            padding: 15px;
-        }
-
-        .page-header {
-            padding: 20px;
-        }
-
-        .page-header h1 {
-            font-size: 20px;
-        }
-
         .form-section {
             padding: 20px;
         }
@@ -448,6 +582,41 @@
     </style>
 </head>
 <body>
+    <!-- Unified Header -->
+    <header class="portal-header">
+        <div class="portal-header-content">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
+                <?php
+                $company_logo = get_option('company_logo');
+                if (!empty($company_logo)) {
+                ?>
+                    <img src="<?php echo base_url('uploads/company/' . $company_logo); ?>" alt="Logo">
+                <?php } else { ?>
+                    <span class="portal-logo-text"><?php echo get_option('companyname'); ?></span>
+                <?php } ?>
+            </a>
+
+            <nav class="portal-nav">
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-nav-link">
+                    <i class="fa fa-home"></i>
+                    <span>Accueil</span>
+                </a>
+                <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="portal-nav-link active">
+                    <i class="fa fa-clipboard-list"></i>
+                    <span>Mes Enquêtes</span>
+                </a>
+                <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="portal-nav-link">
+                    <i class="fa fa-user"></i>
+                    <span>Mon Profil</span>
+                </a>
+                <a href="<?php echo site_url('authentication/logout'); ?>" class="portal-nav-link">
+                    <i class="fa fa-sign-out"></i>
+                    <span>Déconnexion</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
     <div class="container-fluid">
         <!-- Back link -->
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="back-link">
@@ -884,5 +1053,25 @@
     // Set admin_url for compatibility
     const admin_url = base_url + 'admin/';
     </script>
+
+    <!-- Bottom Mobile Navigation -->
+    <nav class="bottom-nav">
+        <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
+            <i class="fa fa-home"></i>
+            <span>Accueil</span>
+        </a>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="bottom-nav-item active">
+            <i class="fa fa-clipboard-list"></i>
+            <span>Enquêtes</span>
+        </a>
+        <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="bottom-nav-item">
+            <i class="fa fa-user"></i>
+            <span>Profil</span>
+        </a>
+        <a href="<?php echo site_url('authentication/logout'); ?>" class="bottom-nav-item">
+            <i class="fa fa-sign-out"></i>
+            <span>Déconnexion</span>
+        </a>
+    </nav>
 </body>
 </html>
