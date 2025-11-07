@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
     <title><?php echo isset($title) ? $title : 'Mon Programme'; ?></title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
@@ -14,20 +15,25 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         body {
             background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
+            padding-bottom: 80px; /* Space for bottom nav on mobile */
         }
 
-        /* Header Uniforme Perfex */
+        /* Header Simplifié Mobile-First */
         .portal-header {
             background: white;
             border-bottom: 1px solid #e9ecef;
-            padding: 15px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .portal-header .container-fluid {
@@ -49,30 +55,31 @@
         }
 
         .portal-logo img {
-            max-height: 50px;
-            max-width: 200px;
+            max-height: 40px;
+            max-width: 150px;
         }
 
         .portal-logo-text {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .portal-logo-text i {
             color: #667eea;
         }
 
-        .portal-nav {
+        /* Desktop Navigation (Hidden on mobile) */
+        .portal-nav-desktop {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .portal-nav a {
+        .portal-nav-desktop a {
             padding: 10px 20px;
             color: #495057;
             text-decoration: none;
@@ -82,87 +89,147 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 15px;
         }
 
-        .portal-nav a:hover {
+        .portal-nav-desktop a:hover {
             background: #f8f9fa;
             color: #667eea;
         }
 
-        .portal-nav a.active {
+        .portal-nav-desktop a.active {
             background: #667eea;
             color: white;
         }
 
-        .portal-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
+        /* Bottom Navigation Mobile */
+        .bottom-nav {
+            display: none; /* Hidden by default, shown on mobile */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .bottom-nav-item.active {
+            color: #667eea;
+        }
+
+        .bottom-nav-item i {
             font-size: 24px;
-            color: #495057;
-            cursor: pointer;
-            padding: 5px 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Active indicator */
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: #667eea;
+            border-radius: 0 0 3px 3px;
         }
 
         /* Container */
         .content-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 30px 15px;
+            padding: 20px 15px;
         }
 
-        /* Page Header */
-        .page-header-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #667eea;
+        /* Page Header Mobile-Friendly */
+        .page-header-mobile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
         }
 
-        .page-header-modern h1 {
-            color: #2c3e50;
-            font-size: 28px;
+        .page-header-mobile h1 {
+            font-size: 24px;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .page-header-modern h1 i {
-            color: #667eea;
-        }
-
-        .page-header-modern p {
-            color: #6c757d;
+        .page-header-mobile p {
             margin: 0;
             font-size: 15px;
+            opacity: 0.95;
         }
 
-        /* Stats Grid */
+        /* Stats Grid - Swipeable on mobile */
+        .stats-scroll-container {
+            overflow-x: auto;
+            margin: 0 -15px 24px -15px;
+            padding: 0 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .stats-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 25px;
-            margin-bottom: 35px;
+            display: flex;
+            gap: 16px;
+            min-width: min-content;
         }
 
         .stat-card {
             background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-            position: relative;
-            overflow: hidden;
+            border-radius: 20px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
+            width: 160px;
             transition: all 0.3s ease;
             border-left: 4px solid transparent;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .stat-card.weight { border-left-color: #667eea; }
@@ -170,17 +237,113 @@
         .stat-card.bmi { border-left-color: #f093fb; }
         .stat-card.fat { border-left-color: #fa709a; }
 
-        .stat-header {
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 16px;
         }
 
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stat-card.target .stat-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            line-height: 1;
+        }
+
+        .stat-value span {
+            font-size: 16px !important;
+            color: #6c757d;
+        }
+
+        /* Progress Card - Mobile Optimized */
+        .progress-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 28px 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .progress-card .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+
+        .progress-card .value {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .progress-card .label {
+            font-size: 14px;
+            opacity: 0.95;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        /* Action Cards - Touch-Friendly */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-left: 4px solid transparent;
+            min-height: 80px; /* Touch-friendly height */
+            cursor: pointer;
+        }
+
+        .action-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .action-card.add-measure { border-left-color: #667eea; }
+        .action-card.history { border-left-color: #11998e; }
+        .action-card.meals { border-left-color: #f093fb; }
+        .action-card.consultations { border-left-color: #fa709a; }
+        .action-card.dietitians { border-left-color: #4facfe; }
+
+        .action-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -189,165 +352,51 @@
             flex-shrink: 0;
         }
 
-        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .stat-card.target .stat-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .action-card.add-measure .action-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .action-card.history .action-icon { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .action-card.meals .action-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .action-card.consultations .action-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .action-card.dietitians .action-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 
-        .stat-content {
+        .action-content {
             flex: 1;
         }
 
-        .stat-label {
-            color: #6c757d;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 36px;
-            font-weight: 700;
-            color: #2c3e50;
-            line-height: 1;
-        }
-
-        /* Progress Card */
-        .progress-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            padding: 30px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .progress-card .icon {
-            font-size: 42px;
-            margin-bottom: 15px;
-            opacity: 0.9;
-        }
-
-        .progress-card .value {
-            font-size: 38px;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-
-        .progress-card .label {
-            font-size: 15px;
-            opacity: 0.95;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        /* Action Grid */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            text-decoration: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            display: block;
-            position: relative;
-            overflow: hidden;
-            border-top: 3px solid transparent;
-            cursor: pointer;
-        }
-
-        .action-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .action-card:hover::after {
-            transform: scaleX(1);
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-            text-decoration: none;
-        }
-
-        .action-card.add-measure { border-top-color: #667eea; }
-        .action-card.add-measure::after { background: #667eea; }
-        .action-card.history { border-top-color: #11998e; }
-        .action-card.history::after { background: #11998e; }
-        .action-card.meals { border-top-color: #f093fb; }
-        .action-card.meals::after { background: #f093fb; }
-        .action-card.consultations { border-top-color: #fa709a; }
-        .action-card.consultations::after { background: #fa709a; }
-        .action-card.dietitians { border-top-color: #4facfe; }
-        .action-card.dietitians::after { background: #4facfe; }
-
-        .action-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: white;
-        }
-
-        .action-card.add-measure .action-icon { background: #667eea; }
-        .action-card.history .action-icon { background: #11998e; }
-        .action-card.meals .action-icon { background: #f093fb; }
-        .action-card.consultations .action-icon { background: #fa709a; }
-        .action-card.dietitians .action-icon { background: #4facfe; }
-
         .action-card h4 {
             color: #2c3e50;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 700;
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
         }
 
         .action-card p {
             color: #6c757d;
             margin: 0;
-            font-size: 13px;
+            font-size: 14px;
+        }
+
+        .action-chevron {
+            color: #dee2e6;
+            font-size: 20px;
         }
 
         /* Info Box */
         .info-box {
             background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .info-box h3 {
             color: #2c3e50;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            margin: 0 0 20px 0;
+            margin: 0 0 16px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .info-box h3 i {
@@ -356,50 +405,57 @@
 
         .info-box hr {
             border-color: #e9ecef;
-            margin: 20px 0;
+            margin: 16px 0;
         }
 
         .info-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .info-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
         }
 
         .info-item i {
             color: #667eea;
-            font-size: 16px;
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
         }
 
         .info-item strong {
             color: #2c3e50;
-            margin-right: 5px;
+            margin-right: 6px;
+            font-size: 14px;
         }
 
         .info-item span {
             color: #6c757d;
+            font-size: 14px;
         }
 
         /* Consultation List */
         .consultation-item {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             border-left: 4px solid #667eea;
         }
 
         .consultation-item i {
-            font-size: 28px;
+            font-size: 24px;
             color: #667eea;
         }
 
@@ -411,7 +467,7 @@
             font-size: 15px;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .consultation-type {
@@ -424,23 +480,25 @@
             background: white;
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
             border-left: 4px solid #667eea;
         }
 
         .alert-modern i {
             font-size: 28px;
             color: #667eea;
+            flex-shrink: 0;
         }
 
         .alert-modern p {
             margin: 0;
             color: #495057;
             font-size: 15px;
+            line-height: 1.5;
         }
 
         /* Animations */
@@ -462,145 +520,155 @@
         .delay-1 { animation-delay: 0.1s; opacity: 0; }
         .delay-2 { animation-delay: 0.2s; opacity: 0; }
         .delay-3 { animation-delay: 0.3s; opacity: 0; }
-        .delay-4 { animation-delay: 0.4s; opacity: 0; }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .portal-nav {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: white;
-                flex-direction: column;
-                padding: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                gap: 5px;
-                z-index: 1000;
+        /* Desktop Breakpoint */
+        @media (min-width: 769px) {
+            body {
+                padding-bottom: 0; /* Remove bottom padding on desktop */
             }
 
-            .portal-nav.show {
-                display: flex;
+            .bottom-nav {
+                display: none !important; /* Always hide on desktop */
             }
 
-            .portal-nav a {
-                width: 100%;
-                justify-content: flex-start;
+            .portal-nav-desktop {
+                display: flex !important;
             }
 
-            .portal-menu-toggle {
-                display: block;
-            }
-
-            .portal-header-content {
-                position: relative;
-            }
-
-            .content-container {
-                padding: 20px 10px;
-            }
-
-            .page-header-modern {
-                padding: 20px 15px;
-            }
-
-            .page-header-modern h1 {
-                font-size: 22px;
+            .stats-scroll-container {
+                margin: 0 0 30px 0;
+                padding: 0;
+                overflow-x: visible;
             }
 
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
             }
 
             .stat-card {
-                padding: 20px 15px;
-            }
-
-            .stat-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 20px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-
-            .stat-value {
-                font-size: 22px;
-            }
-
-            .stat-value span {
-                font-size: 16px !important;
-            }
-
-            .progress-card {
-                padding: 25px 20px;
-            }
-
-            .progress-card .icon {
-                font-size: 32px;
-            }
-
-            .progress-card .value {
-                font-size: 30px;
+                width: auto;
             }
 
             .action-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .action-card {
-                padding: 20px;
-            }
-
-            .action-icon {
-                width: 55px;
-                height: 55px;
-                font-size: 26px;
-                margin-bottom: 15px;
-            }
-
-            .action-card h4 {
-                font-size: 14px;
-            }
-
-            .action-card p {
-                font-size: 12px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
             }
 
             .info-row {
-                grid-template-columns: 1fr;
+                flex-direction: row;
+                flex-wrap: wrap;
             }
 
-            .consultation-item {
-                flex-direction: column;
-                text-align: center;
+            .info-item {
+                flex: 1;
+                min-width: 200px;
             }
         }
 
-        @media (max-width: 480px) {
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .portal-nav-desktop {
+                display: none !important;
+            }
+
+            .bottom-nav {
+                display: block;
+            }
+
+            .content-container {
+                padding: 16px 12px 20px;
+            }
+
+            .page-header-mobile {
+                padding: 20px 16px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+            }
+
+            .page-header-mobile h1 {
+                font-size: 20px;
+            }
+
+            .page-header-mobile p {
+                font-size: 14px;
+            }
+
+            .stats-grid {
+                padding-left: 3px; /* Small padding for swipe indicator */
+            }
+
+            .action-card {
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            .action-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 24px;
+            }
+
+            .action-card h4 {
+                font-size: 16px;
+            }
+
+            .action-card p {
+                font-size: 13px;
+            }
+
+            .info-box {
+                padding: 20px 16px;
+                border-radius: 12px;
+            }
+
+            .info-box h3 {
+                font-size: 17px;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 375px) {
             .portal-logo img {
-                max-height: 40px;
+                max-height: 32px;
+                max-width: 120px;
             }
 
             .portal-logo-text {
+                font-size: 16px;
+            }
+
+            .stat-card {
+                width: 140px;
+                padding: 20px 16px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .page-header-mobile h1 {
                 font-size: 18px;
             }
+        }
+
+        /* Pull to Refresh Indicator (Optional Enhancement) */
+        .pull-to-refresh {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #667eea;
         }
     </style>
 </head>
 <body>
-    <!-- Header Uniforme -->
+    <!-- Header Simplifié -->
     <div class="portal-header">
         <div class="container-fluid">
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    // Essayer d'abord le logo sombre, puis le logo normal
                     $logo_path = get_option('company_logo_dark');
                     if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                         $logo_path = get_option('company_logo');
@@ -612,16 +680,13 @@
                     <?php } else { ?>
                         <div class="portal-logo-text">
                             <i class="fa fa-heartbeat"></i>
-                            <?php echo get_option('companyname') ? get_option('companyname') : 'Programme Diététique'; ?>
+                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
                         </div>
                     <?php } ?>
                 </a>
 
-                <button class="portal-menu-toggle" onclick="toggleMenu()">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <nav class="portal-nav" id="portalNav">
+                <!-- Desktop Navigation -->
+                <nav class="portal-nav-desktop">
                     <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
                         <i class="fa fa-home"></i> Accueil
                     </a>
@@ -629,13 +694,10 @@
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Mon Diététicien
+                        <i class="fa fa-user-md"></i> Diététicien
                     </a>
                     <a href="<?php echo site_url('clients/profile'); ?>">
                         <i class="fa fa-user"></i> Profil
-                    </a>
-                    <a href="<?php echo site_url('authentication/logout'); ?>">
-                        <i class="fa fa-sign-out"></i> Déconnexion
                     </a>
                 </nav>
             </div>
@@ -643,48 +705,34 @@
     </div>
 
     <div class="content-container">
-        <!-- Page Header -->
-        <div class="page-header-modern animate-in">
-            <h1><i class="fa fa-heartbeat"></i> Mon Programme Diététique</h1>
-            <p>Bienvenue, <?php echo isset($patient->client->company) ? htmlspecialchars($patient->client->company) : 'Patient'; ?></p>
+        <!-- Page Header Mobile-Friendly -->
+        <div class="page-header-mobile animate-in">
+            <h1><i class="fa fa-heartbeat"></i> Mon Programme</h1>
+            <p>Bonjour <?php echo isset($patient->first_name) ? htmlspecialchars($patient->first_name) : 'Patient'; ?> 👋</p>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid animate-in delay-1">
-            <div class="stat-card weight">
-                <div class="stat-header">
+        <!-- Stats - Swipeable -->
+        <div class="stats-scroll-container animate-in delay-1">
+            <div class="stats-grid">
+                <div class="stat-card weight">
                     <div class="stat-icon"><i class="fa fa-balance-scale"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Poids Actuel</div>
-                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement ? number_format($latest_measurement->weight, 1) : '-'; ?> <span style="font-size: 20px; color: #6c757d;">kg</span></div>
-                    </div>
+                    <div class="stat-label">Poids Actuel</div>
+                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement ? number_format($latest_measurement->weight, 1) : '-'; ?> <span>kg</span></div>
                 </div>
-            </div>
-            <div class="stat-card target">
-                <div class="stat-header">
+                <div class="stat-card target">
                     <div class="stat-icon"><i class="fa fa-bullseye"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Poids Cible</div>
-                        <div class="stat-value"><?php echo isset($patient->target_weight) && $patient->target_weight ? number_format($patient->target_weight, 1) : '-'; ?> <span style="font-size: 20px; color: #6c757d;">kg</span></div>
-                    </div>
+                    <div class="stat-label">Objectif</div>
+                    <div class="stat-value"><?php echo isset($patient->target_weight) && $patient->target_weight ? number_format($patient->target_weight, 1) : '-'; ?> <span>kg</span></div>
                 </div>
-            </div>
-            <div class="stat-card bmi">
-                <div class="stat-header">
+                <div class="stat-card bmi">
                     <div class="stat-icon"><i class="fa fa-tachometer"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Indice de Masse Corporelle</div>
-                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->bmi) ? number_format($latest_measurement->bmi, 1) : '-'; ?></div>
-                    </div>
+                    <div class="stat-label">IMC</div>
+                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->bmi) ? number_format($latest_measurement->bmi, 1) : '-'; ?></div>
                 </div>
-            </div>
-            <div class="stat-card fat">
-                <div class="stat-header">
+                <div class="stat-card fat">
                     <div class="stat-icon"><i class="fa fa-pie-chart"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Masse Grasse</div>
-                        <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></div>
-                    </div>
+                    <div class="stat-label">Masse Grasse</div>
+                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></div>
                 </div>
             </div>
         </div>
@@ -702,41 +750,56 @@
                 }
                 ?>
             </div>
-            <div class="label">Progression du Poids</div>
+            <div class="label">Progression</div>
         </div>
 
-        <!-- Action Grid -->
+        <!-- Action Cards - Touch-Friendly -->
         <div class="action-grid animate-in delay-3">
             <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-card add-measure">
                 <div class="action-icon"><i class="fa fa-plus-circle"></i></div>
-                <h4>Ajouter une Mesure</h4>
-                <p>Suivez votre évolution</p>
+                <div class="action-content">
+                    <h4>Ajouter une Mesure</h4>
+                    <p>Suivez votre évolution</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron"></i>
             </a>
             <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="action-card history">
                 <div class="action-icon"><i class="fa fa-history"></i></div>
-                <h4>Historique</h4>
-                <p>Consultez vos mesures</p>
+                <div class="action-content">
+                    <h4>Mon Historique</h4>
+                    <p>Toutes mes mesures</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron"></i>
             </a>
             <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="action-card meals">
                 <div class="action-icon"><i class="fa fa-cutlery"></i></div>
-                <h4>Plans Alimentaires</h4>
-                <p>Consultez vos repas</p>
+                <div class="action-content">
+                    <h4>Mes Repas</h4>
+                    <p>Plans alimentaires</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron"></i>
             </a>
             <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-card consultations">
                 <div class="action-icon"><i class="fa fa-calendar-check-o"></i></div>
-                <h4>Consultations</h4>
-                <p>Vos rendez-vous</p>
+                <div class="action-content">
+                    <h4>Mes Rendez-vous</h4>
+                    <p>Consultations</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron"></i>
             </a>
             <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-card dietitians">
                 <div class="action-icon"><i class="fa fa-user-md"></i></div>
-                <h4>Mon Diététicien</h4>
-                <p>Noter et contacter</p>
+                <div class="action-content">
+                    <h4>Mon Diététicien</h4>
+                    <p>Noter et contacter</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron"></i>
             </a>
         </div>
 
         <!-- Active Program -->
         <?php if (isset($active_program) && $active_program) { ?>
-            <div class="info-box animate-in delay-4">
+            <div class="info-box animate-in">
                 <h3><i class="fa fa-check-circle"></i> <?php echo htmlspecialchars($active_program->program_name); ?></h3>
                 <hr>
                 <div class="info-row">
@@ -761,41 +824,32 @@
                             <i class="fa fa-fire"></i>
                             <div>
                                 <strong>Calories:</strong>
-                                <span><?php echo $active_program->daily_calories; ?> kcal/jour</span>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    <?php if (isset($active_program->daily_protein) && $active_program->daily_protein) { ?>
-                        <div class="info-item">
-                            <i class="fa fa-pie-chart"></i>
-                            <div>
-                                <strong>Protéines:</strong>
-                                <span><?php echo $active_program->daily_protein; ?>g/jour</span>
+                                <span><?php echo $active_program->daily_calories; ?> kcal/j</span>
                             </div>
                         </div>
                     <?php } ?>
                 </div>
                 <?php if (isset($active_program->objective) && $active_program->objective) { ?>
                     <hr>
-                    <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;">
-                        <strong style="color: #2c3e50; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <div style="padding: 16px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #667eea;">
+                        <strong style="color: #2c3e50; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px;">
                             <i class="fa fa-target"></i> Objectif:
                         </strong>
-                        <p style="margin: 0; color: #495057;"><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
+                        <p style="margin: 0; color: #495057; font-size: 14px; line-height: 1.6;"><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
                     </div>
                 <?php } ?>
             </div>
         <?php } else { ?>
-            <div class="alert-modern animate-in delay-4">
+            <div class="alert-modern animate-in">
                 <i class="fa fa-info-circle"></i>
-                <p>Aucun programme actif pour le moment. Contactez votre diététicien pour commencer votre suivi.</p>
+                <p>Aucun programme actif. Contactez votre diététicien.</p>
             </div>
         <?php } ?>
 
         <!-- Upcoming Consultations -->
         <?php if (!empty($upcoming_consultations)) { ?>
-            <div class="info-box animate-in delay-4">
-                <h3><i class="fa fa-calendar"></i> Consultations à Venir</h3>
+            <div class="info-box animate-in">
+                <h3><i class="fa fa-calendar"></i> Prochains Rendez-vous</h3>
                 <hr>
                 <?php foreach ($upcoming_consultations as $consultation) { ?>
                     <div class="consultation-item">
@@ -814,22 +868,83 @@
         <?php } ?>
     </div>
 
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item active">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
+                <i class="fa fa-plus-circle"></i>
+                <span>Mesure</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user-md"></i>
+                <span>Contact</span>
+            </a>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user"></i>
+                <span>Profil</span>
+            </a>
+        </div>
+    </nav>
+
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        function toggleMenu() {
-            var nav = document.getElementById('portalNav');
-            nav.classList.toggle('show');
+        // Touch feedback for action cards
+        document.querySelectorAll('.action-card, .bottom-nav-item').forEach(function(element) {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.97)';
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+
+        // Smooth scroll for stats
+        const statsContainer = document.querySelector('.stats-scroll-container');
+        if (statsContainer) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            statsContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - statsContainer.offsetLeft;
+                scrollLeft = statsContainer.scrollLeft;
+            });
+
+            statsContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            statsContainer.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            statsContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - statsContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                statsContainer.scrollLeft = scrollLeft - walk;
+            });
         }
 
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            var nav = document.getElementById('portalNav');
-            var toggle = document.querySelector('.portal-menu-toggle');
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
-                nav.classList.remove('show');
-            }
-        });
+        // Haptic feedback simulation (for devices that support it)
+        if ('vibrate' in navigator) {
+            document.querySelectorAll('.action-card').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    navigator.vibrate(10);
+                });
+            });
+        }
     </script>
 </body>
 </html>
