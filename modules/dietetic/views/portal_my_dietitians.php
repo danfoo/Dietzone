@@ -496,47 +496,45 @@
             <p>Contact et informations</p>
         </div>
 
-        <?php if (!empty($dietitians)) { ?>
+        <?php if (!empty($dietitian)) { ?>
             <div class="animate-in delay-1">
-                <?php foreach ($dietitians as $dietitian) { ?>
-                    <div class="dietitian-card">
-                        <div class="dietitian-header">
-                            <div class="dietitian-avatar">
-                                <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
-                            </div>
-                            <div class="dietitian-info">
-                                <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>
-                                <div class="dietitian-specialty">Diététicien-Nutritionniste</div>
-                            </div>
+                <div class="dietitian-card">
+                    <div class="dietitian-header">
+                        <div class="dietitian-avatar">
+                            <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
                         </div>
-
-                        <div class="dietitian-details">
-                            <?php if (isset($dietitian->email)) { ?>
-                            <div class="detail-item">
-                                <i class="fa fa-envelope"></i>
-                                <label>Email</label>
-                                <div class="value"><?php echo htmlspecialchars($dietitian->email); ?></div>
-                            </div>
-                            <?php } ?>
-
-                            <?php if (isset($dietitian->phonenumber)) { ?>
-                            <div class="detail-item">
-                                <i class="fa fa-phone"></i>
-                                <label>Téléphone</label>
-                                <div class="value"><?php echo htmlspecialchars($dietitian->phonenumber); ?></div>
-                            </div>
-                            <?php } ?>
-                        </div>
-
-                        <div class="action-buttons">
-                            <?php if (isset($dietitian->email)) { ?>
-                            <a href="mailto:<?php echo htmlspecialchars($dietitian->email); ?>" class="btn-contact">
-                                <i class="fa fa-envelope"></i> Contacter
-                            </a>
-                            <?php } ?>
+                        <div class="dietitian-info">
+                            <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>
+                            <div class="dietitian-specialty">Diététicien-Nutritionniste</div>
                         </div>
                     </div>
-                <?php } ?>
+
+                    <div class="dietitian-details">
+                        <?php if (isset($dietitian->email)) { ?>
+                        <div class="detail-item">
+                            <i class="fa fa-envelope"></i>
+                            <label>Email</label>
+                            <div class="value"><?php echo htmlspecialchars($dietitian->email); ?></div>
+                        </div>
+                        <?php } ?>
+
+                        <?php if (isset($dietitian->phonenumber)) { ?>
+                        <div class="detail-item">
+                            <i class="fa fa-phone"></i>
+                            <label>Téléphone</label>
+                            <div class="value"><?php echo htmlspecialchars($dietitian->phonenumber); ?></div>
+                        </div>
+                        <?php } ?>
+                    </div>
+
+                    <div class="action-buttons">
+                        <?php if (isset($dietitian->email)) { ?>
+                        <a href="mailto:<?php echo htmlspecialchars($dietitian->email); ?>" class="btn-contact">
+                            <i class="fa fa-envelope"></i> Contacter
+                        </a>
+                        <?php } ?>
+                    </div>
+                </div>
             </div>
         <?php } else { ?>
             <div class="empty-state animate-in delay-1">

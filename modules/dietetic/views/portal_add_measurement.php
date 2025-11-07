@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?php echo isset($title) ? $title : 'Ajouter une Mesure'; ?></title>
+    <meta name="theme-color" content="#01807B">
+    <title>Ajouter une Mesure</title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
     <?php } ?>
@@ -14,20 +15,24 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         body {
             background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
+            padding-bottom: 80px;
         }
 
-        /* Header Uniforme Perfex */
         .portal-header {
             background: white;
             border-bottom: 1px solid #e9ecef;
-            padding: 15px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .portal-header .container-fluid {
@@ -49,30 +54,30 @@
         }
 
         .portal-logo img {
-            max-height: 50px;
-            max-width: 200px;
+            max-height: 40px;
+            max-width: 150px;
         }
 
         .portal-logo-text {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
-        .portal-nav {
+        .portal-nav-desktop {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .portal-nav a {
+        .portal-nav-desktop a {
             padding: 10px 20px;
             color: #495057;
             text-decoration: none;
@@ -82,228 +87,295 @@
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .portal-nav a:hover {
-            background: #f8f9fa;
-            color: #667eea;
-        }
-
-        .portal-nav a.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .portal-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #495057;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
-
-        /* Container */
-        .content-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 15px;
-        }
-
-        /* Page Header */
-        .page-header-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #fa709a;
-        }
-
-        .page-header-modern h1 {
-            color: #2c3e50;
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .page-header-modern h1 i {
-            color: #fa709a;
-        }
-
-        .page-header-modern p {
-            color: #6c757d;
-            margin: 0;
             font-size: 15px;
         }
 
-        /* Form Container */
-        .form-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 35px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            margin-bottom: 20px;
+        .portal-nav-desktop a:hover {
+            background: #f8f9fa;
+            color: #01807B;
         }
 
-        /* Alert Messages */
-        .alert-modern {
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 25px;
+        .portal-nav-desktop a.active {
+            background: #01807B;
+            color: white;
+        }
+
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .bottom-nav-item.active {
+            color: #01807B;
+        }
+
+        .bottom-nav-item i {
+            font-size: 24px;
+        }
+
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: #01807B;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        .page-header-mobile {
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
+        }
+
+        .page-header-mobile h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
-            border: none;
+            gap: 10px;
         }
 
-        .alert-modern.alert-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+        .page-header-mobile p {
+            margin: 0;
+            font-size: 15px;
+            opacity: 0.95;
         }
 
-        .alert-modern.alert-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .alert-modern i {
-            font-size: 20px;
-        }
-
-        /* Form Sections */
-        .form-section {
-            margin-bottom: 30px;
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .form-section-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0 0 20px 0;
             padding-bottom: 12px;
             border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .form-section-title i {
-            font-size: 20px;
-            color: #667eea;
+            color: #01807B;
         }
 
-        .form-section-title h3 {
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        /* Form Groups */
         .form-group {
             margin-bottom: 20px;
         }
 
         .form-group label {
-            color: #2c3e50;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 8px;
             display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
 
         .form-group label .required {
-            color: #f5576c;
-            margin-left: 3px;
+            color: #F3911D;
+            margin-left: 4px;
         }
 
         .form-control {
+            width: 100%;
+            padding: 14px 16px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px 15px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 16px;
             transition: all 0.3s ease;
-            height: auto;
+            background: white;
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #01807B;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
         }
 
         textarea.form-control {
             resize: vertical;
             min-height: 100px;
+            font-family: inherit;
         }
 
-        /* Input Icons */
         .input-icon-wrapper {
             position: relative;
         }
 
         .input-icon-wrapper i {
             position: absolute;
-            left: 15px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #adb5bd;
+            color: #01807B;
             font-size: 16px;
         }
 
         .input-icon-wrapper .form-control {
-            padding-left: 45px;
+            padding-left: 48px;
         }
 
-        /* Buttons */
-        .btn-modern {
-            padding: 12px 28px;
-            border-radius: 8px;
-            font-weight: 600;
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
             font-size: 14px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .btn-modern.btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-modern.btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-modern.btn-default {
-            background: white;
-            color: #495057;
-            border-color: #dee2e6;
-        }
-
-        .btn-modern.btn-default:hover {
-            background: #f8f9fa;
-            border-color: #adb5bd;
-            text-decoration: none;
+            font-weight: 600;
+            pointer-events: none;
         }
 
         .form-actions {
             display: flex;
-            gap: 15px;
-            justify-content: flex-start;
-            padding-top: 20px;
-            border-top: 2px solid #e9ecef;
+            gap: 12px;
             margin-top: 30px;
         }
 
-        /* Animations */
+        .btn-submit {
+            flex: 1;
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(1, 128, 123, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: white;
+            color: #495057;
+            padding: 16px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fa;
+            border-color: #01807B;
+            color: #01807B;
+            text-decoration: none;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #6c757d;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -322,88 +394,82 @@
         .delay-1 { animation-delay: 0.1s; opacity: 0; }
         .delay-2 { animation-delay: 0.2s; opacity: 0; }
 
-        /* Responsive */
+        @media (min-width: 769px) {
+            body {
+                padding-bottom: 0;
+            }
+
+            .bottom-nav {
+                display: none !important;
+            }
+
+            .portal-nav-desktop {
+                display: flex !important;
+            }
+
+            .form-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
-            .portal-nav {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: white;
-                flex-direction: column;
-                padding: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                gap: 5px;
-                z-index: 1000;
+            .portal-nav-desktop {
+                display: none !important;
             }
 
-            .portal-nav.show {
-                display: flex;
-            }
-
-            .portal-nav a {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            .portal-menu-toggle {
+            .bottom-nav {
                 display: block;
             }
 
-            .portal-header-content {
-                position: relative;
-            }
-
             .content-container {
-                padding: 20px 10px;
+                padding: 16px 12px 20px;
             }
 
-            .page-header-modern {
-                padding: 20px 15px;
+            .page-header-mobile {
+                padding: 20px 16px;
+                border-radius: 12px;
+                margin-bottom: 20px;
             }
 
-            .page-header-modern h1 {
-                font-size: 22px;
+            .page-header-mobile h1 {
+                font-size: 20px;
             }
 
-            .form-modern {
-                padding: 20px 15px;
+            .form-card {
+                padding: 20px 16px;
             }
 
             .form-actions {
                 flex-direction: column;
             }
+        }
 
-            .btn-modern {
-                width: 100%;
-                justify-content: center;
-            }
-
+        @media (max-width: 375px) {
             .portal-logo img {
-                max-height: 40px;
+                max-height: 32px;
+                max-width: 120px;
             }
 
             .portal-logo-text {
+                font-size: 16px;
+            }
+
+            .page-header-mobile h1 {
                 font-size: 18px;
             }
-        }
 
-        @media (max-width: 480px) {
-            .form-section-title h3 {
-                font-size: 16px;
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Uniforme -->
     <div class="portal-header">
         <div class="container-fluid">
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    // Essayer d'abord le logo sombre, puis le logo normal
                     $logo_path = get_option('company_logo_dark');
                     if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                         $logo_path = get_option('company_logo');
@@ -415,16 +481,12 @@
                     <?php } else { ?>
                         <div class="portal-logo-text">
                             <i class="fa fa-heartbeat"></i>
-                            <?php echo get_option('companyname') ? get_option('companyname') : 'Programme Diététique'; ?>
+                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
                         </div>
                     <?php } ?>
                 </a>
 
-                <button class="portal-menu-toggle" onclick="toggleMenu()">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <nav class="portal-nav" id="portalNav">
+                <nav class="portal-nav-desktop">
                     <a href="<?php echo site_url('dietetic/portal'); ?>">
                         <i class="fa fa-home"></i> Accueil
                     </a>
@@ -432,13 +494,10 @@
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Mon Diététicien
+                        <i class="fa fa-user-md"></i> Diététicien
                     </a>
                     <a href="<?php echo site_url('clients/profile'); ?>">
                         <i class="fa fa-user"></i> Profil
-                    </a>
-                    <a href="<?php echo site_url('authentication/logout'); ?>">
-                        <i class="fa fa-sign-out"></i> Déconnexion
                     </a>
                 </nav>
             </div>
@@ -446,186 +505,291 @@
     </div>
 
     <div class="content-container">
-        <!-- Page Header -->
-        <div class="page-header-modern animate-in">
+        <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-plus-circle"></i> Ajouter une Mesure</h1>
-            <p>Enregistrez vos nouvelles mensurations pour suivre votre progression</p>
+            <p>Enregistrez vos progrès</p>
         </div>
 
-        <!-- Alerts -->
+        <?php if (isset($success) && $success) { ?>
+            <div class="alert alert-success animate-in delay-1">
+                <i class="fa fa-check-circle"></i> Votre mesure a été enregistrée avec succès !
+            </div>
+        <?php } ?>
+
         <?php if (isset($error)) { ?>
-            <div class="alert-modern alert-danger animate-in delay-1">
-                <i class="fa fa-exclamation-triangle"></i>
-                <span><?php echo $error; ?></span>
+            <div class="alert alert-danger animate-in delay-1">
+                <i class="fa fa-exclamation-triangle"></i> <?php echo $error; ?>
             </div>
         <?php } ?>
 
-        <?php if (isset($success)) { ?>
-            <div class="alert-modern alert-success animate-in delay-1">
-                <i class="fa fa-check-circle"></i>
-                <span><?php echo $success; ?></span>
-            </div>
-        <?php } ?>
+        <form action="<?php echo site_url('dietetic/portal/save_measurement'); ?>" method="post" class="animate-in delay-1">
+            <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
 
-        <!-- Form -->
-        <div class="form-modern animate-in delay-1">
-            <form method="POST" action="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+            <div class="form-card">
+                <div class="form-section-title">
+                    <i class="fa fa-calendar"></i> Date de Mesure
+                </div>
 
-                <!-- Date Section -->
-                <div class="form-section">
-                    <div class="form-section-title">
+                <div class="form-group">
+                    <label for="measurement_date">
+                        Date <span class="required">*</span>
+                    </label>
+                    <div class="input-icon-wrapper">
                         <i class="fa fa-calendar"></i>
-                        <h3>Date de la Mesure</h3>
-                    </div>
-                    <div class="form-group">
-                        <label>Date <span class="required">*</span></label>
-                        <div class="input-icon-wrapper">
-                            <i class="fa fa-calendar-o"></i>
-                            <input type="date" name="measurement_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
-                        </div>
+                        <input type="date"
+                               id="measurement_date"
+                               name="measurement_date"
+                               class="form-control"
+                               value="<?php echo date('Y-m-d'); ?>"
+                               required>
                     </div>
                 </div>
+            </div>
 
-                <!-- Weight & Body Composition -->
-                <div class="form-section">
-                    <div class="form-section-title">
+            <div class="form-card animate-in delay-2">
+                <div class="form-section-title">
+                    <i class="fa fa-balance-scale"></i> Poids et Composition
+                </div>
+
+                <div class="form-group">
+                    <label for="weight">
+                        Poids <span class="required">*</span>
+                    </label>
+                    <div class="input-icon-wrapper">
                         <i class="fa fa-balance-scale"></i>
-                        <h3>Poids et Composition Corporelle</h3>
+                        <input type="number"
+                               id="weight"
+                               name="weight"
+                               class="form-control"
+                               step="0.1"
+                               min="0"
+                               placeholder="Ex: 70.5"
+                               required
+                               style="padding-right: 50px;">
+                        <span class="input-unit">kg</span>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Poids (kg) <span class="required">*</span></label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-balance-scale"></i>
-                                    <input type="number" name="weight" class="form-control" step="0.1" min="0" placeholder="Ex: 70.5" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Masse Grasse (%)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-pie-chart"></i>
-                                    <input type="number" name="body_fat" class="form-control" step="0.1" min="0" max="100" placeholder="Ex: 25.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Masse Musculaire (%)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-heartbeat"></i>
-                                    <input type="number" name="muscle_mass" class="form-control" step="0.1" min="0" max="100" placeholder="Ex: 35.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="help-text">Pesez-vous de préférence le matin à jeun</div>
                 </div>
 
-                <!-- Body Measurements -->
-                <div class="form-section">
-                    <div class="form-section-title">
-                        <i class="fa fa-arrows-h"></i>
-                        <h3>Mensurations Corporelles</h3>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tour de Taille (cm)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-arrows-h"></i>
-                                    <input type="number" name="waist" class="form-control" step="0.1" min="0" placeholder="Ex: 75.0">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tour de Hanches (cm)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-arrows-h"></i>
-                                    <input type="number" name="hips" class="form-control" step="0.1" min="0" placeholder="Ex: 95.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tour de Poitrine (cm)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-arrows-h"></i>
-                                    <input type="number" name="chest" class="form-control" step="0.1" min="0" placeholder="Ex: 90.0">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tour de Bras (cm)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-arrows-h"></i>
-                                    <input type="number" name="arms" class="form-control" step="0.1" min="0" placeholder="Ex: 30.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tour de Cuisses (cm)</label>
-                                <div class="input-icon-wrapper">
-                                    <i class="fa fa-arrows-h"></i>
-                                    <input type="number" name="thighs" class="form-control" step="0.1" min="0" placeholder="Ex: 55.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notes Section -->
-                <div class="form-section">
-                    <div class="form-section-title">
-                        <i class="fa fa-sticky-note-o"></i>
-                        <h3>Notes et Observations</h3>
-                    </div>
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Notes</label>
-                        <textarea name="notes" class="form-control" rows="4" placeholder="Ajoutez vos remarques, observations ou ressentis..."></textarea>
+                        <label for="body_fat">
+                            Masse Grasse
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-percent"></i>
+                            <input type="number"
+                                   id="body_fat"
+                                   name="body_fat"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   max="100"
+                                   placeholder="Ex: 25.0"
+                                   style="padding-right: 40px;">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="muscle_mass">
+                            Masse Musculaire
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-heartbeat"></i>
+                            <input type="number"
+                                   id="muscle_mass"
+                                   name="muscle_mass"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   max="100"
+                                   placeholder="Ex: 35.0"
+                                   style="padding-right: 40px;">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card animate-in delay-2">
+                <div class="form-section-title">
+                    <i class="fa fa-arrows-h"></i> Mensurations
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="waist">
+                            Tour de Taille
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="waist"
+                                   name="waist"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 75.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hips">
+                            Tour de Hanches
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="hips"
+                                   name="hips"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 95.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-modern btn-default">
-                        <i class="fa fa-arrow-left"></i> Retour
-                    </a>
-                    <button type="submit" class="btn-modern btn-primary">
-                        <i class="fa fa-save"></i> Enregistrer la Mesure
-                    </button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="chest">
+                            Tour de Poitrine
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="chest"
+                                   name="chest"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 90.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="arms">
+                            Tour de Bras
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="arms"
+                                   name="arms"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 30.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </div>
+
+                <div class="form-group">
+                    <label for="thighs">
+                        Tour de Cuisses
+                    </label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa fa-arrows-h"></i>
+                        <input type="number"
+                               id="thighs"
+                               name="thighs"
+                               class="form-control"
+                               step="0.1"
+                               min="0"
+                               placeholder="Ex: 55.0"
+                               style="padding-right: 45px;">
+                        <span class="input-unit">cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card animate-in delay-2">
+                <div class="form-section-title">
+                    <i class="fa fa-comment"></i> Notes
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">
+                        Remarques et Observations
+                    </label>
+                    <textarea id="notes"
+                              name="notes"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Comment vous sentez-vous ? Avez-vous remarqué des changements ? Ajoutez vos observations..."></textarea>
+                    <div class="help-text">Facultatif - Partagez vos ressentis et observations</div>
+                </div>
+            </div>
+
+            <div class="form-actions animate-in delay-2">
+                <button type="submit" class="btn-submit">
+                    <i class="fa fa-check"></i> Enregistrer la Mesure
+                </button>
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-cancel">
+                    <i class="fa fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
     </div>
+
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item active">
+                <i class="fa fa-plus-circle"></i>
+                <span>Mesure</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user-md"></i>
+                <span>Contact</span>
+            </a>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user"></i>
+                <span>Profil</span>
+            </a>
+        </div>
+    </nav>
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        function toggleMenu() {
-            var nav = document.getElementById('portalNav');
-            nav.classList.toggle('show');
+        document.querySelectorAll('.form-card, .bottom-nav-item').forEach(function(element) {
+            element.addEventListener('touchstart', function() {
+                if (this.classList.contains('form-card')) {
+                    this.style.transform = 'scale(0.99)';
+                }
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+
+        if ('vibrate' in navigator) {
+            document.querySelector('.btn-submit').addEventListener('click', function() {
+                navigator.vibrate(10);
+            });
         }
 
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            var nav = document.getElementById('portalNav');
-            var toggle = document.querySelector('.portal-menu-toggle');
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
-                nav.classList.remove('show');
-            }
-        });
+        // Auto-focus sur le premier champ en desktop
+        if (window.innerWidth > 768) {
+            document.getElementById('measurement_date').focus();
+        }
     </script>
 </body>
 </html>
