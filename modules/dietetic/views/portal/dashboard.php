@@ -128,13 +128,432 @@
     </div>
 </div>
 
-<?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
-    <div class="mtop20">
-        <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info">
+<?php
+// Check if food surveys are enabled
+$food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
+$active_surveys = [];
+if ($food_surveys_enabled) {
+    $this->load->model('dietetic/dietetic_food_surveys_model');
+    $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
+}
+?>
+
+<?php if ($food_surveys_enabled) { ?>
+<style>
+/* Food Surveys Section - Mobile First */
+.food-surveys-section {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin: 30px 0;
+}
+
+.food-surveys-header {
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.food-surveys-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.food-surveys-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.food-surveys-header h3 i {
+    font-size: 26px;
+}
+
+.food-surveys-body {
+    padding: 24px 20px;
+}
+
+/* Survey Cards */
+.survey-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .survey-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .survey-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.survey-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e8ecef;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.survey-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #01807B 0%, #F3911D 100%);
+}
+
+.survey-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(1, 128, 123, 0.15);
+    border-color: #01807B;
+}
+
+.survey-card-title {
+    color: #01807B;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.survey-card-title i {
+    color: #F3911D;
+    font-size: 20px;
+}
+
+.survey-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.survey-card-meta i {
+    color: #01807B;
+}
+
+/* Progress Bar */
+.survey-progress {
+    margin: 16px 0;
+}
+
+.survey-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.survey-progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.survey-progress-percent {
+    font-size: 16px;
+    font-weight: 700;
+    color: #01807B;
+}
+
+.survey-progress-bar-container {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.survey-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+    border-radius: 20px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.survey-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Action Buttons */
+.survey-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+    .survey-actions {
+        flex-direction: column;
+    }
+}
+
+.btn-survey-primary {
+    flex: 1;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-survey-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(1, 128, 123, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-survey-secondary {
+    flex: 1;
+    background: white;
+    color: #01807B;
+    border: 2px solid #01807B;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-survey-secondary:hover {
+    background: #01807B;
+    color: white;
+    text-decoration: none;
+}
+
+/* Empty State */
+.survey-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px dashed #01807B;
+}
+
+.survey-empty-state i {
+    font-size: 48px;
+    color: #01807B;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.survey-empty-state h4 {
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.survey-empty-state p {
+    color: #6c757d;
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* View All Button */
+.survey-view-all {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+    margin-top: 20px;
+}
+
+.btn-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    color: #01807B;
+    border: 2px solid #e9ecef;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-view-all:hover {
+    background: #01807B;
+    color: white;
+    border-color: #01807B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.2);
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .food-surveys-header {
+        padding: 20px 16px;
+    }
+
+    .food-surveys-header h3 {
+        font-size: 20px;
+    }
+
+    .food-surveys-body {
+        padding: 20px 16px;
+    }
+
+    .survey-card-title {
+        font-size: 16px;
+    }
+}
+</style>
+
+<div class="food-surveys-section">
+    <div class="food-surveys-header">
+        <h3>
+            <i class="fa fa-clipboard-list"></i>
+            Mes Enquêtes Alimentaires
+        </h3>
+    </div>
+
+    <div class="food-surveys-body">
+        <?php if (!empty($active_surveys)) { ?>
+        <div class="survey-cards-grid">
+            <?php foreach ($active_surveys as $survey) {
+                $completion = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
+            ?>
+            <div class="survey-card">
+                <h4 class="survey-card-title">
+                    <i class="fa fa-utensils"></i>
+                    <?php echo htmlspecialchars($survey->survey_name); ?>
+                </h4>
+
+                <div class="survey-card-meta">
+                    <i class="fa fa-calendar"></i>
+                    <span><?php echo _d($survey->start_date); ?> - <?php echo _d($survey->end_date); ?></span>
+                </div>
+
+                <div class="survey-progress">
+                    <div class="survey-progress-label">
+                        <span class="survey-progress-text">Progression</span>
+                        <span class="survey-progress-percent"><?php echo round($completion); ?>%</span>
+                    </div>
+                    <div class="survey-progress-bar-container">
+                        <div class="survey-progress-bar" style="width: <?php echo $completion; ?>%"></div>
+                    </div>
+                </div>
+
+                <div class="survey-actions">
+                    <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-survey-primary">
+                        <i class="fa fa-camera"></i>
+                        Soumettre
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-survey-secondary">
+                        <i class="fa fa-comments"></i>
+                        Recommandations
+                    </a>
+                </div>
+            </div>
+            <?php } ?>
+        </div>
+        <?php } else { ?>
+        <div class="survey-empty-state">
+            <i class="fa fa-clipboard-list"></i>
+            <h4>Aucune enquête alimentaire active</h4>
+            <p>Votre diététicien ne vous a pas encore assigné d'enquête alimentaire active.<br>
+            Les enquêtes vous permettent de partager vos repas et recevoir des recommandations.</p>
+        </div>
+        <?php } ?>
+
+        <div class="survey-view-all">
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn-view-all">
+                <i class="fa fa-list"></i>
+                Voir toutes mes enquêtes
+            </a>
+        </div>
+    </div>
+</div>
+<?php } ?>
+
+<!-- Action Buttons -->
+<div class="mtop20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
+        <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info" style="flex: 1; min-width: 200px;">
             <i class="fa fa-plus"></i> <?php echo _l('dietetic_add_measurement'); ?>
         </a>
-    </div>
-<?php } ?>
+    <?php } ?>
+
+    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>"
+           class="btn btn-lg"
+           style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); border-color: #01807B; color: white; flex: 1; min-width: 200px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3); transition: all 0.3s;"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(1, 128, 123, 0.4)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(1, 128, 123, 0.3)'">
+            <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
+        </a>
+    <?php } ?>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    .mtop20 > a {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+}
+</style>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

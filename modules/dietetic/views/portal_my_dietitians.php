@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?php echo $title; ?></title>
+    <meta name="theme-color" content="#01807B">
+    <title>Mon Diététicien</title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
     <?php } ?>
@@ -14,20 +15,24 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         body {
             background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
+            padding-bottom: 80px;
         }
 
-        /* Header Uniforme Perfex */
         .portal-header {
             background: white;
             border-bottom: 1px solid #e9ecef;
-            padding: 15px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .portal-header .container-fluid {
@@ -49,30 +54,30 @@
         }
 
         .portal-logo img {
-            max-height: 50px;
-            max-width: 200px;
+            max-height: 40px;
+            max-width: 150px;
         }
 
         .portal-logo-text {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
-        .portal-nav {
+        .portal-nav-desktop {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .portal-nav a {
+        .portal-nav-desktop a {
             padding: 10px 20px;
             color: #495057;
             text-decoration: none;
@@ -82,92 +87,150 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 15px;
         }
 
-        .portal-nav a:hover {
+        .portal-nav-desktop a:hover {
             background: #f8f9fa;
-            color: #667eea;
+            color: #01807B;
         }
 
-        .portal-nav a.active {
-            background: #667eea;
+        .portal-nav-desktop a.active {
+            background: #01807B;
             color: white;
         }
 
-        .portal-menu-toggle {
+        .bottom-nav {
             display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #495057;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
-
-        /* Container */
-        .content-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 15px;
-        }
-
-        /* Page Header */
-        .page-header-modern {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: white;
-            border-radius: 12px;
-            padding: 25px 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #667eea;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
         }
 
-        .page-header-modern h1 {
-            color: #2c3e50;
-            font-size: 26px;
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .bottom-nav-item.active {
+            color: #01807B;
+        }
+
+        .bottom-nav-item i {
+            font-size: 24px;
+        }
+
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: #01807B;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        .page-header-mobile {
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
+        }
+
+        .page-header-mobile h1 {
+            font-size: 24px;
             font-weight: 700;
             margin: 0 0 8px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .page-header-modern h1 i {
-            color: #667eea;
-        }
-
-        .page-header-modern p {
-            color: #6c757d;
+        .page-header-mobile p {
             margin: 0;
-            font-size: 14px;
+            font-size: 15px;
+            opacity: 0.95;
         }
 
-        /* Dietitian Profile Card */
         .dietitian-card {
             background: white;
+            border-left: 4px solid #01807B;
             border-radius: 12px;
-            padding: 35px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .dietitian-card:active {
+            transform: scale(0.98);
         }
 
         .dietitian-header {
             display: flex;
             align-items: center;
-            gap: 30px;
-            margin-bottom: 30px;
-            padding-bottom: 30px;
-            border-bottom: 2px solid #ecf0f1;
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
         .dietitian-avatar {
-            width: 150px;
-            height: 150px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            overflow: hidden;
-            border: 5px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                        linear-gradient(135deg, #667eea, #764ba2) border-box;
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
             flex-shrink: 0;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .dietitian-avatar img {
@@ -176,286 +239,444 @@
             object-fit: cover;
         }
 
-        .dietitian-avatar-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            font-weight: 700;
-        }
-
         .dietitian-info {
             flex: 1;
         }
 
         .dietitian-name {
-            font-size: 32px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
-            margin: 0 0 15px 0;
+            margin-bottom: 4px;
         }
 
-        .dietitian-contact {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #7f8c8d;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        .dietitian-contact i {
-            color: #667eea;
-            font-size: 18px;
-        }
-
-        /* Rating Display */
-        .rating-display {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 16px;
-        }
-
-        .rating-number {
-            font-size: 48px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .rating-stars {
-            color: #f39c12;
-            font-size: 24px;
-        }
-
-        .rating-stars-empty {
-            color: #bdc3c7;
-        }
-
-        .rating-count {
-            color: #7f8c8d;
+        .dietitian-specialty {
+            color: #6c757d;
             font-size: 14px;
-            margin-top: 5px;
         }
 
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 30px;
-        }
-
-        .btn-rate-modern {
-            flex: 1;
-            min-width: 200px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-weight: 700;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
-        }
-
-        .btn-rate-modern:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .btn-contact-modern {
-            flex: 1;
-            min-width: 200px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-weight: 700;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-        }
-
-        .btn-contact-modern:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .btn-back-modern {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            padding: 15px 30px;
-            font-weight: 700;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 16px;
-        }
-
-        .btn-back-modern:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-
-        /* My Rating Section */
-        .my-rating-section {
-            background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%);
-            padding: 30px;
-            border-radius: 16px;
-            margin-top: 30px;
-            border-left: 5px solid #f39c12;
-        }
-
-        .my-rating-section h4 {
-            color: #2c3e50;
-            font-size: 22px;
-            font-weight: 700;
-            margin: 0 0 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .my-rating-section h4 i {
-            color: #f39c12;
-        }
-
-        .my-rating-display {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .my-rating-number {
-            font-size: 36px;
-            font-weight: 700;
-            color: #f39c12;
-        }
-
-        .my-rating-comment {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            font-style: italic;
-            line-height: 1.6;
-            position: relative;
-        }
-
-        .my-rating-comment::before {
-            content: '"';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 48px;
-            color: rgba(243, 156, 18, 0.2);
-            font-family: Georgia, serif;
-        }
-
-        .my-rating-comment p {
-            margin: 0;
-            padding-left: 30px;
-        }
-
-        .rating-criteria-grid {
+        .dietitian-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .criterion-item {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
+        .detail-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
             text-align: center;
         }
 
-        .criterion-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #f39c12;
-            margin-bottom: 5px;
+        .detail-item i {
+            color: #01807B;
+            font-size: 20px;
+            margin-bottom: 6px;
         }
 
-        .criterion-label {
-            font-size: 13px;
-            color: #7f8c8d;
+        .detail-item label {
+            display: block;
+            font-size: 11px;
+            color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 700;
+            margin-bottom: 6px;
         }
 
-        .rating-date {
-            color: #95a5a6;
-            font-size: 13px;
-            margin-top: 20px;
-            text-align: right;
+        .detail-item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
         }
 
-        /* Alert */
-        .alert-modern {
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-contact {
+            flex: 1;
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+        }
+
+        .btn-contact:hover {
+            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-contact:active {
+            transform: scale(0.97);
+        }
+
+        .empty-state {
             background: white;
             border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 50px 30px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state-icon {
+            font-size: 56px;
+            color: #dee2e6;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn-back {
+            background: white;
+            color: #495057;
+            border: 2px solid #dee2e6;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
+        }
+
+        .btn-back:hover {
+            background: #f8f9fa;
+            border-color: #01807B;
+            color: #01807B;
+            text-decoration: none;
+        }
+
+        .rating-card {
+            background: white;
+            border-left: 4px solid #F3911D;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .rating-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            border-left: 5px solid #667eea;
+            gap: 10px;
+            margin-bottom: 16px;
         }
 
-        .alert-modern i {
-            font-size: 32px;
-            color: #667eea;
-        }
-
-        .alert-modern p {
-            margin: 0;
+        .rating-header h3 {
+            font-size: 18px;
+            font-weight: 700;
             color: #2c3e50;
+            margin: 0;
+        }
+
+        .rating-header i {
+            color: #F3911D;
+            font-size: 22px;
+        }
+
+        .average-rating {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .rating-score {
+            font-size: 36px;
+            font-weight: 700;
+            color: #01807B;
+            margin-bottom: 8px;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .rating-stars i {
+            font-size: 24px;
+            color: #F3911D;
+        }
+
+        .rating-stars i.fa-star-o {
+            color: #dee2e6;
+        }
+
+        .rating-count {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .my-rating-section {
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .my-rating-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .my-rating-header i {
+            color: #01807B;
+        }
+
+        .interactive-stars {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .interactive-stars i {
+            font-size: 36px;
+            color: #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-stars i:hover,
+        .interactive-stars i.hover {
+            color: #F3911D;
+            transform: scale(1.15);
+        }
+
+        .interactive-stars i.selected {
+            color: #F3911D;
+        }
+
+        .rating-comment {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 12px;
+            transition: border-color 0.3s ease;
+        }
+
+        .rating-comment:focus {
+            outline: none;
+            border-color: #01807B;
+        }
+
+        .btn-submit-rating {
+            width: 100%;
+            background: linear-gradient(135deg, #F3911D 0%, #d97e0a 100%);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
             font-size: 16px;
         }
 
-        /* Animations */
+        .btn-submit-rating:hover {
+            box-shadow: 0 6px 16px rgba(243, 145, 29, 0.4);
+        }
+
+        .btn-submit-rating:active {
+            transform: scale(0.97);
+        }
+
+        .btn-submit-rating:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .rating-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .rating-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .rating-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .current-rating-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .current-rating-display .rating-stars {
+            margin: 0;
+        }
+
+        .current-rating-text {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .criteria-ratings {
+            margin-top: 16px;
+        }
+
+        .criterion-item {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .criterion-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .criterion-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .criterion-label i {
+            color: #01807B;
+            font-size: 16px;
+        }
+
+        .criterion-stars {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .criterion-stars i {
+            font-size: 18px;
+            color: #F3911D;
+        }
+
+        .criterion-stars i.fa-star-o {
+            color: #dee2e6;
+        }
+
+        .criterion-stars .criterion-score {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .rating-form-group {
+            margin-bottom: 20px;
+        }
+
+        .rating-form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-form-label i {
+            color: #01807B;
+        }
+
+        .rating-form-label .required {
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        .btn-edit-rating {
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .btn-edit-rating:hover {
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.4);
+        }
+
+        .btn-edit-rating:active {
+            transform: scale(0.97);
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -464,263 +685,86 @@
         }
 
         .animate-in {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.5s ease-out forwards;
         }
 
         .delay-1 { animation-delay: 0.1s; opacity: 0; }
         .delay-2 { animation-delay: 0.2s; opacity: 0; }
 
-        /* Responsive */
+        @media (min-width: 769px) {
+            body {
+                padding-bottom: 0;
+            }
+
+            .bottom-nav {
+                display: none !important;
+            }
+
+            .portal-nav-desktop {
+                display: flex !important;
+            }
+
+            .dietitian-details {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
-            .portal-nav {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: white;
-                flex-direction: column;
-                padding: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                gap: 5px;
+            .portal-nav-desktop {
+                display: none !important;
             }
 
-            .portal-nav.show {
-                display: flex;
-            }
-
-            .portal-nav a {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            .portal-menu-toggle {
+            .bottom-nav {
                 display: block;
             }
 
-            .portal-header-content {
-                position: relative;
-            }
-
             .content-container {
-                padding: 20px 10px;
+                padding: 16px 12px 20px;
             }
 
-            .page-header-modern {
-                padding: 20px 15px;
+            .page-header-mobile {
+                padding: 20px 16px;
+                border-radius: 12px;
                 margin-bottom: 20px;
             }
 
-            .page-header-modern h1 {
-                font-size: 22px;
+            .page-header-mobile h1 {
+                font-size: 20px;
             }
 
             .dietitian-card {
-                padding: 25px 20px;
+                padding: 16px;
+                border-radius: 12px;
             }
 
-            .dietitian-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 20px;
-            }
-
-            .dietitian-avatar {
-                width: 120px;
-                height: 120px;
-            }
-
-            .dietitian-avatar-placeholder {
-                font-size: 40px;
-            }
-
-            .dietitian-name {
-                font-size: 26px;
-            }
-
-            .dietitian-contact {
-                justify-content: center;
-            }
-
-            .rating-display {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px 15px;
-            }
-
-            .rating-number {
-                font-size: 40px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn-rate-modern,
-            .btn-contact-modern,
-            .btn-back-modern {
-                width: 100%;
-            }
-
-            .my-rating-section {
-                padding: 20px 15px;
-            }
-
-            .rating-criteria-grid {
+            .dietitian-details {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
         }
 
-        @media (max-width: 480px) {
-            .rating-criteria-grid {
-                grid-template-columns: 1fr;
+        @media (max-width: 375px) {
+            .portal-logo img {
+                max-height: 32px;
+                max-width: 120px;
             }
-        }
 
-        .dietitian-profile {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        .dietitian-header {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            margin-bottom: 25px;
-            padding-bottom: 25px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-        .dietitian-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 3px solid #16a085;
-            flex-shrink: 0;
-        }
-        .dietitian-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .dietitian-avatar-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #16a085, #1abc9c);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            font-weight: 700;
-        }
-        .dietitian-info h2 {
-            margin: 0 0 10px 0;
-            color: #2c3e50;
-            font-size: 28px;
-            font-weight: 700;
-        }
-        .dietitian-email {
-            color: #7f8c8d;
-            margin-bottom: 15px;
-        }
-        .rating-display {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .rating-stars {
-            color: #f39c12;
-            font-size: 20px;
-        }
-        .rating-number {
-            font-size: 28px;
-            font-weight: 700;
-            color: #f39c12;
-        }
-        .rating-count {
-            color: #95a5a6;
-            font-size: 13px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .btn-rate {
-            background: #f39c12;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-weight: 600;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-        .btn-rate:hover {
-            background: #e67e22;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-            color: white;
-        }
-        .btn-contact {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-weight: 600;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-        .btn-contact:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-            color: white;
-        }
-        .my-rating-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 25px;
-            border-left: 4px solid #f39c12;
-        }
-        .my-rating-section h4 {
-            margin: 0 0 15px 0;
-            color: #2c3e50;
-        }
-        .rating-criteria {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .criterion {
-            font-size: 14px;
-            color: #34495e;
-        }
-        .criterion strong {
-            color: #f39c12;
-            font-size: 16px;
-        }
-        .alert-info-custom {
-            background: #e8f5e9;
-            border-left: 4px solid #27ae60;
-            padding: 15px;
-            border-radius: 5px;
-            color: #27ae60;
+            .portal-logo-text {
+                font-size: 16px;
+            }
+
+            .page-header-mobile h1 {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header Uniforme -->
     <div class="portal-header">
         <div class="container-fluid">
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    // Essayer d'abord le logo sombre, puis le logo normal
                     $logo_path = get_option('company_logo_dark');
                     if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                         $logo_path = get_option('company_logo');
@@ -732,16 +776,12 @@
                     <?php } else { ?>
                         <div class="portal-logo-text">
                             <i class="fa fa-heartbeat"></i>
-                            <?php echo get_option('companyname') ? get_option('companyname') : 'Programme Diététique'; ?>
+                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
                         </div>
                     <?php } ?>
                 </a>
 
-                <button class="portal-menu-toggle" onclick="toggleMenu()">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <nav class="portal-nav" id="portalNav">
+                <nav class="portal-nav-desktop">
                     <a href="<?php echo site_url('dietetic/portal'); ?>">
                         <i class="fa fa-home"></i> Accueil
                     </a>
@@ -749,13 +789,10 @@
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="active">
-                        <i class="fa fa-user-md"></i> Mon Diététicien
+                        <i class="fa fa-user-md"></i> Diététicien
                     </a>
                     <a href="<?php echo site_url('clients/profile'); ?>">
                         <i class="fa fa-user"></i> Profil
-                    </a>
-                    <a href="<?php echo site_url('authentication/logout'); ?>">
-                        <i class="fa fa-sign-out"></i> Déconnexion
                     </a>
                 </nav>
             </div>
@@ -763,168 +800,532 @@
     </div>
 
     <div class="content-container">
-        <!-- Page Header -->
-        <div class="page-header-modern animate-in">
+        <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-user-md"></i> Mon Diététicien</h1>
-            <p>Consultez les informations de votre diététicien et laissez votre avis</p>
+            <p>Contact et informations</p>
         </div>
 
-        <!-- Dietitian Profile Card -->
-        <div class="dietitian-card animate-in delay-1">
-            <div class="dietitian-header">
-                <div class="dietitian-avatar">
-                    <?php if (!empty($dietitian->profile_image)) { ?>
-                        <img src="<?php echo staff_profile_image_url($dietitian->staffid, 'small'); ?>" alt="<?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?>">
-                    <?php } else { ?>
-                        <div class="dietitian-avatar-placeholder">
-                            <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
+        <?php if (!empty($dietitian)) { ?>
+            <div class="animate-in delay-1">
+                <div class="dietitian-card">
+                    <div class="dietitian-header">
+                        <div class="dietitian-avatar">
+                            <?php if (!empty($dietitian->profile_image)) { ?>
+                                <img src="<?php echo staff_profile_image_url($dietitian->staffid, 'small'); ?>" alt="<?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?>">
+                            <?php } else { ?>
+                                <?php echo strtoupper(substr($dietitian->firstname, 0, 1) . substr($dietitian->lastname, 0, 1)); ?>
+                            <?php } ?>
                         </div>
-                    <?php } ?>
-                </div>
-
-                <div class="dietitian-info">
-                    <h2 class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></h2>
-                    <div class="dietitian-contact">
-                        <i class="fa fa-envelope"></i>
-                        <span><?php echo htmlspecialchars($dietitian->email); ?></span>
+                        <div class="dietitian-info">
+                            <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>
+                            <div class="dietitian-specialty">Diététicien-Nutritionniste</div>
+                        </div>
                     </div>
 
-                    <?php if ($dietitian_rating && $dietitian_rating->total_ratings > 0) { ?>
-                        <div class="rating-display">
-                            <div class="rating-number"><?php echo number_format($dietitian_rating->avg_overall, 1); ?></div>
-                            <div>
-                                <div class="rating-stars">
-                                    <?php
-                                    $full_stars = floor($dietitian_rating->avg_overall);
-                                    $half_star = ($dietitian_rating->avg_overall - $full_stars) >= 0.5;
+                    <div class="dietitian-details">
+                        <?php if (isset($dietitian->email)) { ?>
+                        <div class="detail-item">
+                            <i class="fa fa-envelope"></i>
+                            <label>Email</label>
+                            <div class="value"><?php echo htmlspecialchars($dietitian->email); ?></div>
+                        </div>
+                        <?php } ?>
 
-                                    for ($i = 0; $i < $full_stars; $i++) {
-                                        echo '<i class="fa fa-star"></i> ';
-                                    }
-                                    if ($half_star) {
-                                        echo '<i class="fa fa-star-half-o"></i> ';
-                                        $full_stars++;
-                                    }
-                                    for ($i = $full_stars; $i < 5; $i++) {
-                                        echo '<i class="fa fa-star-o"></i> ';
-                                    }
-                                    ?>
-                                </div>
-                                <div class="rating-count"><?php echo $dietitian_rating->total_ratings; ?> avis</div>
-                            </div>
+                        <?php if (isset($dietitian->phonenumber)) { ?>
+                        <div class="detail-item">
+                            <i class="fa fa-phone"></i>
+                            <label>Téléphone</label>
+                            <div class="value"><?php echo htmlspecialchars($dietitian->phonenumber); ?></div>
                         </div>
-                    <?php } else { ?>
-                        <div class="rating-display">
-                            <div class="rating-stars rating-stars-empty">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <div class="rating-count">Aucun avis</div>
-                        </div>
-                    <?php } ?>
+                        <?php } ?>
+                    </div>
+
+                    <div class="action-buttons">
+                        <?php if (isset($dietitian->email)) { ?>
+                        <a href="mailto:<?php echo htmlspecialchars($dietitian->email); ?>" class="btn-contact">
+                            <i class="fa fa-envelope"></i> Contacter
+                        </a>
+                        <?php } ?>
+                    </div>
                 </div>
-            </div>
 
-            <?php if ($can_rate) { ?>
-                <div class="action-buttons">
-                    <a href="<?php echo site_url('dietetic/portal/rate_dietitian'); ?>" class="btn-rate-modern">
+                <!-- Rating Section -->
+                <div class="rating-card">
+                    <div class="rating-header">
                         <i class="fa fa-star"></i>
-                        <?php echo $my_rating ? 'Modifier mon avis' : 'Noter mon diététicien'; ?>
-                    </a>
-                    <a href="mailto:<?php echo $dietitian->email; ?>" class="btn-contact-modern">
-                        <i class="fa fa-envelope"></i>
-                        Contacter par email
-                    </a>
-                </div>
-            <?php } else { ?>
-                <div class="alert-modern">
-                    <i class="fa fa-info-circle"></i>
-                    <p>Vous devez avoir au moins une consultation complétée pour noter votre diététicien.</p>
-                </div>
-            <?php } ?>
+                        <h3>Évaluation</h3>
+                    </div>
 
-            <?php if ($my_rating) { ?>
-                <div class="my-rating-section">
-                    <h4><i class="fa fa-star"></i> Mon Avis</h4>
-
-                    <div class="my-rating-display">
-                        <div class="my-rating-number"><?php echo number_format($my_rating->overall_rating, 1); ?></div>
+                    <?php if (isset($dietitian_rating) && $dietitian_rating && $dietitian_rating->total_ratings > 0) { ?>
+                    <!-- Average Rating Display -->
+                    <div class="average-rating">
+                        <div class="rating-score">
+                            <?php echo number_format($dietitian_rating->avg_overall, 1); ?> / 5
+                        </div>
                         <div class="rating-stars">
                             <?php
-                            $full_stars = floor($my_rating->overall_rating);
-                            for ($i = 0; $i < $full_stars; $i++) {
-                                echo '<i class="fa fa-star"></i> ';
+                            $avg = round($dietitian_rating->avg_overall);
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($i <= $avg) {
+                                    echo '<i class="fa fa-star"></i>';
+                                } else {
+                                    echo '<i class="fa fa-star-o"></i>';
+                                }
                             }
-                            for ($i = $full_stars; $i < 5; $i++) {
-                                echo '<i class="fa fa-star-o rating-stars-empty"></i> ';
+                            ?>
+                        </div>
+                        <div class="rating-count">
+                            Basé sur <?php echo $dietitian_rating->total_ratings; ?>
+                            <?php echo $dietitian_rating->total_ratings > 1 ? 'évaluations' : 'évaluation'; ?>
+                        </div>
+
+                        <!-- Criteria Details -->
+                        <div class="criteria-ratings">
+                            <?php
+                            $criteria = [
+                                'professionalism' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($criteria as $key => $info) {
+                                $avg_key = 'avg_' . $key;
+                                if (isset($dietitian_rating->$avg_key) && $dietitian_rating->$avg_key > 0) {
+                                    $criterion_avg = $dietitian_rating->$avg_key;
+                                    $criterion_rounded = round($criterion_avg);
+                            ?>
+                            <div class="criterion-item">
+                                <div class="criterion-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                </div>
+                                <div class="criterion-stars">
+                                    <?php
+                                    for ($i = 1; $i <= 5; $i++) {
+                                        if ($i <= $criterion_rounded) {
+                                            echo '<i class="fa fa-star"></i>';
+                                        } else {
+                                            echo '<i class="fa fa-star-o"></i>';
+                                        }
+                                    }
+                                    ?>
+                                    <span class="criterion-score"><?php echo number_format($criterion_avg, 1); ?>/5</span>
+                                </div>
+                            </div>
+                            <?php
+                                }
                             }
                             ?>
                         </div>
                     </div>
-
-                    <?php if ($my_rating->comment) { ?>
-                        <div class="my-rating-comment">
-                            <p><?php echo nl2br(htmlspecialchars($my_rating->comment)); ?></p>
-                        </div>
                     <?php } ?>
 
-                    <div class="rating-criteria-grid">
-                        <div class="criterion-item">
-                            <div class="criterion-value"><?php echo $my_rating->professionalism_rating; ?>/5</div>
-                            <div class="criterion-label">Professionnalisme</div>
+                    <?php if (isset($my_rating) && $my_rating) { ?>
+                    <!-- Patient's Current Rating -->
+                    <div class="my-rating-section" id="myRatingDisplay">
+                        <div class="my-rating-header">
+                            <i class="fa fa-user"></i>
+                            Votre évaluation
                         </div>
-                        <div class="criterion-item">
-                            <div class="criterion-value"><?php echo $my_rating->listening_rating; ?>/5</div>
-                            <div class="criterion-label">Écoute</div>
+                        <div class="current-rating-display">
+                            <div class="rating-stars">
+                                <?php
+                                $my_overall = round($my_rating->overall_rating);
+                                for ($i = 1; $i <= 5; $i++) {
+                                    if ($i <= $my_overall) {
+                                        echo '<i class="fa fa-star"></i>';
+                                    } else {
+                                        echo '<i class="fa fa-star-o"></i>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                            <span class="current-rating-text">
+                                (<?php echo number_format($my_rating->overall_rating, 1); ?>/5)
+                            </span>
                         </div>
-                        <div class="criterion-item">
-                            <div class="criterion-value"><?php echo $my_rating->advice_rating; ?>/5</div>
-                            <div class="criterion-label">Conseils</div>
+
+                        <!-- My Criteria Details -->
+                        <div class="criteria-ratings">
+                            <?php
+                            $my_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($my_criteria as $key => $info) {
+                                if (isset($my_rating->$key) && $my_rating->$key > 0) {
+                                    $my_score = $my_rating->$key;
+                            ?>
+                            <div class="criterion-item">
+                                <div class="criterion-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                </div>
+                                <div class="criterion-stars">
+                                    <?php
+                                    for ($i = 1; $i <= 5; $i++) {
+                                        if ($i <= $my_score) {
+                                            echo '<i class="fa fa-star"></i>';
+                                        } else {
+                                            echo '<i class="fa fa-star-o"></i>';
+                                        }
+                                    }
+                                    ?>
+                                    <span class="criterion-score"><?php echo $my_score; ?>/5</span>
+                                </div>
+                            </div>
+                            <?php
+                                }
+                            }
+                            ?>
                         </div>
-                        <div class="criterion-item">
-                            <div class="criterion-value"><?php echo $my_rating->results_rating; ?>/5</div>
-                            <div class="criterion-label">Résultats</div>
+
+                        <?php if (!empty($my_rating->comment)) { ?>
+                        <div style="margin-top: 12px; padding: 12px; background: white; border-radius: 8px;">
+                            <div style="font-size: 13px; color: #6c757d; margin-bottom: 6px;">Votre commentaire :</div>
+                            <div style="color: #2c3e50; font-size: 14px; line-height: 1.6;">
+                                <?php echo nl2br(htmlspecialchars($my_rating->comment)); ?>
+                            </div>
                         </div>
-                        <div class="criterion-item">
-                            <div class="criterion-value"><?php echo $my_rating->availability_rating; ?>/5</div>
-                            <div class="criterion-label">Disponibilité</div>
-                        </div>
+                        <?php } ?>
+
+                        <button type="button" class="btn-edit-rating" onclick="showEditForm()">
+                            <i class="fa fa-edit"></i>
+                            Modifier mon évaluation
+                        </button>
                     </div>
 
-                    <div class="rating-date">
-                        <i class="fa fa-clock-o"></i> Publié le <?php echo date('d/m/Y', strtotime($my_rating->created_at)); ?>
+                    <!-- Edit Rating Form (Hidden by default) -->
+                    <div class="my-rating-section" id="editRatingForm" style="display: none;">
+                        <div class="my-rating-header">
+                            <i class="fa fa-pencil"></i>
+                            Modifier votre évaluation
+                        </div>
+                        <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                            <?php
+                            $form_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($form_criteria as $key => $info) {
+                                $current_value = isset($my_rating->$key) ? $my_rating->$key : 0;
+                            ?>
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                    <span class="required">*</span>
+                                </div>
+                                <div class="interactive-stars" data-criterion="<?php echo $key; ?>">
+                                    <?php for ($i = 1; $i <= 5; $i++) { ?>
+                                    <i class="fa <?php echo ($i <= $current_value) ? 'fa-star selected' : 'fa-star-o'; ?>" data-rating="<?php echo $i; ?>"></i>
+                                    <?php } ?>
+                                </div>
+                                <input type="hidden" name="<?php echo $key; ?>" class="criterion-value" value="<?php echo $current_value; ?>" required>
+                            </div>
+                            <?php } ?>
+
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa fa-comment"></i>
+                                    Votre commentaire
+                                </div>
+                                <textarea
+                                    name="comment"
+                                    class="rating-comment"
+                                    placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
+                                ><?php echo isset($my_rating->comment) ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn-submit-rating" id="submitRatingBtn">
+                                    <i class="fa fa-check"></i>
+                                    Enregistrer les modifications
+                                </button>
+                                <button type="button" class="btn-back" onclick="cancelEdit()" style="flex: 0; min-width: auto; padding: 14px 20px;">
+                                    <i class="fa fa-times"></i>
+                                    Annuler
+                                </button>
+                            </div>
+                            <div class="rating-message" id="ratingMessage"></div>
+                        </form>
                     </div>
+                    <?php } elseif (isset($can_rate) && $can_rate) { ?>
+                    <!-- New Rating Form -->
+                    <div class="my-rating-section">
+                        <div class="my-rating-header">
+                            <i class="fa fa-pencil"></i>
+                            Évaluez votre diététicien
+                        </div>
+                        <form id="ratingForm" action="<?php echo site_url('dietetic/portal/rate_dietitian/' . $dietitian->staffid); ?>" method="post">
+                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                            <?php
+                            $form_criteria = [
+                                'professionalism_rating' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
+                                'listening_rating' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
+                                'advice_rating' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
+                                'results_rating' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
+                                'availability_rating' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
+                            ];
+
+                            foreach ($form_criteria as $key => $info) {
+                            ?>
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa <?php echo $info['icon']; ?>"></i>
+                                    <?php echo $info['label']; ?>
+                                    <span class="required">*</span>
+                                </div>
+                                <div class="interactive-stars" data-criterion="<?php echo $key; ?>">
+                                    <i class="fa fa-star-o" data-rating="1"></i>
+                                    <i class="fa fa-star-o" data-rating="2"></i>
+                                    <i class="fa fa-star-o" data-rating="3"></i>
+                                    <i class="fa fa-star-o" data-rating="4"></i>
+                                    <i class="fa fa-star-o" data-rating="5"></i>
+                                </div>
+                                <input type="hidden" name="<?php echo $key; ?>" class="criterion-value" value="0" required>
+                            </div>
+                            <?php } ?>
+
+                            <div class="rating-form-group">
+                                <div class="rating-form-label">
+                                    <i class="fa fa-comment"></i>
+                                    Votre commentaire
+                                </div>
+                                <textarea
+                                    name="comment"
+                                    class="rating-comment"
+                                    placeholder="Partagez votre expérience avec ce diététicien (optionnel)..."
+                                ></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-submit-rating" id="submitRatingBtn" disabled>
+                                <i class="fa fa-check"></i>
+                                Envoyer mon évaluation
+                            </button>
+                            <div class="rating-message" id="ratingMessage"></div>
+                        </form>
+                    </div>
+                    <?php } else { ?>
+                    <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px;">
+                        <i class="fa fa-info-circle" style="font-size: 24px; display: block; margin-bottom: 10px; color: #dee2e6;"></i>
+                        <?php if (isset($can_rate) && !$can_rate) { ?>
+                        Vous devez avoir au moins une consultation complétée pour évaluer votre diététicien.
+                        <?php } else { ?>
+                        L'évaluation n'est pas disponible pour le moment.
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
                 </div>
-            <?php } ?>
-        </div>
+            </div>
+        <?php } else { ?>
+            <div class="empty-state animate-in delay-1">
+                <div class="empty-state-icon">
+                    <i class="fa fa-user-md"></i>
+                </div>
+                <div class="empty-state-title">Aucun diététicien</div>
+                <div class="empty-state-text">
+                    Aucun diététicien n'est actuellement assigné à votre programme.
+                </div>
+            </div>
+        <?php } ?>
 
-        <!-- Back Button -->
-        <div style="text-align: center;" class="animate-in delay-2">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back-modern">
-                <i class="fa fa-arrow-left"></i> Retour au tableau de bord
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
+                <i class="fa fa-arrow-left"></i> Retour au Tableau de bord
             </a>
         </div>
     </div>
 
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
+                <i class="fa fa-plus-circle"></i>
+                <span>Mesure</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item active">
+                <i class="fa fa-user-md"></i>
+                <span>Contact</span>
+            </a>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user"></i>
+                <span>Profil</span>
+            </a>
+        </div>
+    </nav>
+
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        function toggleMenu() {
-            var nav = document.getElementById('portalNav');
-            nav.classList.toggle('show');
+        document.querySelectorAll('.dietitian-card, .bottom-nav-item').forEach(function(element) {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.97)';
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+
+        if ('vibrate' in navigator) {
+            document.querySelectorAll('.btn-contact').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    navigator.vibrate(10);
+                });
+            });
         }
 
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            var nav = document.getElementById('portalNav');
-            var toggle = document.querySelector('.portal-menu-toggle');
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
-                nav.classList.remove('show');
-            }
+        // Rating functionality for multiple criteria
+        function showEditForm() {
+            document.getElementById('myRatingDisplay').style.display = 'none';
+            document.getElementById('editRatingForm').style.display = 'block';
+        }
+
+        function cancelEdit() {
+            document.getElementById('editRatingForm').style.display = 'none';
+            document.getElementById('myRatingDisplay').style.display = 'block';
+        }
+
+        // Initialize rating stars for all criteria
+        var criteriaRatings = {};
+        var submitBtn = document.getElementById('submitRatingBtn');
+
+        document.querySelectorAll('.interactive-stars').forEach(function(starGroup) {
+            var criterion = starGroup.getAttribute('data-criterion');
+            var stars = starGroup.querySelectorAll('i');
+            var input = starGroup.nextElementSibling;
+
+            if (!criterion || !input) return;
+
+            criteriaRatings[criterion] = parseInt(input.value) || 0;
+
+            stars.forEach(function(star) {
+                // Hover effect
+                star.addEventListener('mouseenter', function() {
+                    var rating = parseInt(this.getAttribute('data-rating'));
+                    highlightStars(stars, rating);
+                });
+
+                // Click/touch to select
+                star.addEventListener('click', function() {
+                    var rating = parseInt(this.getAttribute('data-rating'));
+                    criteriaRatings[criterion] = rating;
+                    input.value = rating;
+
+                    // Mark as selected
+                    stars.forEach(function(s) {
+                        s.classList.remove('selected');
+                    });
+                    for (var i = 0; i < rating; i++) {
+                        stars[i].classList.add('selected');
+                    }
+
+                    highlightStars(stars, rating);
+                    checkFormValidity();
+
+                    // Haptic feedback
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(10);
+                    }
+                });
+            });
+
+            // Reset hover effect
+            starGroup.addEventListener('mouseleave', function() {
+                var currentRating = criteriaRatings[criterion] || 0;
+                highlightStars(stars, currentRating);
+            });
         });
+
+        function highlightStars(stars, rating) {
+            stars.forEach(function(star, index) {
+                if (index < rating) {
+                    star.classList.remove('fa-star-o');
+                    star.classList.add('fa-star');
+                } else {
+                    star.classList.remove('fa-star');
+                    star.classList.add('fa-star-o');
+                }
+            });
+        }
+
+        function checkFormValidity() {
+            if (!submitBtn) return;
+
+            var allFilled = true;
+            var requiredCriteria = ['professionalism_rating', 'listening_rating', 'advice_rating', 'results_rating', 'availability_rating'];
+
+            requiredCriteria.forEach(function(criterion) {
+                if (!criteriaRatings[criterion] || criteriaRatings[criterion] === 0) {
+                    allFilled = false;
+                }
+            });
+
+            submitBtn.disabled = !allFilled;
+        }
+
+        // Form submission with AJAX
+        var ratingForm = document.getElementById('ratingForm');
+        if (ratingForm) {
+            ratingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var formData = new FormData(this);
+                var messageDiv = document.getElementById('ratingMessage');
+                var originalBtnText = submitBtn.innerHTML;
+
+                // Disable submit button during submission
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+
+                $.ajax({
+                    url: this.action,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        messageDiv.className = 'rating-message success';
+                        messageDiv.textContent = 'Merci pour votre évaluation !';
+                        messageDiv.style.display = 'block';
+
+                        // Reload page after 2 seconds to show updated rating
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+                    },
+                    error: function() {
+                        messageDiv.className = 'rating-message error';
+                        messageDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                        messageDiv.style.display = 'block';
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
+                });
+            });
+        }
+
+        // Check initial form validity
+        checkFormValidity();
     </script>
 </body>
 </html>

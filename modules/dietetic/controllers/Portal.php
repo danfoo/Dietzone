@@ -18,6 +18,7 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_consultations_model');
+        $this->load->model('dietetic/dietetic_food_surveys_model');
     }
 
     /**
@@ -48,7 +49,15 @@ class Portal extends App_Controller
             'my_dietitians',
             'rate_dietitian',
             'test',
-            'test_with_param'
+            'test_with_param',
+            'repair_orphans',
+            'food_surveys',
+            'food_survey_submit',
+            'save_daily_entry',
+            'view_recommendations',
+            'add_comment',
+            'upload_photo',
+            'delete_photo'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -113,6 +122,11 @@ class Portal extends App_Controller
         $data = [];
         $data['patient'] = $patient;
         $data['title'] = 'My Dietetic Program';
+
+        // Get client info for patient name
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
 
         // Get active program
         try {
@@ -465,8 +479,9 @@ class Portal extends App_Controller
 
         log_activity('[DIETETIC DEBUG] Meal plan found: ID = ' . $meal_plan->id . ', program_id = ' . $meal_plan->program_id);
 
-        // Get program
-        $program = $this->dietetic_programs_model->get($meal_plan->program_id);
+        // Get program WITHOUT access check (we'll verify patient ownership manually below)
+        // Pass false as second parameter to bypass staff permission checks for client portal
+        $program = $this->dietetic_programs_model->get($meal_plan->program_id, false);
 
         if (!$program) {
             log_activity('[DIETETIC DEBUG] Program not found: ID = ' . $meal_plan->program_id);
@@ -788,6 +803,862 @@ class Portal extends App_Controller
         $data['existing_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $dietitian_id);
 
         $this->load->view('portal_rate_dietitian', $data);
+    }
+
+    /**
+     * Repair orphan meal plans (meal plans with missing programs)
+     * This is a diagnostic and repair tool accessible only to logged-in users
+     * Access via: /dietetic/portal/repair_orphans
+     */
+    public function repair_orphans()
+    {
+        // Require staff access (admin or dietitian) for security
+        if (!is_staff_logged_in()) {
+            echo '<h1>Access Denied</h1>';
+            echo '<p>This diagnostic tool requires staff access.</p>';
+            echo '<p>Please <a href="' . admin_url() . '">login as staff</a> to use this tool.</p>';
+            return;
+        }
+
+        $action = $this->input->get('action') ?? 'diagnostic';
+
+        echo "<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Réparation des Meal Plans Orphelins</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; background: white; margin: 20px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th { background: #3498db; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f8f9fa; }
+        .actions { margin: 30px 0; }
+        button, .btn { background: #3498db; color: white; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 5px; margin-right: 10px; text-decoration: none; display: inline-block; }
+        button:hover, .btn:hover { background: #2980b9; }
+        button.danger { background: #e74c3c; }
+        button.danger:hover { background: #c0392b; }
+        .stat { display: inline-block; background: white; padding: 20px; margin: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); min-width: 200px; }
+        .stat-value { font-size: 36px; font-weight: bold; color: #3498db; }
+        .stat-label { color: #7f8c8d; font-size: 14px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Réparation des Meal Plans Orphelins</h1>
+    <p>Ce script détecte et répare les meal plans qui référencent des programmes inexistants.</p>
+";
+
+        if ($action === 'diagnostic') {
+            echo "<div class='info'><strong>MODE: DIAGNOSTIC</strong> - Aucune modification ne sera effectuée</div>";
+
+            // Find all orphan meal plans
+            $this->load->model('dietetic/dietetic_meal_plans_model');
+
+            $query = "
+                SELECT
+                    mp.id as meal_plan_id,
+                    mp.program_id as missing_program_id,
+                    mp.plan_name,
+                    mp.week_number,
+                    mp.start_date,
+                    mp.end_date,
+                    mp.created_at
+                FROM " . db_prefix() . "dietic_meal_plans mp
+                LEFT JOIN " . db_prefix() . "dietic_programs p ON p.id = mp.program_id
+                WHERE p.id IS NULL
+                ORDER BY mp.id
+            ";
+
+            $orphans = $this->db->query($query)->result_array();
+
+            // Statistics
+            $total_meal_plans = $this->db->count_all_results(db_prefix() . 'dietic_meal_plans');
+            $orphan_count = count($orphans);
+            $healthy_count = $total_meal_plans - $orphan_count;
+
+            echo "<h2>📊 Statistiques</h2>";
+            echo "<div class='stat'>
+                    <div class='stat-value'>$total_meal_plans</div>
+                    <div class='stat-label'>Total Meal Plans</div>
+                  </div>";
+            echo "<div class='stat'>
+                    <div class='stat-value' style='color: #e74c3c;'>$orphan_count</div>
+                    <div class='stat-label'>Meal Plans Orphelins</div>
+                  </div>";
+            echo "<div class='stat'>
+                    <div class='stat-value' style='color: #27ae60;'>$healthy_count</div>
+                    <div class='stat-label'>Meal Plans Valides</div>
+                  </div>";
+
+            if ($orphan_count === 0) {
+                echo "<div class='success'>✅ <strong>Aucun meal plan orphelin détecté !</strong> Toutes les références sont valides.</div>";
+            } else {
+                echo "<div class='warning'>⚠️ <strong>$orphan_count meal plan(s) orphelin(s) détecté(s)</strong></div>";
+
+                // Display orphan list
+                echo "<h2>📋 Liste des Meal Plans Orphelins</h2>";
+                echo "<table>";
+                echo "<tr>
+                        <th>Meal Plan ID</th>
+                        <th>Nom du Plan</th>
+                        <th>Programme Manquant (ID)</th>
+                        <th>Semaine</th>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Créé le</th>
+                      </tr>";
+
+                foreach ($orphans as $orphan) {
+                    echo "<tr>";
+                    echo "<td><strong>#{$orphan['meal_plan_id']}</strong></td>";
+                    echo "<td>" . htmlspecialchars($orphan['plan_name'] ?? 'Sans nom') . "</td>";
+                    echo "<td><span style='color: #e74c3c;'>Programme #{$orphan['missing_program_id']} (inexistant)</span></td>";
+                    echo "<td>Semaine {$orphan['week_number']}</td>";
+                    echo "<td>" . ($orphan['start_date'] ?? 'N/A') . "</td>";
+                    echo "<td>" . ($orphan['end_date'] ?? 'N/A') . "</td>";
+                    echo "<td>" . $orphan['created_at'] . "</td>";
+                    echo "</tr>";
+                }
+
+                echo "</table>";
+
+                // Get patient info
+                $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => 1])->row();
+
+                if ($patient) {
+                    $client = $this->db->get_where(db_prefix() . 'clients', ['userid' => $patient->client_id])->row();
+
+                    echo "<h2>🔧 Proposition de Réparation</h2>";
+                    echo "<div class='info'>";
+                    echo "<p><strong>Pour chaque meal plan orphelin, le script va :</strong></p>";
+                    echo "<ol>";
+                    echo "<li>Créer un programme de remplacement</li>";
+                    echo "<li>Associer ce programme au patient ID 1 ({$client->company})</li>";
+                    echo "<li>Utiliser le diététicien du patient (ID: {$patient->dietitian_id})</li>";
+                    echo "<li>Définir des valeurs par défaut appropriées</li>";
+                    echo "</ol>";
+                    echo "</div>";
+
+                    echo "<div class='actions'>";
+                    echo "<a href='" . site_url('dietetic/portal/repair_orphans?action=repair') . "' class='btn' onclick=\"return confirm('Êtes-vous sûr de vouloir réparer tous les meal plans orphelins ?');\">🔧 Lancer la Réparation</a>";
+                    echo "<a href='" . admin_url('dietetic/programs') . "' class='btn' style='background: #95a5a6;'>📋 Voir les Programmes</a>";
+                    echo "</div>";
+                } else {
+                    echo "<div class='error'>❌ <strong>Erreur :</strong> Patient ID 1 introuvable.</div>";
+                }
+            }
+
+        } elseif ($action === 'repair') {
+            echo "<div class='warning'><strong>MODE: RÉPARATION</strong> - Modifications en cours...</div>";
+
+            // Get patient info
+            $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => 1])->row();
+
+            if (!$patient) {
+                echo "<div class='error'>❌ <strong>Erreur :</strong> Patient ID 1 introuvable.</div>";
+                die();
+            }
+
+            $client = $this->db->get_where(db_prefix() . 'clients', ['userid' => $patient->client_id])->row();
+
+            // Find all orphan meal plans
+            $query = "
+                SELECT
+                    mp.id as meal_plan_id,
+                    mp.program_id as missing_program_id,
+                    mp.plan_name,
+                    mp.week_number,
+                    mp.start_date,
+                    mp.end_date,
+                    mp.created_at
+                FROM " . db_prefix() . "dietic_meal_plans mp
+                LEFT JOIN " . db_prefix() . "dietic_programs p ON p.id = mp.program_id
+                WHERE p.id IS NULL
+                ORDER BY mp.id
+            ";
+
+            $orphans = $this->db->query($query)->result_array();
+
+            if (count($orphans) === 0) {
+                echo "<div class='success'>✅ Aucun meal plan orphelin à réparer.</div>";
+            } else {
+                echo "<h2>🔧 Réparation en cours...</h2>";
+
+                $repaired = 0;
+                $errors = 0;
+
+                // Start transaction
+                $this->db->trans_start();
+
+                try {
+                    foreach ($orphans as $orphan) {
+                        $meal_plan_id = $orphan['meal_plan_id'];
+                        $missing_program_id = $orphan['missing_program_id'];
+                        $plan_name = $orphan['plan_name'] ?? "Plan de repas #{$meal_plan_id}";
+
+                        // Create replacement program
+                        $program_data = [
+                            'id' => $missing_program_id,
+                            'patient_id' => $patient->id,
+                            'dietitian_id' => $patient->dietitian_id,
+                            'program_name' => "Programme pour " . $plan_name,
+                            'description' => "Programme créé automatiquement pour réparer le meal plan #{$meal_plan_id}",
+                            'start_date' => $orphan['start_date'] ?? date('Y-m-d'),
+                            'end_date' => $orphan['end_date'],
+                            'status' => 'active',
+                            'created_at' => $orphan['created_at'],
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ];
+
+                        $this->db->insert(db_prefix() . 'dietic_programs', $program_data);
+
+                        echo "<div class='success'>";
+                        echo "✅ <strong>Meal Plan #{$meal_plan_id}</strong>: Programme #{$missing_program_id} créé avec succès";
+                        echo "<br>&nbsp;&nbsp;&nbsp;&nbsp;→ Nom: " . htmlspecialchars($program_data['program_name']);
+                        echo "<br>&nbsp;&nbsp;&nbsp;&nbsp;→ Patient: {$client->company}";
+                        echo "<br>&nbsp;&nbsp;&nbsp;&nbsp;→ Diététicien: ID #{$patient->dietitian_id}";
+                        echo "</div>";
+
+                        $repaired++;
+                    }
+
+                    // Complete transaction
+                    $this->db->trans_complete();
+
+                    if ($this->db->trans_status() === FALSE) {
+                        throw new Exception("Erreur lors de la transaction");
+                    }
+
+                    echo "<div class='success'>";
+                    echo "<h3>✅ Réparation terminée avec succès !</h3>";
+                    echo "<p><strong>$repaired</strong> meal plan(s) réparé(s)</p>";
+                    echo "</div>";
+
+                    echo "<div class='actions'>";
+                    echo "<a href='" . site_url('dietetic/portal/repair_orphans') . "' class='btn'>📊 Voir le Diagnostic</a>";
+                    echo "<a href='" . site_url('dietetic/portal/view_meal_plan/2') . "' class='btn' style='background: #27ae60;'>🧪 Tester Meal Plan #2</a>";
+                    echo "<a href='" . admin_url('dietetic/programs') . "' class='btn' style='background: #95a5a6;'>📋 Voir les Programmes</a>";
+                    echo "</div>";
+
+                    // Log the repair
+                    log_activity("Dietetic: Meal plans orphelins réparés - $repaired programmes créés");
+
+                } catch (Exception $e) {
+                    // Rollback on error
+                    $this->db->trans_rollback();
+
+                    echo "<div class='error'>";
+                    echo "<h3>❌ Erreur lors de la réparation</h3>";
+                    echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+                    echo "<p>Aucune modification n'a été effectuée (transaction annulée).</p>";
+                    echo "</div>";
+                }
+            }
+        }
+
+        echo "
+    <hr>
+    <p style='color: #7f8c8d; font-size: 12px;'>
+        Script de réparation - Module Dietetic Perfex CRM<br>
+        Date: " . date('Y-m-d H:i:s') . "
+    </p>
+</body>
+</html>
+";
+    }
+
+    /**
+     * List food surveys for the logged-in patient
+     */
+    public function food_surveys()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Enquêtes Alimentaires';
+
+        // Get client info for patient name
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get all surveys for this patient
+        $data['surveys'] = $this->dietetic_food_surveys_model->get_by_patient($patient->id);
+
+        // Calculate completion percentages
+        foreach ($data['surveys'] as &$survey) {
+            $survey->completion_percentage = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
+        }
+
+        $this->load->view('portal/food_surveys/list', $data);
+    }
+
+    /**
+     * Daily food survey submission form
+     *
+     * @param int $survey_id
+     */
+    public function food_survey_submit($survey_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get survey
+        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+        if (!$survey || $survey->patient_id != $patient->id) {
+            show_404();
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['survey'] = $survey;
+        $data['title'] = 'Soumission Quotidienne - ' . $survey->survey_name;
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get today's entry if it exists
+        $today = date('Y-m-d');
+        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $today);
+
+        // Get existing beverages if entry exists
+        if ($data['today_entry']) {
+            $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($data['today_entry']->id);
+        } else {
+            $data['beverages'] = [];
+        }
+
+        $this->load->view('portal/food_surveys/submit', $data);
+    }
+
+    /**
+     * Save daily entry (AJAX)
+     */
+    public function save_daily_entry()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Check if client is logged in
+            if (!is_client_logged_in()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Non authentifié'
+                ]);
+                return;
+            }
+
+            $client_id = get_client_user_id();
+
+            // Get patient
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient non trouvé'
+                ]);
+                return;
+            }
+
+            // Get survey
+            $survey_id = $this->input->post('survey_id');
+            $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+            if (!$survey || $survey->patient_id != $patient->id) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Enquête non trouvée ou accès refusé'
+                ]);
+                return;
+            }
+
+            // Prepare entry data
+            $entry_data = [
+                'survey_id' => $survey_id,
+                'entry_date' => $this->input->post('entry_date') ?: date('Y-m-d'),
+                'breakfast_photo' => $this->input->post('breakfast_photo'),
+                'breakfast_time' => $this->input->post('breakfast_time'),
+                'breakfast_notes' => $this->input->post('breakfast_notes'),
+                'lunch_photo' => $this->input->post('lunch_photo'),
+                'lunch_time' => $this->input->post('lunch_time'),
+                'lunch_notes' => $this->input->post('lunch_notes'),
+                'dinner_photo' => $this->input->post('dinner_photo'),
+                'dinner_time' => $this->input->post('dinner_time'),
+                'dinner_notes' => $this->input->post('dinner_notes'),
+                'water_quantity_ml' => $this->input->post('water_quantity_ml'),
+                'submitted_at' => date('Y-m-d H:i:s')
+            ];
+
+            // Check if save_entry method exists
+            if (!method_exists($this->dietetic_food_surveys_model, 'save_entry')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Méthode save_entry non trouvée dans le modèle'
+                ]);
+                return;
+            }
+
+            // Save entry
+            $entry_id = $this->dietetic_food_surveys_model->save_entry($entry_data);
+
+            if ($entry_id) {
+                // Save beverages if provided
+                $beverages = $this->input->post('beverages');
+                if (is_array($beverages) && count($beverages) > 0) {
+                    foreach ($beverages as $beverage) {
+                        if (!empty($beverage['name']) && !empty($beverage['quantity']) && !empty($beverage['time'])) {
+                            $beverage_data = [
+                                'entry_id' => $entry_id,
+                                'beverage_name' => $beverage['name'],
+                                'quantity_ml' => $beverage['quantity'],
+                                'consumption_time' => $beverage['time'],
+                                'notes' => $beverage['notes'] ?? null
+                            ];
+                            $this->dietetic_food_surveys_model->add_beverage($beverage_data);
+                        }
+                    }
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Entrée enregistrée avec succès',
+                    'entry_id' => $entry_id
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'enregistrement de l\'entrée'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'error_line' => $e->getLine(),
+                'error_file' => basename($e->getFile())
+            ]);
+        }
+    }
+
+    /**
+     * View recommendations for a survey
+     *
+     * @param int $survey_id
+     */
+    public function view_recommendations($survey_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get survey
+        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+        if (!$survey || $survey->patient_id != $patient->id) {
+            show_404();
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['survey'] = $survey;
+        $data['title'] = 'Recommandations - ' . $survey->survey_name;
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get all entries with recommendations
+        $entries = $this->dietetic_food_surveys_model->get_entries($survey_id);
+        $data['entries'] = [];
+
+        foreach ($entries as $entry) {
+            if ($entry->has_recommendation) {
+                $entry->recommendations = $this->dietetic_food_surveys_model->get_recommendations($entry->id);
+
+                // Get comments for each recommendation
+                foreach ($entry->recommendations as &$recommendation) {
+                    $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                }
+
+                $data['entries'][] = $entry;
+            }
+        }
+
+        $this->load->view('portal/food_surveys/recommendations', $data);
+    }
+
+    /**
+     * Add comment to a recommendation (AJAX)
+     */
+    public function add_comment()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient non trouvé'
+            ]);
+            return;
+        }
+
+        $recommendation_id = $this->input->post('recommendation_id');
+        $comment_text = $this->input->post('comment_text');
+
+        if (!$recommendation_id || !$comment_text) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Données manquantes'
+            ]);
+            return;
+        }
+
+        // Verify recommendation belongs to patient's survey
+        // (Add security check here if needed)
+
+        $data = [
+            'recommendation_id' => $recommendation_id,
+            'comment_text' => $comment_text
+        ];
+
+        $comment_id = $this->dietetic_food_surveys_model->add_comment($data);
+
+        if ($comment_id) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Commentaire ajouté avec succès',
+                'comment_id' => $comment_id
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'ajout du commentaire'
+            ]);
+        }
+    }
+
+    /**
+     * Upload photo for food survey entry
+     */
+    public function upload_photo()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['photo'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Aucun fichier dans la requête'
+            ]);
+            return;
+        }
+
+        if ($_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            $error_message = 'Erreur upload: ';
+            switch ($_FILES['photo']['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                    $error_message .= 'Le fichier dépasse upload_max_filesize';
+                    break;
+                case UPLOAD_ERR_FORM_SIZE:
+                    $error_message .= 'Le fichier dépasse MAX_FILE_SIZE';
+                    break;
+                case UPLOAD_ERR_PARTIAL:
+                    $error_message .= 'Fichier partiellement téléchargé';
+                    break;
+                case UPLOAD_ERR_NO_FILE:
+                    $error_message .= 'Aucun fichier téléchargé';
+                    break;
+                case UPLOAD_ERR_NO_TMP_DIR:
+                    $error_message .= 'Dossier temporaire manquant';
+                    break;
+                case UPLOAD_ERR_CANT_WRITE:
+                    $error_message .= 'Échec écriture sur disque';
+                    break;
+                case UPLOAD_ERR_EXTENSION:
+                    $error_message .= 'Extension PHP a arrêté le téléchargement';
+                    break;
+                default:
+                    $error_message .= 'Erreur inconnue (' . $_FILES['photo']['error'] . ')';
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => $error_message
+            ]);
+            return;
+        }
+
+        $file = $_FILES['photo'];
+
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_types)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Type de fichier non autorisé. Seules les images (JPEG, PNG, GIF) sont acceptées.'
+            ]);
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        $max_size = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $max_size) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Le fichier est trop volumineux. Taille maximale: 5MB.'
+            ]);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        if (!is_dir($upload_path)) {
+            if (!mkdir($upload_path, 0755, true)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Impossible de créer le dossier d\'upload'
+                ]);
+                return;
+            }
+        }
+
+        // Check directory permissions
+        if (!is_writable($upload_path)) {
+            @chmod($upload_path, 0755);
+            if (!is_writable($upload_path)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le dossier d\'upload n\'est pas accessible en écriture'
+                ]);
+                return;
+            }
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'meal_' . uniqid() . '_' . time() . '.' . $extension;
+        $destination = $upload_path . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $destination)) {
+            // Set correct permissions on uploaded file
+            @chmod($destination, 0644);
+
+            // Create thumbnail for faster loading
+            $this->create_thumbnail($destination, $upload_path . 'thumb_' . $filename);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo téléchargée avec succès',
+                'filename' => $filename,
+                'url' => base_url('uploads/dietetic/food_surveys/' . $filename),
+                'thumbnail_url' => base_url('uploads/dietetic/food_surveys/thumb_' . $filename)
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: impossible de déplacer le fichier. Vérifiez les permissions du dossier uploads/dietetic/food_surveys/'
+            ]);
+        }
+    }
+
+    /**
+     * Delete uploaded photo
+     */
+    public function delete_photo()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        $filename = $this->input->post('filename');
+
+        if (!$filename) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Nom de fichier manquant'
+            ]);
+            return;
+        }
+
+        // Security: prevent directory traversal
+        $filename = basename($filename);
+
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        $file_path = $upload_path . $filename;
+        $thumb_path = $upload_path . 'thumb_' . $filename;
+
+        $success = false;
+
+        // Delete main file
+        if (file_exists($file_path)) {
+            $success = unlink($file_path);
+        }
+
+        // Delete thumbnail
+        if (file_exists($thumb_path)) {
+            unlink($thumb_path);
+        }
+
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo supprimée avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Photo non trouvée ou erreur lors de la suppression'
+            ]);
+        }
+    }
+
+    /**
+     * Create thumbnail from image
+     */
+    private function create_thumbnail($source, $destination, $max_width = 400, $max_height = 400)
+    {
+        // Get image info
+        $image_info = getimagesize($source);
+        if (!$image_info) {
+            return false;
+        }
+
+        list($width, $height, $type) = $image_info;
+
+        // Create image resource based on type
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                $image = imagecreatefromjpeg($source);
+                break;
+            case IMAGETYPE_PNG:
+                $image = imagecreatefrompng($source);
+                break;
+            case IMAGETYPE_GIF:
+                $image = imagecreatefromgif($source);
+                break;
+            default:
+                return false;
+        }
+
+        // Calculate new dimensions
+        $ratio = min($max_width / $width, $max_height / $height);
+        $new_width = (int)($width * $ratio);
+        $new_height = (int)($height * $ratio);
+
+        // Create thumbnail
+        $thumb = imagecreatetruecolor($new_width, $new_height);
+
+        // Preserve transparency for PNG and GIF
+        if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF) {
+            imagealphablending($thumb, false);
+            imagesavealpha($thumb, true);
+            $transparent = imagecolorallocatealpha($thumb, 255, 255, 255, 127);
+            imagefilledrectangle($thumb, 0, 0, $new_width, $new_height, $transparent);
+        }
+
+        // Resize
+        imagecopyresampled($thumb, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+
+        // Save thumbnail
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                imagejpeg($thumb, $destination, 85);
+                break;
+            case IMAGETYPE_PNG:
+                imagepng($thumb, $destination, 8);
+                break;
+            case IMAGETYPE_GIF:
+                imagegif($thumb, $destination);
+                break;
+        }
+
+        // Clean up
+        imagedestroy($image);
+        imagedestroy($thumb);
+
+        return true;
     }
 }
 

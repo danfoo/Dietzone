@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?php echo isset($title) ? $title : 'Mes Consultations'; ?></title>
+    <meta name="theme-color" content="#01807B">
+    <title>Mes Consultations</title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
     <?php } ?>
@@ -14,20 +15,25 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         body {
             background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
+            padding-bottom: 80px;
         }
 
-        /* Header Uniforme Perfex */
+        /* Header */
         .portal-header {
             background: white;
             border-bottom: 1px solid #e9ecef;
-            padding: 15px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .portal-header .container-fluid {
@@ -49,30 +55,30 @@
         }
 
         .portal-logo img {
-            max-height: 50px;
-            max-width: 200px;
+            max-height: 40px;
+            max-width: 150px;
         }
 
         .portal-logo-text {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .portal-logo-text i {
-            color: #667eea;
+            color: #01807B;
         }
 
-        .portal-nav {
+        .portal-nav-desktop {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .portal-nav a {
+        .portal-nav-desktop a {
             padding: 10px 20px;
             color: #495057;
             text-decoration: none;
@@ -82,297 +88,300 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 15px;
         }
 
-        .portal-nav a:hover {
+        .portal-nav-desktop a:hover {
             background: #f8f9fa;
-            color: #667eea;
+            color: #01807B;
         }
 
-        .portal-nav a.active {
-            background: #667eea;
+        .portal-nav-desktop a.active {
+            background: #01807B;
             color: white;
         }
 
-        .portal-menu-toggle {
+        /* Bottom Nav */
+        .bottom-nav {
             display: none;
-            background: none;
-            border: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: #6c757d;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .bottom-nav-item.active {
+            color: #01807B;
+        }
+
+        .bottom-nav-item i {
             font-size: 24px;
-            color: #495057;
-            cursor: pointer;
-            padding: 5px 10px;
+        }
+
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: #01807B;
+            border-radius: 0 0 3px 3px;
         }
 
         /* Container */
         .content-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 30px 15px;
+            padding: 20px 15px;
         }
 
         /* Page Header */
-        .page-header-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #11998e;
+        .page-header-mobile {
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
         }
 
-        .page-header-modern h1 {
-            color: #2c3e50;
-            font-size: 28px;
+        .page-header-mobile h1 {
+            font-size: 24px;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .page-header-modern h1 i {
-            color: #11998e;
-        }
-
-        .page-header-modern p {
-            color: #6c757d;
+        .page-header-mobile p {
             margin: 0;
             font-size: 15px;
+            opacity: 0.95;
         }
 
-        /* Section Header */
-        .section-header {
+        /* Section Title */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 30px 0 16px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .section-header i {
-            font-size: 24px;
-            color: #667eea;
+        .section-title i {
+            color: #01807B;
         }
 
-        .section-header h2 {
-            color: #2c3e50;
-            font-size: 22px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        /* Consultation Cards */
-        .consultations-grid {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
+        /* Consultation Card */
         .consultation-card {
             background: white;
+            border-left: 4px solid #01807B;
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-
-        .consultation-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-        }
-
-        .consultation-card.upcoming {
-            border-left-color: #11998e;
         }
 
         .consultation-card.past {
-            border-left-color: #95a5a6;
-            opacity: 0.9;
+            border-left-color: #6c757d;
+            opacity: 0.85;
+        }
+
+        .consultation-card:active {
+            transform: scale(0.98);
         }
 
         .consultation-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            margin-bottom: 16px;
         }
 
         .consultation-date {
-            display: flex;
-            align-items: center;
-            gap: 10px;
             font-size: 18px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #01807B;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .consultation-date i {
-            color: #667eea;
-            font-size: 20px;
-        }
-
-        .consultation-type {
-            padding: 8px 18px;
+        .status-badge {
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .consultation-type.initial {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        .status-badge.upcoming {
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
         }
 
-        .consultation-type.followup {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .status-badge.completed {
+            background: #e9ecef;
+            color: #6c757d;
         }
 
-        .consultation-type.evaluation {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: white;
-        }
-
-        .consultation-type.final {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .consultation-body {
-            display: grid;
-            gap: 15px;
+        .status-badge.cancelled {
+            background: #fee;
+            color: #dc3545;
         }
 
         .consultation-info {
-            display: flex;
-            align-items: flex-start;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 12px;
-            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
             background: #f8f9fa;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
         }
 
-        .consultation-info i {
-            color: #667eea;
-            font-size: 16px;
-            margin-top: 3px;
+        .info-item i {
+            color: #01807B;
+            font-size: 20px;
+            margin-bottom: 6px;
         }
 
-        .consultation-info-content {
-            flex: 1;
-        }
-
-        .consultation-info strong {
-            color: #2c3e50;
+        .info-item label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
+            font-size: 11px;
+            color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 700;
+            margin-bottom: 6px;
         }
 
-        .consultation-info p {
-            color: #495057;
-            margin: 0;
+        .info-item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .consultation-notes {
+            padding: 14px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 3px solid #F3911D;
+        }
+
+        .consultation-notes strong {
+            color: #2c3e50;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .consultation-notes p {
+            margin: 8px 0 0 0;
+            color: #6c757d;
+            font-size: 14px;
             line-height: 1.6;
         }
 
         /* Empty State */
         .empty-state {
             background: white;
-            border-radius: 12px;
-            padding: 60px 30px;
+            border-radius: 16px;
+            padding: 50px 30px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .empty-state-icon {
-            font-size: 64px;
+            font-size: 56px;
             color: #dee2e6;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .empty-state h3 {
-            color: #6c757d;
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0 0 10px 0;
-        }
-
-        .empty-state p {
-            color: #adb5bd;
-            margin: 0;
-        }
-
-        /* Pagination */
-        .pagination-wrapper {
-            display: flex;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .pagination-wrapper .pagination {
-            margin: 0;
-            display: flex;
-            gap: 5px;
-        }
-
-        .pagination-wrapper .pagination li a,
-        .pagination-wrapper .pagination li span {
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 700;
             color: #495057;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            background: white;
+            margin-bottom: 8px;
         }
 
-        .pagination-wrapper .pagination li a:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+        .empty-state-text {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        .pagination-wrapper .pagination li.active span {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .pagination-wrapper .pagination li.disabled span {
-            background: #f8f9fa;
-            color: #adb5bd;
-            cursor: not-allowed;
-        }
-
-        /* Back Button */
-        .back-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
+        /* Buttons */
+        .btn-back {
             background: white;
             color: #495057;
             border: 2px solid #dee2e6;
-            border-radius: 8px;
-            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 10px;
             font-weight: 600;
             transition: all 0.3s ease;
-            margin-top: 30px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
         }
 
-        .back-button:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+        .btn-back:hover {
+            background: #f8f9fa;
+            border-color: #01807B;
+            color: #01807B;
             text-decoration: none;
         }
 
@@ -395,86 +404,89 @@
         .delay-1 { animation-delay: 0.1s; opacity: 0; }
         .delay-2 { animation-delay: 0.2s; opacity: 0; }
 
-        /* Responsive */
+        /* Desktop */
+        @media (min-width: 769px) {
+            body {
+                padding-bottom: 0;
+            }
+
+            .bottom-nav {
+                display: none !important;
+            }
+
+            .portal-nav-desktop {
+                display: flex !important;
+            }
+
+            .consultation-info {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
-            .portal-nav {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: white;
-                flex-direction: column;
-                padding: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                gap: 5px;
-                z-index: 1000;
+            .portal-nav-desktop {
+                display: none !important;
             }
 
-            .portal-nav.show {
-                display: flex;
-            }
-
-            .portal-nav a {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            .portal-menu-toggle {
+            .bottom-nav {
                 display: block;
             }
 
-            .portal-header-content {
-                position: relative;
-            }
-
             .content-container {
-                padding: 20px 10px;
+                padding: 16px 12px 20px;
             }
 
-            .page-header-modern {
-                padding: 20px 15px;
+            .page-header-mobile {
+                padding: 20px 16px;
+                border-radius: 12px;
+                margin-bottom: 20px;
             }
 
-            .page-header-modern h1 {
-                font-size: 22px;
-            }
-
-            .section-header h2 {
-                font-size: 18px;
+            .page-header-mobile h1 {
+                font-size: 20px;
             }
 
             .consultation-card {
-                padding: 20px 15px;
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            .consultation-info {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
 
             .consultation-header {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 10px;
             }
+        }
 
-            .consultation-date {
-                font-size: 16px;
-            }
-
+        @media (max-width: 375px) {
             .portal-logo img {
-                max-height: 40px;
+                max-height: 32px;
+                max-width: 120px;
             }
 
             .portal-logo-text {
+                font-size: 16px;
+            }
+
+            .page-header-mobile h1 {
                 font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Uniforme -->
+    <!-- Header -->
     <div class="portal-header">
         <div class="container-fluid">
             <div class="portal-header-content">
                 <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
                     <?php
-                    // Essayer d'abord le logo sombre, puis le logo normal
                     $logo_path = get_option('company_logo_dark');
                     if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
                         $logo_path = get_option('company_logo');
@@ -486,16 +498,13 @@
                     <?php } else { ?>
                         <div class="portal-logo-text">
                             <i class="fa fa-heartbeat"></i>
-                            <?php echo get_option('companyname') ? get_option('companyname') : 'Programme Diététique'; ?>
+                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
                         </div>
                     <?php } ?>
                 </a>
 
-                <button class="portal-menu-toggle" onclick="toggleMenu()">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <nav class="portal-nav" id="portalNav">
+                <!-- Desktop Navigation -->
+                <nav class="portal-nav-desktop">
                     <a href="<?php echo site_url('dietetic/portal'); ?>">
                         <i class="fa fa-home"></i> Accueil
                     </a>
@@ -503,16 +512,10 @@
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Mon Diététicien
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="active">
-                        <i class="fa fa-calendar-check-o"></i> Consultations
+                        <i class="fa fa-user-md"></i> Diététicien
                     </a>
                     <a href="<?php echo site_url('clients/profile'); ?>">
                         <i class="fa fa-user"></i> Profil
-                    </a>
-                    <a href="<?php echo site_url('authentication/logout'); ?>">
-                        <i class="fa fa-sign-out"></i> Déconnexion
                     </a>
                 </nav>
             </div>
@@ -521,9 +524,9 @@
 
     <div class="content-container">
         <!-- Page Header -->
-        <div class="page-header-modern animate-in">
+        <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-calendar-check-o"></i> Mes Consultations</h1>
-            <p>Consultez vos rendez-vous passés et à venir avec votre diététicien</p>
+            <p>Historique et rendez-vous à venir</p>
         </div>
 
         <?php if (!empty($consultations)) { ?>
@@ -543,224 +546,168 @@
             ?>
 
             <?php if (!empty($upcoming)) { ?>
-                <div class="section-header animate-in delay-1">
+                <div class="section-title animate-in delay-1">
                     <i class="fa fa-clock-o"></i>
-                    <h2>Consultations à Venir</h2>
+                    <span>Rendez-vous à venir</span>
                 </div>
-                <div class="consultations-grid animate-in delay-1" id="upcoming-consultations">
-                <?php foreach ($upcoming as $consultation) { ?>
-                    <div class="consultation-card upcoming consultation-item">
-                        <div class="consultation-header">
-                            <div class="consultation-date">
-                                <i class="fa fa-calendar"></i>
-                                <span><?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?></span>
+                <div class="animate-in delay-1">
+                    <?php foreach ($upcoming as $consultation) { ?>
+                        <div class="consultation-card">
+                            <div class="consultation-header">
+                                <div class="consultation-date">
+                                    <i class="fa fa-calendar"></i>
+                                    <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
+                                </div>
+                                <span class="status-badge upcoming">À venir</span>
                             </div>
-                            <span class="consultation-type <?php echo $consultation->consultation_type; ?>">
-                                <?php
-                                $types = [
-                                    'initial' => 'Initiale',
-                                    'followup' => 'Suivi',
-                                    'evaluation' => 'Évaluation',
-                                    'final' => 'Finale'
-                                ];
-                                echo isset($types[$consultation->consultation_type]) ? $types[$consultation->consultation_type] : ucfirst(str_replace('_', ' ', $consultation->consultation_type));
-                                ?>
-                            </span>
-                        </div>
-                        <div class="consultation-body">
-                            <?php if ($consultation->dietitian_name) { ?>
-                                <div class="consultation-info">
-                                    <i class="fa fa-user-md"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Diététicien</strong>
-                                        <p><?php echo htmlspecialchars($consultation->dietitian_name); ?></p>
-                                    </div>
+
+                            <div class="consultation-info">
+                                <div class="info-item">
+                                    <i class="fa fa-stethoscope"></i>
+                                    <label>Type</label>
+                                    <div class="value"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
                                 </div>
-                            <?php } ?>
-                            <?php if ($consultation->duration) { ?>
-                                <div class="consultation-info">
+
+                                <?php if (isset($consultation->duration)) { ?>
+                                <div class="info-item">
                                     <i class="fa fa-clock-o"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Durée</strong>
-                                        <p><?php echo $consultation->duration; ?> minutes</p>
-                                    </div>
+                                    <label>Durée</label>
+                                    <div class="value"><?php echo $consultation->duration; ?> min</div>
                                 </div>
-                            <?php } ?>
+                                <?php } ?>
+
+                                <?php if (isset($consultation->dietitian_name)) { ?>
+                                <div class="info-item">
+                                    <i class="fa fa-user-md"></i>
+                                    <label>Diététicien</label>
+                                    <div class="value"><?php echo htmlspecialchars($consultation->dietitian_name); ?></div>
+                                </div>
+                                <?php } ?>
+                            </div>
                         </div>
-                    </div>
-                <?php } ?>
+                    <?php } ?>
                 </div>
-                <div class="pagination-wrapper" id="upcoming-pagination"></div>
             <?php } ?>
 
             <?php if (!empty($past)) { ?>
-                <div class="section-header animate-in delay-2" style="margin-top: 40px;">
+                <div class="section-title animate-in delay-2" style="margin-top: 30px;">
                     <i class="fa fa-history"></i>
-                    <h2>Consultations Passées</h2>
+                    <span>Consultations passées</span>
                 </div>
-                <div class="consultations-grid animate-in delay-2" id="past-consultations">
-                <?php foreach ($past as $consultation) { ?>
-                    <div class="consultation-card past consultation-item">
-                        <div class="consultation-header">
-                            <div class="consultation-date">
-                                <i class="fa fa-calendar"></i>
-                                <span><?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?></span>
+                <div class="animate-in delay-2">
+                    <?php foreach ($past as $consultation) { ?>
+                        <div class="consultation-card past">
+                            <div class="consultation-header">
+                                <div class="consultation-date">
+                                    <i class="fa fa-calendar"></i>
+                                    <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
+                                </div>
+                                <span class="status-badge completed">Terminée</span>
                             </div>
-                            <span class="consultation-type <?php echo $consultation->consultation_type; ?>">
-                                <?php
-                                $types = [
-                                    'initial' => 'Initiale',
-                                    'followup' => 'Suivi',
-                                    'evaluation' => 'Évaluation',
-                                    'final' => 'Finale'
-                                ];
-                                echo isset($types[$consultation->consultation_type]) ? $types[$consultation->consultation_type] : ucfirst(str_replace('_', ' ', $consultation->consultation_type));
-                                ?>
-                            </span>
-                        </div>
-                        <div class="consultation-body">
-                            <?php if ($consultation->dietitian_name) { ?>
-                                <div class="consultation-info">
-                                    <i class="fa fa-user-md"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Diététicien</strong>
-                                        <p><?php echo htmlspecialchars($consultation->dietitian_name); ?></p>
-                                    </div>
+
+                            <div class="consultation-info">
+                                <div class="info-item">
+                                    <i class="fa fa-stethoscope"></i>
+                                    <label>Type</label>
+                                    <div class="value"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
                                 </div>
-                            <?php } ?>
-                            <?php if ($consultation->duration) { ?>
-                                <div class="consultation-info">
+
+                                <?php if (isset($consultation->duration)) { ?>
+                                <div class="info-item">
                                     <i class="fa fa-clock-o"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Durée</strong>
-                                        <p><?php echo $consultation->duration; ?> minutes</p>
-                                    </div>
+                                    <label>Durée</label>
+                                    <div class="value"><?php echo $consultation->duration; ?> min</div>
                                 </div>
-                            <?php } ?>
-                            <?php if ($consultation->observations) { ?>
-                                <div class="consultation-info">
-                                    <i class="fa fa-file-text-o"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Observations</strong>
-                                        <p><?php echo nl2br(htmlspecialchars($consultation->observations)); ?></p>
-                                    </div>
+                                <?php } ?>
+
+                                <?php if (isset($consultation->dietitian_name)) { ?>
+                                <div class="info-item">
+                                    <i class="fa fa-user-md"></i>
+                                    <label>Diététicien</label>
+                                    <div class="value"><?php echo htmlspecialchars($consultation->dietitian_name); ?></div>
                                 </div>
-                            <?php } ?>
-                            <?php if ($consultation->recommendations) { ?>
-                                <div class="consultation-info">
-                                    <i class="fa fa-lightbulb-o"></i>
-                                    <div class="consultation-info-content">
-                                        <strong>Recommandations</strong>
-                                        <p><?php echo nl2br(htmlspecialchars($consultation->recommendations)); ?></p>
-                                    </div>
-                                </div>
+                                <?php } ?>
+                            </div>
+
+                            <?php if (isset($consultation->observations) && $consultation->observations) { ?>
+                            <div class="consultation-notes">
+                                <strong><i class="fa fa-sticky-note"></i> Observations</strong>
+                                <p><?php echo nl2br(htmlspecialchars($consultation->observations)); ?></p>
+                            </div>
                             <?php } ?>
                         </div>
-                    </div>
-                <?php } ?>
+                    <?php } ?>
                 </div>
-                <div class="pagination-wrapper" id="past-pagination"></div>
             <?php } ?>
 
         <?php } else { ?>
+            <!-- Empty State -->
             <div class="empty-state animate-in delay-1">
                 <div class="empty-state-icon">
-                    <i class="fa fa-calendar-times-o"></i>
+                    <i class="fa fa-calendar-o"></i>
                 </div>
-                <h3>Aucune consultation</h3>
-                <p>Vous n'avez pas encore de consultation enregistrée</p>
+                <div class="empty-state-title">Aucune consultation</div>
+                <div class="empty-state-text">
+                    Vous n'avez pas encore de consultations enregistrées. Contactez votre diététicien pour prendre rendez-vous.
+                </div>
             </div>
         <?php } ?>
 
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="back-button animate-in delay-2">
-            <i class="fa fa-arrow-left"></i>
-            Retour au Tableau de bord
-        </a>
+        <!-- Back Button -->
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
+                <i class="fa fa-arrow-left"></i> Retour au Tableau de bord
+            </a>
+        </div>
     </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
+                <i class="fa fa-plus-circle"></i>
+                <span>Mesure</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user-md"></i>
+                <span>Contact</span>
+            </a>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
+                <i class="fa fa-user"></i>
+                <span>Profil</span>
+            </a>
+        </div>
+    </nav>
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        function toggleMenu() {
-            var nav = document.getElementById('portalNav');
-            nav.classList.toggle('show');
-        }
-
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            var nav = document.getElementById('portalNav');
-            var toggle = document.querySelector('.portal-menu-toggle');
-            if (!nav.contains(event.target) && !toggle.contains(event.target)) {
-                nav.classList.remove('show');
-            }
+        // Touch feedback
+        document.querySelectorAll('.consultation-card, .bottom-nav-item').forEach(function(element) {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.97)';
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
         });
 
-        function paginateItems(containerId, paginationId, itemsPerPage) {
-            var $container = $('#' + containerId);
-            var $items = $container.find('.consultation-item');
-            var $pagination = $('#' + paginationId);
-            var totalItems = $items.length;
-            var totalPages = Math.ceil(totalItems / itemsPerPage);
-
-            if (totalItems === 0) {
-                return;
-            }
-
-            function showPage(page) {
-                $items.hide();
-                var start = (page - 1) * itemsPerPage;
-                var end = start + itemsPerPage;
-                $items.slice(start, end).show();
-
-                // Update pagination buttons
-                $pagination.empty();
-                var paginationHtml = '<ul class="pagination" style="margin: 0;">';
-
-                // Previous button
-                if (page > 1) {
-                    paginationHtml += '<li><a href="#" data-page="' + (page - 1) + '"><i class="fa fa-chevron-left"></i></a></li>';
-                } else {
-                    paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-left"></i></span></li>';
-                }
-
-                // Page numbers
-                for (var i = 1; i <= totalPages; i++) {
-                    if (i === page) {
-                        paginationHtml += '<li class="active"><span>' + i + '</span></li>';
-                    } else {
-                        paginationHtml += '<li><a href="#" data-page="' + i + '">' + i + '</a></li>';
-                    }
-                }
-
-                // Next button
-                if (page < totalPages) {
-                    paginationHtml += '<li><a href="#" data-page="' + (page + 1) + '"><i class="fa fa-chevron-right"></i></a></li>';
-                } else {
-                    paginationHtml += '<li class="disabled"><span><i class="fa fa-chevron-right"></i></span></li>';
-                }
-
-                paginationHtml += '</ul>';
-                $pagination.html(paginationHtml);
-
-                // Bind click events
-                $pagination.find('a').on('click', function(e) {
-                    e.preventDefault();
-                    var newPage = parseInt($(this).data('page'));
-                    showPage(newPage);
-                    // Scroll to top of section
-                    $('html, body').animate({
-                        scrollTop: $container.offset().top - 100
-                    }, 300);
+        // Haptic feedback
+        if ('vibrate' in navigator) {
+            document.querySelectorAll('.consultation-card').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    navigator.vibrate(10);
                 });
-            }
-
-            showPage(1);
+            });
         }
-
-        $(document).ready(function() {
-            paginateItems('upcoming-consultations', 'upcoming-pagination', 10);
-            paginateItems('past-consultations', 'past-pagination', 10);
-        });
     </script>
 </body>
 </html>
