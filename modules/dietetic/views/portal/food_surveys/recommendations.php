@@ -575,6 +575,7 @@
                                 <!-- Add Comment Form -->
                                 <div class="add-comment-form">
                                     <form class="comment-form" data-recommendation="<?php echo $recommendation->id; ?>">
+                                        <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                                         <textarea name="comment_text" placeholder="Ajoutez un commentaire ou une question..." required></textarea>
                                         <button type="submit">
                                             <i class="fa fa-paper-plane"></i>
