@@ -693,6 +693,15 @@
                     <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
+                    <?php
+                    // Check if food surveys feature is enabled
+                    $CI_nav =& get_instance();
+                    if ($CI_nav->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                    ?>
+                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
+                        <i class="fa fa-clipboard-list"></i> Enquêtes
+                    </a>
+                    <?php } ?>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
                         <i class="fa fa-user-md"></i> Diététicien
                     </a>
@@ -795,6 +804,21 @@
                 </div>
                 <i class="fa fa-chevron-right action-chevron"></i>
             </a>
+
+            <?php
+            // Check if food surveys feature is enabled
+            $CI =& get_instance();
+            if ($CI->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-card surveys" style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); color: white;">
+                <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;"><i class="fa fa-clipboard-list"></i></div>
+                <div class="action-content">
+                    <h4 style="color: white;">Mes Enquêtes Alimentaires</h4>
+                    <p style="color: rgba(255,255,255,0.9);">Suivre mes repas</p>
+                </div>
+                <i class="fa fa-chevron-right action-chevron" style="color: white;"></i>
+            </a>
+            <?php } ?>
         </div>
 
         <!-- Active Program -->
@@ -879,10 +903,21 @@
                 <i class="fa fa-cutlery"></i>
                 <span>Repas</span>
             </a>
+            <?php
+            // Check if food surveys feature is enabled
+            $CI_bottom =& get_instance();
+            if ($CI_bottom->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="bottom-nav-item">
+                <i class="fa fa-clipboard-list"></i>
+                <span>Enquêtes</span>
+            </a>
+            <?php } else { ?>
             <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
                 <i class="fa fa-plus-circle"></i>
                 <span>Mesure</span>
             </a>
+            <?php } ?>
             <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
                 <i class="fa fa-user-md"></i>
                 <span>Contact</span>
