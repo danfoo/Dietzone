@@ -8,15 +8,20 @@ class Food_surveys extends AdminController
     {
         parent::__construct();
 
-        // Load models
-        $this->load->model('dietetic/dietetic_food_surveys_model');
-        $this->load->model('dietetic/dietetic_patients_model');
-        $this->load->model('dietetic/dietetic_programs_model');
-        $this->load->model('staff_model');
+        // Load helper first
         $this->load->helper('dietetic/dietetic');
 
+        // Check permissions
         if (!dietetic_has_permission('view')) {
             access_denied('dietetic');
+        }
+
+        // Only load models if tables exist (to allow installation)
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            $this->load->model('dietetic/dietetic_food_surveys_model');
+            $this->load->model('dietetic/dietetic_patients_model');
+            $this->load->model('dietetic/dietetic_programs_model');
+            $this->load->model('staff_model');
         }
     }
 
@@ -25,6 +30,12 @@ class Food_surveys extends AdminController
      */
     public function index()
     {
+        // Check if tables exist, if not show install button
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            $this->install_tables();
+            return;
+        }
+
         $data['title'] = 'Enquêtes Alimentaires';
         $data['surveys'] = $this->dietetic_food_surveys_model->get_all();
 
@@ -34,6 +45,68 @@ class Food_surveys extends AdminController
         }
 
         $this->load->view('admin/food_surveys/list', $data);
+    }
+
+    /**
+     * Install Food Surveys tables
+     */
+    public function install_tables()
+    {
+        if (!dietetic_has_permission('create')) {
+            access_denied('dietetic');
+        }
+
+        // If form submitted, do the installation
+        if ($this->input->post('do_install')) {
+            $sql_file = DIETETIC_MODULE_PATH . 'install/food_surveys.sql';
+
+            if (!file_exists($sql_file)) {
+                set_alert('danger', 'Fichier SQL introuvable');
+                redirect(admin_url('dietetic/food_surveys'));
+            }
+
+            $sql_content = file_get_contents($sql_file);
+
+            // Replace table prefix
+            $sql_content = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sql_content);
+
+            // Split by semicolon
+            $statements = array_filter(array_map('trim', explode(';', $sql_content)));
+
+            $success_count = 0;
+            $error_count = 0;
+
+            foreach ($statements as $statement) {
+                if (!empty($statement) && !preg_match('/^--/', $statement)) {
+                    try {
+                        $this->db->query($statement);
+                        $success_count++;
+                    } catch (Exception $e) {
+                        $error_count++;
+                        log_activity('Food Surveys Install Error: ' . substr($e->getMessage(), 0, 200));
+                    }
+                }
+            }
+
+            // Create uploads directory
+            $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            if ($success_count > 0) {
+                set_alert('success', 'Tables Food Surveys installées avec succès! (' . $success_count . ' opérations)');
+                log_activity('Dietetic Module: Food Surveys tables installed');
+            } else {
+                set_alert('warning', 'Installation terminée avec quelques avertissements');
+            }
+
+            redirect(admin_url('dietetic/food_surveys'));
+        }
+
+        // Show installation page
+        $data['title'] = 'Installation Food Surveys';
+        $this->load->view('admin/food_surveys/install', $data);
     }
 
     /**
