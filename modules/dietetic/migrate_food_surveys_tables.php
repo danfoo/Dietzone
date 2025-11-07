@@ -9,42 +9,50 @@
  * Pour exécuter: Visiter https://votre-site.com/modules/dietetic/migrate_food_surveys_tables.php
  */
 
+// Show all errors for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Define BASEPATH to bypass security checks
 define('BASEPATH', true);
 
-// Load database configuration
-$app_path = __DIR__ . '/../../application/config/';
+// Get database configuration by parsing app-config.php
+$app_config_file = __DIR__ . '/../../application/config/app-config.php';
 
-// Check if config exists
-if (!file_exists($app_path . 'app-config.php')) {
-    die('Config files not found. Make sure this script is in the correct location: /modules/dietetic/');
+if (!file_exists($app_config_file)) {
+    die('<h1>Erreur</h1><p>Fichier de configuration non trouvé: ' . $app_config_file . '</p>');
 }
 
-require_once($app_path . 'app-config.php');
+// Parse app-config.php to get DB credentials
+$config_content = file_get_contents($app_config_file);
 
-// Get database credentials
-$db_config_file = $app_path . 'database.php';
-if (!file_exists($db_config_file)) {
-    die('Database config file not found');
+// Extract database config
+preg_match("/define\('APP_DB_HOSTNAME',\s*'([^']+)'\)/", $config_content, $hostname);
+preg_match("/define\('APP_DB_USERNAME',\s*'([^']+)'\)/", $config_content, $username);
+preg_match("/define\('APP_DB_PASSWORD',\s*'([^']+)'\)/", $config_content, $password);
+preg_match("/define\('APP_DB_NAME',\s*'([^']+)'\)/", $config_content, $database);
+preg_match("/define\('APP_DB_PREFIX',\s*'([^']*)'\)/", $config_content, $prefix);
+
+$db_hostname = $hostname[1] ?? 'localhost';
+$db_username = $username[1] ?? '';
+$db_password = $password[1] ?? '';
+$db_name = $database[1] ?? '';
+$db_prefix = $prefix[1] ?? 'tbl';
+
+if (empty($db_name)) {
+    die('<h1>Erreur</h1><p>Impossible de lire la configuration de la base de données.</p>');
 }
-
-// Parse database config
-$db_config = include($db_config_file);
-$db = $db_config['default'];
 
 // Create PDO connection
 try {
-    $dsn = "mysql:host={$db['hostname']};dbname={$db['database']};charset=utf8mb4";
-    $pdo = new PDO($dsn, $db['username'], $db['password'], [
+    $dsn = "mysql:host={$db_hostname};dbname={$db_name};charset=utf8mb4";
+    $pdo = new PDO($dsn, $db_username, $db_password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 } catch (PDOException $e) {
-    die('Database connection failed: ' . $e->getMessage());
+    die('<h1>Erreur de connexion</h1><p>' . htmlspecialchars($e->getMessage()) . '</p>');
 }
-
-// Get table prefix from app config
-$db_prefix = defined('APP_DB_PREFIX') ? APP_DB_PREFIX : 'tbl';
 
 echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Migration Tables Food Surveys</title>";
 echo "<style>body{font-family:Arial;padding:40px;background:#f5f5f5;max-width:900px;margin:0 auto;}";
