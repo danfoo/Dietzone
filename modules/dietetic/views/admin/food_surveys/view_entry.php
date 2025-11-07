@@ -32,6 +32,19 @@
     border-radius: 12px;
     margin-bottom: 30px;
     box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.entry-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 .entry-title {
@@ -40,6 +53,8 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 20px;
+    position: relative;
+    z-index: 1;
 }
 
 .entry-title h1 {
@@ -55,13 +70,48 @@
     font-size: 32px;
 }
 
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.action-btn i {
+    font-size: 16px;
+}
+
 .breadcrumb-nav {
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 14px;
-    margin-top: 10px;
+    margin-top: 15px;
     opacity: 0.9;
+    position: relative;
+    z-index: 1;
 }
 
 .breadcrumb-nav a {
@@ -76,6 +126,41 @@
 
 .breadcrumb-nav i {
     font-size: 12px;
+}
+
+/* Navigation Buttons */
+.entry-navigation {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-btn:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(3px);
+}
+
+.nav-btn.prev:hover:not(.disabled) {
+    transform: translateX(-3px);
+}
+
+.nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Info Grid */
@@ -93,10 +178,23 @@
     box-shadow: var(--shadow);
     border-left: 4px solid var(--primary-color);
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.05) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 .info-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
 
@@ -104,12 +202,24 @@
     border-left-color: var(--warning-color);
 }
 
+.info-card.warning::before {
+    background: radial-gradient(circle, rgba(237, 137, 54, 0.05) 0%, transparent 70%);
+}
+
 .info-card.success {
     border-left-color: var(--success-color);
 }
 
+.info-card.success::before {
+    background: radial-gradient(circle, rgba(72, 187, 120, 0.05) 0%, transparent 70%);
+}
+
 .info-card.info {
     border-left-color: var(--info-color);
+}
+
+.info-card.info::before {
+    background: radial-gradient(circle, rgba(66, 153, 225, 0.05) 0%, transparent 70%);
 }
 
 .info-card-header {
@@ -132,12 +242,173 @@
     font-size: 24px;
     font-weight: 700;
     color: var(--text-dark);
+    position: relative;
+    z-index: 1;
 }
 
 .info-card-label {
     font-size: 13px;
     color: var(--text-light);
     margin-top: 5px;
+}
+
+/* Progress Bar for Water */
+.water-progress {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.water-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--warning-color) 0%, var(--success-color) 100%);
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+/* Timeline View */
+.timeline-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+}
+
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    transform: translateX(-50%);
+}
+
+.timeline-item {
+    display: flex;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.timeline-item:nth-child(odd) {
+    flex-direction: row-reverse;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-content {
+    width: calc(50% - 40px);
+    background: #f7fafc;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.timeline-content:hover {
+    transform: scale(1.02);
+    border-color: var(--primary-color);
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color), #026660);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    box-shadow: 0 0 0 8px white, var(--shadow-lg);
+    z-index: 2;
+}
+
+.timeline-time {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.timeline-meal-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+.timeline-photo {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    cursor: pointer;
+    position: relative;
+}
+
+.timeline-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.timeline-photo:hover img {
+    transform: scale(1.05);
+}
+
+.timeline-photo::after {
+    content: '\f00e';
+    font-family: 'FontAwesome';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.timeline-photo:hover::after {
+    opacity: 1;
+}
+
+.timeline-notes {
+    font-size: 14px;
+    color: var(--text-dark);
+    line-height: 1.6;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid var(--secondary-color);
 }
 
 /* Meals Section */
@@ -181,7 +452,8 @@
 
 .meal-card:hover {
     border-color: var(--primary-color);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
 }
 
 .meal-card.has-data {
@@ -227,12 +499,43 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    position: relative;
 }
 
 .meal-photo-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: var(--transition);
+}
+
+.meal-photo-container:hover img {
+    transform: scale(1.1);
+}
+
+.meal-photo-container::after {
+    content: '\f00e';
+    font-family: 'FontAwesome';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(1, 128, 123, 0.9);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.meal-photo-container:hover::after {
+    opacity: 1;
 }
 
 .meal-photo-placeholder {
@@ -296,7 +599,7 @@
 }
 
 .beverage-item {
-    background: #f7fafc;
+    background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
     padding: 20px;
     border-radius: 8px;
     display: flex;
@@ -307,8 +610,9 @@
 }
 
 .beverage-item:hover {
-    background: #edf2f7;
-    transform: translateX(5px);
+    background: linear-gradient(135deg, #edf2f7 0%, #f7fafc 100%);
+    transform: translateX(8px);
+    box-shadow: var(--shadow);
 }
 
 .beverage-info {
@@ -327,6 +631,7 @@
     align-items: center;
     justify-content: center;
     font-size: 24px;
+    box-shadow: var(--shadow);
 }
 
 .beverage-details h4 {
@@ -378,6 +683,11 @@
     border-radius: 12px;
     margin-bottom: 30px;
     border: 2px dashed var(--border-color);
+    transition: var(--transition);
+}
+
+.add-recommendation-form:hover {
+    border-color: var(--primary-color);
 }
 
 .add-recommendation-form textarea {
@@ -415,7 +725,7 @@
 
 .add-recommendation-form button:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
 }
 
 .recommendations-list {
@@ -432,7 +742,8 @@
 }
 
 .recommendation-card:hover {
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .recommendation-header {
@@ -462,6 +773,7 @@
     font-size: 20px;
     font-weight: 600;
     overflow: hidden;
+    box-shadow: var(--shadow);
 }
 
 .recommendation-avatar img {
@@ -544,6 +856,11 @@
     border-radius: 8px;
     margin-bottom: 10px;
     border-left: 3px solid var(--secondary-color);
+    transition: var(--transition);
+}
+
+.comment-item:hover {
+    transform: translateX(4px);
 }
 
 .comment-item:last-child {
@@ -586,23 +903,125 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
+    box-shadow: var(--shadow);
 }
 
 .status-badge.submitted {
-    background: rgba(72, 187, 120, 0.1);
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.2) 0%, rgba(72, 187, 120, 0.1) 100%);
     color: var(--success-color);
 }
 
 .status-badge.pending {
-    background: rgba(237, 137, 54, 0.1);
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.2) 0%, rgba(237, 137, 54, 0.1) 100%);
     color: var(--warning-color);
 }
 
+/* Lightbox */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90%;
+    position: relative;
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    transition: var(--transition);
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Print Styles */
+@media print {
+    .entry-header,
+    .action-btn,
+    .nav-btn,
+    .add-recommendation-form,
+    .recommendation-actions,
+    #header,
+    #menu,
+    .breadcrumb-nav {
+        display: none !important;
+    }
+
+    .entry-view-container {
+        padding: 0;
+    }
+
+    .meal-card,
+    .info-card,
+    .beverages-section,
+    .recommendations-section {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+
 /* Responsive */
+@media (max-width: 1024px) {
+    .timeline::before {
+        left: 30px;
+    }
+
+    .timeline-item {
+        flex-direction: row !important;
+    }
+
+    .timeline-content {
+        width: calc(100% - 80px);
+        margin-left: 80px;
+    }
+
+    .timeline-marker {
+        left: 30px;
+    }
+}
+
 @media (max-width: 768px) {
     .entry-view-container {
         padding: 15px;
@@ -613,7 +1032,11 @@
     }
 
     .entry-title h1 {
-        font-size: 22px;
+        font-size: 20px;
+    }
+
+    .entry-title h1 i {
+        font-size: 24px;
     }
 
     .info-grid {
@@ -626,7 +1049,8 @@
 
     .meals-section,
     .beverages-section,
-    .recommendations-section {
+    .recommendations-section,
+    .timeline-container {
         padding: 20px;
     }
 
@@ -641,6 +1065,26 @@
         align-items: flex-start;
         gap: 15px;
     }
+
+    .timeline-content {
+        width: calc(100% - 60px);
+        margin-left: 60px;
+    }
+
+    .timeline-marker {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 480px) {
@@ -649,8 +1093,26 @@
         align-items: flex-start;
     }
 
-    .meal-photo-container {
+    .meal-photo-container,
+    .timeline-photo {
         height: 150px;
+    }
+
+    .info-card-value {
+        font-size: 20px;
+    }
+
+    .timeline-marker {
+        left: 20px;
+    }
+
+    .timeline-content {
+        width: calc(100% - 50px);
+        margin-left: 50px;
+    }
+
+    .timeline::before {
+        left: 20px;
     }
 }
 </style>
@@ -661,32 +1123,44 @@
             <!-- Header -->
             <div class="entry-header">
                 <div class="entry-title">
-                    <h1>
-                        <i class="fa fa-calendar-check-o"></i>
-                        Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?>
-                    </h1>
-                    <?php if ($entry->submitted_at): ?>
-                        <span class="status-badge submitted">
-                            <i class="fa fa-check-circle"></i>
-                            Soumise le <?php echo date('d/m/Y à H:i', strtotime($entry->submitted_at)); ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="status-badge pending">
-                            <i class="fa fa-clock-o"></i>
-                            En attente de soumission
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <div class="breadcrumb-nav">
-                    <a href="<?php echo admin_url('dietetic/food_surveys'); ?>">
-                        <i class="fa fa-list"></i> Enquêtes
-                    </a>
-                    <i class="fa fa-angle-right"></i>
-                    <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>">
-                        <?php echo htmlspecialchars($survey->survey_name); ?>
-                    </a>
-                    <i class="fa fa-angle-right"></i>
-                    <span>Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?></span>
+                    <div>
+                        <h1>
+                            <i class="fa fa-calendar-check-o"></i>
+                            Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?>
+                        </h1>
+                        <div class="breadcrumb-nav">
+                            <a href="<?php echo admin_url('dietetic/food_surveys'); ?>">
+                                <i class="fa fa-list"></i> Enquêtes
+                            </a>
+                            <i class="fa fa-angle-right"></i>
+                            <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>">
+                                <?php echo htmlspecialchars($survey->survey_name); ?>
+                            </a>
+                            <i class="fa fa-angle-right"></i>
+                            <span>Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?></span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <?php if ($entry->submitted_at): ?>
+                            <span class="status-badge submitted">
+                                <i class="fa fa-check-circle"></i>
+                                Soumise le <?php echo date('d/m/Y à H:i', strtotime($entry->submitted_at)); ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="status-badge pending">
+                                <i class="fa fa-clock-o"></i>
+                                En attente
+                            </span>
+                        <?php endif; ?>
+                        <button class="action-btn" onclick="window.print()">
+                            <i class="fa fa-print"></i>
+                            Imprimer
+                        </button>
+                        <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>" class="action-btn">
+                            <i class="fa fa-arrow-left"></i>
+                            Retour
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -708,7 +1182,13 @@
                     <div class="info-card-value">
                         <?php echo $entry->water_quantity_ml ? number_format($entry->water_quantity_ml) : '0'; ?> ml
                     </div>
-                    <div class="info-card-label">Objectif recommandé: 2000 ml/jour</div>
+                    <div class="info-card-label">Objectif: 2000 ml/jour</div>
+                    <?php
+                    $water_percentage = $entry->water_quantity_ml ? min(($entry->water_quantity_ml / 2000) * 100, 100) : 0;
+                    ?>
+                    <div class="water-progress">
+                        <div class="water-progress-bar" style="width: <?php echo $water_percentage; ?>%"></div>
+                    </div>
                 </div>
 
                 <div class="info-card info">
@@ -727,6 +1207,89 @@
                     </div>
                     <div class="info-card-value"><?php echo count($recommendations); ?></div>
                     <div class="info-card-label">Par le diététicien</div>
+                </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div class="timeline-container">
+                <div class="section-title">
+                    <i class="fa fa-clock-o"></i>
+                    Timeline de la journée
+                </div>
+
+                <div class="timeline">
+                    <?php
+                    $meals_timeline = [];
+                    if ($entry->breakfast_time) {
+                        $meals_timeline[] = [
+                            'time' => $entry->breakfast_time,
+                            'name' => 'Petit-déjeuner',
+                            'icon' => 'coffee',
+                            'photo' => $entry->breakfast_photo,
+                            'notes' => $entry->breakfast_notes
+                        ];
+                    }
+                    if ($entry->lunch_time) {
+                        $meals_timeline[] = [
+                            'time' => $entry->lunch_time,
+                            'name' => 'Déjeuner',
+                            'icon' => 'sun-o',
+                            'photo' => $entry->lunch_photo,
+                            'notes' => $entry->lunch_notes
+                        ];
+                    }
+                    if ($entry->dinner_time) {
+                        $meals_timeline[] = [
+                            'time' => $entry->dinner_time,
+                            'name' => 'Dîner',
+                            'icon' => 'moon-o',
+                            'photo' => $entry->dinner_photo,
+                            'notes' => $entry->dinner_notes
+                        ];
+                    }
+
+                    // Sort by time
+                    usort($meals_timeline, function($a, $b) {
+                        return strtotime($a['time']) - strtotime($b['time']);
+                    });
+
+                    if (count($meals_timeline) > 0):
+                        foreach ($meals_timeline as $meal):
+                    ?>
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-time">
+                                <i class="fa fa-clock-o"></i>
+                                <?php echo date('H:i', strtotime($meal['time'])); ?>
+                            </div>
+                            <div class="timeline-meal-name">
+                                <i class="fa fa-<?php echo $meal['icon']; ?>"></i>
+                                <?php echo $meal['name']; ?>
+                            </div>
+                            <?php if ($meal['photo']): ?>
+                                <div class="timeline-photo" onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $meal['photo']); ?>')">
+                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $meal['photo']); ?>" alt="<?php echo $meal['name']; ?>">
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($meal['notes']): ?>
+                                <div class="timeline-notes">
+                                    <?php echo nl2br(htmlspecialchars($meal['notes'])); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="timeline-marker">
+                            <i class="fa fa-<?php echo $meal['icon']; ?>"></i>
+                        </div>
+                    </div>
+                    <?php
+                        endforeach;
+                    else:
+                    ?>
+                    <div class="no-data">
+                        <i class="fa fa-info-circle"></i>
+                        <p>Aucun repas enregistré pour cette journée</p>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -753,7 +1316,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
+                            <div class="meal-photo-container" <?php if ($entry->breakfast_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->breakfast_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
                                 <?php else: ?>
@@ -793,7 +1356,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
+                            <div class="meal-photo-container" <?php if ($entry->lunch_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->lunch_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
                                 <?php else: ?>
@@ -833,7 +1396,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
+                            <div class="meal-photo-container" <?php if ($entry->dinner_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->dinner_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
                                 <?php else: ?>
@@ -930,8 +1493,17 @@
                             <div class="recommendation-header">
                                 <div class="recommendation-author">
                                     <div class="recommendation-avatar">
-                                        <?php if ($recommendation->profile_image): ?>
-                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="">
+                                        <?php
+                                        $has_profile_image = false;
+                                        if (!empty($recommendation->profile_image)) {
+                                            $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
+                                            if (file_exists($image_path)) {
+                                                $has_profile_image = true;
+                                            }
+                                        }
+
+                                        if ($has_profile_image): ?>
+                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
                                         <?php else: ?>
                                             <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
                                         <?php endif; ?>
@@ -993,11 +1565,40 @@
     </div>
 </div>
 
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+        <button class="lightbox-close" onclick="closeLightbox()">
+            <i class="fa fa-times"></i>
+        </button>
+        <img src="" alt="Photo repas" id="lightboxImage">
+    </div>
+</div>
+
 <?php init_tail(); ?>
 
 <script>
 (function() {
     'use strict';
+
+    // Lightbox functions
+    window.openLightbox = function(imageUrl) {
+        document.getElementById('lightboxImage').src = imageUrl;
+        document.getElementById('lightbox').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeLightbox = function() {
+        document.getElementById('lightbox').classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    // Close lightbox with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+    });
 
     // Add recommendation form submission
     $('#addRecommendationForm').on('submit', function(e) {
@@ -1078,5 +1679,10 @@
             }
         });
     };
+
+    // Animate water progress bar on load
+    setTimeout(function() {
+        $('.water-progress-bar').css('width', $('.water-progress-bar').css('width'));
+    }, 100);
 })();
 </script>
