@@ -1173,87 +1173,105 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        // Check if client is logged in
-        if (!is_client_logged_in()) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Non authentifié'
-            ]);
-            return;
-        }
-
-        $client_id = get_client_user_id();
-
-        // Get patient
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
-
-        if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Patient non trouvé'
-            ]);
-            return;
-        }
-
-        // Get survey
-        $survey_id = $this->input->post('survey_id');
-        $survey = $this->dietetic_food_surveys_model->get($survey_id);
-
-        if (!$survey || $survey->patient_id != $patient->id) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Enquête non trouvée ou accès refusé'
-            ]);
-            return;
-        }
-
-        // Prepare entry data
-        $entry_data = [
-            'survey_id' => $survey_id,
-            'entry_date' => $this->input->post('entry_date') ?: date('Y-m-d'),
-            'breakfast_photo' => $this->input->post('breakfast_photo'),
-            'breakfast_time' => $this->input->post('breakfast_time'),
-            'breakfast_notes' => $this->input->post('breakfast_notes'),
-            'lunch_photo' => $this->input->post('lunch_photo'),
-            'lunch_time' => $this->input->post('lunch_time'),
-            'lunch_notes' => $this->input->post('lunch_notes'),
-            'dinner_photo' => $this->input->post('dinner_photo'),
-            'dinner_time' => $this->input->post('dinner_time'),
-            'dinner_notes' => $this->input->post('dinner_notes'),
-            'water_quantity_ml' => $this->input->post('water_quantity_ml'),
-            'submitted_at' => date('Y-m-d H:i:s')
-        ];
-
-        // Save entry
-        $entry_id = $this->dietetic_food_surveys_model->save_entry($entry_data);
-
-        if ($entry_id) {
-            // Save beverages if provided
-            $beverages = $this->input->post('beverages');
-            if (is_array($beverages) && count($beverages) > 0) {
-                foreach ($beverages as $beverage) {
-                    if (!empty($beverage['name']) && !empty($beverage['quantity']) && !empty($beverage['time'])) {
-                        $beverage_data = [
-                            'entry_id' => $entry_id,
-                            'beverage_name' => $beverage['name'],
-                            'quantity_ml' => $beverage['quantity'],
-                            'consumption_time' => $beverage['time'],
-                            'notes' => $beverage['notes'] ?? null
-                        ];
-                        $this->dietetic_food_surveys_model->add_beverage($beverage_data);
-                    }
-                }
+        try {
+            // Check if client is logged in
+            if (!is_client_logged_in()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Non authentifié'
+                ]);
+                return;
             }
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Entrée enregistrée avec succès',
-                'entry_id' => $entry_id
-            ]);
-        } else {
+            $client_id = get_client_user_id();
+
+            // Get patient
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient non trouvé'
+                ]);
+                return;
+            }
+
+            // Get survey
+            $survey_id = $this->input->post('survey_id');
+            $survey = $this->dietetic_food_surveys_model->get($survey_id);
+
+            if (!$survey || $survey->patient_id != $patient->id) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Enquête non trouvée ou accès refusé'
+                ]);
+                return;
+            }
+
+            // Prepare entry data
+            $entry_data = [
+                'survey_id' => $survey_id,
+                'entry_date' => $this->input->post('entry_date') ?: date('Y-m-d'),
+                'breakfast_photo' => $this->input->post('breakfast_photo'),
+                'breakfast_time' => $this->input->post('breakfast_time'),
+                'breakfast_notes' => $this->input->post('breakfast_notes'),
+                'lunch_photo' => $this->input->post('lunch_photo'),
+                'lunch_time' => $this->input->post('lunch_time'),
+                'lunch_notes' => $this->input->post('lunch_notes'),
+                'dinner_photo' => $this->input->post('dinner_photo'),
+                'dinner_time' => $this->input->post('dinner_time'),
+                'dinner_notes' => $this->input->post('dinner_notes'),
+                'water_quantity_ml' => $this->input->post('water_quantity_ml'),
+                'submitted_at' => date('Y-m-d H:i:s')
+            ];
+
+            // Check if save_entry method exists
+            if (!method_exists($this->dietetic_food_surveys_model, 'save_entry')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Méthode save_entry non trouvée dans le modèle'
+                ]);
+                return;
+            }
+
+            // Save entry
+            $entry_id = $this->dietetic_food_surveys_model->save_entry($entry_data);
+
+            if ($entry_id) {
+                // Save beverages if provided
+                $beverages = $this->input->post('beverages');
+                if (is_array($beverages) && count($beverages) > 0) {
+                    foreach ($beverages as $beverage) {
+                        if (!empty($beverage['name']) && !empty($beverage['quantity']) && !empty($beverage['time'])) {
+                            $beverage_data = [
+                                'entry_id' => $entry_id,
+                                'beverage_name' => $beverage['name'],
+                                'quantity_ml' => $beverage['quantity'],
+                                'consumption_time' => $beverage['time'],
+                                'notes' => $beverage['notes'] ?? null
+                            ];
+                            $this->dietetic_food_surveys_model->add_beverage($beverage_data);
+                        }
+                    }
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Entrée enregistrée avec succès',
+                    'entry_id' => $entry_id
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'enregistrement de l\'entrée'
+                ]);
+            }
+        } catch (Exception $e) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Erreur lors de l\'enregistrement de l\'entrée'
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'error_line' => $e->getLine(),
+                'error_file' => basename($e->getFile())
             ]);
         }
     }

@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS `tbldietic_food_survey_entries` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `survey_id` int(11) NOT NULL,
   `entry_date` date NOT NULL,
-  `
-_photo` varchar(255) DEFAULT NULL,
+  `breakfast_photo` varchar(255) DEFAULT NULL,
   `breakfast_time` time DEFAULT NULL,
   `breakfast_notes` text DEFAULT NULL,
   `lunch_photo` varchar(255) DEFAULT NULL,
