@@ -16,12 +16,14 @@ class Food_surveys extends AdminController
             access_denied('dietetic');
         }
 
-        // Only load models if tables exist (to allow installation)
+        // Always load these models (they come from the main dietetic module)
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_programs_model');
+        $this->load->model('staff_model');
+
+        // Only load food surveys model if tables exist
         if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
             $this->load->model('dietetic/dietetic_food_surveys_model');
-            $this->load->model('dietetic/dietetic_patients_model');
-            $this->load->model('dietetic/dietetic_programs_model');
-            $this->load->model('staff_model');
         }
     }
 
@@ -116,6 +118,11 @@ class Food_surveys extends AdminController
      */
     public function view($id)
     {
+        // Check if tables exist, if not redirect to install
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            redirect(admin_url('dietetic/food_surveys'));
+        }
+
         $data['survey'] = $this->dietetic_food_surveys_model->get($id);
 
         if (!$data['survey']) {
@@ -134,6 +141,11 @@ class Food_surveys extends AdminController
      */
     public function create()
     {
+        // Check if tables exist, if not redirect to install
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            redirect(admin_url('dietetic/food_surveys'));
+        }
+
         if (!dietetic_has_permission('create')) {
             access_denied('dietetic');
         }
@@ -171,6 +183,11 @@ class Food_surveys extends AdminController
      */
     public function edit($id)
     {
+        // Check if tables exist, if not redirect to install
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            redirect(admin_url('dietetic/food_surveys'));
+        }
+
         if (!dietetic_has_permission('edit')) {
             access_denied('dietetic');
         }
@@ -207,6 +224,12 @@ class Food_surveys extends AdminController
      */
     public function delete($id)
     {
+        // Check if tables exist
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            echo json_encode(['success' => false, 'message' => 'Tables non installées']);
+            return;
+        }
+
         if (!dietetic_has_permission('delete')) {
             ajax_access_denied();
         }
@@ -225,6 +248,11 @@ class Food_surveys extends AdminController
      */
     public function view_entry($entry_id)
     {
+        // Check if tables exist, if not redirect to install
+        if (!$this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            redirect(admin_url('dietetic/food_surveys'));
+        }
+
         $data['entry'] = $this->dietetic_food_surveys_model->get_entry($entry_id);
 
         if (!$data['entry']) {
