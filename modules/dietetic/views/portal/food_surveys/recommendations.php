@@ -648,13 +648,13 @@
                 // Disable button
                 $button.addClass('btn-loading').prop('disabled', true);
 
+                // Serialize form to include CSRF token
+                var formData = $form.serialize() + '&recommendation_id=' + recommendationId;
+
                 $.ajax({
                     url: '<?php echo site_url('dietetic/portal/add_comment'); ?>',
                     type: 'POST',
-                    data: {
-                        recommendation_id: recommendationId,
-                        comment_text: commentText
-                    },
+                    data: formData,
                     dataType: 'json',
                     success: function(response) {
                         if (response.success) {
