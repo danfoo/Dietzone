@@ -898,11 +898,12 @@
         formData.append('photo', file);
 
         $.ajax({
-            url: admin_url + 'dietetic/food_surveys/upload_photo',
+            url: site_url + '/dietetic/portal/upload_photo',
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
+            dataType: 'json',
             success: function(response) {
                 $('#loadingOverlay').removeClass('active');
 
@@ -922,11 +923,12 @@
 
                     showAlert('Photo téléchargée avec succès', 'success');
                 } else {
-                    showAlert(response.message, 'danger');
+                    showAlert(response.message || 'Erreur lors du téléchargement', 'danger');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 $('#loadingOverlay').removeClass('active');
+                console.error('Upload error:', error);
                 showAlert('Erreur lors du téléchargement de la photo', 'danger');
             }
         });
@@ -939,13 +941,17 @@
         if (filename) {
             // Delete from server
             $.ajax({
-                url: admin_url + 'dietetic/food_surveys/delete_photo',
+                url: site_url + '/dietetic/portal/delete_photo',
                 type: 'POST',
                 data: { filename: filename },
+                dataType: 'json',
                 success: function(response) {
                     if (response.success) {
                         showAlert('Photo supprimée', 'success');
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Delete error:', error);
                 }
             });
         }
@@ -1049,9 +1055,6 @@
             });
         }, 5000);
     }
-
-    // Set admin_url for compatibility
-    const admin_url = base_url + 'admin/';
     </script>
 
     <!-- Bottom Mobile Navigation -->

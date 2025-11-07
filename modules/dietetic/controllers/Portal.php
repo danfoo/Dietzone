@@ -55,7 +55,9 @@ class Portal extends App_Controller
             'food_survey_submit',
             'save_daily_entry',
             'view_recommendations',
-            'add_comment'
+            'add_comment',
+            'upload_photo',
+            'delete_photo'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -1377,6 +1379,213 @@ class Portal extends App_Controller
                 'message' => 'Erreur lors de l\'ajout du commentaire'
             ]);
         }
+    }
+
+    /**
+     * Upload photo for food survey entry
+     */
+    public function upload_photo()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Aucun fichier téléchargé ou erreur lors du téléchargement'
+            ]);
+            return;
+        }
+
+        $file = $_FILES['photo'];
+
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_types)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Type de fichier non autorisé. Seules les images (JPEG, PNG, GIF) sont acceptées.'
+            ]);
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        $max_size = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $max_size) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Le fichier est trop volumineux. Taille maximale: 5MB.'
+            ]);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'meal_' . uniqid() . '_' . time() . '.' . $extension;
+        $destination = $upload_path . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $destination)) {
+            // Create thumbnail for faster loading
+            $this->create_thumbnail($destination, $upload_path . 'thumb_' . $filename);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo téléchargée avec succès',
+                'filename' => $filename,
+                'url' => base_url('uploads/dietetic/food_surveys/' . $filename),
+                'thumbnail_url' => base_url('uploads/dietetic/food_surveys/thumb_' . $filename)
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du déplacement du fichier'
+            ]);
+        }
+    }
+
+    /**
+     * Delete uploaded photo
+     */
+    public function delete_photo()
+    {
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ]);
+            return;
+        }
+
+        $filename = $this->input->post('filename');
+
+        if (!$filename) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Nom de fichier manquant'
+            ]);
+            return;
+        }
+
+        // Security: prevent directory traversal
+        $filename = basename($filename);
+
+        $upload_path = FCPATH . 'uploads/dietetic/food_surveys/';
+        $file_path = $upload_path . $filename;
+        $thumb_path = $upload_path . 'thumb_' . $filename;
+
+        $success = false;
+
+        // Delete main file
+        if (file_exists($file_path)) {
+            $success = unlink($file_path);
+        }
+
+        // Delete thumbnail
+        if (file_exists($thumb_path)) {
+            unlink($thumb_path);
+        }
+
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Photo supprimée avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Photo non trouvée ou erreur lors de la suppression'
+            ]);
+        }
+    }
+
+    /**
+     * Create thumbnail from image
+     */
+    private function create_thumbnail($source, $destination, $max_width = 400, $max_height = 400)
+    {
+        // Get image info
+        $image_info = getimagesize($source);
+        if (!$image_info) {
+            return false;
+        }
+
+        list($width, $height, $type) = $image_info;
+
+        // Create image resource based on type
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                $image = imagecreatefromjpeg($source);
+                break;
+            case IMAGETYPE_PNG:
+                $image = imagecreatefrompng($source);
+                break;
+            case IMAGETYPE_GIF:
+                $image = imagecreatefromgif($source);
+                break;
+            default:
+                return false;
+        }
+
+        // Calculate new dimensions
+        $ratio = min($max_width / $width, $max_height / $height);
+        $new_width = (int)($width * $ratio);
+        $new_height = (int)($height * $ratio);
+
+        // Create thumbnail
+        $thumb = imagecreatetruecolor($new_width, $new_height);
+
+        // Preserve transparency for PNG and GIF
+        if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF) {
+            imagealphablending($thumb, false);
+            imagesavealpha($thumb, true);
+            $transparent = imagecolorallocatealpha($thumb, 255, 255, 255, 127);
+            imagefilledrectangle($thumb, 0, 0, $new_width, $new_height, $transparent);
+        }
+
+        // Resize
+        imagecopyresampled($thumb, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+
+        // Save thumbnail
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                imagejpeg($thumb, $destination, 85);
+                break;
+            case IMAGETYPE_PNG:
+                imagepng($thumb, $destination, 8);
+                break;
+            case IMAGETYPE_GIF:
+                imagegif($thumb, $destination);
+                break;
+        }
+
+        // Clean up
+        imagedestroy($image);
+        imagedestroy($thumb);
+
+        return true;
     }
 }
 
