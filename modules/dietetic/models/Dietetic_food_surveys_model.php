@@ -345,10 +345,23 @@ class Dietetic_food_surveys_model extends App_Model
         $has_meal_type_column = in_array('meal_type', $columns);
 
         foreach ($recommendations as $recommendation) {
-            // If column doesn't exist, treat all as global
-            $meal_type = $has_meal_type_column && isset($recommendation->meal_type)
-                ? $recommendation->meal_type
-                : 'global';
+            // Determine meal type
+            if (!$has_meal_type_column) {
+                // Column doesn't exist, treat all as global
+                $meal_type = 'global';
+            } elseif (isset($recommendation->meal_type) && !empty($recommendation->meal_type)) {
+                // Column exists and has a value
+                $meal_type = $recommendation->meal_type;
+            } else {
+                // Column exists but is NULL or empty, default to global
+                $meal_type = 'global';
+            }
+
+            // Make sure the meal_type is valid
+            if (!isset($grouped[$meal_type])) {
+                $meal_type = 'global';
+            }
+
             $grouped[$meal_type][] = $recommendation;
         }
 

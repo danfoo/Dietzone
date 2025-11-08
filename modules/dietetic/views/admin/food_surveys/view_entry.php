@@ -397,6 +397,7 @@
     font-size: 20px;
     opacity: 0;
     transition: var(--transition);
+    pointer-events: none;
 }
 
 .meal-photo-container:hover::after {
