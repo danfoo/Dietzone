@@ -301,48 +301,11 @@
     gap: 25px;
 }
 
-/* Day View - Vertical chronological layout */
+/* Day View - Grid layout */
 .meals-day-view {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    max-width: 900px;
-    margin: 0 auto;
-    position: relative;
-    padding-left: 40px;
-}
-
-.meals-day-view::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 60px;
-    bottom: 60px;
-    width: 3px;
-    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
-    border-radius: 2px;
-}
-
-.meals-day-view .meal-card {
-    position: relative;
-}
-
-.meals-day-view .meal-card::before {
-    content: '';
-    position: absolute;
-    left: -30px;
-    top: 20px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border: 3px solid var(--primary-color);
-    border-radius: 50%;
-    z-index: 1;
-}
-
-.meals-day-view .meal-card.has-data::before {
-    background: var(--primary-color);
-    box-shadow: 0 0 0 6px rgba(1, 128, 123, 0.2);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
 }
 
 .meal-card {
@@ -827,12 +790,53 @@
     color: var(--text-dark);
     font-size: 16px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .recommendation-author-info p {
     margin: 0;
     color: var(--text-light);
     font-size: 13px;
+}
+
+/* Recommendation Meal Badge */
+.recommendation-meal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recommendation-meal-badge i {
+    font-size: 12px;
+}
+
+.recommendation-meal-coffee {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+    color: white;
+}
+
+.recommendation-meal-sun-o {
+    background: linear-gradient(135deg, #FFA500 0%, #FFB84D 100%);
+    color: white;
+}
+
+.recommendation-meal-moon-o {
+    background: linear-gradient(135deg, #4A5568 0%, #2D3748 100%);
+    color: white;
+}
+
+.recommendation-meal-list-alt {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+    color: white;
 }
 
 .recommendation-actions {
@@ -1083,16 +1087,7 @@
 /* Responsive */
 @media (max-width: 1024px) {
     .meals-day-view {
-        padding-left: 30px;
-        max-width: 100%;
-    }
-
-    .meals-day-view::before {
-        left: 15px;
-    }
-
-    .meals-day-view .meal-card::before {
-        left: -25px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 }
 
@@ -1117,22 +1112,9 @@
         grid-template-columns: 1fr;
     }
 
-    .meals-grid {
-        grid-template-columns: 1fr;
-    }
-
+    .meals-grid,
     .meals-day-view {
-        padding-left: 20px;
-    }
-
-    .meals-day-view::before {
-        left: 10px;
-    }
-
-    .meals-day-view .meal-card::before {
-        left: -20px;
-        width: 16px;
-        height: 16px;
+        grid-template-columns: 1fr;
     }
 
     .meals-section,
@@ -1610,7 +1592,13 @@
                                                 <?php endif; ?>
                                             </div>
                                             <div class="recommendation-author-info">
-                                                <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
+                                                <h4>
+                                                    <?php echo htmlspecialchars($recommendation->dietitian_name); ?>
+                                                    <span class="recommendation-meal-badge recommendation-meal-<?php echo $meal_icon; ?>">
+                                                        <i class="fa fa-<?php echo $meal_icon; ?>"></i>
+                                                        <?php echo $meal_name; ?>
+                                                    </span>
+                                                </h4>
                                                 <p>
                                                     <i class="fa fa-clock-o"></i>
                                                     <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
