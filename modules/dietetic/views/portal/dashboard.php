@@ -1,393 +1,162 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
-
-<!-- MOBILE HEADER & NAVIGATION -->
-<style>
-/* Reset pour mobile */
-@media (max-width: 768px) {
-    body {
-        padding-top: 60px !important;
-        padding-bottom: 65px !important;
-    }
-}
-
-/* Header Mobile Fixe */
-.mobile-portal-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    color: white;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 10000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.mobile-portal-header .logo {
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.mobile-portal-header .hamburger {
-    width: 30px;
-    height: 25px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: pointer;
-}
-
-.mobile-portal-header .hamburger span {
-    display: block;
-    height: 3px;
-    background: white;
-    border-radius: 2px;
-    transition: 0.3s;
-}
-
-/* Menu Mobile Slide */
-.mobile-menu-slide {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 280px;
-    height: 100vh;
-    background: white;
-    z-index: 10001;
-    transition: right 0.3s;
-    overflow-y: auto;
-    padding-top: 60px;
-}
-
-.mobile-menu-slide.open {
-    right: 0;
-}
-
-.mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 9999;
-    display: none;
-}
-
-.mobile-menu-overlay.show {
-    display: block;
-}
-
-.mobile-menu-slide a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
-    color: #333;
-    text-decoration: none;
-    border-bottom: 1px solid #eee;
-}
-
-.mobile-menu-slide a.active {
-    background: #e8f5f4;
-    color: #01807B;
-    border-left: 4px solid #01807B;
-}
-
-.mobile-menu-slide a i {
-    font-size: 20px;
-    width: 25px;
-}
-
-/* Bottom Nav Fixe */
-.mobile-bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0;
-    border-top: 1px solid #ddd;
-    z-index: 10000;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-}
-
-.mobile-bottom-nav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    color: #666;
-    text-decoration: none;
-    font-size: 11px;
-}
-
-.mobile-bottom-nav a.active {
-    color: #01807B;
-}
-
-.mobile-bottom-nav a i {
-    font-size: 22px;
-}
-
-/* Cache sur desktop */
-@media (min-width: 769px) {
-    .mobile-portal-header,
-    .mobile-bottom-nav,
-    .mobile-menu-slide,
-    .mobile-menu-overlay {
-        display: none !important;
-    }
-
-    body {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-}
-</style>
-
-<!-- Header Mobile -->
-<div class="mobile-portal-header">
-    <div class="logo">
-        <i class="fa fa-heartbeat"></i> DietSenegal
-    </div>
-    <div class="hamburger" onclick="toggleMobileMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-</div>
-
-<!-- Overlay -->
-<div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
-
-<!-- Menu Slide -->
-<div class="mobile-menu-slide" id="mobileMenu">
-    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
-        <i class="fa fa-home"></i>
-        <span>Accueil</span>
-    </a>
-    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-        <i class="fa fa-cutlery"></i>
-        <span>Plans de Repas</span>
-    </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
-    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-        <i class="fa fa-clipboard-list"></i>
-        <span>Enquêtes Alimentaires</span>
-    </a>
-    <?php } ?>
-    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-        <i class="fa fa-heartbeat"></i>
-        <span>Mes Mesures</span>
-    </a>
-    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-        <i class="fa fa-user-md"></i>
-        <span>Mon Diététicien</span>
-    </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
-    <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>">
-        <i class="fa fa-bell"></i>
-        <span>Notifications</span>
-    </a>
-    <?php } ?>
-    <a href="<?php echo site_url('clients/profile'); ?>">
-        <i class="fa fa-user"></i>
-        <span>Mon Profil</span>
-    </a>
-    <a href="<?php echo site_url('authentication/logout'); ?>">
-        <i class="fa fa-sign-out"></i>
-        <span>Déconnexion</span>
-    </a>
-</div>
-
-<!-- Bottom Navigation -->
-<div class="mobile-bottom-nav">
-    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
-        <i class="fa fa-home"></i>
-        <span>Accueil</span>
-    </a>
-    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-        <i class="fa fa-cutlery"></i>
-        <span>Repas</span>
-    </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
-    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-        <i class="fa fa-clipboard-list"></i>
-        <span>Enquêtes</span>
-    </a>
-    <?php } ?>
-    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-        <i class="fa fa-plus-circle"></i>
-        <span>Mesure</span>
-    </a>
-    <a href="<?php echo site_url('clients/profile'); ?>">
-        <i class="fa fa-user"></i>
-        <span>Profil</span>
-    </a>
-</div>
-
-<script>
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    const overlay = document.querySelector('.mobile-menu-overlay');
-
-    menu.classList.toggle('open');
-    overlay.classList.toggle('show');
-}
-</script>
-
 <?php
 // Set active page for navigation
 $active_page = 'dashboard';
 ?>
+<?php $this->load->view('dietetic/portal/includes/header_styles'); ?>
+<?php $this->load->view('dietetic/portal/includes/header_nav'); ?>
 
-<div class="dietetic-portal-header">
-    <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
-    <p><?php echo _l('welcome'); ?>, <?php echo $patient->client->company; ?>!</p>
-</div>
-
-<div class="portal-stat-grid">
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight . ' kg' : '-'; ?></h3>
-        <p><?php echo _l('dietetic_current_weight'); ?></p>
-    </div>
-
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->target_weight ? $patient->target_weight . ' kg' : '-'; ?></h3>
-        <p><?php echo _l('dietetic_target_weight'); ?></p>
-    </div>
-
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? $patient->latest_measurement->bmi : '-'; ?></h3>
-        <p><?php echo _l('dietetic_bmi'); ?></p>
-    </div>
-
-    <?php if ($weight_progress->weight_change !== null) { ?>
-        <div class="portal-stat-card">
-            <h3 class="<?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
-                <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
-            </h3>
-            <p><?php echo _l('dietetic_weight_progress'); ?></p>
-        </div>
-    <?php } ?>
-</div>
-
-<?php if ($active_program) { ?>
-    <div class="portal-program-card">
-        <div class="portal-program-header">
-            <div class="portal-program-title"><?php echo $active_program->program_name; ?></div>
-            <span class="portal-program-status active"><?php echo _l('dietetic_program_active'); ?></span>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong><?php echo _l('dietetic_start_date'); ?>:</strong> <?php echo _d($active_program->start_date); ?></p>
-                <?php if ($active_program->end_date) { ?>
-                    <p><strong><?php echo _l('dietetic_end_date'); ?>:</strong> <?php echo _d($active_program->end_date); ?></p>
-                <?php } ?>
-            </div>
-            <div class="col-md-6">
-                <?php if ($active_program->daily_calories) { ?>
-                    <p><strong><?php echo _l('dietetic_daily_calories'); ?>:</strong> <?php echo $active_program->daily_calories; ?> kcal</p>
-                <?php } ?>
-                <?php if ($active_program->daily_protein) { ?>
-                    <p><strong><?php echo _l('dietetic_protein'); ?>:</strong> <?php echo $active_program->daily_protein; ?>g</p>
-                <?php } ?>
-            </div>
-        </div>
-
-        <?php if ($active_program->objective) { ?>
-            <p><strong><?php echo _l('dietetic_objective'); ?>:</strong></p>
-            <p><?php echo nl2br($active_program->objective); ?></p>
-        <?php } ?>
-
-        <?php
-        // Get meal plans for this program
-        $this->load->model('dietetic/dietetic_meal_plans_model');
-        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
-        ?>
-
-        <?php if (!empty($meal_plans)) { ?>
-            <h5 class="mtop20"><?php echo _l('dietetic_meal_plans'); ?></h5>
-            <?php foreach ($meal_plans as $plan) { ?>
-                <div class="portal-meal-plan-card">
-                    <div class="portal-meal-plan-header">
-                        <?php echo $plan->plan_name; ?> - <?php echo _l('dietetic_week'); ?> <?php echo $plan->week_number; ?>
-                    </div>
-                    <div class="mtop10">
-                        <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-info">
-                            <i class="fa fa-eye"></i> <?php echo _l('dietetic_view_details'); ?>
-                        </a>
-                        <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-success">
-                            <i class="fa fa-download"></i> <?php echo _l('dietetic_download_pdf'); ?>
-                        </a>
-                    </div>
-                </div>
-            <?php } ?>
-        <?php } ?>
-    </div>
-<?php } else { ?>
-    <div class="alert alert-info">
-        <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_no_programs'); ?>
-    </div>
-<?php } ?>
-
-<div class="row mtop30">
-    <div class="col-md-6">
-        <div class="portal-weight-chart-container">
-            <h4><?php echo _l('dietetic_weight_evolution'); ?></h4>
-            <canvas id="portalWeightChart" height="200"></canvas>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="panel panel-default">
-            <div class="panel-heading"><?php echo _l('dietetic_upcoming_consultations'); ?></div>
-            <div class="panel-body">
-                <?php if (!empty($upcoming_consultations)) { ?>
-                    <ul class="portal-consultation-list">
-                        <?php foreach ($upcoming_consultations as $consultation) { ?>
-                            <li class="portal-consultation-item">
-                                <div>
-                                    <div class="portal-consultation-date"><?php echo _dt($consultation->consultation_date); ?></div>
-                                    <div class="portal-consultation-type"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
-                                </div>
-                                <span class="portal-consultation-status badge badge-info"><?php echo _l('dietetic_consultation_scheduled'); ?></span>
-                            </li>
-                        <?php } ?>
-                    </ul>
-                <?php } else { ?>
-                    <p class="text-muted"><?php echo _l('dietetic_no_consultations'); ?></p>
-                <?php } ?>
-
-                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn btn-sm btn-default mtop10">
-                    <?php echo _l('view_all'); ?>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php
-// Check if food surveys are enabled
-$food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
-$active_surveys = [];
-if ($food_surveys_enabled) {
-    $this->load->model('dietetic/dietetic_food_surveys_model');
-    $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
-}
-?>
-
-<?php if ($food_surveys_enabled) { ?>
+<!-- Dashboard Specific Styles -->
 <style>
+/* Dashboard Header */
+.dietetic-portal-header {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.dietetic-portal-header h1 {
+    margin: 0 0 8px 0;
+    color: #01807B;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.dietetic-portal-header p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 16px;
+}
+
+/* Stats Grid */
+.portal-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.portal-stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.portal-stat-card h3 {
+    margin: 0 0 8px 0;
+    color: #01807B;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.portal-stat-card p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+/* Program Card */
+.portal-program-card {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+}
+
+.portal-program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.portal-program-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+}
+
+.portal-program-status {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.portal-program-status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Meal Plan Card */
+.portal-meal-plan-card {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border-left: 4px solid #01807B;
+}
+
+.portal-meal-plan-header {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Weight Chart */
+.portal-weight-chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.portal-weight-chart-container h4 {
+    margin: 0 0 16px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+/* Consultation List */
+.portal-consultation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.portal-consultation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.portal-consultation-item:last-child {
+    border-bottom: none;
+}
+
+.portal-consultation-date {
+    font-weight: 600;
+    color: #333;
+}
+
+.portal-consultation-type {
+    font-size: 13px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.portal-consultation-status {
+    font-size: 12px;
+}
+
 /* Food Surveys Section - Mobile First */
 .food-surveys-section {
     background: white;
@@ -704,9 +473,153 @@ if ($food_surveys_enabled) {
     .survey-card-title {
         font-size: 16px;
     }
+
+    .mtop20 > a {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
 }
 </style>
 
+<div class="container">
+<div class="dietetic-portal-header">
+    <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
+    <p><?php echo _l('welcome'); ?>, <?php echo $patient->client->company; ?>!</p>
+</div>
+
+<div class="portal-stat-grid">
+    <div class="portal-stat-card">
+        <h3><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight . ' kg' : '-'; ?></h3>
+        <p><?php echo _l('dietetic_current_weight'); ?></p>
+    </div>
+
+    <div class="portal-stat-card">
+        <h3><?php echo $patient->target_weight ? $patient->target_weight . ' kg' : '-'; ?></h3>
+        <p><?php echo _l('dietetic_target_weight'); ?></p>
+    </div>
+
+    <div class="portal-stat-card">
+        <h3><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? $patient->latest_measurement->bmi : '-'; ?></h3>
+        <p><?php echo _l('dietetic_bmi'); ?></p>
+    </div>
+
+    <?php if ($weight_progress->weight_change !== null) { ?>
+        <div class="portal-stat-card">
+            <h3 class="<?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
+                <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
+            </h3>
+            <p><?php echo _l('dietetic_weight_progress'); ?></p>
+        </div>
+    <?php } ?>
+</div>
+
+<?php if ($active_program) { ?>
+    <div class="portal-program-card">
+        <div class="portal-program-header">
+            <div class="portal-program-title"><?php echo $active_program->program_name; ?></div>
+            <span class="portal-program-status active"><?php echo _l('dietetic_program_active'); ?></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong><?php echo _l('dietetic_start_date'); ?>:</strong> <?php echo _d($active_program->start_date); ?></p>
+                <?php if ($active_program->end_date) { ?>
+                    <p><strong><?php echo _l('dietetic_end_date'); ?>:</strong> <?php echo _d($active_program->end_date); ?></p>
+                <?php } ?>
+            </div>
+            <div class="col-md-6">
+                <?php if ($active_program->daily_calories) { ?>
+                    <p><strong><?php echo _l('dietetic_daily_calories'); ?>:</strong> <?php echo $active_program->daily_calories; ?> kcal</p>
+                <?php } ?>
+                <?php if ($active_program->daily_protein) { ?>
+                    <p><strong><?php echo _l('dietetic_protein'); ?>:</strong> <?php echo $active_program->daily_protein; ?>g</p>
+                <?php } ?>
+            </div>
+        </div>
+
+        <?php if ($active_program->objective) { ?>
+            <p><strong><?php echo _l('dietetic_objective'); ?>:</strong></p>
+            <p><?php echo nl2br($active_program->objective); ?></p>
+        <?php } ?>
+
+        <?php
+        // Get meal plans for this program
+        $this->load->model('dietetic/dietetic_meal_plans_model');
+        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
+        ?>
+
+        <?php if (!empty($meal_plans)) { ?>
+            <h5 class="mtop20"><?php echo _l('dietetic_meal_plans'); ?></h5>
+            <?php foreach ($meal_plans as $plan) { ?>
+                <div class="portal-meal-plan-card">
+                    <div class="portal-meal-plan-header">
+                        <?php echo $plan->plan_name; ?> - <?php echo _l('dietetic_week'); ?> <?php echo $plan->week_number; ?>
+                    </div>
+                    <div class="mtop10">
+                        <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-info">
+                            <i class="fa fa-eye"></i> <?php echo _l('dietetic_view_details'); ?>
+                        </a>
+                        <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-success">
+                            <i class="fa fa-download"></i> <?php echo _l('dietetic_download_pdf'); ?>
+                        </a>
+                    </div>
+                </div>
+            <?php } ?>
+        <?php } ?>
+    </div>
+<?php } else { ?>
+    <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_no_programs'); ?>
+    </div>
+<?php } ?>
+
+<div class="row mtop30">
+    <div class="col-md-6">
+        <div class="portal-weight-chart-container">
+            <h4><?php echo _l('dietetic_weight_evolution'); ?></h4>
+            <canvas id="portalWeightChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading"><?php echo _l('dietetic_upcoming_consultations'); ?></div>
+            <div class="panel-body">
+                <?php if (!empty($upcoming_consultations)) { ?>
+                    <ul class="portal-consultation-list">
+                        <?php foreach ($upcoming_consultations as $consultation) { ?>
+                            <li class="portal-consultation-item">
+                                <div>
+                                    <div class="portal-consultation-date"><?php echo _dt($consultation->consultation_date); ?></div>
+                                    <div class="portal-consultation-type"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
+                                </div>
+                                <span class="portal-consultation-status badge badge-info"><?php echo _l('dietetic_consultation_scheduled'); ?></span>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                <?php } else { ?>
+                    <p class="text-muted"><?php echo _l('dietetic_no_consultations'); ?></p>
+                <?php } ?>
+
+                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn btn-sm btn-default mtop10">
+                    <?php echo _l('view_all'); ?>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
+// Check if food surveys are enabled
+$food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
+$active_surveys = [];
+if ($food_surveys_enabled) {
+    $this->load->model('dietetic/dietetic_food_surveys_model');
+    $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
+}
+?>
+
+<?php if ($food_surveys_enabled) { ?>
 <div class="food-surveys-section">
     <div class="food-surveys-header">
         <h3>
@@ -793,15 +706,7 @@ if ($food_surveys_enabled) {
     <?php } ?>
 </div>
 
-<style>
-@media (max-width: 768px) {
-    .mtop20 > a {
-        flex: 1 1 100% !important;
-        min-width: 100% !important;
-    }
-}
-</style>
-
+</div><!-- /.container -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -818,4 +723,5 @@ if ($food_surveys_enabled) {
     });
 </script>
 
+<?php $this->load->view('dietetic/portal/includes/header_scripts'); ?>
 <?php $this->load->view('authentication/includes/footer'); ?>
