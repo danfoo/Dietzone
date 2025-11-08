@@ -1,200 +1,10 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#01807B">
-    <title>Mon Diététicien</title>
-    <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
-        <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
-    <?php } ?>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
-        }
+<?php
+$active_page = 'my_dietitians';
+$page_title = 'Mon Diététicien';
+$this->load->view('portal/includes/portal_header');
+?>
 
-        body {
-            background: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
-
-        .portal-header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 12px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .portal-header .container-fluid {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .portal-header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .portal-logo {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .portal-logo img {
-            max-height: 40px;
-            max-width: 150px;
-        }
-
-        .portal-logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .portal-logo-text i {
-            color: #01807B;
-        }
-
-        .portal-nav-desktop {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .portal-nav-desktop a {
-            padding: 10px 20px;
-            color: #495057;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 15px;
-        }
-
-        .portal-nav-desktop a:hover {
-            background: #f8f9fa;
-            color: #01807B;
-        }
-
-        .portal-nav-desktop a.active {
-            background: #01807B;
-            color: white;
-        }
-
-        .bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #e9ecef;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-            z-index: 1000;
-            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
-        }
-
-        .bottom-nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .bottom-nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            color: #6c757d;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-radius: 12px;
-            min-width: 60px;
-            position: relative;
-        }
-
-        .bottom-nav-item.active {
-            color: #01807B;
-        }
-
-        .bottom-nav-item i {
-            font-size: 24px;
-        }
-
-        .bottom-nav-item.active i {
-            transform: scale(1.1);
-        }
-
-        .bottom-nav-item span {
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .bottom-nav-item.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 32px;
-            height: 3px;
-            background: #01807B;
-            border-radius: 0 0 3px 3px;
-        }
-
-        .content-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px 15px;
-        }
-
-        .page-header-mobile {
-            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
-            border-radius: 16px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            color: white;
-            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
-        }
-
-        .page-header-mobile h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .page-header-mobile p {
-            margin: 0;
-            font-size: 15px;
-            opacity: 0.95;
-        }
-
+<style>
         .dietitian-card {
             background: white;
             border-left: 4px solid #01807B;
@@ -743,63 +553,26 @@
             }
         }
 
-        @media (max-width: 375px) {
-            .portal-logo img {
-                max-height: 32px;
-                max-width: 120px;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-
-            .portal-logo-text {
-                font-size: 16px;
-            }
-
-            .page-header-mobile h1 {
-                font-size: 18px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
-    </style>
-</head>
-<body>
-    <div class="portal-header">
-        <div class="container-fluid">
-            <div class="portal-header-content">
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
-                    <?php
-                    $logo_path = get_option('company_logo_dark');
-                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                        $logo_path = get_option('company_logo');
-                    }
 
-                    if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                    ?>
-                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-                    <?php } else { ?>
-                        <div class="portal-logo-text">
-                            <i class="fa fa-heartbeat"></i>
-                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
-                        </div>
-                    <?php } ?>
-                </a>
+        .animate-in {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
 
-                <nav class="portal-nav-desktop">
-                    <a href="<?php echo site_url('dietetic/portal'); ?>">
-                        <i class="fa fa-home"></i> Accueil
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-                        <i class="fa fa-cutlery"></i> Repas
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="active">
-                        <i class="fa fa-user-md"></i> Diététicien
-                    </a>
-                    <a href="<?php echo site_url('clients/profile'); ?>">
-                        <i class="fa fa-user"></i> Profil
-                    </a>
-                </nav>
-            </div>
-        </div>
-    </div>
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+</style>
 
-    <div class="content-container">
+<div class="content-container">
         <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-user-md"></i> Mon Diététicien</h1>
             <p>Contact et informations</p>
@@ -1148,184 +921,140 @@
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <div class="bottom-nav-items">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
-                <i class="fa fa-home"></i>
-                <span>Accueil</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
-                <i class="fa fa-cutlery"></i>
-                <span>Repas</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
-                <i class="fa fa-plus-circle"></i>
-                <span>Mesure</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item active">
-                <i class="fa fa-user-md"></i>
-                <span>Contact</span>
-            </a>
-            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
-                <i class="fa fa-user"></i>
-                <span>Profil</span>
-            </a>
-        </div>
-    </nav>
+<script>
+    // Rating functionality for multiple criteria
+    function showEditForm() {
+        document.getElementById('myRatingDisplay').style.display = 'none';
+        document.getElementById('editRatingForm').style.display = 'block';
+    }
 
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script>
-        document.querySelectorAll('.dietitian-card, .bottom-nav-item').forEach(function(element) {
-            element.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.97)';
-            });
-            element.addEventListener('touchend', function() {
-                this.style.transform = '';
-            });
-        });
+    function cancelEdit() {
+        document.getElementById('editRatingForm').style.display = 'none';
+        document.getElementById('myRatingDisplay').style.display = 'block';
+    }
 
-        if ('vibrate' in navigator) {
-            document.querySelectorAll('.btn-contact').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+    // Initialize rating stars for all criteria
+    var criteriaRatings = {};
+    var submitBtn = document.getElementById('submitRatingBtn');
+
+    document.querySelectorAll('.interactive-stars').forEach(function(starGroup) {
+        var criterion = starGroup.getAttribute('data-criterion');
+        var stars = starGroup.querySelectorAll('i');
+        var input = starGroup.nextElementSibling;
+
+        if (!criterion || !input) return;
+
+        criteriaRatings[criterion] = parseInt(input.value) || 0;
+
+        stars.forEach(function(star) {
+            // Hover effect
+            star.addEventListener('mouseenter', function() {
+                var rating = parseInt(this.getAttribute('data-rating'));
+                highlightStars(stars, rating);
+            });
+
+            // Click/touch to select
+            star.addEventListener('click', function() {
+                var rating = parseInt(this.getAttribute('data-rating'));
+                criteriaRatings[criterion] = rating;
+                input.value = rating;
+
+                // Mark as selected
+                stars.forEach(function(s) {
+                    s.classList.remove('selected');
+                });
+                for (var i = 0; i < rating; i++) {
+                    stars[i].classList.add('selected');
+                }
+
+                highlightStars(stars, rating);
+                checkFormValidity();
+
+                // Haptic feedback
+                if ('vibrate' in navigator) {
                     navigator.vibrate(10);
-                });
-            });
-        }
-
-        // Rating functionality for multiple criteria
-        function showEditForm() {
-            document.getElementById('myRatingDisplay').style.display = 'none';
-            document.getElementById('editRatingForm').style.display = 'block';
-        }
-
-        function cancelEdit() {
-            document.getElementById('editRatingForm').style.display = 'none';
-            document.getElementById('myRatingDisplay').style.display = 'block';
-        }
-
-        // Initialize rating stars for all criteria
-        var criteriaRatings = {};
-        var submitBtn = document.getElementById('submitRatingBtn');
-
-        document.querySelectorAll('.interactive-stars').forEach(function(starGroup) {
-            var criterion = starGroup.getAttribute('data-criterion');
-            var stars = starGroup.querySelectorAll('i');
-            var input = starGroup.nextElementSibling;
-
-            if (!criterion || !input) return;
-
-            criteriaRatings[criterion] = parseInt(input.value) || 0;
-
-            stars.forEach(function(star) {
-                // Hover effect
-                star.addEventListener('mouseenter', function() {
-                    var rating = parseInt(this.getAttribute('data-rating'));
-                    highlightStars(stars, rating);
-                });
-
-                // Click/touch to select
-                star.addEventListener('click', function() {
-                    var rating = parseInt(this.getAttribute('data-rating'));
-                    criteriaRatings[criterion] = rating;
-                    input.value = rating;
-
-                    // Mark as selected
-                    stars.forEach(function(s) {
-                        s.classList.remove('selected');
-                    });
-                    for (var i = 0; i < rating; i++) {
-                        stars[i].classList.add('selected');
-                    }
-
-                    highlightStars(stars, rating);
-                    checkFormValidity();
-
-                    // Haptic feedback
-                    if ('vibrate' in navigator) {
-                        navigator.vibrate(10);
-                    }
-                });
-            });
-
-            // Reset hover effect
-            starGroup.addEventListener('mouseleave', function() {
-                var currentRating = criteriaRatings[criterion] || 0;
-                highlightStars(stars, currentRating);
+                }
             });
         });
 
-        function highlightStars(stars, rating) {
-            stars.forEach(function(star, index) {
-                if (index < rating) {
-                    star.classList.remove('fa-star-o');
-                    star.classList.add('fa-star');
-                } else {
-                    star.classList.remove('fa-star');
-                    star.classList.add('fa-star-o');
+        // Reset hover effect
+        starGroup.addEventListener('mouseleave', function() {
+            var currentRating = criteriaRatings[criterion] || 0;
+            highlightStars(stars, currentRating);
+        });
+    });
+
+    function highlightStars(stars, rating) {
+        stars.forEach(function(star, index) {
+            if (index < rating) {
+                star.classList.remove('fa-star-o');
+                star.classList.add('fa-star');
+            } else {
+                star.classList.remove('fa-star');
+                star.classList.add('fa-star-o');
+            }
+        });
+    }
+
+    function checkFormValidity() {
+        if (!submitBtn) return;
+
+        var allFilled = true;
+        var requiredCriteria = ['professionalism_rating', 'listening_rating', 'advice_rating', 'results_rating', 'availability_rating'];
+
+        requiredCriteria.forEach(function(criterion) {
+            if (!criteriaRatings[criterion] || criteriaRatings[criterion] === 0) {
+                allFilled = false;
+            }
+        });
+
+        submitBtn.disabled = !allFilled;
+    }
+
+    // Form submission with AJAX
+    var ratingForm = document.getElementById('ratingForm');
+    if (ratingForm) {
+        ratingForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+            var messageDiv = document.getElementById('ratingMessage');
+            var originalBtnText = submitBtn.innerHTML;
+
+            // Disable submit button during submission
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+
+            $.ajax({
+                url: this.action,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    messageDiv.className = 'rating-message success';
+                    messageDiv.textContent = 'Merci pour votre évaluation !';
+                    messageDiv.style.display = 'block';
+
+                    // Reload page after 2 seconds to show updated rating
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
+                },
+                error: function() {
+                    messageDiv.className = 'rating-message error';
+                    messageDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                    messageDiv.style.display = 'block';
+
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
                 }
             });
-        }
+        });
+    }
 
-        function checkFormValidity() {
-            if (!submitBtn) return;
+    // Check initial form validity
+    checkFormValidity();
+</script>
 
-            var allFilled = true;
-            var requiredCriteria = ['professionalism_rating', 'listening_rating', 'advice_rating', 'results_rating', 'availability_rating'];
-
-            requiredCriteria.forEach(function(criterion) {
-                if (!criteriaRatings[criterion] || criteriaRatings[criterion] === 0) {
-                    allFilled = false;
-                }
-            });
-
-            submitBtn.disabled = !allFilled;
-        }
-
-        // Form submission with AJAX
-        var ratingForm = document.getElementById('ratingForm');
-        if (ratingForm) {
-            ratingForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                var formData = new FormData(this);
-                var messageDiv = document.getElementById('ratingMessage');
-                var originalBtnText = submitBtn.innerHTML;
-
-                // Disable submit button during submission
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
-
-                $.ajax({
-                    url: this.action,
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        messageDiv.className = 'rating-message success';
-                        messageDiv.textContent = 'Merci pour votre évaluation !';
-                        messageDiv.style.display = 'block';
-
-                        // Reload page after 2 seconds to show updated rating
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 2000);
-                    },
-                    error: function() {
-                        messageDiv.className = 'rating-message error';
-                        messageDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
-                        messageDiv.style.display = 'block';
-
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalBtnText;
-                    }
-                });
-            });
-        }
-
-        // Check initial form validity
-        checkFormValidity();
-    </script>
-</body>
-</html>
+<?php $this->load->view('portal/includes/portal_footer'); ?>
