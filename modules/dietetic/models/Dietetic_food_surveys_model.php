@@ -340,8 +340,15 @@ class Dietetic_food_surveys_model extends App_Model
             'global' => []
         ];
 
+        // Check if meal_type column exists (for backward compatibility)
+        $columns = $this->db->list_fields($this->table_recommendations);
+        $has_meal_type_column = in_array('meal_type', $columns);
+
         foreach ($recommendations as $recommendation) {
-            $meal_type = $recommendation->meal_type ?? 'global';
+            // If column doesn't exist, treat all as global
+            $meal_type = $has_meal_type_column && isset($recommendation->meal_type)
+                ? $recommendation->meal_type
+                : 'global';
             $grouped[$meal_type][] = $recommendation;
         }
 
@@ -357,6 +364,13 @@ class Dietetic_food_surveys_model extends App_Model
     public function add_recommendation($data)
     {
         $data['created_at'] = date('Y-m-d H:i:s');
+
+        // Check if meal_type column exists (for backward compatibility)
+        $columns = $this->db->list_fields($this->table_recommendations);
+        if (!in_array('meal_type', $columns) && isset($data['meal_type'])) {
+            // Column doesn't exist yet, remove it to avoid SQL error
+            unset($data['meal_type']);
+        }
 
         if ($this->db->insert($this->table_recommendations, $data)) {
             $recommendation_id = $this->db->insert_id();
