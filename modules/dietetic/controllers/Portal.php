@@ -57,7 +57,9 @@ class Portal extends App_Controller
             'view_recommendations',
             'add_comment',
             'upload_photo',
-            'delete_photo'
+            'delete_photo',
+            'notification_preferences',
+            'save_notification_preferences'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -309,6 +311,17 @@ class Portal extends App_Controller
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
                 if ($measurement_id) {
+                    // Check for milestones (wrapped in try-catch to not block measurement creation)
+                    try {
+                        if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
+                            $this->load->model('dietetic/dietetic_notifications_model');
+                            $this->dietetic_notifications_model->check_milestones($patient->id);
+                        }
+                    } catch (Exception $e) {
+                        // Log error but don't fail the measurement creation
+                        log_activity('Dietetic milestone check error: ' . $e->getMessage());
+                    }
+
                     // Send notification to dietitian (wrapped in try-catch to not block measurement creation)
                     if ($patient->dietitian_id) {
                         try {
@@ -1679,6 +1692,103 @@ class Portal extends App_Controller
         imagedestroy($thumb);
 
         return true;
+    }
+
+    /**
+     * Notification preferences page
+     */
+    public function notification_preferences()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client_id($client_id);
+
+        if (!$patient) {
+            set_alert('danger', 'Patient non trouvé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        // Check if notifications tables exist
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            set_alert('warning', 'Le système de notifications n\'est pas encore installé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Get or create preferences
+        $data['preferences'] = $this->dietetic_notifications_model->get_preferences($patient->id);
+        if (!$data['preferences']) {
+            $this->dietetic_notifications_model->create_default_preferences($patient->id);
+            $data['preferences'] = $this->dietetic_notifications_model->get_preferences($patient->id);
+        }
+
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Préférences de Notification';
+
+        $this->load->view('portal/notifications/preferences', $data);
+    }
+
+    /**
+     * Save notification preferences
+     */
+    public function save_notification_preferences()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non autorisé']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client_id($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Prepare preferences data
+        $preferences = [
+            'reminder_weight' => $this->input->post('reminder_weight') ? 1 : 0,
+            'reminder_weight_day' => $this->input->post('reminder_weight_day') ?: 'friday',
+            'reminder_weight_time' => $this->input->post('reminder_weight_time') ?: '09:00:00',
+            'reminder_water' => $this->input->post('reminder_water') ? 1 : 0,
+            'reminder_water_times' => $this->input->post('reminder_water_times') ?: '10:00,14:00,18:00',
+            'notify_recommendation' => $this->input->post('notify_recommendation') ? 1 : 0,
+            'notify_consultation' => $this->input->post('notify_consultation') ? 1 : 0,
+            'notify_milestone' => $this->input->post('notify_milestone') ? 1 : 0,
+            'channel_email' => $this->input->post('channel_email') ? 1 : 0,
+            'channel_sms' => $this->input->post('channel_sms') ? 1 : 0,
+            'channel_whatsapp' => $this->input->post('channel_whatsapp') ? 1 : 0,
+        ];
+
+        // Update preferences
+        $result = $this->dietetic_notifications_model->update_preferences($patient->id, $preferences);
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Vos préférences ont été enregistrées avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'enregistrement des préférences'
+            ]);
+        }
     }
 }
 
