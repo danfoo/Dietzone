@@ -48,6 +48,8 @@ class Dietetic_notifications_model extends App_Model
             'notify_recommendation' => 1,
             'notify_consultation' => 1,
             'notify_milestone' => 1,
+            'notify_program' => 1,
+            'notify_food_entry' => 1,
             'channel_email' => 1,
             'channel_sms' => 0,
             'channel_whatsapp' => 0,
@@ -591,5 +593,523 @@ class Dietetic_notifications_model extends App_Model
         $stats->by_type = $this->db->get(db_prefix() . $this->table_logs)->result();
 
         return $stats;
+    }
+
+    // ==================== PROGRAM NOTIFICATIONS ====================
+
+    /**
+     * Notify patient when new program is assigned
+     */
+    public function notify_program_assigned($patient_id, $program_name, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_program) {
+            return false;
+        }
+
+        // Get patient info
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "📋 Votre diététicien {$dietitian_name} vous a assigné un nouveau programme :\n\n";
+        $message .= "🎯 {$program_name}\n\n";
+        $message .= "Consultez votre portail patient pour voir les détails et commencer votre programme.\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/meal_plans') . "\n\n";
+        $message .= "Bonne continuation ! 💪";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'program_assigned',
+            'subject' => '📋 Nouveau Programme Diététique',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when program is updated
+     */
+    public function notify_program_updated($patient_id, $program_name, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_program) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "🔄 Votre diététicien {$dietitian_name} a mis à jour votre programme :\n\n";
+        $message .= "{$program_name}\n\n";
+        $message .= "Consultez les modifications sur votre portail.\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/meal_plans');
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'program_updated',
+            'subject' => '🔄 Programme Diététique Mis à Jour',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when program is ending soon (7 days before)
+     */
+    public function notify_program_ending_soon($patient_id, $program_name, $end_date)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_program) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "⏰ Votre programme \"{$program_name}\" se termine bientôt :\n\n";
+        $message .= "📅 Date de fin : " . date('d/m/Y', strtotime($end_date)) . "\n\n";
+        $message .= "C'est le moment de faire le bilan avec votre diététicien et planifier la suite ! 💪";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'program_ending',
+            'subject' => '⏰ Fin de Programme Approchant',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    // ==================== CONSULTATION NOTIFICATIONS ====================
+
+    /**
+     * Notify patient when new consultation is scheduled
+     */
+    public function notify_consultation_scheduled($patient_id, $consultation_date, $consultation_time, $dietitian_name, $consultation_type = 'Consultation')
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $formatted_date = date('d/m/Y', strtotime($consultation_date));
+        $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : '';
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "📅 Une nouvelle consultation a été planifiée :\n\n";
+        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message .= "📆 Date : {$formatted_date}\n";
+        if ($formatted_time) {
+            $message .= "🕐 Heure : {$formatted_time}\n";
+        }
+        $message .= "📝 Type : {$consultation_type}\n\n";
+        $message .= "Nous avons hâte de vous voir ! 😊";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'consultation_scheduled',
+            'subject' => '📅 Nouvelle Consultation Planifiée',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient 1 day before consultation
+     */
+    public function notify_consultation_reminder_day($patient_id, $consultation_date, $consultation_time, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'à confirmer';
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "⏰ Rappel : Votre consultation est demain !\n\n";
+        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message .= "🕐 Heure : {$formatted_time}\n\n";
+        $message .= "N'oubliez pas votre rendez-vous ! 📋";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'consultation_reminder_day',
+            'subject' => '⏰ Rappel : Consultation Demain',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient 1 hour before consultation
+     */
+    public function notify_consultation_reminder_hour($patient_id, $consultation_time, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'bientôt';
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "⏰ Votre consultation commence dans 1 heure !\n\n";
+        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message .= "🕐 Heure : {$formatted_time}\n\n";
+        $message .= "À tout de suite ! 😊";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'consultation_reminder_hour',
+            'subject' => '⏰ Consultation dans 1 heure',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when consultation is cancelled
+     */
+    public function notify_consultation_cancelled($patient_id, $consultation_date, $dietitian_name, $reason = '')
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $formatted_date = date('d/m/Y', strtotime($consultation_date));
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
+        if ($reason) {
+            $message .= "Raison : {$reason}\n\n";
+        }
+        $message .= "Veuillez contacter votre diététicien pour reprogrammer.";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'consultation_cancelled',
+            'subject' => '❌ Consultation Annulée',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Get consultations that need reminders (1 day before)
+     */
+    public function get_consultations_for_day_reminder()
+    {
+        $tomorrow = date('Y-m-d', strtotime('+1 day'));
+
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        $this->db->from(db_prefix() . 'dietic_consultations c');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
+        $this->db->where('DATE(c.consultation_date)', $tomorrow);
+        $this->db->where('c.status !=', 'cancelled');
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get consultations that need reminders (1 hour before)
+     */
+    public function get_consultations_for_hour_reminder()
+    {
+        $now = date('Y-m-d H:i:s');
+        $one_hour_later = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        $this->db->from(db_prefix() . 'dietic_consultations c');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
+        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) <=', $one_hour_later);
+        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) >', $now);
+        $this->db->where('c.status !=', 'cancelled');
+
+        return $this->db->get()->result();
+    }
+
+    // ==================== FOOD SURVEY NOTIFICATIONS ====================
+
+    /**
+     * Notify dietitian when patient submits daily food entry
+     */
+    public function notify_dietitian_food_entry($dietitian_id, $patient_name, $date)
+    {
+        $this->load->model('staff_model');
+        $dietitian = $this->staff_model->get($dietitian_id);
+
+        if (!$dietitian || empty($dietitian->email)) {
+            return false;
+        }
+
+        $formatted_date = date('d/m/Y', strtotime($date));
+
+        $message = "Bonjour {$dietitian->firstname},\n\n";
+        $message .= "📝 {$patient_name} a soumis son journal alimentaire du {$formatted_date}.\n\n";
+        $message .= "Consultez les détails et ajoutez vos recommandations :\n";
+        $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
+        $message .= "Bonne journée !";
+
+        // Send email to dietitian
+        return send_mail_template('dietetic_food_entry_submitted', [
+            'email' => $dietitian->email,
+            'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
+            'message' => $message
+        ]);
+    }
+
+    /**
+     * Notify patient when dietitian adds recommendation
+     */
+    public function notify_patient_recommendation($patient_id, $dietitian_name, $meal_type = 'général')
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_recommendation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $meal_labels = [
+            'breakfast' => 'petit-déjeuner',
+            'lunch' => 'déjeuner',
+            'dinner' => 'dîner',
+            'global' => 'général'
+        ];
+        $meal_label = $meal_labels[$meal_type] ?? 'général';
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "💡 Votre diététicien {$dietitian_name} a ajouté une nouvelle recommandation pour votre {$meal_label}.\n\n";
+        $message .= "Consultez vos recommandations :\n";
+        $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Suivez ces conseils pour progresser ! 💪";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'recommendation_added',
+            'subject' => '💡 Nouvelle Recommandation Diététique',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when dietitian adds comment
+     */
+    public function notify_patient_comment($patient_id, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_recommendation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "💬 {$dietitian_name} a ajouté un commentaire sur votre journal alimentaire.\n\n";
+        $message .= "Consultez le commentaire :\n";
+        $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Continuez vos efforts ! 🌟";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'comment_added',
+            'subject' => '💬 Nouveau Commentaire de votre Diététicien',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
+    /**
+     * Get patients who haven't submitted food entry today (for daily reminder)
+     */
+    public function get_patients_for_food_entry_reminder()
+    {
+        $today = date('Y-m-d');
+
+        // Get all active patients with active surveys
+        $this->db->select('p.id as patient_id, p.client_id, fs.id as survey_id');
+        $this->db->from(db_prefix() . 'dietic_patients p');
+        $this->db->join(db_prefix() . 'dietic_food_surveys fs', 'p.id = fs.patient_id', 'inner');
+        $this->db->where('fs.status', 'active');
+
+        $patients_with_surveys = $this->db->get()->result();
+
+        $patients_to_remind = [];
+
+        foreach ($patients_with_surveys as $patient) {
+            // Check if patient already submitted today
+            $this->db->where('survey_id', $patient->survey_id);
+            $this->db->where('DATE(entry_date)', $today);
+            $count = $this->db->count_all_results(db_prefix() . 'dietic_food_survey_entries');
+
+            if ($count == 0) {
+                // Check if patient has reminder enabled
+                $prefs = $this->get_preferences($patient->patient_id);
+                if ($prefs && $prefs->notify_food_entry) {
+                    $patients_to_remind[] = $patient;
+                }
+            }
+        }
+
+        return $patients_to_remind;
+    }
+
+    /**
+     * Send daily food entry reminder to patient
+     */
+    public function send_food_entry_reminder($patient_id)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_food_entry) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "📝 N'oubliez pas de remplir votre journal alimentaire d'aujourd'hui !\n\n";
+        $message .= "Quelques minutes suffisent pour noter vos repas et boissons.\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Votre suivi régulier est la clé du succès ! 🌟";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'food_entry_reminder',
+            'subject' => '📝 Rappel : Journal Alimentaire',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
     }
 }

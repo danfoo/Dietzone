@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS `tbldietic_notification_preferences` (
   `notify_recommendation` tinyint(1) DEFAULT 1 COMMENT 'Notify when dietitian adds recommendation',
   `notify_consultation` tinyint(1) DEFAULT 1 COMMENT 'Notify for new consultation',
   `notify_milestone` tinyint(1) DEFAULT 1 COMMENT 'Celebrate milestones',
+  `notify_program` tinyint(1) DEFAULT 1 COMMENT 'Notify for program assignments and updates',
+  `notify_food_entry` tinyint(1) DEFAULT 1 COMMENT 'Remind to submit daily food entry',
   `channel_email` tinyint(1) DEFAULT 1,
   `channel_sms` tinyint(1) DEFAULT 0,
   `channel_whatsapp` tinyint(1) DEFAULT 0,
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `tbldietic_notification_preferences` (
 CREATE TABLE IF NOT EXISTS `tbldietic_notification_logs` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) NOT NULL,
-  `notification_type` enum('reminder_weight','reminder_water','milestone','recommendation','consultation','program_update') NOT NULL,
+  `notification_type` enum('reminder_weight','reminder_water','milestone','recommendation_added','comment_added','consultation_scheduled','consultation_reminder_day','consultation_reminder_hour','consultation_cancelled','program_assigned','program_updated','program_ending','food_entry_reminder','test') NOT NULL,
   `channel` enum('email','sms','whatsapp') NOT NULL,
   `recipient` varchar(255) NOT NULL COMMENT 'Email, phone number, or WhatsApp ID',
   `subject` varchar(255) DEFAULT NULL,

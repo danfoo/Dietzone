@@ -345,6 +345,34 @@ class Food_surveys extends AdminController
             $recommendation_id = $this->dietetic_food_surveys_model->add_recommendation($data);
 
             if ($recommendation_id) {
+                // Send notification to patient
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                        // Get entry to find patient
+                        $entry = $this->dietetic_food_surveys_model->get_entry($data['entry_id']);
+                        if ($entry) {
+                            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+                            if ($survey && $survey->patient_id) {
+                                $this->load->model('dietetic/dietetic_notifications_model');
+                                $this->load->model('staff_model');
+
+                                // Get dietitian info
+                                $dietitian = $this->staff_model->get(get_staff_user_id());
+                                $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                                // Send notification
+                                $this->dietetic_notifications_model->notify_patient_recommendation(
+                                    $survey->patient_id,
+                                    $dietitian_name,
+                                    $data['meal_type']
+                                );
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    log_activity('Recommendation notification error: ' . $e->getMessage());
+                }
+
                 echo json_encode([
                     'success' => true,
                     'message' => 'Recommandation ajoutée avec succès'

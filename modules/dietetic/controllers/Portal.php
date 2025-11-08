@@ -1288,6 +1288,27 @@ class Portal extends App_Controller
                     }
                 }
 
+                // Send notification to dietitian
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $patient->dietitian_id) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+                        $this->load->model('clients_model');
+
+                        // Get patient name
+                        $client = $this->clients_model->get($patient->client_id);
+                        $patient_name = $client ? $client->company : 'Un patient';
+
+                        // Send notification
+                        $this->dietetic_notifications_model->notify_dietitian_food_entry(
+                            $patient->dietitian_id,
+                            $patient_name,
+                            $entry_data['entry_date']
+                        );
+                    }
+                } catch (Exception $e) {
+                    log_activity('Food entry notification error: ' . $e->getMessage());
+                }
+
                 echo json_encode([
                     'success' => true,
                     'message' => 'Entrée enregistrée avec succès',
@@ -1770,6 +1791,8 @@ class Portal extends App_Controller
             'notify_recommendation' => $this->input->post('notify_recommendation') ? 1 : 0,
             'notify_consultation' => $this->input->post('notify_consultation') ? 1 : 0,
             'notify_milestone' => $this->input->post('notify_milestone') ? 1 : 0,
+            'notify_program' => $this->input->post('notify_program') ? 1 : 0,
+            'notify_food_entry' => $this->input->post('notify_food_entry') ? 1 : 0,
             'channel_email' => $this->input->post('channel_email') ? 1 : 0,
             'channel_sms' => $this->input->post('channel_sms') ? 1 : 0,
             'channel_whatsapp' => $this->input->post('channel_whatsapp') ? 1 : 0,

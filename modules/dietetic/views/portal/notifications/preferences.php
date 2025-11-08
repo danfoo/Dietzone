@@ -399,6 +399,28 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Programmes Diététiques</h4>
+                        <p>Soyez notifié lorsqu'un programme vous est assigné ou modifié</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="notify_program" <?php echo $preferences->notify_program ? 'checked' : ''; ?>>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="preference-item">
+                    <div class="preference-info">
+                        <h4>Rappel Journal Alimentaire</h4>
+                        <p>Recevez un rappel quotidien pour remplir votre journal alimentaire (18h)</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="notify_food_entry" <?php echo $preferences->notify_food_entry ? 'checked' : ''; ?>>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
             </div>
 
             <!-- Channels -->
