@@ -8,8 +8,6 @@
  * Usage: Access this file via browser, then delete it after execution
  */
 
-defined('BASEPATH') or exit('No direct script access allowed');
-
 // Security: Enable/Disable script execution
 define('MIGRATION_ENABLED', true);
 
