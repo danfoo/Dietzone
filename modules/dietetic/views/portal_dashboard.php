@@ -663,56 +663,6 @@
     </style>
 </head>
 <body>
-    <!-- Header Simplifié -->
-    <div class="portal-header">
-        <div class="container-fluid">
-            <div class="portal-header-content">
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
-                    <?php
-                    $logo_path = get_option('company_logo_dark');
-                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                        $logo_path = get_option('company_logo');
-                    }
-
-                    if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                    ?>
-                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-                    <?php } else { ?>
-                        <div class="portal-logo-text">
-                            <i class="fa fa-heartbeat"></i>
-                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
-                        </div>
-                    <?php } ?>
-                </a>
-
-                <!-- Desktop Navigation -->
-                <nav class="portal-nav-desktop">
-                    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
-                        <i class="fa fa-home"></i> Accueil
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-                        <i class="fa fa-cutlery"></i> Repas
-                    </a>
-                    <?php
-                    // Check if food surveys feature is enabled
-                    $CI_nav =& get_instance();
-                    if ($CI_nav->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-                    ?>
-                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-                        <i class="fa fa-clipboard-list"></i> Enquêtes
-                    </a>
-                    <?php } ?>
-                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Diététicien
-                    </a>
-                    <a href="<?php echo site_url('clients/profile'); ?>">
-                        <i class="fa fa-user"></i> Profil
-                    </a>
-                </nav>
-            </div>
-        </div>
-    </div>
-
     <div class="content-container">
         <!-- Page Header Mobile-Friendly -->
         <div class="page-header-mobile animate-in">
@@ -892,48 +842,11 @@
         <?php } ?>
     </div>
 
-    <!-- Bottom Navigation (Mobile Only) -->
-    <nav class="bottom-nav">
-        <div class="bottom-nav-items">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item active">
-                <i class="fa fa-home"></i>
-                <span>Accueil</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
-                <i class="fa fa-cutlery"></i>
-                <span>Repas</span>
-            </a>
-            <?php
-            // Check if food surveys feature is enabled
-            $CI_bottom =& get_instance();
-            if ($CI_bottom->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-            ?>
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="bottom-nav-item">
-                <i class="fa fa-clipboard-list"></i>
-                <span>Enquêtes</span>
-            </a>
-            <?php } else { ?>
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item">
-                <i class="fa fa-plus-circle"></i>
-                <span>Mesure</span>
-            </a>
-            <?php } ?>
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
-                <i class="fa fa-user-md"></i>
-                <span>Contact</span>
-            </a>
-            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
-                <i class="fa fa-user"></i>
-                <span>Profil</span>
-            </a>
-        </div>
-    </nav>
-
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
         // Touch feedback for action cards
-        document.querySelectorAll('.action-card, .bottom-nav-item').forEach(function(element) {
+        document.querySelectorAll('.action-card').forEach(function(element) {
             element.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.97)';
             });
