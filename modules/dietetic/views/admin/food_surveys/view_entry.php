@@ -20,7 +20,7 @@
 
 .entry-view-container {
     padding: 20px;
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
 }
 
@@ -29,9 +29,22 @@
     background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
     color: white;
     padding: 30px;
-    border-radius: 12px;
+    border-radius: 16px;
     margin-bottom: 30px;
     box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.entry-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 .entry-title {
@@ -40,27 +53,29 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 20px;
+    position: relative;
+    z-index: 1;
 }
 
 .entry-title h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
 }
 
 .entry-title h1 i {
-    font-size: 32px;
+    font-size: 36px;
 }
 
 .breadcrumb-nav {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 14px;
     margin-top: 10px;
+    font-size: 14px;
     opacity: 0.9;
 }
 
@@ -68,83 +83,392 @@
     color: white;
     text-decoration: none;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .breadcrumb-nav a:hover {
     opacity: 0.8;
 }
 
-.breadcrumb-nav i {
-    font-size: 12px;
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
-/* Info Grid */
-.info-grid {
+.action-btn {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn i {
+    font-size: 16px;
+}
+
+/* Dashboard Stats */
+.dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
 
-.info-card {
+.stat-card {
     background: white;
     padding: 25px;
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
-    border-left: 4px solid var(--primary-color);
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
-.info-card:hover {
-    transform: translateY(-2px);
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
 }
 
-.info-card.warning {
-    border-left-color: var(--warning-color);
-}
-
-.info-card.success {
-    border-left-color: var(--success-color);
-}
-
-.info-card.info {
-    border-left-color: var(--info-color);
-}
-
-.info-card-header {
+.stat-card-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    color: var(--text-light);
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.stat-card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+.stat-card.warning .stat-card-icon {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #e07d0f 100%);
+    box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+}
+
+.stat-card.success .stat-card-icon {
+    background: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.stat-card.info .stat-card-icon {
+    background: linear-gradient(135deg, var(--info-color) 0%, #3182ce 100%);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+.stat-card-content h3 {
+    margin: 0;
     font-size: 14px;
     font-weight: 600;
+    color: var(--text-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.info-card-header i {
-    font-size: 18px;
+.stat-card-value {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 10px 0 5px;
+    line-height: 1;
 }
 
-.info-card-value {
+.stat-card-label {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+.stat-progress {
+    margin-top: 15px;
+    background: #f7fafc;
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stat-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 10px;
+    transition: width 1s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Meals Day View */
+.meals-day-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 3px solid var(--primary-color);
+    box-shadow: var(--shadow);
+}
+
+.section-header h2 {
+    margin: 0;
     font-size: 24px;
     font-weight: 700;
     color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.info-card-label {
-    font-size: 13px;
+.section-header h2 i {
+    color: var(--primary-color);
+    font-size: 28px;
+}
+
+.section-subheader {
+    font-size: 14px;
     color: var(--text-light);
-    margin-top: 5px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Meals Section */
-.meals-section {
+.meals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    padding: 30px;
+    background: #f8fafb;
+    border-radius: 0 0 16px 16px;
+}
+
+.meal-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.meal-card.has-data {
+    border-color: var(--success-color);
+}
+
+.meal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.meal-card-header {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.meal-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meal-card-header h3 i {
+    font-size: 22px;
+    color: var(--primary-color);
+}
+
+.meal-time {
+    background: var(--primary-color);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.meal-recommendation-badge {
+    background: linear-gradient(135deg, var(--warning-color), var(--secondary-color));
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.meal-card-body {
+    padding: 20px;
+}
+
+.meal-photo-container {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    background: #f7fafc;
+    position: relative;
+}
+
+.meal-photo-container img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
+
+.meal-photo-container.clickable {
+    cursor: pointer;
+}
+
+.meal-photo-container.clickable::after {
+    content: '🔍 Cliquer pour agrandir';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    padding: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.meal-photo-container.clickable:hover::after {
+    opacity: 1;
+}
+
+.meal-photo-placeholder {
+    color: var(--text-light);
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.meal-photo-placeholder i {
+    font-size: 56px;
+    opacity: 0.3;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.meal-notes {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 18px;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.meal-notes-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.meal-notes-text {
+    color: var(--text-dark);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.no-data {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-light);
+}
+
+.no-data i {
+    font-size: 42px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* Beverages Section */
+.beverages-section {
     background: white;
     padding: 30px;
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
     margin-bottom: 30px;
 }
@@ -158,7 +482,7 @@
     align-items: center;
     gap: 12px;
     padding-bottom: 15px;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 3px solid var(--primary-color);
 }
 
 .section-title i {
@@ -166,256 +490,217 @@
     font-size: 26px;
 }
 
-.meals-grid {
+.beverages-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
 }
 
-.meal-card {
+.beverage-card {
+    background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
     border: 2px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
     transition: var(--transition);
 }
 
-.meal-card:hover {
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow);
-}
-
-.meal-card.has-data {
-    border-color: var(--success-color);
-}
-
-.meal-card-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.meal-card-header h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.meal-time {
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 5px 12px;
-    border-radius: 20px;
-}
-
-.meal-card-body {
-    padding: 20px;
-}
-
-.meal-photo-container {
-    width: 100%;
-    height: 200px;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 15px;
-    background: #f7fafc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.meal-photo-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.meal-photo-placeholder {
-    color: var(--text-light);
-    text-align: center;
-    padding: 20px;
-}
-
-.meal-photo-placeholder i {
-    font-size: 48px;
-    opacity: 0.3;
-    margin-bottom: 10px;
-}
-
-.meal-notes {
-    background: #f7fafc;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 3px solid var(--primary-color);
-}
-
-.meal-notes-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.meal-notes-text {
-    color: var(--text-dark);
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.no-data {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-light);
-}
-
-.no-data i {
-    font-size: 36px;
-    opacity: 0.3;
-    margin-bottom: 10px;
-}
-
-/* Beverages Section */
-.beverages-section {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-bottom: 30px;
-}
-
-.beverages-list {
-    display: grid;
-    gap: 15px;
-}
-
-.beverage-item {
-    background: #f7fafc;
-    padding: 20px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-left: 4px solid var(--secondary-color);
-    transition: var(--transition);
-}
-
-.beverage-item:hover {
-    background: #edf2f7;
+.beverage-card:hover {
+    border-color: var(--secondary-color);
     transform: translateX(5px);
-}
-
-.beverage-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    box-shadow: var(--shadow);
 }
 
 .beverage-icon {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     background: linear-gradient(135deg, var(--secondary-color) 0%, #e07d0f 100%);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
+    flex-shrink: 0;
+}
+
+.beverage-details {
+    flex: 1;
 }
 
 .beverage-details h4 {
-    margin: 0 0 5px 0;
+    margin: 0 0 6px 0;
     color: var(--text-dark);
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .beverage-details p {
     margin: 0;
     color: var(--text-light);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .beverage-quantity {
-    display: flex;
-    align-items: center;
-    gap: 10px;
     background: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 12px 18px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-align: center;
 }
 
 .beverage-quantity-value {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
     color: var(--primary-color);
+    display: block;
 }
 
 .beverage-quantity-unit {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--text-light);
+    text-transform: uppercase;
 }
 
 /* Recommendations Section */
 .recommendations-section {
     background: white;
     padding: 30px;
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
     margin-bottom: 30px;
 }
 
 .add-recommendation-form {
     background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    padding: 25px;
-    border-radius: 12px;
+    padding: 30px;
+    border-radius: 14px;
     margin-bottom: 30px;
     border: 2px dashed var(--border-color);
 }
 
-.add-recommendation-form textarea {
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 14px;
+}
+
+.form-group select,
+.form-group textarea {
     width: 100%;
-    min-height: 120px;
-    padding: 15px;
+    padding: 12px 16px;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 14px;
     font-family: inherit;
-    resize: vertical;
     transition: var(--transition);
 }
 
-.add-recommendation-form textarea:focus {
+.form-group select:focus,
+.form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
 }
 
-.add-recommendation-form button {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
-.add-recommendation-form button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
+/* Meal Type Radio Buttons */
+.meal-type-radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.meal-radio-option {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+}
+
+.meal-radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meal-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.meal-radio-label i {
+    font-size: 20px;
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+
+.meal-radio-label .meal-name {
+    font-size: 14px;
+}
+
+.meal-radio-option:hover .meal-radio-label {
+    border-color: var(--primary-color);
+    background: rgba(1, 128, 123, 0.05);
+}
+
+.meal-radio-option input[type="radio"]:checked + .meal-radio-label {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
+}
+
+.meal-radio-option input[type="radio"]:checked + .meal-radio-label i {
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .meal-type-radio-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, var(--primary-color), #026660);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+.btn-submit:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.4);
 }
 
 .recommendations-list {
@@ -424,24 +709,28 @@
 }
 
 .recommendation-card {
-    background: #f7fafc;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+    border-radius: 14px;
     overflow: hidden;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     transition: var(--transition);
 }
 
 .recommendation-card:hover {
-    box-shadow: var(--shadow);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
 }
 
 .recommendation-header {
-    padding: 20px;
+    padding: 25px;
     background: white;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .recommendation-author {
@@ -451,17 +740,18 @@
 }
 
 .recommendation-avatar {
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
 }
 
 .recommendation-avatar img {
@@ -473,8 +763,8 @@
 .recommendation-author-info h4 {
     margin: 0 0 5px 0;
     color: var(--text-dark);
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 700;
 }
 
 .recommendation-author-info p {
@@ -483,126 +773,53 @@
     font-size: 13px;
 }
 
-.recommendation-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.recommendation-actions button {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-light);
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: var(--transition);
-    font-size: 14px;
-}
-
-.recommendation-actions button:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.recommendation-actions button.delete:hover {
-    border-color: var(--danger-color);
-    color: var(--danger-color);
-}
-
-.recommendation-body {
-    padding: 20px;
-}
-
-.recommendation-text {
-    color: var(--text-dark);
-    font-size: 15px;
-    line-height: 1.7;
-    margin-bottom: 20px;
-}
-
-.recommendation-comments {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-}
-
-.comments-header {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 15px;
-    display: flex;
+.recommendation-meal-badge {
+    background: linear-gradient(135deg, var(--secondary-color), #e07d0f);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.comment-item {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    border-left: 3px solid var(--secondary-color);
+.recommendation-content {
+    padding: 25px;
+    color: var(--text-dark);
+    font-size: 15px;
+    line-height: 1.8;
 }
 
-.comment-item:last-child {
-    margin-bottom: 0;
-}
-
-.comment-meta {
+.recommendation-meta {
+    padding: 15px 25px;
+    background: #f7fafc;
+    border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 8px;
     font-size: 13px;
     color: var(--text-light);
 }
 
-.comment-text {
-    color: var(--text-dark);
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.no-recommendations {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-light);
-}
-
-.no-recommendations i {
-    font-size: 64px;
-    opacity: 0.2;
-    margin-bottom: 20px;
-}
-
-.no-recommendations p {
-    font-size: 16px;
-}
-
-/* Status badges */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.status-badge.submitted {
-    background: rgba(72, 187, 120, 0.1);
-    color: var(--success-color);
-}
-
-.status-badge.pending {
-    background: rgba(237, 137, 54, 0.1);
-    color: var(--warning-color);
+.recommendation-meta i {
+    margin-right: 5px;
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+    .meals-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .dashboard-stats {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .entry-view-container {
         padding: 15px;
@@ -613,44 +830,50 @@
     }
 
     .entry-title h1 {
-        font-size: 22px;
+        font-size: 24px;
     }
 
-    .info-grid {
-        grid-template-columns: 1fr;
+    .header-actions {
+        width: 100%;
+    }
+
+    .action-btn {
+        flex: 1;
+        justify-content: center;
     }
 
     .meals-grid {
         grid-template-columns: 1fr;
-    }
-
-    .meals-section,
-    .beverages-section,
-    .recommendations-section {
         padding: 20px;
     }
 
-    .beverage-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+    .dashboard-stats {
+        grid-template-columns: 1fr;
     }
 
-    .recommendation-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+    .beverages-grid {
+        grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 480px) {
-    .entry-title {
-        flex-direction: column;
-        align-items: flex-start;
+@media print {
+    .entry-header,
+    .header-actions,
+    .add-recommendation-form {
+        display: none;
     }
 
-    .meal-photo-container {
-        height: 150px;
+    .entry-view-container {
+        padding: 0;
+    }
+
+    .meal-card,
+    .stat-card,
+    .beverages-section,
+    .recommendations-section {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
     }
 }
 </style>
@@ -661,80 +884,128 @@
             <!-- Header -->
             <div class="entry-header">
                 <div class="entry-title">
-                    <h1>
-                        <i class="fa fa-calendar-check-o"></i>
-                        Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?>
-                    </h1>
-                    <?php if ($entry->submitted_at): ?>
-                        <span class="status-badge submitted">
-                            <i class="fa fa-check-circle"></i>
-                            Soumise le <?php echo date('d/m/Y à H:i', strtotime($entry->submitted_at)); ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="status-badge pending">
-                            <i class="fa fa-clock-o"></i>
-                            En attente de soumission
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <div class="breadcrumb-nav">
-                    <a href="<?php echo admin_url('dietetic/food_surveys'); ?>">
-                        <i class="fa fa-list"></i> Enquêtes
-                    </a>
-                    <i class="fa fa-angle-right"></i>
-                    <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>">
-                        <?php echo htmlspecialchars($survey->survey_name); ?>
-                    </a>
-                    <i class="fa fa-angle-right"></i>
-                    <span>Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?></span>
+                    <div>
+                        <h1>
+                            <i class="fa fa-calendar-check-o"></i>
+                            Entrée du <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?>
+                        </h1>
+                        <div class="breadcrumb-nav">
+                            <a href="<?php echo admin_url('dietetic/food_surveys'); ?>">
+                                <i class="fa fa-list"></i> Enquêtes
+                            </a>
+                            <i class="fa fa-angle-right"></i>
+                            <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>">
+                                <?php echo htmlspecialchars($survey->survey_name); ?>
+                            </a>
+                            <i class="fa fa-angle-right"></i>
+                            <span><?php echo htmlspecialchars($patient->client->company); ?></span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <a href="<?php echo admin_url('dietetic/food_surveys/view/' . $survey->id); ?>" class="action-btn">
+                            <i class="fa fa-arrow-left"></i>
+                            Retour
+                        </a>
+                        <a href="javascript:window.print();" class="action-btn">
+                            <i class="fa fa-print"></i>
+                            Imprimer
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <!-- Info Grid -->
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <i class="fa fa-user"></i>
-                        Patient
+            <!-- Dashboard Stats -->
+            <div class="dashboard-stats">
+                <?php
+                // Calculate meal completion
+                $meals_logged = 0;
+                $total_meals = 3;
+                if ($entry->breakfast_photo || $entry->breakfast_notes) $meals_logged++;
+                if ($entry->lunch_photo || $entry->lunch_notes) $meals_logged++;
+                if ($entry->dinner_photo || $entry->dinner_notes) $meals_logged++;
+                $completion_percentage = round(($meals_logged / $total_meals) * 100);
+                ?>
+
+                <div class="stat-card <?php echo $meals_logged == $total_meals ? 'success' : ($meals_logged > 0 ? 'warning' : ''); ?>">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <i class="fa fa-cutlery"></i>
+                        </div>
                     </div>
-                    <div class="info-card-value"><?php echo htmlspecialchars($survey->patient_name); ?></div>
+                    <div class="stat-card-content">
+                        <h3>Repas complétés</h3>
+                        <div class="stat-card-value"><?php echo $meals_logged; ?> <span style="font-size: 20px; color: var(--text-light);">/ <?php echo $total_meals; ?></span></div>
+                        <div class="stat-card-label"><?php echo $completion_percentage; ?>% de complétion</div>
+                        <div class="stat-progress">
+                            <div class="stat-progress-bar" style="width: <?php echo $completion_percentage; ?>%"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="info-card warning">
-                    <div class="info-card-header">
-                        <i class="fa fa-tint"></i>
-                        Eau consommée
+                <div class="stat-card warning">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <i class="fa fa-tint"></i>
+                        </div>
                     </div>
-                    <div class="info-card-value">
-                        <?php echo $entry->water_quantity_ml ? number_format($entry->water_quantity_ml) : '0'; ?> ml
+                    <div class="stat-card-content">
+                        <h3>Eau consommée</h3>
+                        <div class="stat-card-value">
+                            <?php echo $entry->water_quantity_ml ? number_format($entry->water_quantity_ml) : '0'; ?> <span style="font-size: 18px;">ml</span>
+                        </div>
+                        <div class="stat-card-label">Objectif: 2000 ml/jour</div>
+                        <?php
+                        $water_percentage = $entry->water_quantity_ml ? min(($entry->water_quantity_ml / 2000) * 100, 100) : 0;
+                        ?>
+                        <div class="stat-progress">
+                            <div class="stat-progress-bar" style="width: <?php echo $water_percentage; ?>%"></div>
+                        </div>
                     </div>
-                    <div class="info-card-label">Objectif recommandé: 2000 ml/jour</div>
                 </div>
 
-                <div class="info-card info">
-                    <div class="info-card-header">
-                        <i class="fa fa-coffee"></i>
-                        Boissons
+                <div class="stat-card info">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <i class="fa fa-coffee"></i>
+                        </div>
                     </div>
-                    <div class="info-card-value"><?php echo count($beverages); ?></div>
-                    <div class="info-card-label">Boissons enregistrées</div>
+                    <div class="stat-card-content">
+                        <h3>Boissons</h3>
+                        <div class="stat-card-value"><?php echo count($beverages); ?></div>
+                        <div class="stat-card-label">Boissons enregistrées</div>
+                    </div>
                 </div>
 
-                <div class="info-card success">
-                    <div class="info-card-header">
-                        <i class="fa fa-comments"></i>
-                        Recommandations
+                <div class="stat-card success">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <i class="fa fa-comments"></i>
+                        </div>
                     </div>
-                    <div class="info-card-value"><?php echo count($recommendations); ?></div>
-                    <div class="info-card-label">Par le diététicien</div>
+                    <div class="stat-card-content">
+                        <h3>Recommandations</h3>
+                        <div class="stat-card-value">
+                            <?php
+                            $total_recommendations = array_sum(array_map('count', $recommendations_by_meal));
+                            echo $total_recommendations;
+                            ?>
+                        </div>
+                        <div class="stat-card-label">Par le diététicien</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Meals Section -->
-            <div class="meals-section">
-                <div class="section-title">
-                    <i class="fa fa-cutlery"></i>
-                    Repas de la journée
+            <!-- Meals Day View -->
+            <div class="meals-day-section">
+                <div class="section-header">
+                    <h2>
+                        <i class="fa fa-sun-o"></i>
+                        Vue Journalière
+                    </h2>
+                    <div class="section-subheader">
+                        <i class="fa fa-calendar"></i>
+                        <?php echo strftime('%A %d %B %Y', strtotime($entry->entry_date)); ?>
+                    </div>
                 </div>
 
                 <div class="meals-grid">
@@ -744,6 +1015,11 @@
                             <h3>
                                 <i class="fa fa-coffee"></i>
                                 Petit-déjeuner
+                                <?php if (count($recommendations_by_meal['breakfast']) > 0): ?>
+                                    <span class="meal-recommendation-badge">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['breakfast']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->breakfast_time): ?>
                                 <span class="meal-time">
@@ -753,19 +1029,23 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
-                                <?php if ($entry->breakfast_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
-                                <?php else: ?>
+                            <?php if ($entry->breakfast_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" target="_blank">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->breakfast_notes): ?>
                                 <div class="meal-notes">
-                                    <div class="meal-notes-label">Notes</div>
+                                    <div class="meal-notes-label"><i class="fa fa-sticky-note-o"></i> Notes</div>
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->breakfast_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
@@ -784,6 +1064,11 @@
                             <h3>
                                 <i class="fa fa-sun-o"></i>
                                 Déjeuner
+                                <?php if (count($recommendations_by_meal['lunch']) > 0): ?>
+                                    <span class="meal-recommendation-badge">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['lunch']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->lunch_time): ?>
                                 <span class="meal-time">
@@ -793,19 +1078,23 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
-                                <?php if ($entry->lunch_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
-                                <?php else: ?>
+                            <?php if ($entry->lunch_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" target="_blank">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->lunch_notes): ?>
                                 <div class="meal-notes">
-                                    <div class="meal-notes-label">Notes</div>
+                                    <div class="meal-notes-label"><i class="fa fa-sticky-note-o"></i> Notes</div>
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->lunch_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
@@ -824,6 +1113,11 @@
                             <h3>
                                 <i class="fa fa-moon-o"></i>
                                 Dîner
+                                <?php if (count($recommendations_by_meal['dinner']) > 0): ?>
+                                    <span class="meal-recommendation-badge">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['dinner']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->dinner_time): ?>
                                 <span class="meal-time">
@@ -833,19 +1127,23 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container">
-                                <?php if ($entry->dinner_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
-                                <?php else: ?>
+                            <?php if ($entry->dinner_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" target="_blank">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->dinner_notes): ?>
                                 <div class="meal-notes">
-                                    <div class="meal-notes-label">Notes</div>
+                                    <div class="meal-notes-label"><i class="fa fa-sticky-note-o"></i> Notes</div>
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->dinner_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
@@ -861,166 +1159,207 @@
             </div>
 
             <!-- Beverages Section -->
-            <?php if (count($beverages) > 0): ?>
-            <div class="beverages-section">
-                <div class="section-title">
-                    <i class="fa fa-coffee"></i>
-                    Boissons consommées
-                </div>
-
-                <div class="beverages-list">
-                    <?php foreach ($beverages as $beverage): ?>
-                    <div class="beverage-item">
-                        <div class="beverage-info">
-                            <div class="beverage-icon">
-                                <i class="fa fa-tint"></i>
+            <?php if (!empty($beverages)): ?>
+                <div class="beverages-section">
+                    <h2 class="section-title">
+                        <i class="fa fa-glass"></i>
+                        Boissons de la journée
+                    </h2>
+                    <div class="beverages-grid">
+                        <?php foreach ($beverages as $beverage): ?>
+                            <div class="beverage-card">
+                                <div class="beverage-icon">
+                                    <i class="fa fa-coffee"></i>
+                                </div>
+                                <div class="beverage-details">
+                                    <h4><?php echo htmlspecialchars($beverage->beverage_name); ?></h4>
+                                    <p><?php echo $beverage->time_consumed ? date('H:i', strtotime($beverage->time_consumed)) : 'Heure non spécifiée'; ?></p>
+                                </div>
+                                <div class="beverage-quantity">
+                                    <span class="beverage-quantity-value"><?php echo number_format($beverage->quantity_ml); ?></span>
+                                    <span class="beverage-quantity-unit">ml</span>
+                                </div>
                             </div>
-                            <div class="beverage-details">
-                                <h4><?php echo htmlspecialchars($beverage->beverage_name); ?></h4>
-                                <p>
-                                    <i class="fa fa-clock-o"></i>
-                                    <?php echo date('H:i', strtotime($beverage->consumption_time)); ?>
-                                    <?php if ($beverage->notes): ?>
-                                        - <?php echo htmlspecialchars($beverage->notes); ?>
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="beverage-quantity">
-                            <span class="beverage-quantity-value"><?php echo number_format($beverage->quantity_ml); ?></span>
-                            <span class="beverage-quantity-unit">ml</span>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-                    <?php endforeach; ?>
                 </div>
-            </div>
             <?php endif; ?>
 
             <!-- Recommendations Section -->
             <div class="recommendations-section">
-                <div class="section-title">
+                <h2 class="section-title">
                     <i class="fa fa-lightbulb-o"></i>
                     Recommandations du diététicien
-                </div>
+                </h2>
 
-                <?php if (dietetic_has_permission('edit')): ?>
                 <!-- Add Recommendation Form -->
                 <div class="add-recommendation-form">
-                    <form id="addRecommendationForm">
-                        <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
-                        <input type="hidden" name="entry_id" value="<?php echo $entry->id; ?>">
+                    <h3 style="margin-top: 0; color: var(--text-dark);">
+                        <i class="fa fa-plus-circle"></i>
+                        Ajouter une nouvelle recommandation
+                    </h3>
+                    <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST">
+                        <?php echo form_hidden('entry_id', $entry->id); ?>
+                        <?php echo form_hidden('survey_id', $survey->id); ?>
+                        <?php echo csrf_field(); ?>
+
                         <div class="form-group">
-                            <label for="recommendation_text">Nouvelle recommandation</label>
-                            <textarea name="recommendation_text" id="recommendation_text"
-                                      placeholder="Entrez votre recommandation pour le patient..." required></textarea>
+                            <label>
+                                <i class="fa fa-cutlery"></i>
+                                Repas concerné
+                            </label>
+                            <div class="meal-type-radio-group">
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="breakfast" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-coffee"></i>
+                                        <span class="meal-name">Petit-déjeuner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="lunch" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-sun-o"></i>
+                                        <span class="meal-name">Déjeuner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="dinner" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-moon-o"></i>
+                                        <span class="meal-name">Dîner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="global" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-star"></i>
+                                        <span class="meal-name">Recommandation générale</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
-                        <button type="submit">
-                            <i class="fa fa-plus-circle"></i>
-                            Ajouter une recommandation
+
+                        <div class="form-group">
+                            <label for="recommendation_text">
+                                <i class="fa fa-comment"></i>
+                                Votre recommandation
+                            </label>
+                            <textarea name="recommendation_text" id="recommendation_text"
+                                      placeholder="Entrez votre recommandation détaillée..."
+                                      required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            <i class="fa fa-paper-plane"></i>
+                            Envoyer la recommandation
                         </button>
                     </form>
                 </div>
-                <?php endif; ?>
 
                 <!-- Recommendations List -->
-                <div class="recommendations-list">
-                    <?php if (count($recommendations) > 0): ?>
-                        <?php foreach ($recommendations as $recommendation): ?>
-                        <div class="recommendation-card" data-id="<?php echo $recommendation->id; ?>">
-                            <div class="recommendation-header">
-                                <div class="recommendation-author">
-                                    <div class="recommendation-avatar">
-                                        <?php if ($recommendation->profile_image): ?>
-                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="">
-                                        <?php else: ?>
-                                            <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="recommendation-author-info">
-                                        <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
-                                        <p>
-                                            <i class="fa fa-clock-o"></i>
-                                            <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
-                                        </p>
-                                    </div>
-                                </div>
-                                <?php if (dietetic_has_permission('delete')): ?>
-                                <div class="recommendation-actions">
-                                    <button class="delete" onclick="deleteRecommendation(<?php echo $recommendation->id; ?>)">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="recommendation-body">
-                                <div class="recommendation-text">
-                                    <?php echo nl2br(htmlspecialchars($recommendation->recommendation_text)); ?>
-                                </div>
+                <?php if (!empty($recommendations_by_meal)): ?>
+                    <div class="recommendations-list">
+                        <?php
+                        $meal_labels = [
+                            'breakfast' => ['Petit-déjeuner', 'fa-coffee'],
+                            'lunch' => ['Déjeuner', 'fa-sun-o'],
+                            'dinner' => ['Dîner', 'fa-moon-o'],
+                            'global' => ['Recommandation générale', 'fa-star']
+                        ];
 
-                                <?php if (count($recommendation->comments) > 0): ?>
-                                <div class="recommendation-comments">
-                                    <div class="comments-header">
-                                        <i class="fa fa-comment"></i>
-                                        Commentaires du patient (<?php echo count($recommendation->comments); ?>)
-                                    </div>
-                                    <?php foreach ($recommendation->comments as $comment): ?>
-                                    <div class="comment-item">
-                                        <div class="comment-meta">
-                                            <i class="fa fa-user-circle"></i>
-                                            Patient
-                                            <span>•</span>
-                                            <?php echo date('d/m/Y à H:i', strtotime($comment->created_at)); ?>
+                        foreach ($recommendations_by_meal as $meal_type => $recommendations):
+                            if (!empty($recommendations)):
+                        ?>
+                            <?php foreach ($recommendations as $rec): ?>
+                                <div class="recommendation-card">
+                                    <div class="recommendation-header">
+                                        <div class="recommendation-author">
+                                            <div class="recommendation-avatar">
+                                                <?php
+                                                $staff = $this->db->get_where('staff', ['staffid' => $rec->staff_id])->row();
+                                                if ($staff && $staff->profile_image) {
+                                                    echo '<img src="' . base_url('uploads/staff_profile_images/' . $staff->staffid . '/' . $staff->profile_image) . '" alt="' . $staff->firstname . '">';
+                                                } else {
+                                                    echo strtoupper(substr($staff->firstname, 0, 1));
+                                                }
+                                                ?>
+                                            </div>
+                                            <div class="recommendation-author-info">
+                                                <h4>
+                                                    <?php echo $staff->firstname . ' ' . $staff->lastname; ?>
+                                                </h4>
+                                                <p>Diététicien</p>
+                                            </div>
                                         </div>
-                                        <div class="comment-text">
-                                            <?php echo nl2br(htmlspecialchars($comment->comment_text)); ?>
-                                        </div>
+                                        <span class="recommendation-meal-badge">
+                                            <i class="fa <?php echo $meal_labels[$meal_type][1]; ?>"></i>
+                                            <?php echo $meal_labels[$meal_type][0]; ?>
+                                        </span>
                                     </div>
-                                    <?php endforeach; ?>
+                                    <div class="recommendation-content">
+                                        <?php echo nl2br(htmlspecialchars($rec->recommendation_text)); ?>
+                                    </div>
+                                    <div class="recommendation-meta">
+                                        <span>
+                                            <i class="fa fa-calendar"></i>
+                                            <?php echo date('d/m/Y', strtotime($rec->created_at)); ?>
+                                        </span>
+                                        <span>
+                                            <i class="fa fa-clock-o"></i>
+                                            <?php echo date('H:i', strtotime($rec->created_at)); ?>
+                                        </span>
+                                    </div>
                                 </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="no-recommendations">
-                            <i class="fa fa-lightbulb-o"></i>
-                            <p>Aucune recommandation pour cette entrée</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                            <?php endforeach; ?>
+                        <?php
+                            endif;
+                        endforeach;
+                        ?>
+                    </div>
+                <?php else: ?>
+                    <div class="no-data" style="background: #f7fafc; padding: 60px; border-radius: 12px;">
+                        <i class="fa fa-comments-o"></i>
+                        <p style="font-size: 16px; margin-top: 15px;">Aucune recommandation pour cette entrée</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<?php init_tail(); ?>
-
 <script>
-(function() {
-    'use strict';
-
-    // Add recommendation form submission
-    $('#addRecommendationForm').on('submit', function(e) {
+$(document).ready(function() {
+    // Handle recommendation form submission
+    $('.add-recommendation-form form').on('submit', function(e) {
         e.preventDefault();
 
-        var $form = $(this);
-        var $button = $form.find('button[type="submit"]');
-        var $textarea = $form.find('textarea');
+        var form = $(this);
+        var submitBtn = form.find('.btn-submit');
+        var originalBtnText = submitBtn.html();
 
-        // Validation
-        if (!$textarea.val().trim()) {
-            alert_float('warning', 'Veuillez entrer une recommandation');
-            return;
+        // Check if a meal type is selected
+        var mealType = form.find('input[name="meal_type"]:checked').val();
+        if (!mealType) {
+            alert_float('danger', 'Veuillez sélectionner un type de repas');
+            return false;
         }
 
-        // Disable button
-        $button.prop('disabled', true);
-        $button.html('<i class="fa fa-spinner fa-spin"></i> Ajout en cours...');
+        // Check if recommendation text is filled
+        var recommendationText = form.find('#recommendation_text').val().trim();
+        if (!recommendationText) {
+            alert_float('danger', 'Veuillez saisir votre recommandation');
+            return false;
+        }
+
+        // Disable button and show loading
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
 
         $.ajax({
-            url: admin_url + 'dietetic/food_surveys/add_recommendation',
+            url: form.attr('action'),
             type: 'POST',
-            data: $form.serialize(),
+            data: form.serialize(),
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
@@ -1028,55 +1367,24 @@
                     // Reload page to show new recommendation
                     setTimeout(function() {
                         location.reload();
-                    }, 500);
+                    }, 1000);
                 } else {
-                    alert_float('danger', response.message || 'Une erreur est survenue');
-                    // Re-enable button
-                    $button.prop('disabled', false);
-                    $button.html('<i class="fa fa-plus-circle"></i> Ajouter une recommandation');
+                    alert_float('danger', response.message || 'Erreur lors de l\'ajout de la recommandation');
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalBtnText);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-                console.error('Response:', xhr.responseText);
-                alert_float('danger', 'Une erreur est survenue. Veuillez réessayer.');
-                // Re-enable button
-                $button.prop('disabled', false);
-                $button.html('<i class="fa fa-plus-circle"></i> Ajouter une recommandation');
+                console.error('Error:', xhr.responseText);
+                alert_float('danger', 'Erreur lors de l\'envoi de la recommandation. Veuillez réessayer.');
+                submitBtn.prop('disabled', false);
+                submitBtn.html(originalBtnText);
             }
         });
+
+        return false;
     });
-
-    // Delete recommendation function
-    window.deleteRecommendation = function(id) {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')) {
-            return;
-        }
-
-        $.ajax({
-            url: admin_url + 'dietetic/food_surveys/delete_recommendation/' + id,
-            type: 'POST',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    alert_float('success', response.message);
-                    // Remove recommendation card
-                    $('.recommendation-card[data-id="' + id + '"]').fadeOut(300, function() {
-                        $(this).remove();
-                        // Check if no recommendations left
-                        if ($('.recommendation-card').length === 0) {
-                            $('.recommendations-list').html('<div class="no-recommendations"><i class="fa fa-lightbulb-o"></i><p>Aucune recommandation pour cette entrée</p></div>');
-                        }
-                    });
-                } else {
-                    alert_float('danger', response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-                alert_float('danger', 'Une erreur est survenue. Veuillez réessayer.');
-            }
-        });
-    };
-})();
+});
 </script>
+
+<?php init_tail(); ?>

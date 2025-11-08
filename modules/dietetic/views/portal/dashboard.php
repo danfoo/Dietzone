@@ -1,5 +1,11 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
+<?php
+// Set active page for navigation
+$active_page = 'dashboard';
+?>
+<?php $this->load->view('dietetic/portal/includes/header_styles'); ?>
+<?php $this->load->view('dietetic/portal/includes/header_nav'); ?>
 
 <div class="dietetic-portal-header">
     <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
@@ -569,5 +575,6 @@ if ($food_surveys_enabled) {
         <?php } ?>
     });
 </script>
+<?php $this->load->view('dietetic/portal/includes/header_scripts'); ?>
 
 <?php $this->load->view('authentication/includes/footer'); ?>

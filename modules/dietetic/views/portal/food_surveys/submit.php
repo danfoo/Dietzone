@@ -175,6 +175,128 @@
         white-space: nowrap;
     }
 
+    /* Hamburger Menu */
+    .hamburger-menu {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    @media (min-width: 769px) {
+        .hamburger-menu {
+            display: none;
+        }
+    }
+
+    .hamburger-menu:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .hamburger-icon {
+        width: 28px;
+        height: 24px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .hamburger-icon span {
+        display: block;
+        height: 3px;
+        background: white;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .hamburger-menu.active .hamburger-icon span:nth-child(1) {
+        transform: translateY(10.5px) rotate(45deg);
+    }
+
+    .hamburger-menu.active .hamburger-icon span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .hamburger-menu.active .hamburger-icon span:nth-child(3) {
+        transform: translateY(-10.5px) rotate(-45deg);
+    }
+
+    /* Mobile Menu Overlay */
+    .mobile-menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 998;
+    }
+
+    .mobile-menu-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Mobile Menu Panel */
+    .mobile-menu-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 280px;
+        max-width: 85%;
+        height: 100vh;
+        background: white;
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 999;
+        overflow-y: auto;
+        padding-top: 60px;
+    }
+
+    .mobile-menu-panel.active {
+        transform: translateX(0);
+    }
+
+    .mobile-menu-items {
+        padding: 20px 0;
+    }
+
+    .mobile-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 25px;
+        color: #495057;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .mobile-menu-item:hover {
+        background: #f8f9fa;
+        color: #01807B;
+    }
+
+    .mobile-menu-item.active {
+        background: #e8f5f4;
+        color: #01807B;
+        border-left-color: #01807B;
+    }
+
+    .mobile-menu-item i {
+        font-size: 20px;
+        width: 24px;
+        text-align: center;
+    }
+
     .container-fluid {
         padding: 20px;
         max-width: 1200px;
@@ -204,6 +326,93 @@
         margin: 0;
         opacity: 0.95;
         font-size: 14px;
+    }
+
+    /* Date Navigation */
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .date-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        color: white;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .date-nav-btn:hover:not(.disabled) {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .date-nav-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .date-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: white;
+        color: var(--primary-color);
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 16px;
+        box-shadow: var(--shadow);
+    }
+
+    .date-display.is-today {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, #FFA74D 100%);
+        color: white;
+    }
+
+    .today-badge {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 768px) {
+        .date-navigation {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .date-nav-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-display {
+            order: -1;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-nav-label {
+            display: none;
+        }
     }
 
     /* Back link */
@@ -646,8 +855,60 @@
                     <span>Déconnexion</span>
                 </a>
             </nav>
+
+            <!-- Hamburger Menu (Mobile) -->
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <div class="hamburger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
     </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+    <!-- Mobile Menu Panel -->
+    <div class="mobile-menu-panel" id="mobileMenuPanel">
+        <div class="mobile-menu-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="mobile-menu-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="mobile-menu-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Plans de Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="mobile-menu-item active">
+                <i class="fa fa-clipboard-list"></i>
+                <span>Enquêtes Alimentaires</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="mobile-menu-item">
+                <i class="fa fa-heartbeat"></i>
+                <span>Mes Mesures</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="mobile-menu-item">
+                <i class="fa fa-user-md"></i>
+                <span>Mon Diététicien</span>
+            </a>
+            <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="mobile-menu-item">
+                <i class="fa fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+            <?php } ?>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="mobile-menu-item">
+                <i class="fa fa-user"></i>
+                <span>Mon Profil</span>
+            </a>
+            <a href="<?php echo site_url('authentication/logout'); ?>" class="mobile-menu-item">
+                <i class="fa fa-sign-out"></i>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </div>
 
     <div class="container-fluid">
         <!-- Back link -->
@@ -662,7 +923,34 @@
                 <i class="fa fa-camera"></i>
                 <?php echo htmlspecialchars($survey->survey_name); ?>
             </h1>
-            <p>Soumission quotidienne du <?php echo date('d/m/Y'); ?></p>
+
+            <!-- Date Navigation -->
+            <div class="date-navigation">
+                <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id . '/' . $prev_date); ?>" class="date-nav-btn">
+                    <i class="fa fa-chevron-left"></i>
+                    <span class="date-nav-label">Jour précédent</span>
+                </a>
+
+                <div class="date-display <?php echo $is_today ? 'is-today' : ''; ?>">
+                    <i class="fa fa-calendar"></i>
+                    <span><?php echo date('d/m/Y', strtotime($selected_date)); ?></span>
+                    <?php if ($is_today): ?>
+                        <span class="today-badge">Aujourd'hui</span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($can_go_next): ?>
+                    <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id . '/' . $next_date); ?>" class="date-nav-btn">
+                        <span class="date-nav-label">Jour suivant</span>
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                <?php else: ?>
+                    <div class="date-nav-btn disabled">
+                        <span class="date-nav-label">Jour suivant</span>
+                        <i class="fa fa-chevron-right"></i>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Alert area -->
@@ -670,7 +958,7 @@
 
         <form id="dailyEntryForm">
             <input type="hidden" name="survey_id" value="<?php echo $survey->id; ?>">
-            <input type="hidden" name="entry_date" value="<?php echo date('Y-m-d'); ?>">
+            <input type="hidden" name="entry_date" value="<?php echo $selected_date; ?>">
             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <!-- Meals Section -->
@@ -1145,6 +1433,51 @@
             });
         }, 5000);
     }
+
+    // Hamburger Menu Toggle
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileMenuPanel = document.getElementById('mobileMenuPanel');
+
+    function toggleMenu() {
+        if (!hamburgerMenu || !mobileMenuOverlay || !mobileMenuPanel) return;
+
+        hamburgerMenu.classList.toggle('active');
+        mobileMenuOverlay.classList.toggle('active');
+        mobileMenuPanel.classList.toggle('active');
+
+        // Prevent body scroll when menu is open
+        if (mobileMenuPanel.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (hamburgerMenu) {
+        hamburgerMenu.addEventListener('click', toggleMenu);
+    }
+
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', toggleMenu);
+    }
+
+    // Close menu on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && mobileMenuPanel && mobileMenuPanel.classList.contains('active')) {
+            toggleMenu();
+        }
+    });
+
+    // Touch feedback for mobile menu items
+    document.querySelectorAll('.mobile-menu-item').forEach(function(element) {
+        element.addEventListener('touchstart', function() {
+            this.style.opacity = '0.7';
+        });
+        element.addEventListener('touchend', function() {
+            this.style.opacity = '';
+        });
+    });
     </script>
 
     <!-- Bottom Mobile Navigation -->

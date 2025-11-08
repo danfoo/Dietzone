@@ -302,9 +302,10 @@ class Dietetic_food_surveys_model extends App_Model
      * Get recommendations for an entry
      *
      * @param int $entry_id
+     * @param string $meal_type Optional filter by meal type (breakfast, lunch, dinner, global)
      * @return array
      */
-    public function get_recommendations($entry_id)
+    public function get_recommendations($entry_id, $meal_type = null)
     {
         $this->db->select($this->table_recommendations . '.*,
             CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name,
@@ -312,9 +313,59 @@ class Dietetic_food_surveys_model extends App_Model
         $this->db->from($this->table_recommendations);
         $this->db->join('tblstaff', 'tblstaff.staffid = ' . $this->table_recommendations . '.dietitian_id', 'left');
         $this->db->where('entry_id', $entry_id);
+
+        if ($meal_type !== null) {
+            $this->db->where('meal_type', $meal_type);
+        }
+
         $this->db->order_by($this->table_recommendations . '.created_at', 'DESC');
 
         return $this->db->get()->result();
+    }
+
+    /**
+     * Get recommendations by meal type for an entry
+     *
+     * @param int $entry_id
+     * @return array Array with keys 'breakfast', 'lunch', 'dinner', 'global'
+     */
+    public function get_recommendations_by_meal($entry_id)
+    {
+        $recommendations = $this->get_recommendations($entry_id);
+
+        $grouped = [
+            'breakfast' => [],
+            'lunch' => [],
+            'dinner' => [],
+            'global' => []
+        ];
+
+        // Check if meal_type column exists (for backward compatibility)
+        $columns = $this->db->list_fields($this->table_recommendations);
+        $has_meal_type_column = in_array('meal_type', $columns);
+
+        foreach ($recommendations as $recommendation) {
+            // Determine meal type
+            if (!$has_meal_type_column) {
+                // Column doesn't exist, treat all as global
+                $meal_type = 'global';
+            } elseif (isset($recommendation->meal_type) && !empty($recommendation->meal_type)) {
+                // Column exists and has a value
+                $meal_type = $recommendation->meal_type;
+            } else {
+                // Column exists but is NULL or empty, default to global
+                $meal_type = 'global';
+            }
+
+            // Make sure the meal_type is valid
+            if (!isset($grouped[$meal_type])) {
+                $meal_type = 'global';
+            }
+
+            $grouped[$meal_type][] = $recommendation;
+        }
+
+        return $grouped;
     }
 
     /**
@@ -326,6 +377,13 @@ class Dietetic_food_surveys_model extends App_Model
     public function add_recommendation($data)
     {
         $data['created_at'] = date('Y-m-d H:i:s');
+
+        // Check if meal_type column exists (for backward compatibility)
+        $columns = $this->db->list_fields($this->table_recommendations);
+        if (!in_array('meal_type', $columns) && isset($data['meal_type'])) {
+            // Column doesn't exist yet, remove it to avoid SQL error
+            unset($data['meal_type']);
+        }
 
         if ($this->db->insert($this->table_recommendations, $data)) {
             $recommendation_id = $this->db->insert_id();

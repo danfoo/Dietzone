@@ -77,6 +77,32 @@ class Consultations extends AdminController
             $consultation_id = $this->dietetic_consultations_model->add($data);
 
             if ($consultation_id) {
+                // Send notification to patient
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && isset($data['patient_id'])) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+
+                        // Get consultation info
+                        $consultation = $this->dietetic_consultations_model->get($consultation_id);
+
+                        // Get dietitian info
+                        $dietitian_id = $data['dietitian_id'] ?? get_staff_user_id();
+                        $dietitian = $this->staff_model->get($dietitian_id);
+                        $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                        // Send notification
+                        $this->dietetic_notifications_model->notify_consultation_scheduled(
+                            $data['patient_id'],
+                            $data['consultation_date'],
+                            $data['consultation_time'] ?? null,
+                            $dietitian_name,
+                            $data['consultation_type'] ?? 'Consultation'
+                        );
+                    }
+                } catch (Exception $e) {
+                    log_activity('Consultation notification error: ' . $e->getMessage());
+                }
+
                 set_alert('success', _l('added_successfully'));
                 redirect(admin_url('dietetic/consultations/view/' . $consultation_id));
             } else {
@@ -115,7 +141,51 @@ class Consultations extends AdminController
         if ($this->input->post()) {
             $update_data = $this->input->post();
 
+            // Check if consultation was cancelled
+            $was_cancelled = (isset($update_data['status']) &&
+                             $update_data['status'] == 'cancelled' &&
+                             $data['consultation']->status != 'cancelled');
+
             if ($this->dietetic_consultations_model->update($id, $update_data)) {
+                // Send appropriate notification
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $data['consultation']->patient_id) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+
+                        // Get dietitian info
+                        $dietitian = $this->staff_model->get($data['consultation']->dietitian_id);
+                        $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                        if ($was_cancelled) {
+                            // Notify cancellation
+                            $this->dietetic_notifications_model->notify_consultation_cancelled(
+                                $data['consultation']->patient_id,
+                                $data['consultation']->consultation_date,
+                                $dietitian_name,
+                                $update_data['cancellation_reason'] ?? ''
+                            );
+                        } else {
+                            // Notify modification (date/time changed)
+                            $date_changed = isset($update_data['consultation_date']) &&
+                                          $update_data['consultation_date'] != $data['consultation']->consultation_date;
+                            $time_changed = isset($update_data['consultation_time']) &&
+                                          $update_data['consultation_time'] != $data['consultation']->consultation_time;
+
+                            if ($date_changed || $time_changed) {
+                                $this->dietetic_notifications_model->notify_consultation_scheduled(
+                                    $data['consultation']->patient_id,
+                                    $update_data['consultation_date'] ?? $data['consultation']->consultation_date,
+                                    $update_data['consultation_time'] ?? $data['consultation']->consultation_time,
+                                    $dietitian_name,
+                                    $update_data['consultation_type'] ?? $data['consultation']->consultation_type
+                                );
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    log_activity('Consultation update notification error: ' . $e->getMessage());
+                }
+
                 set_alert('success', _l('updated_successfully'));
                 redirect(admin_url('dietetic/consultations/view/' . $id));
             } else {

@@ -113,6 +113,17 @@ class Measurements extends AdminController
                 $measurement_id = $this->dietetic_measurements_model->add($post_data);
 
                 if ($measurement_id) {
+                    // Check for milestones (wrapped in try-catch to not block measurement creation)
+                    try {
+                        if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
+                            $this->load->model('dietetic/dietetic_notifications_model');
+                            $this->dietetic_notifications_model->check_milestones($patient_id);
+                        }
+                    } catch (Exception $e) {
+                        // Log error but don't fail the measurement creation
+                        log_activity('Dietetic milestone check error: ' . $e->getMessage());
+                    }
+
                     set_alert('success', 'Measurement added successfully');
                     redirect(admin_url('dietetic/patients/view/' . $patient_id));
                     return;

@@ -307,12 +307,18 @@ class Food_surveys extends AdminController
 
         $data['survey'] = $this->dietetic_food_surveys_model->get($data['entry']->survey_id);
         $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($entry_id);
-        $data['recommendations'] = $this->dietetic_food_surveys_model->get_recommendations($entry_id);
 
-        // Get comments for each recommendation
-        foreach ($data['recommendations'] as &$recommendation) {
-            $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+        // Get recommendations grouped by meal type
+        $recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry_id);
+
+        // Get comments for each recommendation in each meal
+        foreach ($recommendations_by_meal as $meal_type => &$recommendations) {
+            foreach ($recommendations as &$recommendation) {
+                $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+            }
         }
+
+        $data['recommendations_by_meal'] = $recommendations_by_meal;
 
         $data['title'] = 'Entrée du ' . date('d/m/Y', strtotime($data['entry']->entry_date));
 
@@ -331,6 +337,7 @@ class Food_surveys extends AdminController
         if ($this->input->post()) {
             $data = [
                 'entry_id' => $this->input->post('entry_id'),
+                'meal_type' => $this->input->post('meal_type') ?: 'global',
                 'dietitian_id' => get_staff_user_id(),
                 'recommendation_text' => $this->input->post('recommendation_text')
             ];
@@ -338,6 +345,34 @@ class Food_surveys extends AdminController
             $recommendation_id = $this->dietetic_food_surveys_model->add_recommendation($data);
 
             if ($recommendation_id) {
+                // Send notification to patient
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                        // Get entry to find patient
+                        $entry = $this->dietetic_food_surveys_model->get_entry($data['entry_id']);
+                        if ($entry) {
+                            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+                            if ($survey && $survey->patient_id) {
+                                $this->load->model('dietetic/dietetic_notifications_model');
+                                $this->load->model('staff_model');
+
+                                // Get dietitian info
+                                $dietitian = $this->staff_model->get(get_staff_user_id());
+                                $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                                // Send notification
+                                $this->dietetic_notifications_model->notify_patient_recommendation(
+                                    $survey->patient_id,
+                                    $dietitian_name,
+                                    $data['meal_type']
+                                );
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    log_activity('Recommendation notification error: ' . $e->getMessage());
+                }
+
                 echo json_encode([
                     'success' => true,
                     'message' => 'Recommandation ajoutée avec succès'
@@ -620,5 +655,62 @@ class Food_surveys extends AdminController
         imagedestroy($thumb_image);
 
         return $result;
+    }
+
+    /**
+     * Run migration to add meal_type column to recommendations
+     * URL: /admin/dietetic/food_surveys/run_migration
+     */
+    public function run_migration()
+    {
+        if (!is_admin()) {
+            access_denied('Migration');
+        }
+
+        $this->load->view('admin/food_surveys/run_migration');
+    }
+
+    /**
+     * Execute migration via AJAX
+     */
+    public function execute_migration()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        try {
+            // Check if column already exists
+            $columns = $this->db->list_fields('tbldietic_food_survey_recommendations');
+
+            if (in_array('meal_type', $columns)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'La colonne meal_type existe déjà dans la table.',
+                    'already_exists' => true
+                ]);
+                return;
+            }
+
+            // Add meal_type column
+            $sql = "ALTER TABLE `" . db_prefix() . "dietic_food_survey_recommendations`
+                    ADD COLUMN `meal_type` ENUM('breakfast', 'lunch', 'dinner', 'global') DEFAULT 'global'
+                    AFTER `entry_id`,
+                    ADD INDEX `idx_meal_type` (`meal_type`)";
+
+            $this->db->query($sql);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration exécutée avec succès ! La colonne meal_type a été ajoutée.'
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la migration : ' . $e->getMessage()
+            ]);
+        }
     }
 }

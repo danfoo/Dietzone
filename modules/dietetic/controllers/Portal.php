@@ -57,7 +57,9 @@ class Portal extends App_Controller
             'view_recommendations',
             'add_comment',
             'upload_photo',
-            'delete_photo'
+            'delete_photo',
+            'notification_preferences',
+            'save_notification_preferences'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -309,6 +311,17 @@ class Portal extends App_Controller
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
                 if ($measurement_id) {
+                    // Check for milestones (wrapped in try-catch to not block measurement creation)
+                    try {
+                        if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
+                            $this->load->model('dietetic/dietetic_notifications_model');
+                            $this->dietetic_notifications_model->check_milestones($patient->id);
+                        }
+                    } catch (Exception $e) {
+                        // Log error but don't fail the measurement creation
+                        log_activity('Dietetic milestone check error: ' . $e->getMessage());
+                    }
+
                     // Send notification to dietitian (wrapped in try-catch to not block measurement creation)
                     if ($patient->dietitian_id) {
                         try {
@@ -1117,8 +1130,9 @@ class Portal extends App_Controller
      * Daily food survey submission form
      *
      * @param int $survey_id
+     * @param string $date Optional date in Y-m-d format
      */
-    public function food_survey_submit($survey_id)
+    public function food_survey_submit($survey_id, $date = null)
     {
         // Check if client is logged in
         if (!is_client_logged_in()) {
@@ -1152,9 +1166,18 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         $data['client'] = $client;
 
-        // Get today's entry if it exists
-        $today = date('Y-m-d');
-        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $today);
+        // Determine which date to display
+        if ($date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $selected_date = $date;
+        } else {
+            $selected_date = date('Y-m-d');
+        }
+
+        $data['selected_date'] = $selected_date;
+        $data['is_today'] = ($selected_date == date('Y-m-d'));
+
+        // Get entry for the selected date
+        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $selected_date);
 
         // Get existing beverages if entry exists
         if ($data['today_entry']) {
@@ -1162,6 +1185,13 @@ class Portal extends App_Controller
         } else {
             $data['beverages'] = [];
         }
+
+        // Calculate previous and next dates for navigation
+        $prev_date = date('Y-m-d', strtotime($selected_date . ' -1 day'));
+        $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
+        $data['prev_date'] = $prev_date;
+        $data['next_date'] = $next_date;
+        $data['can_go_next'] = (strtotime($next_date) <= strtotime(date('Y-m-d')));
 
         $this->load->view('portal/food_surveys/submit', $data);
     }
@@ -1258,6 +1288,27 @@ class Portal extends App_Controller
                     }
                 }
 
+                // Send notification to dietitian
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $patient->dietitian_id) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+                        $this->load->model('clients_model');
+
+                        // Get patient name
+                        $client = $this->clients_model->get($patient->client_id);
+                        $patient_name = $client ? $client->company : 'Un patient';
+
+                        // Send notification
+                        $this->dietetic_notifications_model->notify_dietitian_food_entry(
+                            $patient->dietitian_id,
+                            $patient_name,
+                            $entry_data['entry_date']
+                        );
+                    }
+                } catch (Exception $e) {
+                    log_activity('Food entry notification error: ' . $e->getMessage());
+                }
+
                 echo json_encode([
                     'success' => true,
                     'message' => 'Entrée enregistrée avec succès',
@@ -1324,11 +1375,14 @@ class Portal extends App_Controller
 
         foreach ($entries as $entry) {
             if ($entry->has_recommendation) {
-                $entry->recommendations = $this->dietetic_food_surveys_model->get_recommendations($entry->id);
+                // Get recommendations grouped by meal type
+                $entry->recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry->id);
 
-                // Get comments for each recommendation
-                foreach ($entry->recommendations as &$recommendation) {
-                    $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                // Get comments for each recommendation in each meal type
+                foreach ($entry->recommendations_by_meal as $meal_type => &$recommendations) {
+                    foreach ($recommendations as &$recommendation) {
+                        $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                    }
                 }
 
                 $data['entries'][] = $entry;
@@ -1662,6 +1716,105 @@ class Portal extends App_Controller
         imagedestroy($thumb);
 
         return true;
+    }
+
+    /**
+     * Notification preferences page
+     */
+    public function notification_preferences()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            set_alert('danger', 'Patient non trouvé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        // Check if notifications tables exist
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            set_alert('warning', 'Le système de notifications n\'est pas encore installé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Get or create preferences
+        $data['preferences'] = $this->dietetic_notifications_model->get_preferences($patient->id);
+        if (!$data['preferences']) {
+            $this->dietetic_notifications_model->create_default_preferences($patient->id);
+            $data['preferences'] = $this->dietetic_notifications_model->get_preferences($patient->id);
+        }
+
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Préférences de Notification';
+
+        $this->load->view('portal/notifications/preferences', $data);
+    }
+
+    /**
+     * Save notification preferences
+     */
+    public function save_notification_preferences()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non autorisé']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Prepare preferences data
+        $preferences = [
+            'reminder_weight' => $this->input->post('reminder_weight') ? 1 : 0,
+            'reminder_weight_day' => $this->input->post('reminder_weight_day') ?: 'friday',
+            'reminder_weight_time' => $this->input->post('reminder_weight_time') ?: '09:00:00',
+            'reminder_water' => $this->input->post('reminder_water') ? 1 : 0,
+            'reminder_water_times' => $this->input->post('reminder_water_times') ?: '10:00,14:00,18:00',
+            'notify_recommendation' => $this->input->post('notify_recommendation') ? 1 : 0,
+            'notify_consultation' => $this->input->post('notify_consultation') ? 1 : 0,
+            'notify_milestone' => $this->input->post('notify_milestone') ? 1 : 0,
+            'notify_program' => $this->input->post('notify_program') ? 1 : 0,
+            'notify_food_entry' => $this->input->post('notify_food_entry') ? 1 : 0,
+            'channel_email' => $this->input->post('channel_email') ? 1 : 0,
+            'channel_sms' => $this->input->post('channel_sms') ? 1 : 0,
+            'channel_whatsapp' => $this->input->post('channel_whatsapp') ? 1 : 0,
+        ];
+
+        // Update preferences
+        $result = $this->dietetic_notifications_model->update_preferences($patient->id, $preferences);
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Vos préférences ont été enregistrées avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'enregistrement des préférences'
+            ]);
+        }
     }
 }
 

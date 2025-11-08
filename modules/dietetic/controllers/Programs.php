@@ -96,6 +96,30 @@ class Programs extends AdminController
             $program_id = $this->dietetic_programs_model->add($data);
 
             if ($program_id) {
+                // Send notification to patient
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && isset($data['patient_id'])) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+
+                        // Get program info
+                        $program = $this->dietetic_programs_model->get($program_id);
+
+                        // Get dietitian info
+                        $dietitian_id = $data['dietitian_id'] ?? get_staff_user_id();
+                        $dietitian = $this->staff_model->get($dietitian_id);
+                        $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                        // Send notification
+                        $this->dietetic_notifications_model->notify_program_assigned(
+                            $data['patient_id'],
+                            $program->name,
+                            $dietitian_name
+                        );
+                    }
+                } catch (Exception $e) {
+                    log_activity('Program notification error: ' . $e->getMessage());
+                }
+
                 set_alert('success', _l('added_successfully'));
                 redirect(admin_url('dietetic/programs/view/' . $program_id));
             } else {
@@ -131,6 +155,30 @@ class Programs extends AdminController
             $update_data = $this->input->post();
 
             if ($this->dietetic_programs_model->update($id, $update_data)) {
+                // Send notification to patient
+                try {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $data['program']->patient_id) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+
+                        // Get updated program info
+                        $program = $this->dietetic_programs_model->get($id);
+
+                        // Get dietitian info
+                        $dietitian_id = $program->dietitian_id;
+                        $dietitian = $this->staff_model->get($dietitian_id);
+                        $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+
+                        // Send notification
+                        $this->dietetic_notifications_model->notify_program_updated(
+                            $program->patient_id,
+                            $program->name,
+                            $dietitian_name
+                        );
+                    }
+                } catch (Exception $e) {
+                    log_activity('Program update notification error: ' . $e->getMessage());
+                }
+
                 set_alert('success', _l('updated_successfully'));
                 redirect(admin_url('dietetic/programs/view/' . $id));
             } else {

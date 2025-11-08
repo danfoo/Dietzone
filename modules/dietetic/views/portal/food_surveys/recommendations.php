@@ -210,8 +210,32 @@
         .recommendation-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
             margin-bottom: 16px;
+        }
+
+        .recommendation-author-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .recommendation-meal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .recommendation-meal-badge i {
+            font-size: 14px;
         }
 
         .dietitian-avatar {
@@ -443,6 +467,128 @@
             transform: scale(0.95);
         }
 
+        /* Hamburger Menu */
+        .hamburger-menu {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 769px) {
+            .hamburger-menu {
+                display: none;
+            }
+        }
+
+        .hamburger-menu:hover {
+            background: #f8f9fa;
+        }
+
+        .hamburger-icon {
+            width: 28px;
+            height: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 3px;
+            background: #01807B;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active .hamburger-icon span:nth-child(1) {
+            transform: translateY(10.5px) rotate(45deg);
+        }
+
+        .hamburger-menu.active .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active .hamburger-icon span:nth-child(3) {
+            transform: translateY(-10.5px) rotate(-45deg);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 998;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Mobile Menu Panel */
+        .mobile-menu-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 280px;
+            max-width: 85%;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            padding-top: 60px;
+        }
+
+        .mobile-menu-panel.active {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-items {
+            padding: 20px 0;
+        }
+
+        .mobile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: #495057;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .mobile-menu-item:hover {
+            background: #f8f9fa;
+            color: #01807B;
+        }
+
+        .mobile-menu-item.active {
+            background: #e8f5f4;
+            color: #01807B;
+            border-left-color: #01807B;
+        }
+
+        .mobile-menu-item i {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
         /* Loading */
         .btn-loading {
             opacity: 0.6;
@@ -491,7 +637,59 @@
                         <i class="fa fa-user"></i> Profil
                     </a>
                 </nav>
+
+                <!-- Hamburger Menu (Mobile) -->
+                <div class="hamburger-menu" id="hamburgerMenu">
+                    <div class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+    <!-- Mobile Menu Panel -->
+    <div class="mobile-menu-panel" id="mobileMenuPanel">
+        <div class="mobile-menu-items">
+            <a href="<?php echo site_url('dietetic/portal'); ?>" class="mobile-menu-item">
+                <i class="fa fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="mobile-menu-item">
+                <i class="fa fa-cutlery"></i>
+                <span>Plans de Repas</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="mobile-menu-item active">
+                <i class="fa fa-clipboard-list"></i>
+                <span>Enquêtes Alimentaires</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="mobile-menu-item">
+                <i class="fa fa-heartbeat"></i>
+                <span>Mes Mesures</span>
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="mobile-menu-item">
+                <i class="fa fa-user-md"></i>
+                <span>Mon Diététicien</span>
+            </a>
+            <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="mobile-menu-item">
+                <i class="fa fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+            <?php } ?>
+            <a href="<?php echo site_url('clients/profile'); ?>" class="mobile-menu-item">
+                <i class="fa fa-user"></i>
+                <span>Mon Profil</span>
+            </a>
+            <a href="<?php echo site_url('authentication/logout'); ?>" class="mobile-menu-item">
+                <i class="fa fa-sign-out"></i>
+                <span>Déconnexion</span>
+            </a>
         </div>
     </div>
 
@@ -527,32 +725,49 @@
                         </div>
                     </div>
 
-                    <?php foreach ($entry->recommendations as $recommendation): ?>
+                    <?php
+                    $meal_labels = [
+                        'breakfast' => ['Petit-déjeuner', 'fa-coffee'],
+                        'lunch' => ['Déjeuner', 'fa-sun-o'],
+                        'dinner' => ['Dîner', 'fa-moon-o'],
+                        'global' => ['Recommandation générale', 'fa-star']
+                    ];
+
+                    foreach ($entry->recommendations_by_meal as $meal_type => $recommendations):
+                        if (!empty($recommendations)):
+                            foreach ($recommendations as $recommendation):
+                    ?>
                         <div class="recommendation" data-id="<?php echo $recommendation->id; ?>">
                             <div class="recommendation-header">
-                                <div class="dietitian-avatar">
-                                    <?php
-                                    $has_profile_image = false;
-                                    if (!empty($recommendation->profile_image)) {
-                                        $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
-                                        if (file_exists($image_path)) {
-                                            $has_profile_image = true;
+                                <div class="recommendation-author-group">
+                                    <div class="dietitian-avatar">
+                                        <?php
+                                        $has_profile_image = false;
+                                        if (!empty($recommendation->profile_image)) {
+                                            $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
+                                            if (file_exists($image_path)) {
+                                                $has_profile_image = true;
+                                            }
                                         }
-                                    }
 
-                                    if ($has_profile_image): ?>
-                                        <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
-                                    <?php else: ?>
-                                        <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
-                                    <?php endif; ?>
+                                        if ($has_profile_image): ?>
+                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
+                                        <?php else: ?>
+                                            <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="recommendation-info">
+                                        <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
+                                        <p>
+                                            <i class="fa fa-clock-o"></i>
+                                            <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="recommendation-info">
-                                    <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
-                                    <p>
-                                        <i class="fa fa-clock-o"></i>
-                                        <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
-                                    </p>
-                                </div>
+                                <span class="recommendation-meal-badge">
+                                    <i class="fa <?php echo $meal_labels[$meal_type][1]; ?>"></i>
+                                    <?php echo $meal_labels[$meal_type][0]; ?>
+                                </span>
                             </div>
 
                             <div class="recommendation-text">
@@ -594,7 +809,11 @@
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php
+                            endforeach;
+                        endif;
+                    endforeach;
+                    ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -724,6 +943,51 @@
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
             }
+
+            // Hamburger Menu Toggle
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+            const mobileMenuPanel = document.getElementById('mobileMenuPanel');
+
+            function toggleMenu() {
+                if (!hamburgerMenu || !mobileMenuOverlay || !mobileMenuPanel) return;
+
+                hamburgerMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                mobileMenuPanel.classList.toggle('active');
+
+                // Prevent body scroll when menu is open
+                if (mobileMenuPanel.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+
+            if (hamburgerMenu) {
+                hamburgerMenu.addEventListener('click', toggleMenu);
+            }
+
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.addEventListener('click', toggleMenu);
+            }
+
+            // Close menu on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && mobileMenuPanel && mobileMenuPanel.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+
+            // Touch feedback for mobile menu items
+            document.querySelectorAll('.mobile-menu-item').forEach(function(element) {
+                element.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.7';
+                });
+                element.addEventListener('touchend', function() {
+                    this.style.opacity = '';
+                });
+            });
         });
     </script>
 </body>
