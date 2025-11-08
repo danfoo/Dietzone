@@ -269,148 +269,6 @@
     transition: width 1s ease;
 }
 
-/* Timeline View */
-.timeline-container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-bottom: 30px;
-}
-
-.timeline {
-    position: relative;
-    padding: 20px 0;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
-    transform: translateX(-50%);
-}
-
-.timeline-item {
-    display: flex;
-    margin-bottom: 40px;
-    position: relative;
-}
-
-.timeline-item:nth-child(odd) {
-    flex-direction: row-reverse;
-}
-
-.timeline-item:last-child {
-    margin-bottom: 0;
-}
-
-.timeline-content {
-    width: calc(50% - 40px);
-    background: #f7fafc;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    border: 2px solid var(--border-color);
-    transition: var(--transition);
-}
-
-.timeline-content:hover {
-    transform: scale(1.02);
-    border-color: var(--primary-color);
-}
-
-.timeline-marker {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--primary-color), #026660);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 20px;
-    box-shadow: 0 0 0 8px white, var(--shadow-lg);
-    z-index: 2;
-}
-
-.timeline-time {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.timeline-meal-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-dark);
-    margin-bottom: 10px;
-}
-
-.timeline-photo {
-    width: 100%;
-    height: 150px;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 10px;
-    cursor: pointer;
-    position: relative;
-}
-
-.timeline-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: var(--transition);
-}
-
-.timeline-photo:hover img {
-    transform: scale(1.05);
-}
-
-.timeline-photo::after {
-    content: '\f00e';
-    font-family: 'FontAwesome';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.timeline-photo:hover::after {
-    opacity: 1;
-}
-
-.timeline-notes {
-    font-size: 14px;
-    color: var(--text-dark);
-    line-height: 1.6;
-    padding: 10px;
-    background: white;
-    border-radius: 6px;
-    border-left: 3px solid var(--secondary-color);
-}
-
 /* Meals Section */
 .meals-section {
     background: white;
@@ -441,6 +299,50 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 25px;
+}
+
+/* Day View - Vertical chronological layout */
+.meals-day-view {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    padding-left: 40px;
+}
+
+.meals-day-view::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 60px;
+    bottom: 60px;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+}
+
+.meals-day-view .meal-card {
+    position: relative;
+}
+
+.meals-day-view .meal-card::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 20px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 3px solid var(--primary-color);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.meals-day-view .meal-card.has-data::before {
+    background: var(--primary-color);
+    box-shadow: 0 0 0 6px rgba(1, 128, 123, 0.2);
 }
 
 .meal-card {
@@ -1042,21 +944,17 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-    .timeline::before {
-        left: 30px;
+    .meals-day-view {
+        padding-left: 30px;
+        max-width: 100%;
     }
 
-    .timeline-item {
-        flex-direction: row !important;
+    .meals-day-view::before {
+        left: 15px;
     }
 
-    .timeline-content {
-        width: calc(100% - 80px);
-        margin-left: 80px;
-    }
-
-    .timeline-marker {
-        left: 30px;
+    .meals-day-view .meal-card::before {
+        left: -25px;
     }
 }
 
@@ -1085,10 +983,23 @@
         grid-template-columns: 1fr;
     }
 
+    .meals-day-view {
+        padding-left: 20px;
+    }
+
+    .meals-day-view::before {
+        left: 10px;
+    }
+
+    .meals-day-view .meal-card::before {
+        left: -20px;
+        width: 16px;
+        height: 16px;
+    }
+
     .meals-section,
     .beverages-section,
-    .recommendations-section,
-    .timeline-container {
+    .recommendations-section {
         padding: 20px;
     }
 
@@ -1102,17 +1013,6 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
-    }
-
-    .timeline-content {
-        width: calc(100% - 60px);
-        margin-left: 60px;
-    }
-
-    .timeline-marker {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
     }
 
     .header-actions {
@@ -1131,8 +1031,7 @@
         align-items: flex-start;
     }
 
-    .meal-photo-container,
-    .timeline-photo {
+    .meal-photo-container {
         height: 150px;
     }
 
@@ -1210,6 +1109,37 @@
                         Patient
                     </div>
                     <div class="info-card-value"><?php echo htmlspecialchars($survey->patient_name); ?></div>
+                    <div class="info-card-label"><?php echo htmlspecialchars($survey->program_name ?: 'Aucun programme'); ?></div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fa fa-user-md"></i>
+                        Diététicien
+                    </div>
+                    <div class="info-card-value" style="font-size: 18px;"><?php echo htmlspecialchars($survey->dietitian_name); ?></div>
+                    <div class="info-card-label">Responsable du suivi</div>
+                </div>
+
+                <?php
+                // Calculate meal completion
+                $meals_logged = 0;
+                $total_meals = 3;
+                if ($entry->breakfast_photo || $entry->breakfast_notes) $meals_logged++;
+                if ($entry->lunch_photo || $entry->lunch_notes) $meals_logged++;
+                if ($entry->dinner_photo || $entry->dinner_notes) $meals_logged++;
+                $completion_percentage = round(($meals_logged / $total_meals) * 100);
+                ?>
+                <div class="info-card <?php echo $meals_logged == $total_meals ? 'success' : ($meals_logged > 0 ? 'warning' : 'danger'); ?>">
+                    <div class="info-card-header">
+                        <i class="fa fa-cutlery"></i>
+                        Repas complétés
+                    </div>
+                    <div class="info-card-value"><?php echo $meals_logged; ?> / <?php echo $total_meals; ?></div>
+                    <div class="info-card-label"><?php echo $completion_percentage; ?>% de complétion</div>
+                    <div class="water-progress">
+                        <div class="water-progress-bar" style="width: <?php echo $completion_percentage; ?>%"></div>
+                    </div>
                 </div>
 
                 <div class="info-card warning">
@@ -1253,97 +1183,19 @@
                 </div>
             </div>
 
-            <!-- Timeline View -->
-            <div class="timeline-container">
-                <div class="section-title">
-                    <i class="fa fa-clock-o"></i>
-                    Timeline de la journée
-                </div>
-
-                <div class="timeline">
-                    <?php
-                    $meals_timeline = [];
-                    if ($entry->breakfast_time) {
-                        $meals_timeline[] = [
-                            'time' => $entry->breakfast_time,
-                            'name' => 'Petit-déjeuner',
-                            'icon' => 'coffee',
-                            'photo' => $entry->breakfast_photo,
-                            'notes' => $entry->breakfast_notes
-                        ];
-                    }
-                    if ($entry->lunch_time) {
-                        $meals_timeline[] = [
-                            'time' => $entry->lunch_time,
-                            'name' => 'Déjeuner',
-                            'icon' => 'sun-o',
-                            'photo' => $entry->lunch_photo,
-                            'notes' => $entry->lunch_notes
-                        ];
-                    }
-                    if ($entry->dinner_time) {
-                        $meals_timeline[] = [
-                            'time' => $entry->dinner_time,
-                            'name' => 'Dîner',
-                            'icon' => 'moon-o',
-                            'photo' => $entry->dinner_photo,
-                            'notes' => $entry->dinner_notes
-                        ];
-                    }
-
-                    // Sort by time
-                    usort($meals_timeline, function($a, $b) {
-                        return strtotime($a['time']) - strtotime($b['time']);
-                    });
-
-                    if (count($meals_timeline) > 0):
-                        foreach ($meals_timeline as $meal):
-                    ?>
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <div class="timeline-time">
-                                <i class="fa fa-clock-o"></i>
-                                <?php echo date('H:i', strtotime($meal['time'])); ?>
-                            </div>
-                            <div class="timeline-meal-name">
-                                <i class="fa fa-<?php echo $meal['icon']; ?>"></i>
-                                <?php echo $meal['name']; ?>
-                            </div>
-                            <?php if ($meal['photo']): ?>
-                                <div class="timeline-photo" onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $meal['photo']); ?>')">
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $meal['photo']); ?>" alt="<?php echo $meal['name']; ?>">
-                                </div>
-                            <?php endif; ?>
-                            <?php if ($meal['notes']): ?>
-                                <div class="timeline-notes">
-                                    <?php echo nl2br(htmlspecialchars($meal['notes'])); ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="timeline-marker">
-                            <i class="fa fa-<?php echo $meal['icon']; ?>"></i>
-                        </div>
-                    </div>
-                    <?php
-                        endforeach;
-                    else:
-                    ?>
-                    <div class="no-data">
-                        <i class="fa fa-info-circle"></i>
-                        <p>Aucun repas enregistré pour cette journée</p>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
 
             <!-- Meals Section -->
             <div class="meals-section">
                 <div class="section-title">
-                    <i class="fa fa-cutlery"></i>
-                    Repas de la journée
+                    <i class="fa fa-calendar-o"></i>
+                    Vue journalière - <?php echo date('d/m/Y', strtotime($entry->entry_date)); ?>
+                    <div style="font-size: 14px; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                        <i class="fa fa-clock-o"></i>
+                        Progression chronologique des repas
+                    </div>
                 </div>
 
-                <div class="meals-grid">
+                <div class="meals-day-view">
                     <!-- Breakfast -->
                     <div class="meal-card <?php echo $entry->breakfast_photo ? 'has-data' : ''; ?>">
                         <div class="meal-card-header">
