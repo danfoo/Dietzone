@@ -1020,7 +1020,7 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="menu-item">
-                <i class="fa fa-clipboard-list"></i>
+                <i class="fa fa-list-alt"></i>
                 <span>Enquêtes Alimentaires</span>
             </a>
             <?php } ?>
@@ -1031,14 +1031,14 @@
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="menu-item">
-                <i class="fa fa-chart-line"></i>
+                <i class="fa fa-line-chart"></i>
                 <span>Mes Mesures</span>
             </a>
 
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="menu-item">
-                <i class="fa fa-calendar-check"></i>
+                <i class="fa fa-calendar"></i>
                 <span>Mes Consultations</span>
             </a>
 
@@ -1050,7 +1050,7 @@
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item">
-                <i class="fa fa-user-circle"></i>
+                <i class="fa fa-user"></i>
                 <span>Mon Profil</span>
             </a>
 
@@ -1354,7 +1354,7 @@
         if ($CI_footer->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
         ?>
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="footer-item">
-            <i class="fa fa-clipboard-list footer-icon"></i>
+            <i class="fa fa-list-alt footer-icon"></i>
             <span class="footer-label">Enquêtes</span>
         </a>
         <?php } else { ?>
