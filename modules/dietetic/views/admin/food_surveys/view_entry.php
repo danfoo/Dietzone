@@ -809,6 +809,50 @@
     margin-right: 5px;
 }
 
+.recommendation-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.recommendation-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-edit-recommendation,
+.btn-delete-recommendation {
+    background: white;
+    border: 2px solid var(--border-color);
+    color: var(--text-dark);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-edit-recommendation:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+.btn-delete-recommendation:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .meals-grid {
@@ -1198,10 +1242,9 @@
                         <i class="fa fa-plus-circle"></i>
                         Ajouter une nouvelle recommandation
                     </h3>
-                    <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST">
+                    <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST" id="recommendation-form">
                         <?php echo form_hidden('entry_id', $entry->id); ?>
                         <?php echo form_hidden('survey_id', $survey->id); ?>
-                        <?php echo csrf_field(); ?>
 
                         <div class="form-group">
                             <label>
@@ -1301,14 +1344,24 @@
                                         <?php echo nl2br(htmlspecialchars($rec->recommendation_text)); ?>
                                     </div>
                                     <div class="recommendation-meta">
-                                        <span>
-                                            <i class="fa fa-calendar"></i>
-                                            <?php echo date('d/m/Y', strtotime($rec->created_at)); ?>
-                                        </span>
-                                        <span>
-                                            <i class="fa fa-clock-o"></i>
-                                            <?php echo date('H:i', strtotime($rec->created_at)); ?>
-                                        </span>
+                                        <div class="recommendation-info">
+                                            <span>
+                                                <i class="fa fa-calendar"></i>
+                                                <?php echo date('d/m/Y', strtotime($rec->created_at)); ?>
+                                            </span>
+                                            <span>
+                                                <i class="fa fa-clock-o"></i>
+                                                <?php echo date('H:i', strtotime($rec->created_at)); ?>
+                                            </span>
+                                        </div>
+                                        <div class="recommendation-actions">
+                                            <button type="button" class="btn-edit-recommendation" data-id="<?php echo $rec->id; ?>" data-text="<?php echo htmlspecialchars($rec->recommendation_text); ?>" data-meal="<?php echo $meal_type; ?>" title="Modifier">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn-delete-recommendation" data-id="<?php echo $rec->id; ?>" title="Supprimer">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -1328,10 +1381,50 @@
     </div>
 </div>
 
+<!-- Edit Recommendation Modal -->
+<div class="modal fade" id="edit-recommendation-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-edit"></i>
+                    Modifier la recommandation
+                </h4>
+            </div>
+            <form id="edit-recommendation-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-recommendation-id" name="recommendation_id">
+
+                    <div class="form-group">
+                        <label for="edit-recommendation-text">
+                            <i class="fa fa-comment"></i>
+                            Recommandation
+                        </label>
+                        <textarea class="form-control" id="edit-recommendation-text" name="recommendation_text" rows="6" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php init_tail(); ?>
+
 <script>
 $(document).ready(function() {
     // Handle recommendation form submission
-    $('.add-recommendation-form form').on('submit', function(e) {
+    $('#recommendation-form').on('submit', function(e) {
         e.preventDefault();
 
         var form = $(this);
@@ -1356,18 +1449,31 @@ $(document).ready(function() {
         submitBtn.prop('disabled', true);
         submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
 
+        // Prepare form data
+        var formData = form.serializeArray();
+
+        // Add CSRF token if not already present
+        if (!formData.some(function(item) { return item.name === '<?php echo $this->security->get_csrf_token_name(); ?>'; })) {
+            formData.push({
+                name: '<?php echo $this->security->get_csrf_token_name(); ?>',
+                value: '<?php echo $this->security->get_csrf_hash(); ?>'
+            });
+        }
+
         $.ajax({
             url: form.attr('action'),
             type: 'POST',
-            data: form.serialize(),
+            data: $.param(formData),
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
+                    // Clear form
+                    form[0].reset();
                     // Reload page to show new recommendation
                     setTimeout(function() {
                         location.reload();
-                    }, 1000);
+                    }, 1500);
                 } else {
                     alert_float('danger', response.message || 'Erreur lors de l\'ajout de la recommandation');
                     submitBtn.prop('disabled', false);
@@ -1376,7 +1482,15 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('Error:', xhr.responseText);
-                alert_float('danger', 'Erreur lors de l\'envoi de la recommandation. Veuillez réessayer.');
+                var errorMsg = 'Erreur lors de l\'envoi de la recommandation';
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.status === 403) {
+                    errorMsg = 'Accès refusé. Veuillez actualiser la page et réessayer.';
+                }
+
+                alert_float('danger', errorMsg);
                 submitBtn.prop('disabled', false);
                 submitBtn.html(originalBtnText);
             }
@@ -1384,7 +1498,112 @@ $(document).ready(function() {
 
         return false;
     });
+
+    // Handle Edit Recommendation button click
+    $('.btn-edit-recommendation').on('click', function() {
+        var recommendationId = $(this).data('id');
+        var recommendationText = $(this).data('text');
+
+        $('#edit-recommendation-id').val(recommendationId);
+        $('#edit-recommendation-text').val(recommendationText);
+
+        $('#edit-recommendation-modal').modal('show');
+    });
+
+    // Handle Edit Recommendation form submission
+    $('#edit-recommendation-form').on('submit', function(e) {
+        e.preventDefault();
+
+        var form = $(this);
+        var recommendationId = $('#edit-recommendation-id').val();
+        var submitBtn = form.find('button[type="submit"]');
+        var originalBtnText = submitBtn.html();
+
+        // Prepare form data
+        var formData = form.serializeArray();
+
+        // Add CSRF token
+        if (!formData.some(function(item) { return item.name === '<?php echo $this->security->get_csrf_token_name(); ?>'; })) {
+            formData.push({
+                name: '<?php echo $this->security->get_csrf_token_name(); ?>',
+                value: '<?php echo $this->security->get_csrf_hash(); ?>'
+            });
+        }
+
+        // Disable button and show loading
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Enregistrement...');
+
+        $.ajax({
+            url: admin_url + 'dietetic/food_surveys/update_recommendation/' + recommendationId,
+            type: 'POST',
+            data: $.param(formData),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    $('#edit-recommendation-modal').modal('hide');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert_float('danger', response.message || 'Erreur lors de la mise à jour');
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalBtnText);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+                alert_float('danger', 'Erreur lors de la mise à jour de la recommandation');
+                submitBtn.prop('disabled', false);
+                submitBtn.html(originalBtnText);
+            }
+        });
+
+        return false;
+    });
+
+    // Handle Delete Recommendation button click
+    $('.btn-delete-recommendation').on('click', function() {
+        var recommendationId = $(this).data('id');
+        var button = $(this);
+
+        // Confirm deletion
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')) {
+            return;
+        }
+
+        // Disable button
+        button.prop('disabled', true);
+        button.html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: admin_url + 'dietetic/food_surveys/delete_recommendation/' + recommendationId,
+            type: 'POST',
+            data: {
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert_float('danger', response.message || 'Erreur lors de la suppression');
+                    button.prop('disabled', false);
+                    button.html('<i class="fa fa-trash"></i>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+                alert_float('danger', 'Erreur lors de la suppression de la recommandation');
+                button.prop('disabled', false);
+                button.html('<i class="fa fa-trash"></i>');
+            }
+        });
+    });
 });
 </script>
 
-<?php init_tail(); ?>

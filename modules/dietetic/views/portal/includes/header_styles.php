@@ -1,28 +1,31 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* Portal Patient Specific Styles - Scoped to avoid conflicts */
+
+body.dietetic-portal-page {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    background: #f8f9fa !important;
+    padding-top: 70px !important;
+    padding-bottom: 70px !important;
 }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: #f8f9fa;
-    padding-top: 70px;
-    padding-bottom: env(safe-area-inset-bottom, 70px);
+@supports (padding: env(safe-area-inset-bottom)) {
+    body.dietetic-portal-page {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+    }
 }
 
 /* Portal Header */
 .portal-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    z-index: 1000;
-    padding: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 .portal-header-content {
@@ -142,42 +145,42 @@ body {
 
 /* Mobile Menu Overlay */
 .mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 998;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+    z-index: 99998 !important;
 }
 
 .mobile-menu-overlay.active {
-    opacity: 1;
-    visibility: visible;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* Mobile Menu Panel */
 .mobile-menu-panel {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 280px;
-    max-width: 85%;
-    height: 100vh;
-    background: white;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    z-index: 999;
-    overflow-y: auto;
-    padding-top: 60px;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 280px !important;
+    max-width: 85% !important;
+    height: 100vh !important;
+    background: white !important;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1) !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 99999 !important;
+    overflow-y: auto !important;
+    padding-top: 60px !important;
 }
 
 .mobile-menu-panel.active {
-    transform: translateX(0);
+    transform: translateX(0) !important;
 }
 
 .mobile-menu-items {
@@ -215,16 +218,23 @@ body {
 
 /* Bottom Navigation (Mobile) */
 .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 1px solid #e9ecef;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-    z-index: 1000;
-    padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border-top: 1px solid #e9ecef !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08) !important;
+    z-index: 9998 !important;
+    padding: 8px 0 8px 0 !important;
+    margin: 0 !important;
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+    .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom) !important;
+    }
 }
 
 .bottom-nav-items {
@@ -282,8 +292,8 @@ body {
 
 /* Desktop Breakpoint */
 @media (min-width: 992px) {
-    body {
-        padding-bottom: 0;
+    body.dietetic-portal-page {
+        padding-bottom: 0 !important;
     }
 
     .portal-nav-desktop {
@@ -291,11 +301,11 @@ body {
     }
 
     .hamburger-menu {
-        display: none;
+        display: none !important;
     }
 
     .bottom-nav {
-        display: none;
+        display: none !important;
     }
 
     .mobile-menu-overlay,
