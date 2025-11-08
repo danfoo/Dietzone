@@ -40,6 +40,11 @@ class Notifications extends AdminController
             redirect(admin_url('dietetic/notifications/run_migration'));
         }
 
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
         $data['title'] = 'Notifications & Rappels';
 
         // Get statistics
@@ -63,6 +68,11 @@ class Notifications extends AdminController
         // Check if tables exist
         if (!$this->db->table_exists(db_prefix() . 'dietic_notification_settings')) {
             redirect(admin_url('dietetic/notifications/run_migration'));
+        }
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
         }
 
         // Handle form submission
@@ -101,6 +111,11 @@ class Notifications extends AdminController
         }
 
         header('Content-Type: application/json');
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
 
         $channel = $this->input->post('channel'); // email, sms, whatsapp
         $recipient = $this->input->post('recipient');
@@ -260,6 +275,11 @@ class Notifications extends AdminController
             redirect(admin_url('dietetic/notifications/run_migration'));
         }
 
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
         $data['title'] = 'Historique des Notifications';
 
         // Pagination
@@ -296,6 +316,11 @@ class Notifications extends AdminController
         // Check if tables exist
         if (!$this->db->table_exists(db_prefix() . 'dietic_milestones')) {
             redirect(admin_url('dietetic/notifications/run_migration'));
+        }
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
         }
 
         $data['title'] = 'Jalons Atteints';
