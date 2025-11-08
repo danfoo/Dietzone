@@ -569,10 +569,14 @@ class Dietetic_notifications_model extends App_Model
             $where['patient_id'] = $patient_id;
         }
 
-        // Total sent
+        // Total notifications
+        if (!empty($where)) $this->db->where($where);
+        $stats->total = $this->db->count_all_results(db_prefix() . $this->table_logs);
+
+        // Sent
         $this->db->where('status', 'sent');
         if (!empty($where)) $this->db->where($where);
-        $stats->total_sent = $this->db->count_all_results(db_prefix() . $this->table_logs);
+        $stats->sent = $this->db->count_all_results(db_prefix() . $this->table_logs);
 
         // Sent today
         $this->db->where('status', 'sent');
@@ -584,6 +588,11 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('status', 'failed');
         if (!empty($where)) $this->db->where($where);
         $stats->failed = $this->db->count_all_results(db_prefix() . $this->table_logs);
+
+        // Pending
+        $this->db->where('status', 'pending');
+        if (!empty($where)) $this->db->where($where);
+        $stats->pending = $this->db->count_all_results(db_prefix() . $this->table_logs);
 
         // By type
         $this->db->select('notification_type, COUNT(*) as count');
