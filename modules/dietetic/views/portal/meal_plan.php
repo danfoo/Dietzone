@@ -552,6 +552,11 @@
                     <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="active">
                         <i class="fa fa-cutlery"></i> Repas
                     </a>
+                    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
+                        <i class="fa fa-clipboard-list"></i> Enquêtes
+                    </a>
+                    <?php } ?>
                     <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
                         <i class="fa fa-user-md"></i> Diététicien
                     </a>
@@ -559,6 +564,15 @@
                         <i class="fa fa-user"></i> Profil
                     </a>
                 </nav>
+
+                <!-- Hamburger Menu (Mobile) -->
+                <div class="hamburger-menu" id="hamburgerMenu">
+                    <div class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
