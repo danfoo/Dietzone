@@ -194,23 +194,36 @@ class Notifications extends AdminController
             // Replace table prefix
             $sql_content = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sql_content);
 
-            // Split by semicolon
-            $statements = array_filter(array_map('trim', explode(';', $sql_content)));
+            // Remove SQL comments
+            $sql_content = preg_replace('/^--.*$/m', '', $sql_content);
+
+            // Split by semicolon and filter empty statements
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql_content)),
+                function($stmt) {
+                    return !empty($stmt) && strlen($stmt) > 10; // Filter out very short statements
+                }
+            );
 
             $success_count = 0;
             $error_count = 0;
             $errors = [];
+            $tables_created = 0;
 
             foreach ($statements as $statement) {
-                if (!empty($statement) && !preg_match('/^--/', $statement)) {
-                    try {
-                        $this->db->query($statement);
-                        $success_count++;
-                    } catch (Exception $e) {
-                        $error_count++;
-                        $errors[] = substr($e->getMessage(), 0, 200);
-                        log_activity('Notifications Migration Error: ' . $e->getMessage());
+                try {
+                    $this->db->query($statement);
+                    $success_count++;
+
+                    // Count if it's a CREATE TABLE statement
+                    if (stripos($statement, 'CREATE TABLE') !== false) {
+                        $tables_created++;
                     }
+                } catch (Exception $e) {
+                    $error_count++;
+                    $error_msg = $e->getMessage();
+                    $errors[] = substr($error_msg, 0, 200);
+                    log_activity('Notifications Migration Error: ' . $error_msg . ' | Statement: ' . substr($statement, 0, 100));
                 }
             }
 
@@ -218,12 +231,15 @@ class Notifications extends AdminController
                 echo json_encode([
                     'success' => false,
                     'message' => "Migration partiellement réussie. {$success_count} requêtes réussies, {$error_count} échouées.",
-                    'errors' => $errors
+                    'errors' => $errors,
+                    'tables_created' => $tables_created
                 ]);
             } else {
                 echo json_encode([
                     'success' => true,
-                    'message' => "Migration exécutée avec succès ! {$success_count} tables créées."
+                    'message' => "Migration exécutée avec succès ! {$tables_created} table(s) créée(s).",
+                    'tables_created' => $tables_created,
+                    'total_queries' => $success_count
                 ]);
             }
         } catch (Exception $e) {

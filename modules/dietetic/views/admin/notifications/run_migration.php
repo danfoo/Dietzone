@@ -289,9 +289,20 @@ function runMigration() {
         type: 'POST',
         dataType: 'json',
         success: function(response) {
+            console.log('Migration response:', response); // Debug
+
             if (response.success) {
                 result.className = 'migration-result success';
                 result.innerHTML = '<i class="fa fa-check-circle"></i> ' + response.message;
+
+                // Add details
+                if (response.tables_created !== undefined && response.total_queries !== undefined) {
+                    result.innerHTML += '<br><br><strong>Détails:</strong><ul style="margin: 10px 0 0 20px;">';
+                    result.innerHTML += '<li>Tables créées: ' + response.tables_created + '</li>';
+                    result.innerHTML += '<li>Requêtes SQL exécutées: ' + response.total_queries + '</li>';
+                    result.innerHTML += '</ul>';
+                }
+
                 result.style.display = 'block';
 
                 // Show success alert
@@ -313,6 +324,11 @@ function runMigration() {
                         result.innerHTML += '<li>' + error + '</li>';
                     });
                     result.innerHTML += '</ul>';
+                }
+
+                // Show details if available
+                if (response.tables_created !== undefined) {
+                    result.innerHTML += '<br><strong>Tables créées: ' + response.tables_created + '</strong>';
                 }
 
                 // Re-enable button if not already exists
