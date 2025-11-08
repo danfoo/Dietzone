@@ -628,4 +628,61 @@ class Food_surveys extends AdminController
 
         return $result;
     }
+
+    /**
+     * Run migration to add meal_type column to recommendations
+     * URL: /admin/dietetic/food_surveys/run_migration
+     */
+    public function run_migration()
+    {
+        if (!is_admin()) {
+            access_denied('Migration');
+        }
+
+        $this->load->view('admin/food_surveys/run_migration');
+    }
+
+    /**
+     * Execute migration via AJAX
+     */
+    public function execute_migration()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        try {
+            // Check if column already exists
+            $columns = $this->db->list_fields('tbldietic_food_survey_recommendations');
+
+            if (in_array('meal_type', $columns)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'La colonne meal_type existe déjà dans la table.',
+                    'already_exists' => true
+                ]);
+                return;
+            }
+
+            // Add meal_type column
+            $sql = "ALTER TABLE `" . db_prefix() . "dietic_food_survey_recommendations`
+                    ADD COLUMN `meal_type` ENUM('breakfast', 'lunch', 'dinner', 'global') DEFAULT 'global'
+                    AFTER `entry_id`,
+                    ADD INDEX `idx_meal_type` (`meal_type`)";
+
+            $this->db->query($sql);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration exécutée avec succès ! La colonne meal_type a été ajoutée.'
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la migration : ' . $e->getMessage()
+            ]);
+        }
+    }
 }
