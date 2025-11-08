@@ -302,9 +302,10 @@ class Dietetic_food_surveys_model extends App_Model
      * Get recommendations for an entry
      *
      * @param int $entry_id
+     * @param string $meal_type Optional filter by meal type (breakfast, lunch, dinner, global)
      * @return array
      */
-    public function get_recommendations($entry_id)
+    public function get_recommendations($entry_id, $meal_type = null)
     {
         $this->db->select($this->table_recommendations . '.*,
             CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name,
@@ -312,9 +313,39 @@ class Dietetic_food_surveys_model extends App_Model
         $this->db->from($this->table_recommendations);
         $this->db->join('tblstaff', 'tblstaff.staffid = ' . $this->table_recommendations . '.dietitian_id', 'left');
         $this->db->where('entry_id', $entry_id);
+
+        if ($meal_type !== null) {
+            $this->db->where('meal_type', $meal_type);
+        }
+
         $this->db->order_by($this->table_recommendations . '.created_at', 'DESC');
 
         return $this->db->get()->result();
+    }
+
+    /**
+     * Get recommendations by meal type for an entry
+     *
+     * @param int $entry_id
+     * @return array Array with keys 'breakfast', 'lunch', 'dinner', 'global'
+     */
+    public function get_recommendations_by_meal($entry_id)
+    {
+        $recommendations = $this->get_recommendations($entry_id);
+
+        $grouped = [
+            'breakfast' => [],
+            'lunch' => [],
+            'dinner' => [],
+            'global' => []
+        ];
+
+        foreach ($recommendations as $recommendation) {
+            $meal_type = $recommendation->meal_type ?? 'global';
+            $grouped[$meal_type][] = $recommendation;
+        }
+
+        return $grouped;
     }
 
     /**

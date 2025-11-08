@@ -882,6 +882,44 @@
     line-height: 1.6;
 }
 
+/* Meal-specific recommendations */
+.meal-recommendations-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.meal-recommendations-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meal-recommendations-title i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.recommendations-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
 .no-recommendations {
     text-align: center;
     padding: 60px 20px;
@@ -1205,7 +1243,12 @@
                         <i class="fa fa-comments"></i>
                         Recommandations
                     </div>
-                    <div class="info-card-value"><?php echo count($recommendations); ?></div>
+                    <div class="info-card-value">
+                        <?php
+                        $total_recommendations = array_sum(array_map('count', $recommendations_by_meal));
+                        echo $total_recommendations;
+                        ?>
+                    </div>
                     <div class="info-card-label">Par le diététicien</div>
                 </div>
             </div>
@@ -1459,7 +1502,7 @@
             </div>
             <?php endif; ?>
 
-            <!-- Recommendations Section -->
+            <!-- Recommendations Section - By Meal -->
             <div class="recommendations-section">
                 <div class="section-title">
                     <i class="fa fa-lightbulb-o"></i>
@@ -1473,93 +1516,122 @@
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                         <input type="hidden" name="entry_id" value="<?php echo $entry->id; ?>">
                         <div class="form-group">
-                            <label for="recommendation_text">Nouvelle recommandation</label>
+                            <label for="meal_type_select">Repas concerné</label>
+                            <select name="meal_type" id="meal_type_select" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 15px;">
+                                <option value="breakfast">🍳 Petit-déjeuner</option>
+                                <option value="lunch">☀️ Déjeuner</option>
+                                <option value="dinner">🌙 Dîner</option>
+                                <option value="global">📋 Recommandation globale</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recommendation_text">Recommandation</label>
                             <textarea name="recommendation_text" id="recommendation_text"
                                       placeholder="Entrez votre recommandation pour le patient..." required></textarea>
                         </div>
                         <button type="submit">
                             <i class="fa fa-plus-circle"></i>
-                            Ajouter une recommandation
+                            Ajouter la recommandation
                         </button>
                     </form>
                 </div>
                 <?php endif; ?>
 
-                <!-- Recommendations List -->
-                <div class="recommendations-list">
-                    <?php if (count($recommendations) > 0): ?>
-                        <?php foreach ($recommendations as $recommendation): ?>
-                        <div class="recommendation-card" data-id="<?php echo $recommendation->id; ?>">
-                            <div class="recommendation-header">
-                                <div class="recommendation-author">
-                                    <div class="recommendation-avatar">
-                                        <?php
-                                        $has_profile_image = false;
-                                        if (!empty($recommendation->profile_image)) {
-                                            $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
-                                            if (file_exists($image_path)) {
-                                                $has_profile_image = true;
-                                            }
-                                        }
+                <?php
+                // Helper function to display recommendations
+                function display_recommendations($recommendations, $meal_name, $meal_icon) {
+                    if (count($recommendations) > 0): ?>
+                        <div class="meal-recommendations-section">
+                            <h3 class="meal-recommendations-title">
+                                <i class="fa fa-<?php echo $meal_icon; ?>"></i>
+                                <?php echo $meal_name; ?>
+                                <span class="recommendations-count"><?php echo count($recommendations); ?></span>
+                            </h3>
+                            <div class="recommendations-list">
+                                <?php foreach ($recommendations as $recommendation): ?>
+                                <div class="recommendation-card" data-id="<?php echo $recommendation->id; ?>">
+                                    <div class="recommendation-header">
+                                        <div class="recommendation-author">
+                                            <div class="recommendation-avatar">
+                                                <?php
+                                                $has_profile_image = false;
+                                                if (!empty($recommendation->profile_image)) {
+                                                    $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
+                                                    if (file_exists($image_path)) {
+                                                        $has_profile_image = true;
+                                                    }
+                                                }
 
-                                        if ($has_profile_image): ?>
-                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
-                                        <?php else: ?>
-                                            <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
+                                                if ($has_profile_image): ?>
+                                                    <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
+                                                <?php else: ?>
+                                                    <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="recommendation-author-info">
+                                                <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
+                                                <p>
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <?php if (dietetic_has_permission('delete')): ?>
+                                        <div class="recommendation-actions">
+                                            <button class="delete" onclick="deleteRecommendation(<?php echo $recommendation->id; ?>)">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="recommendation-author-info">
-                                        <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
-                                        <p>
-                                            <i class="fa fa-clock-o"></i>
-                                            <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
-                                        </p>
-                                    </div>
-                                </div>
-                                <?php if (dietetic_has_permission('delete')): ?>
-                                <div class="recommendation-actions">
-                                    <button class="delete" onclick="deleteRecommendation(<?php echo $recommendation->id; ?>)">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="recommendation-body">
-                                <div class="recommendation-text">
-                                    <?php echo nl2br(htmlspecialchars($recommendation->recommendation_text)); ?>
-                                </div>
+                                    <div class="recommendation-body">
+                                        <div class="recommendation-text">
+                                            <?php echo nl2br(htmlspecialchars($recommendation->recommendation_text)); ?>
+                                        </div>
 
-                                <?php if (count($recommendation->comments) > 0): ?>
-                                <div class="recommendation-comments">
-                                    <div class="comments-header">
-                                        <i class="fa fa-comment"></i>
-                                        Commentaires du patient (<?php echo count($recommendation->comments); ?>)
-                                    </div>
-                                    <?php foreach ($recommendation->comments as $comment): ?>
-                                    <div class="comment-item">
-                                        <div class="comment-meta">
-                                            <i class="fa fa-user-circle"></i>
-                                            Patient
-                                            <span>•</span>
-                                            <?php echo date('d/m/Y à H:i', strtotime($comment->created_at)); ?>
+                                        <?php if (count($recommendation->comments) > 0): ?>
+                                        <div class="recommendation-comments">
+                                            <div class="comments-header">
+                                                <i class="fa fa-comment"></i>
+                                                Commentaires du patient (<?php echo count($recommendation->comments); ?>)
+                                            </div>
+                                            <?php foreach ($recommendation->comments as $comment): ?>
+                                            <div class="comment-item">
+                                                <div class="comment-meta">
+                                                    <i class="fa fa-user-circle"></i>
+                                                    Patient
+                                                    <span>•</span>
+                                                    <?php echo date('d/m/Y à H:i', strtotime($comment->created_at)); ?>
+                                                </div>
+                                                <div class="comment-text">
+                                                    <?php echo nl2br(htmlspecialchars($comment->comment_text)); ?>
+                                                </div>
+                                            </div>
+                                            <?php endforeach; ?>
                                         </div>
-                                        <div class="comment-text">
-                                            <?php echo nl2br(htmlspecialchars($comment->comment_text)); ?>
-                                        </div>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php endforeach; ?>
                                 </div>
-                                <?php endif; ?>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="no-recommendations">
-                            <i class="fa fa-lightbulb-o"></i>
-                            <p>Aucune recommandation pour cette entrée</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                    <?php endif;
+                }
+
+                // Display recommendations by meal type
+                display_recommendations($recommendations_by_meal['breakfast'], 'Petit-déjeuner', 'coffee');
+                display_recommendations($recommendations_by_meal['lunch'], 'Déjeuner', 'sun-o');
+                display_recommendations($recommendations_by_meal['dinner'], 'Dîner', 'moon-o');
+                display_recommendations($recommendations_by_meal['global'], 'Recommandations globales', 'list-alt');
+
+                // Check if there are any recommendations at all
+                $has_any_recommendations = array_sum(array_map('count', $recommendations_by_meal)) > 0;
+                if (!$has_any_recommendations): ?>
+                    <div class="no-recommendations">
+                        <i class="fa fa-lightbulb-o"></i>
+                        <p>Aucune recommandation pour cette entrée</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

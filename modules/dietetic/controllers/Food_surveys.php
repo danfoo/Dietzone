@@ -307,12 +307,18 @@ class Food_surveys extends AdminController
 
         $data['survey'] = $this->dietetic_food_surveys_model->get($data['entry']->survey_id);
         $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($entry_id);
-        $data['recommendations'] = $this->dietetic_food_surveys_model->get_recommendations($entry_id);
 
-        // Get comments for each recommendation
-        foreach ($data['recommendations'] as &$recommendation) {
-            $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+        // Get recommendations grouped by meal type
+        $recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry_id);
+
+        // Get comments for each recommendation in each meal
+        foreach ($recommendations_by_meal as $meal_type => &$recommendations) {
+            foreach ($recommendations as &$recommendation) {
+                $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+            }
         }
+
+        $data['recommendations_by_meal'] = $recommendations_by_meal;
 
         $data['title'] = 'Entrée du ' . date('d/m/Y', strtotime($data['entry']->entry_date));
 
@@ -331,6 +337,7 @@ class Food_surveys extends AdminController
         if ($this->input->post()) {
             $data = [
                 'entry_id' => $this->input->post('entry_id'),
+                'meal_type' => $this->input->post('meal_type') ?: 'global',
                 'dietitian_id' => get_staff_user_id(),
                 'recommendation_text' => $this->input->post('recommendation_text')
             ];
