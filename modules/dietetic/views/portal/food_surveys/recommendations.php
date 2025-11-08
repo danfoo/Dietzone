@@ -210,8 +210,32 @@
         .recommendation-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
             margin-bottom: 16px;
+        }
+
+        .recommendation-author-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .recommendation-meal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .recommendation-meal-badge i {
+            font-size: 14px;
         }
 
         .dietitian-avatar {
@@ -701,32 +725,49 @@
                         </div>
                     </div>
 
-                    <?php foreach ($entry->recommendations as $recommendation): ?>
+                    <?php
+                    $meal_labels = [
+                        'breakfast' => ['Petit-déjeuner', 'fa-coffee'],
+                        'lunch' => ['Déjeuner', 'fa-sun-o'],
+                        'dinner' => ['Dîner', 'fa-moon-o'],
+                        'global' => ['Recommandation générale', 'fa-star']
+                    ];
+
+                    foreach ($entry->recommendations_by_meal as $meal_type => $recommendations):
+                        if (!empty($recommendations)):
+                            foreach ($recommendations as $recommendation):
+                    ?>
                         <div class="recommendation" data-id="<?php echo $recommendation->id; ?>">
                             <div class="recommendation-header">
-                                <div class="dietitian-avatar">
-                                    <?php
-                                    $has_profile_image = false;
-                                    if (!empty($recommendation->profile_image)) {
-                                        $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
-                                        if (file_exists($image_path)) {
-                                            $has_profile_image = true;
+                                <div class="recommendation-author-group">
+                                    <div class="dietitian-avatar">
+                                        <?php
+                                        $has_profile_image = false;
+                                        if (!empty($recommendation->profile_image)) {
+                                            $image_path = FCPATH . 'uploads/staff_profile_images/' . $recommendation->profile_image;
+                                            if (file_exists($image_path)) {
+                                                $has_profile_image = true;
+                                            }
                                         }
-                                    }
 
-                                    if ($has_profile_image): ?>
-                                        <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
-                                    <?php else: ?>
-                                        <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
-                                    <?php endif; ?>
+                                        if ($has_profile_image): ?>
+                                            <img src="<?php echo base_url('uploads/staff_profile_images/' . $recommendation->profile_image); ?>" alt="<?php echo htmlspecialchars($recommendation->dietitian_name); ?>">
+                                        <?php else: ?>
+                                            <?php echo strtoupper(substr($recommendation->dietitian_name, 0, 1)); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="recommendation-info">
+                                        <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
+                                        <p>
+                                            <i class="fa fa-clock-o"></i>
+                                            <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="recommendation-info">
-                                    <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
-                                    <p>
-                                        <i class="fa fa-clock-o"></i>
-                                        <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
-                                    </p>
-                                </div>
+                                <span class="recommendation-meal-badge">
+                                    <i class="fa <?php echo $meal_labels[$meal_type][1]; ?>"></i>
+                                    <?php echo $meal_labels[$meal_type][0]; ?>
+                                </span>
                             </div>
 
                             <div class="recommendation-text">
@@ -768,7 +809,11 @@
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php
+                            endforeach;
+                        endif;
+                    endforeach;
+                    ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

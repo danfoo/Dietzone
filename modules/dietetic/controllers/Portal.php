@@ -1375,11 +1375,14 @@ class Portal extends App_Controller
 
         foreach ($entries as $entry) {
             if ($entry->has_recommendation) {
-                $entry->recommendations = $this->dietetic_food_surveys_model->get_recommendations($entry->id);
+                // Get recommendations grouped by meal type
+                $entry->recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry->id);
 
-                // Get comments for each recommendation
-                foreach ($entry->recommendations as &$recommendation) {
-                    $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                // Get comments for each recommendation in each meal type
+                foreach ($entry->recommendations_by_meal as $meal_type => &$recommendations) {
+                    foreach ($recommendations as &$recommendation) {
+                        $recommendation->comments = $this->dietetic_food_surveys_model->get_comments($recommendation->id);
+                    }
                 }
 
                 $data['entries'][] = $entry;

@@ -617,6 +617,71 @@
     resize: vertical;
 }
 
+/* Meal Type Radio Buttons */
+.meal-type-radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.meal-radio-option {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+}
+
+.meal-radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meal-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.meal-radio-label i {
+    font-size: 20px;
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+
+.meal-radio-label .meal-name {
+    font-size: 14px;
+}
+
+.meal-radio-option:hover .meal-radio-label {
+    border-color: var(--primary-color);
+    background: rgba(1, 128, 123, 0.05);
+}
+
+.meal-radio-option input[type="radio"]:checked + .meal-radio-label {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
+}
+
+.meal-radio-option input[type="radio"]:checked + .meal-radio-label i {
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .meal-type-radio-group {
+        grid-template-columns: 1fr;
+    }
+}
+
 .btn-submit {
     background: linear-gradient(135deg, var(--primary-color), #026660);
     color: white;
@@ -1134,21 +1199,45 @@
                         Ajouter une nouvelle recommandation
                     </h3>
                     <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST">
-                        <input type="hidden" name="entry_id" value="<?php echo $entry->id; ?>">
-                        <input type="hidden" name="survey_id" value="<?php echo $survey->id; ?>">
+                        <?php echo form_hidden('entry_id', $entry->id); ?>
+                        <?php echo form_hidden('survey_id', $survey->id); ?>
+                        <?php echo csrf_field(); ?>
 
                         <div class="form-group">
-                            <label for="meal_type">
+                            <label>
                                 <i class="fa fa-cutlery"></i>
                                 Repas concerné
                             </label>
-                            <select name="meal_type" id="meal_type" required>
-                                <option value="">Sélectionnez un repas...</option>
-                                <option value="breakfast">Petit-déjeuner</option>
-                                <option value="lunch">Déjeuner</option>
-                                <option value="dinner">Dîner</option>
-                                <option value="global">Recommandation générale</option>
-                            </select>
+                            <div class="meal-type-radio-group">
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="breakfast" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-coffee"></i>
+                                        <span class="meal-name">Petit-déjeuner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="lunch" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-sun-o"></i>
+                                        <span class="meal-name">Déjeuner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="dinner" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-moon-o"></i>
+                                        <span class="meal-name">Dîner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="global" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-star"></i>
+                                        <span class="meal-name">Recommandation générale</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-group">
