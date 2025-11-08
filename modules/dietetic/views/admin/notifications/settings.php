@@ -2,6 +2,54 @@
 <?php init_head(); ?>
 
 <style>
+.notifications-nav {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 30px;
+}
+
+.notifications-nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.notifications-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 0;
+}
+
+.notifications-nav li {
+    margin: 0;
+}
+
+.notifications-nav a {
+    display: block;
+    padding: 15px 25px;
+    color: #718096;
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.notifications-nav a:hover {
+    color: #01807B;
+    background: #f7fafc;
+}
+
+.notifications-nav a.active {
+    color: #01807B;
+    border-bottom-color: #01807B;
+}
+
+.notifications-nav i {
+    margin-right: 5px;
+}
+
 .settings-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -227,6 +275,18 @@ input:checked + .toggle-slider:before {
 
 <div id="wrapper">
     <div class="content">
+        <!-- Notifications Navigation -->
+        <div class="notifications-nav">
+            <div class="notifications-nav-container">
+                <ul>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/settings'); ?>" class="active"><i class="fa fa-cog"></i> Configuration</a></li>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/templates'); ?>"><i class="fa fa-file-text-o"></i> Modèles</a></li>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/logs'); ?>"><i class="fa fa-list"></i> Historique</a></li>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/milestones'); ?>"><i class="fa fa-trophy"></i> Jalons</a></li>
+                </ul>
+            </div>
+        </div>
+
         <div class="settings-container">
             <div class="settings-header">
                 <h1><i class="fa fa-cog"></i> Paramètres des Notifications</h1>

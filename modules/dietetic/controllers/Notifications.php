@@ -298,6 +298,10 @@ class Notifications extends AdminController
      */
     public function templates()
     {
+        if (!is_admin()) {
+            access_denied('Notification Templates');
+        }
+
         $data['title'] = 'Modèles de Notifications';
         $this->load->view('admin/notifications/templates', $data);
     }
