@@ -1328,4 +1328,63 @@
     </div>
 </div>
 
+<script>
+$(document).ready(function() {
+    // Handle recommendation form submission
+    $('.add-recommendation-form form').on('submit', function(e) {
+        e.preventDefault();
+
+        var form = $(this);
+        var submitBtn = form.find('.btn-submit');
+        var originalBtnText = submitBtn.html();
+
+        // Check if a meal type is selected
+        var mealType = form.find('input[name="meal_type"]:checked').val();
+        if (!mealType) {
+            alert_float('danger', 'Veuillez sélectionner un type de repas');
+            return false;
+        }
+
+        // Check if recommendation text is filled
+        var recommendationText = form.find('#recommendation_text').val().trim();
+        if (!recommendationText) {
+            alert_float('danger', 'Veuillez saisir votre recommandation');
+            return false;
+        }
+
+        // Disable button and show loading
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    // Reload page to show new recommendation
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert_float('danger', response.message || 'Erreur lors de l\'ajout de la recommandation');
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalBtnText);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+                alert_float('danger', 'Erreur lors de l\'envoi de la recommandation. Veuillez réessayer.');
+                submitBtn.prop('disabled', false);
+                submitBtn.html(originalBtnText);
+            }
+        });
+
+        return false;
+    });
+});
+</script>
+
 <?php init_tail(); ?>
