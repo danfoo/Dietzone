@@ -292,4 +292,13 @@ class Notifications extends AdminController
 
         $this->load->view('admin/notifications/milestones', $data);
     }
+
+    /**
+     * Notification templates page
+     */
+    public function templates()
+    {
+        $data['title'] = 'Modèles de Notifications';
+        $this->load->view('admin/notifications/templates', $data);
+    }
 }

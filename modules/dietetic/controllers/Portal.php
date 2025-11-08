@@ -1727,7 +1727,7 @@ class Portal extends App_Controller
 
         // Get patient record
         $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client_id($client_id);
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
 
         if (!$patient) {
             set_alert('danger', 'Patient non trouvé');
@@ -1771,7 +1771,7 @@ class Portal extends App_Controller
 
         // Get patient record
         $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client_id($client_id);
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
 
         if (!$patient) {
             echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
