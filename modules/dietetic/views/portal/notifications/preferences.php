@@ -1,4 +1,11 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $this->load->view('authentication/includes/head'); ?>
+<?php
+// Set active page for navigation
+$active_page = 'notifications';
+?>
+<?php $this->load->view('dietetic/portal/includes/header_styles'); ?>
+<?php $this->load->view('dietetic/portal/includes/header_nav'); ?>
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -540,5 +547,7 @@
             }
         });
     </script>
+
+<?php $this->load->view('dietetic/portal/includes/header_scripts'); ?>
 </body>
 </html>

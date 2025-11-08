@@ -1,5 +1,11 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
+<?php
+// Set active page for navigation
+$active_page = 'consultations';
+?>
+<?php $this->load->view('dietetic/portal/includes/header_styles'); ?>
+<?php $this->load->view('dietetic/portal/includes/header_nav'); ?>
 
 <div class="container">
     <div class="row mtop30">
@@ -58,4 +64,5 @@
     </div>
 </div>
 
+<?php $this->load->view('dietetic/portal/includes/header_scripts'); ?>
 <?php $this->load->view('authentication/includes/footer'); ?>
