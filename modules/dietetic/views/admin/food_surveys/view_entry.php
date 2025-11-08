@@ -1198,10 +1198,9 @@
                         <i class="fa fa-plus-circle"></i>
                         Ajouter une nouvelle recommandation
                     </h3>
-                    <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST">
+                    <form action="<?php echo admin_url('dietetic/food_surveys/add_recommendation'); ?>" method="POST" id="recommendation-form">
                         <?php echo form_hidden('entry_id', $entry->id); ?>
                         <?php echo form_hidden('survey_id', $survey->id); ?>
-                        <?php echo csrf_field(); ?>
 
                         <div class="form-group">
                             <label>
@@ -1328,10 +1327,12 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
+
 <script>
 $(document).ready(function() {
     // Handle recommendation form submission
-    $('.add-recommendation-form form').on('submit', function(e) {
+    $('#recommendation-form').on('submit', function(e) {
         e.preventDefault();
 
         var form = $(this);
@@ -1356,18 +1357,31 @@ $(document).ready(function() {
         submitBtn.prop('disabled', true);
         submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
 
+        // Prepare form data
+        var formData = form.serializeArray();
+
+        // Add CSRF token if not already present
+        if (!formData.some(function(item) { return item.name === '<?php echo $this->security->get_csrf_token_name(); ?>'; })) {
+            formData.push({
+                name: '<?php echo $this->security->get_csrf_token_name(); ?>',
+                value: '<?php echo $this->security->get_csrf_hash(); ?>'
+            });
+        }
+
         $.ajax({
             url: form.attr('action'),
             type: 'POST',
-            data: form.serialize(),
+            data: $.param(formData),
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
+                    // Clear form
+                    form[0].reset();
                     // Reload page to show new recommendation
                     setTimeout(function() {
                         location.reload();
-                    }, 1000);
+                    }, 1500);
                 } else {
                     alert_float('danger', response.message || 'Erreur lors de l\'ajout de la recommandation');
                     submitBtn.prop('disabled', false);
@@ -1376,7 +1390,15 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('Error:', xhr.responseText);
-                alert_float('danger', 'Erreur lors de l\'envoi de la recommandation. Veuillez réessayer.');
+                var errorMsg = 'Erreur lors de l\'envoi de la recommandation';
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.status === 403) {
+                    errorMsg = 'Accès refusé. Veuillez actualiser la page et réessayer.';
+                }
+
+                alert_float('danger', errorMsg);
                 submitBtn.prop('disabled', false);
                 submitBtn.html(originalBtnText);
             }
@@ -1387,4 +1409,3 @@ $(document).ready(function() {
 });
 </script>
 
-<?php init_tail(); ?>
