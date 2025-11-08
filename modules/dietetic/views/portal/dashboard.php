@@ -1,129 +1,31 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
 
-<!-- MOBILE HEADER & NAVIGATION v2.0 -->
+<!-- TEST VISIBILITE v3.0 - CE BLOC DOIT APPARAITRE -->
+<div style="position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 999999; text-align: center; font-size: 20px; font-weight: bold;">
+    ✅ FICHIER DASHBOARD.PHP CHARGÉ - VERSION 3.0
+</div>
+
+<!-- MOBILE HEADER & NAVIGATION v3.0 -->
 <style>
-/* IMPORTANT: Force display pour debug */
-.mobile-portal-header,
-.mobile-bottom-nav {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Reset pour mobile */
-@media (max-width: 768px) {
-    body {
-        padding-top: 60px !important;
-        padding-bottom: 65px !important;
-        margin: 0 !important;
-    }
-}
-
-@media (min-width: 769px) {
-    body {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-}
-
-/* Header Mobile Fixe */
+/* FORCE ABSOLUTE - Visible partout même desktop */
 .mobile-portal-header {
     position: fixed !important;
-    top: 0 !important;
+    top: 50px !important;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%) !important;
     color: white !important;
-    padding: 12px 15px !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    z-index: 99999 !important;
+    padding: 15px !important;
+    display: block !important;
+    z-index: 999998 !important;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
-    margin: 0 !important;
-}
-
-.mobile-portal-header .logo {
+    text-align: center !important;
     font-size: 18px !important;
-    font-weight: 700 !important;
-    color: white !important;
+    font-weight: bold !important;
 }
 
-.mobile-portal-header .hamburger {
-    width: 30px !important;
-    height: 25px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    cursor: pointer !important;
-}
-
-.mobile-portal-header .hamburger span {
-    display: block !important;
-    height: 3px !important;
-    width: 100% !important;
-    background: white !important;
-    border-radius: 2px !important;
-    transition: 0.3s !important;
-}
-
-/* Menu Mobile Slide */
-.mobile-menu-slide {
-    position: fixed !important;
-    top: 0 !important;
-    right: -100% !important;
-    width: 280px !important;
-    height: 100vh !important;
-    background: white !important;
-    z-index: 100000 !important;
-    transition: right 0.3s ease !important;
-    overflow-y: auto !important;
-    padding-top: 60px !important;
-}
-
-.mobile-menu-slide.open {
-    right: 0 !important;
-}
-
-.mobile-menu-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: rgba(0,0,0,0.5) !important;
-    z-index: 99998 !important;
-    display: none !important;
-}
-
-.mobile-menu-overlay.show {
-    display: block !important;
-}
-
-.mobile-menu-slide a {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 15px 20px !important;
-    color: #333 !important;
-    text-decoration: none !important;
-    border-bottom: 1px solid #eee !important;
-}
-
-.mobile-menu-slide a.active {
-    background: #e8f5f4 !important;
-    color: #01807B !important;
-    border-left: 4px solid #01807B !important;
-}
-
-.mobile-menu-slide a i {
-    font-size: 20px !important;
-    width: 25px !important;
-}
-
-/* Bottom Nav Fixe */
 .mobile-bottom-nav {
     position: fixed !important;
     bottom: 0 !important;
@@ -133,11 +35,10 @@
     background: white !important;
     display: flex !important;
     justify-content: space-around !important;
-    padding: 8px 0 !important;
-    border-top: 1px solid #ddd !important;
-    z-index: 99999 !important;
+    padding: 10px 0 !important;
+    border-top: 2px solid #01807B !important;
+    z-index: 999998 !important;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
-    margin: 0 !important;
 }
 
 .mobile-bottom-nav a {
@@ -149,83 +50,30 @@
     color: #666 !important;
     text-decoration: none !important;
     font-size: 11px !important;
+    padding: 5px !important;
 }
 
 .mobile-bottom-nav a.active {
     color: #01807B !important;
+    font-weight: bold !important;
 }
 
 .mobile-bottom-nav a i {
-    font-size: 22px !important;
+    font-size: 24px !important;
 }
 
-/* Cache sur desktop */
-@media (min-width: 769px) {
-    .mobile-portal-header,
-    .mobile-bottom-nav,
-    .mobile-menu-slide,
-    .mobile-menu-overlay {
-        display: none !important;
-    }
+body {
+    padding-top: 120px !important;
+    padding-bottom: 80px !important;
 }
 </style>
 
-<!-- Header Mobile -->
+<!-- Header Mobile SIMPLE -->
 <div class="mobile-portal-header">
-    <div class="logo">
-        <i class="fa fa-heartbeat"></i> DietSenegal
-    </div>
-    <div class="hamburger" onclick="toggleMobileMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
+    🍔 MENU MOBILE ACTIF - CLIQUEZ ICI
 </div>
 
-<!-- Overlay -->
-<div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
-
-<!-- Menu Slide -->
-<div class="mobile-menu-slide" id="mobileMenu">
-    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
-        <i class="fa fa-home"></i>
-        <span>Accueil</span>
-    </a>
-    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-        <i class="fa fa-cutlery"></i>
-        <span>Plans de Repas</span>
-    </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
-    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-        <i class="fa fa-clipboard-list"></i>
-        <span>Enquêtes Alimentaires</span>
-    </a>
-    <?php } ?>
-    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-        <i class="fa fa-heartbeat"></i>
-        <span>Mes Mesures</span>
-    </a>
-    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-        <i class="fa fa-user-md"></i>
-        <span>Mon Diététicien</span>
-    </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
-    <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>">
-        <i class="fa fa-bell"></i>
-        <span>Notifications</span>
-    </a>
-    <?php } ?>
-    <a href="<?php echo site_url('clients/profile'); ?>">
-        <i class="fa fa-user"></i>
-        <span>Mon Profil</span>
-    </a>
-    <a href="<?php echo site_url('authentication/logout'); ?>">
-        <i class="fa fa-sign-out"></i>
-        <span>Déconnexion</span>
-    </a>
-</div>
-
-<!-- Bottom Navigation -->
+<!-- Bottom Navigation SIMPLE -->
 <div class="mobile-bottom-nav">
     <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
         <i class="fa fa-home"></i>
@@ -235,12 +83,10 @@
         <i class="fa fa-cutlery"></i>
         <span>Repas</span>
     </a>
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
     <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
         <i class="fa fa-clipboard-list"></i>
         <span>Enquêtes</span>
     </a>
-    <?php } ?>
     <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
         <i class="fa fa-plus-circle"></i>
         <span>Mesure</span>
@@ -250,16 +96,6 @@
         <span>Profil</span>
     </a>
 </div>
-
-<script>
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    const overlay = document.querySelector('.mobile-menu-overlay');
-
-    menu.classList.toggle('open');
-    overlay.classList.toggle('show');
-}
-</script>
 
 <?php
 // Set active page for navigation
