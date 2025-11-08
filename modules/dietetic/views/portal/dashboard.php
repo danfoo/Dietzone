@@ -1,140 +1,162 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
 
-<!-- MOBILE HEADER & NAVIGATION -->
+<!-- MOBILE HEADER & NAVIGATION v2.0 -->
 <style>
+/* IMPORTANT: Force display pour debug */
+.mobile-portal-header,
+.mobile-bottom-nav {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* Reset pour mobile */
 @media (max-width: 768px) {
     body {
         padding-top: 60px !important;
         padding-bottom: 65px !important;
+        margin: 0 !important;
+    }
+}
+
+@media (min-width: 769px) {
+    body {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
 }
 
 /* Header Mobile Fixe */
 .mobile-portal-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    color: white;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 10000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%) !important;
+    color: white !important;
+    padding: 12px 15px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    z-index: 99999 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+    margin: 0 !important;
 }
 
 .mobile-portal-header .logo {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: white !important;
 }
 
 .mobile-portal-header .hamburger {
-    width: 30px;
-    height: 25px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: pointer;
+    width: 30px !important;
+    height: 25px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    cursor: pointer !important;
 }
 
 .mobile-portal-header .hamburger span {
-    display: block;
-    height: 3px;
-    background: white;
-    border-radius: 2px;
-    transition: 0.3s;
+    display: block !important;
+    height: 3px !important;
+    width: 100% !important;
+    background: white !important;
+    border-radius: 2px !important;
+    transition: 0.3s !important;
 }
 
 /* Menu Mobile Slide */
 .mobile-menu-slide {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 280px;
-    height: 100vh;
-    background: white;
-    z-index: 10001;
-    transition: right 0.3s;
-    overflow-y: auto;
-    padding-top: 60px;
+    position: fixed !important;
+    top: 0 !important;
+    right: -100% !important;
+    width: 280px !important;
+    height: 100vh !important;
+    background: white !important;
+    z-index: 100000 !important;
+    transition: right 0.3s ease !important;
+    overflow-y: auto !important;
+    padding-top: 60px !important;
 }
 
 .mobile-menu-slide.open {
-    right: 0;
+    right: 0 !important;
 }
 
 .mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 9999;
-    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0,0,0,0.5) !important;
+    z-index: 99998 !important;
+    display: none !important;
 }
 
 .mobile-menu-overlay.show {
-    display: block;
+    display: block !important;
 }
 
 .mobile-menu-slide a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
-    color: #333;
-    text-decoration: none;
-    border-bottom: 1px solid #eee;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 15px 20px !important;
+    color: #333 !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid #eee !important;
 }
 
 .mobile-menu-slide a.active {
-    background: #e8f5f4;
-    color: #01807B;
-    border-left: 4px solid #01807B;
+    background: #e8f5f4 !important;
+    color: #01807B !important;
+    border-left: 4px solid #01807B !important;
 }
 
 .mobile-menu-slide a i {
-    font-size: 20px;
-    width: 25px;
+    font-size: 20px !important;
+    width: 25px !important;
 }
 
 /* Bottom Nav Fixe */
 .mobile-bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0;
-    border-top: 1px solid #ddd;
-    z-index: 10000;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    padding: 8px 0 !important;
+    border-top: 1px solid #ddd !important;
+    z-index: 99999 !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
+    margin: 0 !important;
 }
 
 .mobile-bottom-nav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    color: #666;
-    text-decoration: none;
-    font-size: 11px;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: #666 !important;
+    text-decoration: none !important;
+    font-size: 11px !important;
 }
 
 .mobile-bottom-nav a.active {
-    color: #01807B;
+    color: #01807B !important;
 }
 
 .mobile-bottom-nav a i {
-    font-size: 22px;
+    font-size: 22px !important;
 }
 
 /* Cache sur desktop */
@@ -144,11 +166,6 @@
     .mobile-menu-slide,
     .mobile-menu-overlay {
         display: none !important;
-    }
-
-    body {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
     }
 }
 </style>
