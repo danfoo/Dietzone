@@ -1112,4 +1112,134 @@ class Dietetic_notifications_model extends App_Model
             ]
         ]);
     }
+
+    /**
+     * Get all notification settings
+     */
+    public function get_all_settings()
+    {
+        $settings_array = $this->db->get(db_prefix() . $this->table_settings)->result();
+
+        // Convert to associative array
+        $settings = [];
+        foreach ($settings_array as $setting) {
+            $settings[$setting->setting_key] = $setting->setting_value;
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Get notification logs with filters
+     */
+    public function get_logs($filters = [], $limit = 50, $offset = 0)
+    {
+        $this->db->select('*');
+        $this->db->from(db_prefix() . $this->table_logs);
+
+        // Apply filters
+        if (!empty($filters['patient_id'])) {
+            $this->db->where('patient_id', $filters['patient_id']);
+        }
+
+        if (!empty($filters['notification_type'])) {
+            $this->db->where('notification_type', $filters['notification_type']);
+        }
+
+        if (!empty($filters['status'])) {
+            $this->db->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['channel'])) {
+            $this->db->where('channel', $filters['channel']);
+        }
+
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit($limit, $offset);
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Count notification logs with filters
+     */
+    public function count_logs($filters = [])
+    {
+        $this->db->from(db_prefix() . $this->table_logs);
+
+        // Apply filters
+        if (!empty($filters['patient_id'])) {
+            $this->db->where('patient_id', $filters['patient_id']);
+        }
+
+        if (!empty($filters['notification_type'])) {
+            $this->db->where('notification_type', $filters['notification_type']);
+        }
+
+        if (!empty($filters['status'])) {
+            $this->db->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['channel'])) {
+            $this->db->where('channel', $filters['channel']);
+        }
+
+        return $this->db->count_all_results();
+    }
+
+    /**
+     * Get recent notification logs
+     */
+    public function get_recent_logs($limit = 20)
+    {
+        $this->db->select('*');
+        $this->db->from(db_prefix() . $this->table_logs);
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit($limit);
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get all milestones
+     */
+    public function get_all_milestones($limit = 50)
+    {
+        $this->db->select('*');
+        $this->db->from(db_prefix() . $this->table_milestones);
+        $this->db->order_by('achieved_at', 'DESC');
+        $this->db->limit($limit);
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get milestone statistics
+     */
+    public function get_milestone_statistics()
+    {
+        $stats = [];
+
+        // Total milestones
+        $stats['total'] = $this->db->count_all(db_prefix() . $this->table_milestones);
+
+        // Count by type
+        $milestone_types = ['weight_loss_5kg', 'weight_loss_10kg', 'weight_loss_15kg', 'weight_loss_20kg', 'weight_loss_25kg'];
+
+        foreach ($milestone_types as $type) {
+            $this->db->where('milestone_type', $type);
+            $count = $this->db->count_all_results(db_prefix() . $this->table_milestones);
+
+            // Extract kg from type (e.g., "weight_loss_5kg" -> "5kg")
+            $key = str_replace('weight_loss_', '', $type);
+            $stats[$key] = $count;
+        }
+
+        // This month
+        $this->db->where('achieved_at >=', date('Y-m-01 00:00:00'));
+        $this->db->where('achieved_at <=', date('Y-m-t 23:59:59'));
+        $stats['this_month'] = $this->db->count_all_results(db_prefix() . $this->table_milestones);
+
+        return $stats;
+    }
 }
