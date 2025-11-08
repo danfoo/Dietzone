@@ -1,106 +1,78 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
 
-<!-- TEST VISIBILITE v3.0 - CE BLOC DOIT APPARAITRE -->
-<div style="position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 999999; text-align: center; font-size: 20px; font-weight: bold;">
-    ✅ FICHIER DASHBOARD.PHP CHARGÉ - VERSION 3.0
+<!-- HEADER MOBILE - INLINE STYLES ONLY -->
+<div style="position: fixed; top: 0; left: 0; right: 0; width: 100%; background: linear-gradient(135deg, #01807B, #019B95); color: white; padding: 12px 15px; z-index: 999999; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
+    <div style="font-size: 16px; font-weight: 700;">
+        <i class="fa fa-heartbeat"></i> DietSenegal
+    </div>
+    <div onclick="document.getElementById('mobilemenu').style.right='0';document.getElementById('menuoverlay').style.display='block';" style="cursor: pointer; padding: 8px;">
+        <div style="width: 25px; height: 3px; background: white; margin: 4px 0; border-radius: 2px;"></div>
+        <div style="width: 25px; height: 3px; background: white; margin: 4px 0; border-radius: 2px;"></div>
+        <div style="width: 25px; height: 3px; background: white; margin: 4px 0; border-radius: 2px;"></div>
+    </div>
 </div>
 
-<!-- MOBILE HEADER & NAVIGATION v3.0 -->
-<style>
-/* FORCE ABSOLUTE - Visible partout même desktop */
-.mobile-portal-header {
-    position: fixed !important;
-    top: 50px !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%) !important;
-    color: white !important;
-    padding: 15px !important;
-    display: block !important;
-    z-index: 999998 !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
-    text-align: center !important;
-    font-size: 18px !important;
-    font-weight: bold !important;
-}
+<!-- MENU OVERLAY -->
+<div id="menuoverlay" onclick="document.getElementById('mobilemenu').style.right='-100%';this.style.display='none';" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999998;"></div>
 
-.mobile-bottom-nav {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    background: white !important;
-    display: flex !important;
-    justify-content: space-around !important;
-    padding: 10px 0 !important;
-    border-top: 2px solid #01807B !important;
-    z-index: 999998 !important;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
-}
-
-.mobile-bottom-nav a {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 4px !important;
-    color: #666 !important;
-    text-decoration: none !important;
-    font-size: 11px !important;
-    padding: 5px !important;
-}
-
-.mobile-bottom-nav a.active {
-    color: #01807B !important;
-    font-weight: bold !important;
-}
-
-.mobile-bottom-nav a i {
-    font-size: 24px !important;
-}
-
-body {
-    padding-top: 120px !important;
-    padding-bottom: 80px !important;
-}
-</style>
-
-<!-- Header Mobile SIMPLE -->
-<div class="mobile-portal-header">
-    🍔 MENU MOBILE ACTIF - CLIQUEZ ICI
-</div>
-
-<!-- Bottom Navigation SIMPLE -->
-<div class="mobile-bottom-nav">
-    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
-        <i class="fa fa-home"></i>
+<!-- MENU SLIDE -->
+<div id="mobilemenu" style="position: fixed; top: 0; right: -100%; width: 280px; height: 100vh; background: white; z-index: 999999; overflow-y: auto; transition: right 0.3s; padding-top: 60px;">
+    <a href="<?php echo site_url('dietetic/portal'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; background: #e8f5f4; border-left: 4px solid #01807B;">
+        <i class="fa fa-home" style="font-size: 20px; width: 25px;"></i>
         <span>Accueil</span>
     </a>
-    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-        <i class="fa fa-cutlery"></i>
-        <span>Repas</span>
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-cutlery" style="font-size: 20px; width: 25px;"></i>
+        <span>Plans de Repas</span>
     </a>
-    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-        <i class="fa fa-clipboard-list"></i>
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-clipboard-list" style="font-size: 20px; width: 25px;"></i>
         <span>Enquêtes</span>
     </a>
-    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
-        <i class="fa fa-plus-circle"></i>
+    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-heartbeat" style="font-size: 20px; width: 25px;"></i>
+        <span>Mes Mesures</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-user-md" style="font-size: 20px; width: 25px;"></i>
+        <span>Mon Diététicien</span>
+    </a>
+    <a href="<?php echo site_url('clients/profile'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-user" style="font-size: 20px; width: 25px;"></i>
+        <span>Mon Profil</span>
+    </a>
+    <a href="<?php echo site_url('authentication/logout'); ?>" style="display: flex; align-items: center; gap: 12px; padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">
+        <i class="fa fa-sign-out" style="font-size: 20px; width: 25px;"></i>
+        <span>Déconnexion</span>
+    </a>
+</div>
+
+<!-- BOTTOM NAV -->
+<div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 8px 0; border-top: 2px solid #01807B; z-index: 999999; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
+    <a href="<?php echo site_url('dietetic/portal'); ?>" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #01807B; text-decoration: none; font-size: 11px; font-weight: 700;">
+        <i class="fa fa-home" style="font-size: 22px;"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; text-decoration: none; font-size: 11px;">
+        <i class="fa fa-cutlery" style="font-size: 22px;"></i>
+        <span>Repas</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; text-decoration: none; font-size: 11px;">
+        <i class="fa fa-clipboard-list" style="font-size: 22px;"></i>
+        <span>Enquêtes</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; text-decoration: none; font-size: 11px;">
+        <i class="fa fa-plus-circle" style="font-size: 22px;"></i>
         <span>Mesure</span>
     </a>
-    <a href="<?php echo site_url('clients/profile'); ?>">
-        <i class="fa fa-user"></i>
+    <a href="<?php echo site_url('clients/profile'); ?>" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; text-decoration: none; font-size: 11px;">
+        <i class="fa fa-user" style="font-size: 22px;"></i>
         <span>Profil</span>
     </a>
 </div>
 
-<?php
-// Set active page for navigation
-$active_page = 'dashboard';
-?>
+<div style="padding-top: 60px; padding-bottom: 70px;">
 
 <div class="dietetic-portal-header">
     <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
