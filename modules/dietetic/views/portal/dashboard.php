@@ -1,11 +1,253 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $this->load->view('authentication/includes/head'); ?>
+
+<!-- MOBILE HEADER & NAVIGATION -->
+<style>
+/* Reset pour mobile */
+@media (max-width: 768px) {
+    body {
+        padding-top: 60px !important;
+        padding-bottom: 65px !important;
+    }
+}
+
+/* Header Mobile Fixe */
+.mobile-portal-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.mobile-portal-header .logo {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mobile-portal-header .hamburger {
+    width: 30px;
+    height: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.mobile-portal-header .hamburger span {
+    display: block;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+    transition: 0.3s;
+}
+
+/* Menu Mobile Slide */
+.mobile-menu-slide {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    z-index: 10001;
+    transition: right 0.3s;
+    overflow-y: auto;
+    padding-top: 60px;
+}
+
+.mobile-menu-slide.open {
+    right: 0;
+}
+
+.mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: none;
+}
+
+.mobile-menu-overlay.show {
+    display: block;
+}
+
+.mobile-menu-slide a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    color: #333;
+    text-decoration: none;
+    border-bottom: 1px solid #eee;
+}
+
+.mobile-menu-slide a.active {
+    background: #e8f5f4;
+    color: #01807B;
+    border-left: 4px solid #01807B;
+}
+
+.mobile-menu-slide a i {
+    font-size: 20px;
+    width: 25px;
+}
+
+/* Bottom Nav Fixe */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    border-top: 1px solid #ddd;
+    z-index: 10000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.mobile-bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #666;
+    text-decoration: none;
+    font-size: 11px;
+}
+
+.mobile-bottom-nav a.active {
+    color: #01807B;
+}
+
+.mobile-bottom-nav a i {
+    font-size: 22px;
+}
+
+/* Cache sur desktop */
+@media (min-width: 769px) {
+    .mobile-portal-header,
+    .mobile-bottom-nav,
+    .mobile-menu-slide,
+    .mobile-menu-overlay {
+        display: none !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}
+</style>
+
+<!-- Header Mobile -->
+<div class="mobile-portal-header">
+    <div class="logo">
+        <i class="fa fa-heartbeat"></i> DietSenegal
+    </div>
+    <div class="hamburger" onclick="toggleMobileMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</div>
+
+<!-- Overlay -->
+<div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+<!-- Menu Slide -->
+<div class="mobile-menu-slide" id="mobileMenu">
+    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
+        <i class="fa fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
+        <i class="fa fa-cutlery"></i>
+        <span>Plans de Repas</span>
+    </a>
+    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
+        <i class="fa fa-clipboard-list"></i>
+        <span>Enquêtes Alimentaires</span>
+    </a>
+    <?php } ?>
+    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
+        <i class="fa fa-heartbeat"></i>
+        <span>Mes Mesures</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
+        <i class="fa fa-user-md"></i>
+        <span>Mon Diététicien</span>
+    </a>
+    <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
+    <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>">
+        <i class="fa fa-bell"></i>
+        <span>Notifications</span>
+    </a>
+    <?php } ?>
+    <a href="<?php echo site_url('clients/profile'); ?>">
+        <i class="fa fa-user"></i>
+        <span>Mon Profil</span>
+    </a>
+    <a href="<?php echo site_url('authentication/logout'); ?>">
+        <i class="fa fa-sign-out"></i>
+        <span>Déconnexion</span>
+    </a>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="mobile-bottom-nav">
+    <a href="<?php echo site_url('dietetic/portal'); ?>" class="active">
+        <i class="fa fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
+        <i class="fa fa-cutlery"></i>
+        <span>Repas</span>
+    </a>
+    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
+        <i class="fa fa-clipboard-list"></i>
+        <span>Enquêtes</span>
+    </a>
+    <?php } ?>
+    <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>">
+        <i class="fa fa-plus-circle"></i>
+        <span>Mesure</span>
+    </a>
+    <a href="<?php echo site_url('clients/profile'); ?>">
+        <i class="fa fa-user"></i>
+        <span>Profil</span>
+    </a>
+</div>
+
+<script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+
+    menu.classList.toggle('open');
+    overlay.classList.toggle('show');
+}
+</script>
+
 <?php
 // Set active page for navigation
 $active_page = 'dashboard';
 ?>
-<?php $this->load->view('dietetic/portal/includes/header_styles'); ?>
-<?php $this->load->view('dietetic/portal/includes/header_nav'); ?>
 
 <div class="dietetic-portal-header">
     <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
@@ -575,6 +817,5 @@ if ($food_surveys_enabled) {
         <?php } ?>
     });
 </script>
-<?php $this->load->view('dietetic/portal/includes/header_scripts'); ?>
 
 <?php $this->load->view('authentication/includes/footer'); ?>
