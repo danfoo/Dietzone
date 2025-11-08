@@ -1,573 +1,677 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $this->load->view('authentication/includes/head'); ?>
-
-<div class="dietetic-portal-header">
-    <h1><i class="fa fa-heartbeat"></i> <?php echo _l('dietetic_my_program'); ?></h1>
-    <p><?php echo _l('welcome'); ?>, <?php echo $patient->client->company; ?>!</p>
-</div>
-
-<div class="portal-stat-grid">
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight . ' kg' : '-'; ?></h3>
-        <p><?php echo _l('dietetic_current_weight'); ?></p>
-    </div>
-
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->target_weight ? $patient->target_weight . ' kg' : '-'; ?></h3>
-        <p><?php echo _l('dietetic_target_weight'); ?></p>
-    </div>
-
-    <div class="portal-stat-card">
-        <h3><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? $patient->latest_measurement->bmi : '-'; ?></h3>
-        <p><?php echo _l('dietetic_bmi'); ?></p>
-    </div>
-
-    <?php if ($weight_progress->weight_change !== null) { ?>
-        <div class="portal-stat-card">
-            <h3 class="<?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
-                <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
-            </h3>
-            <p><?php echo _l('dietetic_weight_progress'); ?></p>
-        </div>
-    <?php } ?>
-</div>
-
-<?php if ($active_program) { ?>
-    <div class="portal-program-card">
-        <div class="portal-program-header">
-            <div class="portal-program-title"><?php echo $active_program->program_name; ?></div>
-            <span class="portal-program-status active"><?php echo _l('dietetic_program_active'); ?></span>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong><?php echo _l('dietetic_start_date'); ?>:</strong> <?php echo _d($active_program->start_date); ?></p>
-                <?php if ($active_program->end_date) { ?>
-                    <p><strong><?php echo _l('dietetic_end_date'); ?>:</strong> <?php echo _d($active_program->end_date); ?></p>
-                <?php } ?>
-            </div>
-            <div class="col-md-6">
-                <?php if ($active_program->daily_calories) { ?>
-                    <p><strong><?php echo _l('dietetic_daily_calories'); ?>:</strong> <?php echo $active_program->daily_calories; ?> kcal</p>
-                <?php } ?>
-                <?php if ($active_program->daily_protein) { ?>
-                    <p><strong><?php echo _l('dietetic_protein'); ?>:</strong> <?php echo $active_program->daily_protein; ?>g</p>
-                <?php } ?>
-            </div>
-        </div>
-
-        <?php if ($active_program->objective) { ?>
-            <p><strong><?php echo _l('dietetic_objective'); ?>:</strong></p>
-            <p><?php echo nl2br($active_program->objective); ?></p>
-        <?php } ?>
-
-        <?php
-        // Get meal plans for this program
-        $this->load->model('dietetic/dietetic_meal_plans_model');
-        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
-        ?>
-
-        <?php if (!empty($meal_plans)) { ?>
-            <h5 class="mtop20"><?php echo _l('dietetic_meal_plans'); ?></h5>
-            <?php foreach ($meal_plans as $plan) { ?>
-                <div class="portal-meal-plan-card">
-                    <div class="portal-meal-plan-header">
-                        <?php echo $plan->plan_name; ?> - <?php echo _l('dietetic_week'); ?> <?php echo $plan->week_number; ?>
-                    </div>
-                    <div class="mtop10">
-                        <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-info">
-                            <i class="fa fa-eye"></i> <?php echo _l('dietetic_view_details'); ?>
-                        </a>
-                        <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn btn-sm btn-success">
-                            <i class="fa fa-download"></i> <?php echo _l('dietetic_download_pdf'); ?>
-                        </a>
-                    </div>
-                </div>
-            <?php } ?>
-        <?php } ?>
-    </div>
-<?php } else { ?>
-    <div class="alert alert-info">
-        <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_no_programs'); ?>
-    </div>
-<?php } ?>
-
-<div class="row mtop30">
-    <div class="col-md-6">
-        <div class="portal-weight-chart-container">
-            <h4><?php echo _l('dietetic_weight_evolution'); ?></h4>
-            <canvas id="portalWeightChart" height="200"></canvas>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="panel panel-default">
-            <div class="panel-heading"><?php echo _l('dietetic_upcoming_consultations'); ?></div>
-            <div class="panel-body">
-                <?php if (!empty($upcoming_consultations)) { ?>
-                    <ul class="portal-consultation-list">
-                        <?php foreach ($upcoming_consultations as $consultation) { ?>
-                            <li class="portal-consultation-item">
-                                <div>
-                                    <div class="portal-consultation-date"><?php echo _dt($consultation->consultation_date); ?></div>
-                                    <div class="portal-consultation-type"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
-                                </div>
-                                <span class="portal-consultation-status badge badge-info"><?php echo _l('dietetic_consultation_scheduled'); ?></span>
-                            </li>
-                        <?php } ?>
-                    </ul>
-                <?php } else { ?>
-                    <p class="text-muted"><?php echo _l('dietetic_no_consultations'); ?></p>
-                <?php } ?>
-
-                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn btn-sm btn-default mtop10">
-                    <?php echo _l('view_all'); ?>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php
-// Check if food surveys are enabled
-$food_surveys_enabled = $this->db->table_exists(db_prefix() . 'dietic_food_surveys');
-$active_surveys = [];
-if ($food_surveys_enabled) {
-    $this->load->model('dietetic/dietetic_food_surveys_model');
-    $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
-}
+$active_page = 'dashboard';
+$page_title = 'Mon Programme';
+$this->load->view('portal/includes/portal_header');
 ?>
 
-<?php if ($food_surveys_enabled) { ?>
 <style>
-/* Food Surveys Section - Mobile First */
-.food-surveys-section {
+/* Flat Design - Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    border: 2px solid #f1f3f5;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: #01807B;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+}
+
+.stat-card .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-card.weight .stat-icon {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.stat-card.target .stat-icon {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.stat-card.bmi .stat-icon {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+}
+
+.stat-card.progress .stat-icon {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 8px 0;
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value.text-success {
+    color: #48bb78 !important;
+}
+
+/* Program Card - Flat Design */
+.program-card {
     background: white;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    margin: 30px 0;
+    border: 2px solid #f1f3f5;
+    margin-bottom: 30px;
 }
 
-.food-surveys-header {
+.program-header {
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    padding: 24px 20px;
+    padding: 32px 28px;
+    color: white;
     position: relative;
-    overflow: hidden;
 }
 
-.food-surveys-header::before {
+.program-header::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
+    top: -50px;
+    right: -50px;
     width: 200px;
     height: 200px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
 }
 
-.food-surveys-header h3 {
-    margin: 0;
-    color: white;
-    font-size: 22px;
+.program-title {
+    font-size: 24px;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    margin: 0 0 8px 0;
     position: relative;
     z-index: 1;
 }
 
-.food-surveys-header h3 i {
-    font-size: 26px;
-}
-
-.food-surveys-body {
-    padding: 24px 20px;
-}
-
-/* Survey Cards */
-.survey-cards-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-@media (min-width: 768px) {
-    .survey-cards-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1200px) {
-    .survey-cards-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.survey-card {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 2px solid #e8ecef;
-    border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.survey-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, #01807B 0%, #F3911D 100%);
-}
-
-.survey-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(1, 128, 123, 0.15);
-    border-color: #01807B;
-}
-
-.survey-card-title {
-    color: #01807B;
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.survey-card-title i {
-    color: #F3911D;
-    font-size: 20px;
-}
-
-.survey-card-meta {
-    display: flex;
+.program-status {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #6c757d;
-    font-size: 14px;
-    margin-bottom: 16px;
-}
-
-.survey-card-meta i {
-    color: #01807B;
-}
-
-/* Progress Bar */
-.survey-progress {
-    margin: 16px 0;
-}
-
-.survey-progress-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.survey-progress-text {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 6px 16px;
+    border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
-    color: #495057;
+    position: relative;
+    z-index: 1;
 }
 
-.survey-progress-percent {
+.program-status i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.program-body {
+    padding: 28px;
+}
+
+.program-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #01807B;
+}
+
+.info-item i {
+    font-size: 20px;
+    color: #01807B;
+    margin-top: 2px;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.info-value {
     font-size: 16px;
+    color: #212529;
+    font-weight: 600;
+}
+
+.program-objective {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #F3911D;
+    margin: 20px 0;
+}
+
+.program-objective strong {
+    display: block;
+    color: #01807B;
+    font-size: 14px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.program-objective p {
+    color: #495057;
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* Meal Plans Section */
+.meal-plans-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid #f1f3f5;
+}
+
+.section-title {
+    font-size: 18px;
     font-weight: 700;
+    color: #212529;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
     color: #01807B;
 }
 
-.survey-progress-bar-container {
-    height: 10px;
-    background: #e9ecef;
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
+.meal-plan-item {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
 }
 
-.survey-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
-    border-radius: 20px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+.meal-plan-item:hover {
+    border-color: #01807B;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.1);
 }
 
-.survey-progress-bar::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: shimmer 2s infinite;
+.meal-plan-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 12px;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-/* Action Buttons */
-.survey-actions {
+.meal-plan-actions {
     display: flex;
     gap: 10px;
-    margin-top: 16px;
+    flex-wrap: wrap;
 }
 
-@media (max-width: 480px) {
-    .survey-actions {
-        flex-direction: column;
-    }
-}
-
-.btn-survey-primary {
-    flex: 1;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    color: white;
+.btn-flat {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
     border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.3s;
-    text-decoration: none;
-}
-
-.btn-survey-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(1, 128, 123, 0.3);
-    color: white;
-    text-decoration: none;
-}
-
-.btn-survey-secondary {
-    flex: 1;
-    background: white;
-    color: #01807B;
-    border: 2px solid #01807B;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.3s;
-    text-decoration: none;
-}
-
-.btn-survey-secondary:hover {
-    background: #01807B;
-    color: white;
-    text-decoration: none;
-}
-
-/* Empty State */
-.survey-empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 12px;
-    border: 2px dashed #01807B;
-}
-
-.survey-empty-state i {
-    font-size: 48px;
-    color: #01807B;
-    opacity: 0.3;
-    margin-bottom: 16px;
-}
-
-.survey-empty-state h4 {
-    color: #495057;
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-}
-
-.survey-empty-state p {
-    color: #6c757d;
-    font-size: 14px;
-    margin: 0;
-    line-height: 1.6;
-}
-
-/* View All Button */
-.survey-view-all {
-    text-align: center;
-    padding-top: 20px;
-    border-top: 2px solid #e9ecef;
-    margin-top: 20px;
-}
-
-.btn-view-all {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #f8f9fa;
-    color: #01807B;
-    border: 2px solid #e9ecef;
-    padding: 12px 28px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
     transition: all 0.3s;
     text-decoration: none;
 }
 
-.btn-view-all:hover {
+.btn-flat-primary {
     background: #01807B;
     color: white;
-    border-color: #01807B;
+}
+
+.btn-flat-primary:hover {
+    background: #026660;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.2);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    color: white;
     text-decoration: none;
 }
 
-/* Responsive */
+.btn-flat-success {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-flat-success:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Consultations Card - Timeline Design */
+.consultations-card {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid #f1f3f5;
+    overflow: hidden;
+}
+
+.consultations-header {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    padding: 20px 24px;
+    color: white;
+}
+
+.consultations-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.consultations-body {
+    padding: 24px;
+}
+
+.consultation-timeline {
+    position: relative;
+}
+
+.consultation-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #4299e1 0%, #e9ecef 100%);
+}
+
+.consultation-item {
+    position: relative;
+    padding-left: 56px;
+    margin-bottom: 24px;
+}
+
+.consultation-item:last-child {
+    margin-bottom: 0;
+}
+
+.consultation-dot {
+    position: absolute;
+    left: 12px;
+    top: 4px;
+    width: 18px;
+    height: 18px;
+    background: #4299e1;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #4299e1;
+    z-index: 1;
+}
+
+.consultation-content {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 10px;
+    border-left: 3px solid #4299e1;
+}
+
+.consultation-date {
+    font-size: 14px;
+    font-weight: 700;
+    color: #01807B;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.consultation-type {
+    font-size: 13px;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.consultation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #4299e1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-consultations {
+    text-align: center;
+    padding: 32px 20px;
+    color: #6c757d;
+}
+
+.empty-consultations i {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid #f1f3f5;
+}
+
+.chart-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-card h4 i {
+    color: #01807B;
+}
+
+.no-program-alert {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 2px solid #4299e1;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.no-program-alert i {
+    font-size: 56px;
+    color: #4299e1;
+    margin-bottom: 16px;
+}
+
+.no-program-alert p {
+    font-size: 16px;
+    color: #1e40af;
+    font-weight: 500;
+    margin: 0;
+}
+
 @media (max-width: 768px) {
-    .food-surveys-header {
-        padding: 20px 16px;
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .food-surveys-header h3 {
-        font-size: 20px;
+    .program-info-grid {
+        grid-template-columns: 1fr;
     }
 
-    .food-surveys-body {
-        padding: 20px 16px;
+    .meal-plan-actions {
+        flex-direction: column;
     }
 
-    .survey-card-title {
-        font-size: 16px;
+    .btn-flat {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>
 
-<div class="food-surveys-section">
-    <div class="food-surveys-header">
-        <h3>
-            <i class="fa fa-clipboard-list"></i>
-            Mes Enquêtes Alimentaires
-        </h3>
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card weight">
+        <div class="stat-icon">
+            <i class="fa fa-weight"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
+        <div class="stat-label">Poids actuel (kg)</div>
     </div>
 
-    <div class="food-surveys-body">
-        <?php if (!empty($active_surveys)) { ?>
-        <div class="survey-cards-grid">
-            <?php foreach ($active_surveys as $survey) {
-                $completion = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
-            ?>
-            <div class="survey-card">
-                <h4 class="survey-card-title">
-                    <i class="fa fa-utensils"></i>
-                    <?php echo htmlspecialchars($survey->survey_name); ?>
-                </h4>
+    <div class="stat-card target">
+        <div class="stat-icon">
+            <i class="fa fa-bullseye"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
+        <div class="stat-label">Objectif (kg)</div>
+    </div>
 
-                <div class="survey-card-meta">
-                    <i class="fa fa-calendar"></i>
-                    <span><?php echo _d($survey->start_date); ?> - <?php echo _d($survey->end_date); ?></span>
+    <div class="stat-card bmi">
+        <div class="stat-icon">
+            <i class="fa fa-heartbeat"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? number_format($patient->latest_measurement->bmi, 1) : '-'; ?></div>
+        <div class="stat-label">IMC</div>
+    </div>
+
+    <?php if ($weight_progress->weight_change !== null) { ?>
+    <div class="stat-card progress">
+        <div class="stat-icon">
+            <i class="fa fa-chart-line"></i>
+        </div>
+        <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
+        </div>
+        <div class="stat-label">Progression (kg)</div>
+    </div>
+    <?php } ?>
+</div>
+
+<!-- Program Card -->
+<?php if ($active_program) { ?>
+<div class="program-card">
+    <div class="program-header">
+        <div class="program-title"><i class="fa fa-trophy"></i> <?php echo $active_program->program_name; ?></div>
+        <div class="program-status">
+            <i class="fa fa-circle"></i>
+            Programme actif
+        </div>
+    </div>
+
+    <div class="program-body">
+        <div class="program-info-grid">
+            <div class="info-item">
+                <i class="fa fa-calendar-alt"></i>
+                <div class="info-content">
+                    <div class="info-label">Date de début</div>
+                    <div class="info-value"><?php echo _d($active_program->start_date); ?></div>
                 </div>
+            </div>
 
-                <div class="survey-progress">
-                    <div class="survey-progress-label">
-                        <span class="survey-progress-text">Progression</span>
-                        <span class="survey-progress-percent"><?php echo round($completion); ?>%</span>
-                    </div>
-                    <div class="survey-progress-bar-container">
-                        <div class="survey-progress-bar" style="width: <?php echo $completion; ?>%"></div>
-                    </div>
+            <?php if ($active_program->end_date) { ?>
+            <div class="info-item">
+                <i class="fa fa-calendar-check"></i>
+                <div class="info-content">
+                    <div class="info-label">Date de fin</div>
+                    <div class="info-value"><?php echo _d($active_program->end_date); ?></div>
                 </div>
+            </div>
+            <?php } ?>
 
-                <div class="survey-actions">
-                    <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-survey-primary">
-                        <i class="fa fa-camera"></i>
-                        Soumettre
+            <?php if ($active_program->daily_calories) { ?>
+            <div class="info-item">
+                <i class="fa fa-fire"></i>
+                <div class="info-content">
+                    <div class="info-label">Calories quotidiennes</div>
+                    <div class="info-value"><?php echo $active_program->daily_calories; ?> kcal</div>
+                </div>
+            </div>
+            <?php } ?>
+
+            <?php if ($active_program->daily_protein) { ?>
+            <div class="info-item">
+                <i class="fa fa-drumstick-bite"></i>
+                <div class="info-content">
+                    <div class="info-label">Protéines</div>
+                    <div class="info-value"><?php echo $active_program->daily_protein; ?>g</div>
+                </div>
+            </div>
+            <?php } ?>
+        </div>
+
+        <?php if ($active_program->objective) { ?>
+        <div class="program-objective">
+            <strong><i class="fa fa-bullseye"></i> Objectif</strong>
+            <p><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
+        </div>
+        <?php } ?>
+
+        <?php
+        $this->load->model('dietetic/dietetic_meal_plans_model');
+        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
+        ?>
+
+        <?php if (!empty($meal_plans)) { ?>
+        <div class="meal-plans-section">
+            <h5 class="section-title">
+                <i class="fa fa-utensils"></i>
+                Plans de repas
+            </h5>
+
+            <?php foreach ($meal_plans as $plan) { ?>
+            <div class="meal-plan-item">
+                <div class="meal-plan-name">
+                    <i class="fa fa-calendar-week"></i>
+                    <?php echo $plan->plan_name; ?> - Semaine <?php echo $plan->week_number; ?>
+                </div>
+                <div class="meal-plan-actions">
+                    <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
+                        <i class="fa fa-eye"></i> Voir les détails
                     </a>
-                    <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-survey-secondary">
-                        <i class="fa fa-comments"></i>
-                        Recommandations
+                    <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-success">
+                        <i class="fa fa-download"></i> Télécharger PDF
                     </a>
                 </div>
             </div>
             <?php } ?>
         </div>
-        <?php } else { ?>
-        <div class="survey-empty-state">
-            <i class="fa fa-clipboard-list"></i>
-            <h4>Aucune enquête alimentaire active</h4>
-            <p>Votre diététicien ne vous a pas encore assigné d'enquête alimentaire active.<br>
-            Les enquêtes vous permettent de partager vos repas et recevoir des recommandations.</p>
-        </div>
         <?php } ?>
-
-        <div class="survey-view-all">
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="btn-view-all">
-                <i class="fa fa-list"></i>
-                Voir toutes mes enquêtes
-            </a>
-        </div>
     </div>
+</div>
+<?php } else { ?>
+<div class="no-program-alert">
+    <i class="fa fa-info-circle"></i>
+    <p>Aucun programme actif pour le moment. Votre diététicien vous en assignera un prochainement.</p>
 </div>
 <?php } ?>
 
-<!-- Action Buttons -->
-<div class="mtop20" style="display: flex; gap: 10px; flex-wrap: wrap;">
-    <?php if (dietetic_get_option('enable_client_measurements', true)) { ?>
-        <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn btn-info" style="flex: 1; min-width: 200px;">
-            <i class="fa fa-plus"></i> <?php echo _l('dietetic_add_measurement'); ?>
-        </a>
-    <?php } ?>
+<!-- Row for Chart and Consultations -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
+            <canvas id="portalWeightChart" height="200"></canvas>
+        </div>
+    </div>
 
-    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
-        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>"
-           class="btn btn-lg"
-           style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); border-color: #01807B; color: white; flex: 1; min-width: 200px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3); transition: all 0.3s;"
-           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(1, 128, 123, 0.4)'"
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(1, 128, 123, 0.3)'">
-            <i class="fa fa-clipboard-list"></i> Mes Enquêtes Alimentaires
-        </a>
-    <?php } ?>
+    <div class="col-md-6">
+        <div class="consultations-card">
+            <div class="consultations-header">
+                <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
+            </div>
+            <div class="consultations-body">
+                <?php if (!empty($upcoming_consultations)) { ?>
+                <div class="consultation-timeline">
+                    <?php foreach ($upcoming_consultations as $consultation) { ?>
+                    <div class="consultation-item">
+                        <div class="consultation-dot"></div>
+                        <div class="consultation-content">
+                            <div class="consultation-date">
+                                <i class="fa fa-clock"></i>
+                                <?php echo _dt($consultation->consultation_date); ?>
+                            </div>
+                            <div class="consultation-type">
+                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
+                            </div>
+                            <span class="consultation-badge">
+                                <i class="fa fa-check-circle"></i>
+                                Programmé
+                            </span>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn-flat btn-flat-primary">
+                        <i class="fa fa-list"></i> Voir tous les rendez-vous
+                    </a>
+                </div>
+                <?php } else { ?>
+                <div class="empty-consultations">
+                    <i class="fa fa-calendar-times"></i>
+                    <p>Aucun rendez-vous programmé</p>
+                </div>
+                <?php } ?>
+            </div>
+        </div>
+    </div>
 </div>
-
-<style>
-@media (max-width: 768px) {
-    .mtop20 > a {
-        flex: 1 1 100% !important;
-        min-width: 100% !important;
-    }
-}
-</style>
-
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    $(function() {
-        <?php if (!empty($weight_evolution)) { ?>
-            var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
-            var weights = [<?php foreach ($weight_evolution as $m) { echo $m->weight . ','; } ?>];
-            var bmis = [<?php foreach ($weight_evolution as $m) { echo $m->bmi . ','; } ?>];
+$(function() {
+    <?php if (!empty($weight_evolution)) { ?>
+        var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
+        var weights = [<?php foreach ($weight_evolution as $m) { echo $m->weight . ','; } ?>];
+        var bmis = [<?php foreach ($weight_evolution as $m) { echo $m->bmi . ','; } ?>];
 
-            if (typeof dietetic_portal !== 'undefined') {
-                dietetic_portal.loadWeightChart('portalWeightChart', weights, bmis, labels);
-            }
-        <?php } ?>
-    });
+        if (typeof dietetic_portal !== 'undefined') {
+            dietetic_portal.loadWeightChart('portalWeightChart', weights, bmis, labels);
+        }
+    <?php } ?>
+});
 </script>
 
-<?php $this->load->view('authentication/includes/footer'); ?>
+<?php $this->load->view('portal/includes/portal_footer'); ?>
