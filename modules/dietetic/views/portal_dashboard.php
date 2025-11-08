@@ -1,1378 +1,677 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#01807B">
-    <title><?php echo isset($title) ? $title : 'Mon Programme'; ?></title>
-    <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
-        <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
+<?php
+$active_page = 'dashboard';
+$page_title = 'Mon Programme';
+$this->load->view('portal/includes/portal_header');
+?>
+
+<style>
+/* Flat Design - Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    border: 2px solid #f1f3f5;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: #01807B;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+}
+
+.stat-card .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-card.weight .stat-icon {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.stat-card.target .stat-icon {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.stat-card.bmi .stat-icon {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+}
+
+.stat-card.progress .stat-icon {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 8px 0;
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value.text-success {
+    color: #48bb78 !important;
+}
+
+/* Program Card - Flat Design */
+.program-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #f1f3f5;
+    margin-bottom: 30px;
+}
+
+.program-header {
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    padding: 32px 28px;
+    color: white;
+    position: relative;
+}
+
+.program-header::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.program-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.program-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.program-status i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.program-body {
+    padding: 28px;
+}
+
+.program-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #01807B;
+}
+
+.info-item i {
+    font-size: 20px;
+    color: #01807B;
+    margin-top: 2px;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #212529;
+    font-weight: 600;
+}
+
+.program-objective {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #F3911D;
+    margin: 20px 0;
+}
+
+.program-objective strong {
+    display: block;
+    color: #01807B;
+    font-size: 14px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.program-objective p {
+    color: #495057;
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* Meal Plans Section */
+.meal-plans-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid #f1f3f5;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #01807B;
+}
+
+.meal-plan-item {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+}
+
+.meal-plan-item:hover {
+    border-color: #01807B;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.1);
+}
+
+.meal-plan-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 12px;
+}
+
+.meal-plan-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-flat {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-flat-primary {
+    background: #01807B;
+    color: white;
+}
+
+.btn-flat-primary:hover {
+    background: #026660;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-flat-success {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-flat-success:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Consultations Card - Timeline Design */
+.consultations-card {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid #f1f3f5;
+    overflow: hidden;
+}
+
+.consultations-header {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    padding: 20px 24px;
+    color: white;
+}
+
+.consultations-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.consultations-body {
+    padding: 24px;
+}
+
+.consultation-timeline {
+    position: relative;
+}
+
+.consultation-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #4299e1 0%, #e9ecef 100%);
+}
+
+.consultation-item {
+    position: relative;
+    padding-left: 56px;
+    margin-bottom: 24px;
+}
+
+.consultation-item:last-child {
+    margin-bottom: 0;
+}
+
+.consultation-dot {
+    position: absolute;
+    left: 12px;
+    top: 4px;
+    width: 18px;
+    height: 18px;
+    background: #4299e1;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #4299e1;
+    z-index: 1;
+}
+
+.consultation-content {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 10px;
+    border-left: 3px solid #4299e1;
+}
+
+.consultation-date {
+    font-size: 14px;
+    font-weight: 700;
+    color: #01807B;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.consultation-type {
+    font-size: 13px;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.consultation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #4299e1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-consultations {
+    text-align: center;
+    padding: 32px 20px;
+    color: #6c757d;
+}
+
+.empty-consultations i {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid #f1f3f5;
+}
+
+.chart-card h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-card h4 i {
+    color: #01807B;
+}
+
+.no-program-alert {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 2px solid #4299e1;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.no-program-alert i {
+    font-size: 56px;
+    color: #4299e1;
+    margin-bottom: 16px;
+}
+
+.no-program-alert p {
+    font-size: 16px;
+    color: #1e40af;
+    font-weight: 500;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .program-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meal-plan-actions {
+        flex-direction: column;
+    }
+
+    .btn-flat {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card weight">
+        <div class="stat-icon">
+            <i class="fa fa-weight"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
+        <div class="stat-label">Poids actuel (kg)</div>
+    </div>
+
+    <div class="stat-card target">
+        <div class="stat-icon">
+            <i class="fa fa-bullseye"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
+        <div class="stat-label">Objectif (kg)</div>
+    </div>
+
+    <div class="stat-card bmi">
+        <div class="stat-icon">
+            <i class="fa fa-heartbeat"></i>
+        </div>
+        <div class="stat-value"><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? number_format($patient->latest_measurement->bmi, 1) : '-'; ?></div>
+        <div class="stat-label">IMC</div>
+    </div>
+
+    <?php if ($weight_progress->weight_change !== null) { ?>
+    <div class="stat-card progress">
+        <div class="stat-icon">
+            <i class="fa fa-chart-line"></i>
+        </div>
+        <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
+        </div>
+        <div class="stat-label">Progression (kg)</div>
+    </div>
     <?php } ?>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
-        }
-
-        body {
-            background: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            min-height: 100vh;
-            padding-top: 70px; /* Space for fixed header */
-            padding-bottom: 75px; /* Space for fixed footer */
-        }
-
-        /* ============================================
-           HEADER MAGNIFIQUE
-           ============================================ */
-        .app-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            box-shadow: 0 4px 20px rgba(1, 128, 123, 0.3);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-        }
-
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: white;
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
-
-        .header-logo:hover {
-            transform: scale(1.05);
-        }
-
-        .header-logo img {
-            height: 45px;
-            width: auto;
-            filter: brightness(0) invert(1);
-        }
-
-        .header-logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-logo-text i {
-            font-size: 28px;
-            animation: heartbeat 1.5s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1); }
-            50% { transform: scale(1); }
-        }
-
-        /* Hamburger Menu Button */
-        .hamburger-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-        }
-
-        .hamburger-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-        }
-
-        .hamburger-btn:active {
-            transform: scale(0.95);
-        }
-
-        .hamburger-line {
-            width: 28px;
-            height: 3px;
-            background: white;
-            border-radius: 3px;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        .hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
-        }
-
-        .hamburger-btn.active .hamburger-line:nth-child(2) {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-
-        .hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
-        }
-
-        /* Menu Overlay */
-        .menu-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .menu-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Slide Menu */
-        .slide-menu {
-            position: fixed;
-            top: 0;
-            right: -350px;
-            width: 320px;
-            height: 100vh;
-            background: white;
-            z-index: 1001;
-            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
-            overflow-y: auto;
-        }
-
-        .slide-menu.active {
-            right: 0;
-        }
-
-        .menu-header {
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            padding: 30px 20px;
-            color: white;
-            text-align: center;
-        }
-
-        .menu-header h3 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .menu-header p {
-            margin: 5px 0 0 0;
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .menu-items {
-            padding: 15px 0;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 16px 20px;
-            color: #2c3e50;
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-            position: relative;
-        }
-
-        .menu-item:hover {
-            background: linear-gradient(90deg, rgba(1, 128, 123, 0.1) 0%, transparent 100%);
-            border-left-color: #01807B;
-            padding-left: 25px;
-        }
-
-        .menu-item.active {
-            background: linear-gradient(90deg, rgba(1, 128, 123, 0.15) 0%, transparent 100%);
-            border-left-color: #01807B;
-            font-weight: 600;
-        }
-
-        .menu-item i {
-            font-size: 22px;
-            width: 30px;
-            text-align: center;
-            color: #01807B;
-        }
-
-        .menu-item span {
-            flex: 1;
-            font-size: 16px;
-        }
-
-        .menu-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
-            margin: 10px 20px;
-        }
-
-        /* ============================================
-           FOOTER MAGNIFIQUE
-           ============================================ */
-        .app-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 75px;
-            background: white;
-            border-top: 3px solid #01807B;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 10px;
-        }
-
-        .footer-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 10px 5px;
-            color: #6c757d;
-            text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .footer-item:hover {
-            background: rgba(1, 128, 123, 0.05);
-        }
-
-        .footer-item:active {
-            transform: scale(0.95);
-        }
-
-        .footer-item.active {
-            color: #01807B;
-        }
-
-        .footer-item.active::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 3px;
-            background: #01807B;
-            border-radius: 0 0 3px 3px;
-        }
-
-        .footer-icon {
-            font-size: 24px;
-            transition: all 0.3s;
-        }
-
-        .footer-item.active .footer-icon {
-            transform: scale(1.1);
-            color: #01807B;
-        }
-
-        .footer-label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .footer-item.active .footer-label {
-            font-weight: 700;
-        }
-
-        /* Notification Badge */
-        .notification-badge {
-            position: absolute;
-            top: 8px;
-            right: 50%;
-            transform: translateX(15px);
-            background: #dc3545;
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-        }
-
-        /* Header Simplifié Mobile-First */
-        .portal-header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 12px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .portal-header .container-fluid {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .portal-header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .portal-logo {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .portal-logo img {
-            max-height: 40px;
-            max-width: 150px;
-        }
-
-        .portal-logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .portal-logo-text i {
-            color: #01807B;
-        }
-
-        /* Desktop Navigation (Hidden on mobile) */
-        .portal-nav-desktop {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .portal-nav-desktop a {
-            padding: 10px 20px;
-            color: #495057;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 15px;
-        }
-
-        .portal-nav-desktop a:hover {
-            background: #f8f9fa;
-            color: #01807B;
-        }
-
-        .portal-nav-desktop a.active {
-            background: #01807B;
-            color: white;
-        }
-
-        /* Bottom Navigation Mobile */
-        .bottom-nav {
-            display: none; /* Hidden by default, shown on mobile */
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #e9ecef;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-            z-index: 1000;
-            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
-        }
-
-        .bottom-nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .bottom-nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            color: #6c757d;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-radius: 12px;
-            min-width: 60px;
-            position: relative;
-        }
-
-        .bottom-nav-item.active {
-            color: #01807B;
-        }
-
-        .bottom-nav-item i {
-            font-size: 24px;
-            transition: transform 0.2s ease;
-        }
-
-        .bottom-nav-item.active i {
-            transform: scale(1.1);
-        }
-
-        .bottom-nav-item span {
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        /* Active indicator */
-        .bottom-nav-item.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 32px;
-            height: 3px;
-            background: #01807B;
-            border-radius: 0 0 3px 3px;
-        }
-
-        /* Container */
-        .content-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px 15px;
-        }
-
-        /* Page Header Mobile-Friendly */
-        .page-header-mobile {
-            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
-            border-radius: 16px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            color: white;
-            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
-        }
-
-        .page-header-mobile h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .page-header-mobile p {
-            margin: 0;
-            font-size: 15px;
-            opacity: 0.95;
-        }
-
-        /* Stats Grid - Swipeable on mobile */
-        .stats-scroll-container {
-            overflow-x: auto;
-            margin: 0 -15px 24px -15px;
-            padding: 0 15px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-
-        .stats-scroll-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .stats-grid {
-            display: flex;
-            gap: 16px;
-            min-width: min-content;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 24px 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            flex-shrink: 0;
-            width: 160px;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-
-        .stat-card.weight { border-left-color: #01807B; }
-        .stat-card.target { border-left-color: #F3911D; }
-        .stat-card.bmi { border-left-color: #01807B; }
-        .stat-card.fat { border-left-color: #F3911D; }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            margin-bottom: 16px;
-        }
-
-        .stat-card.weight .stat-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
-        .stat-card.target .stat-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
-        .stat-card.bmi .stat-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
-        .stat-card.fat .stat-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-            line-height: 1;
-        }
-
-        .stat-value span {
-            font-size: 16px !important;
-            color: #6c757d;
-        }
-
-        /* Progress Card - Mobile Optimized */
-        .progress-card {
-            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
-            border-radius: 20px;
-            padding: 28px 24px;
-            color: white;
-            box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .progress-card .icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-            opacity: 0.9;
-        }
-
-        .progress-card .value {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-
-        .progress-card .label {
-            font-size: 14px;
-            opacity: 0.95;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 600;
-        }
-
-        /* Action Cards - Touch-Friendly */
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-left: 4px solid transparent;
-            min-height: 80px; /* Touch-friendly height */
-            cursor: pointer;
-        }
-
-        .action-card:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-        }
-
-        .action-card.add-measure { border-left-color: #01807B; }
-        .action-card.history { border-left-color: #F3911D; }
-        .action-card.meals { border-left-color: #01807B; }
-        .action-card.consultations { border-left-color: #F3911D; }
-        .action-card.dietitians { border-left-color: #01807B; }
-
-        .action-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .action-card.add-measure .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
-        .action-card.history .action-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
-        .action-card.meals .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
-        .action-card.consultations .action-icon { background: linear-gradient(135deg, #F3911D 0%, #D67A0F 100%); }
-        .action-card.dietitians .action-icon { background: linear-gradient(135deg, #01807B 0%, #026661 100%); }
-
-        .action-content {
-            flex: 1;
-        }
-
-        .action-card h4 {
-            color: #2c3e50;
-            font-size: 17px;
-            font-weight: 700;
-            margin: 0 0 6px 0;
-        }
-
-        .action-card p {
-            color: #6c757d;
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .action-chevron {
-            color: #dee2e6;
-            font-size: 20px;
-        }
-
-        /* Info Box */
-        .info-box {
-            background: white;
-            border-radius: 16px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .info-box h3 {
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0 0 16px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .info-box h3 i {
-            color: #01807B;
-        }
-
-        .info-box hr {
-            border-color: #e9ecef;
-            margin: 16px 0;
-        }
-
-        .info-row {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .info-item i {
-            color: #01807B;
-            font-size: 20px;
-            width: 24px;
-            text-align: center;
-        }
-
-        .info-item strong {
-            color: #2c3e50;
-            margin-right: 6px;
-            font-size: 14px;
-        }
-
-        .info-item span {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        /* Consultation List */
-        .consultation-item {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-left: 4px solid #01807B;
-        }
-
-        .consultation-item i {
-            font-size: 24px;
-            color: #01807B;
-        }
-
-        .consultation-info {
-            flex: 1;
-        }
-
-        .consultation-date {
-            font-size: 15px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 4px;
-        }
-
-        .consultation-type {
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        /* Alert */
-        .alert-modern {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-left: 4px solid #01807B;
-        }
-
-        .alert-modern i {
-            font-size: 28px;
-            color: #01807B;
-            flex-shrink: 0;
-        }
-
-        .alert-modern p {
-            margin: 0;
-            color: #495057;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-in {
-            animation: fadeInUp 0.5s ease-out forwards;
-        }
-
-        .delay-1 { animation-delay: 0.1s; opacity: 0; }
-        .delay-2 { animation-delay: 0.2s; opacity: 0; }
-        .delay-3 { animation-delay: 0.3s; opacity: 0; }
-
-        /* Desktop Breakpoint */
-        @media (min-width: 769px) {
-            body {
-                padding-bottom: 0; /* Remove bottom padding on desktop */
-            }
-
-            .bottom-nav {
-                display: none !important; /* Always hide on desktop */
-            }
-
-            .portal-nav-desktop {
-                display: flex !important;
-            }
-
-            .stats-scroll-container {
-                margin: 0 0 30px 0;
-                padding: 0;
-                overflow-x: visible;
-            }
-
-            .stats-grid {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 20px;
-            }
-
-            .stat-card {
-                width: auto;
-            }
-
-            .action-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-            }
-
-            .info-row {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-
-            .info-item {
-                flex: 1;
-                min-width: 200px;
-            }
-        }
-
-        /* Mobile Optimization */
-        @media (max-width: 768px) {
-            .portal-nav-desktop {
-                display: none !important;
-            }
-
-            .bottom-nav {
-                display: block;
-            }
-
-            .content-container {
-                padding: 16px 12px 20px;
-            }
-
-            .page-header-mobile {
-                padding: 20px 16px;
-                border-radius: 12px;
-                margin-bottom: 20px;
-            }
-
-            .page-header-mobile h1 {
-                font-size: 20px;
-            }
-
-            .page-header-mobile p {
-                font-size: 14px;
-            }
-
-            .stats-grid {
-                padding-left: 3px; /* Small padding for swipe indicator */
-            }
-
-            .action-card {
-                padding: 16px;
-                border-radius: 12px;
-            }
-
-            .action-icon {
-                width: 48px;
-                height: 48px;
-                font-size: 24px;
-            }
-
-            .action-card h4 {
-                font-size: 16px;
-            }
-
-            .action-card p {
-                font-size: 13px;
-            }
-
-            .info-box {
-                padding: 20px 16px;
-                border-radius: 12px;
-            }
-
-            .info-box h3 {
-                font-size: 17px;
-            }
-        }
-
-        /* Small Mobile */
-        @media (max-width: 375px) {
-            .portal-logo img {
-                max-height: 32px;
-                max-width: 120px;
-            }
-
-            .portal-logo-text {
-                font-size: 16px;
-            }
-
-            .stat-card {
-                width: 140px;
-                padding: 20px 16px;
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .page-header-mobile h1 {
-                font-size: 18px;
-            }
-        }
-
-        /* Pull to Refresh Indicator (Optional Enhancement) */
-        .pull-to-refresh {
-            display: none;
-            text-align: center;
-            padding: 10px;
-            color: #01807B;
-        }
-    </style>
-</head>
-<body>
-    <!-- HEADER MAGNIFIQUE -->
-    <header class="app-header">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="header-logo">
-            <?php
-            $logo_path = get_option('company_logo_dark');
-            if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                $logo_path = get_option('company_logo');
-            }
-
-            if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-            ?>
-                <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-            <?php } else { ?>
-                <div class="header-logo-text">
-                    <i class="fa fa-heartbeat"></i>
-                    <span><?php echo get_option('companyname') ? get_option('companyname') : 'DietSenegal'; ?></span>
-                </div>
-            <?php } ?>
-        </a>
-
-        <button class="hamburger-btn" id="menuToggle">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-    </header>
-
-    <!-- MENU OVERLAY -->
-    <div class="menu-overlay" id="menuOverlay"></div>
-
-    <!-- SLIDE MENU -->
-    <nav class="slide-menu" id="slideMenu">
-        <div class="menu-header">
-            <h3><?php echo isset($client->company) && $client->company ? htmlspecialchars($client->company) : 'Mon Compte'; ?></h3>
-            <p>Portail Patient</p>
+</div>
+
+<!-- Program Card -->
+<?php if ($active_program) { ?>
+<div class="program-card">
+    <div class="program-header">
+        <div class="program-title"><i class="fa fa-trophy"></i> <?php echo $active_program->program_name; ?></div>
+        <div class="program-status">
+            <i class="fa fa-circle"></i>
+            Programme actif
         </div>
+    </div>
 
-        <div class="menu-items">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="menu-item active">
-                <i class="fa fa-home"></i>
-                <span>Accueil</span>
-            </a>
-
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="menu-item">
-                <i class="fa fa-cutlery"></i>
-                <span>Plans de Repas</span>
-            </a>
-
-            <?php
-            // Check if food surveys feature is enabled
-            $CI_menu = &get_instance();
-            if ($CI_menu->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-            ?>
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="menu-item">
-                <i class="fa fa-list-alt"></i>
-                <span>Enquêtes Alimentaires</span>
-            </a>
-            <?php } ?>
-
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="menu-item">
-                <i class="fa fa-plus-circle"></i>
-                <span>Ajouter une Mesure</span>
-            </a>
-
-            <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="menu-item">
-                <i class="fa fa-line-chart"></i>
-                <span>Mes Mesures</span>
-            </a>
-
-            <div class="menu-divider"></div>
-
-            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="menu-item">
-                <i class="fa fa-calendar"></i>
-                <span>Mes Consultations</span>
-            </a>
-
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="menu-item">
-                <i class="fa fa-user-md"></i>
-                <span>Mon Diététicien</span>
-            </a>
-
-            <div class="menu-divider"></div>
-
-            <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item">
-                <i class="fa fa-user"></i>
-                <span>Mon Profil</span>
-            </a>
-
-            <a href="<?php echo site_url('authentication/logout'); ?>" class="menu-item">
-                <i class="fa fa-sign-out"></i>
-                <span>Déconnexion</span>
-            </a>
-        </div>
-    </nav>
-
-    <div class="content-container">
-        <!-- Page Header Mobile-Friendly -->
-        <div class="page-header-mobile animate-in">
-            <h1><i class="fa fa-heartbeat"></i> Mon Programme</h1>
-            <p>Bonjour <?php echo isset($client->company) && $client->company ? htmlspecialchars($client->company) : 'Patient'; ?> 👋</p>
-        </div>
-
-        <!-- Stats - Swipeable -->
-        <div class="stats-scroll-container animate-in delay-1">
-            <div class="stats-grid">
-                <div class="stat-card weight">
-                    <div class="stat-icon"><i class="fa fa-balance-scale"></i></div>
-                    <div class="stat-label">Poids Actuel</div>
-                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement ? number_format($latest_measurement->weight, 1) : '-'; ?> <span>kg</span></div>
-                </div>
-                <div class="stat-card target">
-                    <div class="stat-icon"><i class="fa fa-bullseye"></i></div>
-                    <div class="stat-label">Objectif</div>
-                    <div class="stat-value"><?php echo isset($patient->target_weight) && $patient->target_weight ? number_format($patient->target_weight, 1) : '-'; ?> <span>kg</span></div>
-                </div>
-                <div class="stat-card bmi">
-                    <div class="stat-icon"><i class="fa fa-tachometer"></i></div>
-                    <div class="stat-label">IMC</div>
-                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->bmi) ? number_format($latest_measurement->bmi, 1) : '-'; ?></div>
-                </div>
-                <div class="stat-card fat">
-                    <div class="stat-icon"><i class="fa fa-pie-chart"></i></div>
-                    <div class="stat-label">Masse Grasse</div>
-                    <div class="stat-value"><?php echo isset($latest_measurement) && $latest_measurement && isset($latest_measurement->body_fat) ? number_format($latest_measurement->body_fat, 1) . '%' : '-'; ?></div>
+    <div class="program-body">
+        <div class="program-info-grid">
+            <div class="info-item">
+                <i class="fa fa-calendar-alt"></i>
+                <div class="info-content">
+                    <div class="info-label">Date de début</div>
+                    <div class="info-value"><?php echo _d($active_program->start_date); ?></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Progress Card -->
-        <div class="progress-card animate-in delay-2">
-            <div class="icon"><i class="fa fa-line-chart"></i></div>
-            <div class="value">
-                <?php
-                if (isset($weight_progress->weight_change) && $weight_progress->weight_change !== null) {
-                    $change = $weight_progress->weight_change;
-                    echo ($change > 0 ? '+' : '') . number_format($change, 1) . ' kg';
-                } else {
-                    echo '-';
-                }
-                ?>
+            <?php if ($active_program->end_date) { ?>
+            <div class="info-item">
+                <i class="fa fa-calendar-check"></i>
+                <div class="info-content">
+                    <div class="info-label">Date de fin</div>
+                    <div class="info-value"><?php echo _d($active_program->end_date); ?></div>
+                </div>
             </div>
-            <div class="label">Progression</div>
-        </div>
+            <?php } ?>
 
-        <!-- Action Cards - Touch-Friendly -->
-        <div class="action-grid animate-in delay-3">
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-card add-measure">
-                <div class="action-icon"><i class="fa fa-plus-circle"></i></div>
-                <div class="action-content">
-                    <h4>Ajouter une Mesure</h4>
-                    <p>Suivez votre évolution</p>
+            <?php if ($active_program->daily_calories) { ?>
+            <div class="info-item">
+                <i class="fa fa-fire"></i>
+                <div class="info-content">
+                    <div class="info-label">Calories quotidiennes</div>
+                    <div class="info-value"><?php echo $active_program->daily_calories; ?> kcal</div>
                 </div>
-                <i class="fa fa-chevron-right action-chevron"></i>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="action-card history">
-                <div class="action-icon"><i class="fa fa-history"></i></div>
-                <div class="action-content">
-                    <h4>Mon Historique</h4>
-                    <p>Toutes mes mesures</p>
-                </div>
-                <i class="fa fa-chevron-right action-chevron"></i>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="action-card meals">
-                <div class="action-icon"><i class="fa fa-cutlery"></i></div>
-                <div class="action-content">
-                    <h4>Mes Repas</h4>
-                    <p>Plans alimentaires</p>
-                </div>
-                <i class="fa fa-chevron-right action-chevron"></i>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-card consultations">
-                <div class="action-icon"><i class="fa fa-calendar-check-o"></i></div>
-                <div class="action-content">
-                    <h4>Mes Rendez-vous</h4>
-                    <p>Consultations</p>
-                </div>
-                <i class="fa fa-chevron-right action-chevron"></i>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-card dietitians">
-                <div class="action-icon"><i class="fa fa-user-md"></i></div>
-                <div class="action-content">
-                    <h4>Mon Diététicien</h4>
-                    <p>Noter et contacter</p>
-                </div>
-                <i class="fa fa-chevron-right action-chevron"></i>
-            </a>
+            </div>
+            <?php } ?>
 
-            <?php
-            // Check if food surveys feature is enabled
-            $CI =& get_instance();
-            if ($CI->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-            ?>
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-card surveys" style="background: linear-gradient(135deg, #01807B 0%, #019B95 100%); color: white;">
-                <div class="action-icon" style="background: rgba(255,255,255,0.2); color: white;"><i class="fa fa-clipboard-list"></i></div>
-                <div class="action-content">
-                    <h4 style="color: white;">Mes Enquêtes Alimentaires</h4>
-                    <p style="color: rgba(255,255,255,0.9);">Suivre mes repas</p>
+            <?php if ($active_program->daily_protein) { ?>
+            <div class="info-item">
+                <i class="fa fa-drumstick-bite"></i>
+                <div class="info-content">
+                    <div class="info-label">Protéines</div>
+                    <div class="info-value"><?php echo $active_program->daily_protein; ?>g</div>
                 </div>
-                <i class="fa fa-chevron-right action-chevron" style="color: white;"></i>
-            </a>
+            </div>
             <?php } ?>
         </div>
 
-        <!-- Active Program -->
-        <?php if (isset($active_program) && $active_program) { ?>
-            <div class="info-box animate-in">
-                <h3><i class="fa fa-check-circle"></i> <?php echo htmlspecialchars($active_program->program_name); ?></h3>
-                <hr>
-                <div class="info-row">
-                    <div class="info-item">
-                        <i class="fa fa-calendar"></i>
-                        <div>
-                            <strong>Début:</strong>
-                            <span><?php echo date('d/m/Y', strtotime($active_program->start_date)); ?></span>
-                        </div>
-                    </div>
-                    <?php if (isset($active_program->end_date) && $active_program->end_date) { ?>
-                        <div class="info-item">
-                            <i class="fa fa-calendar-check-o"></i>
-                            <div>
-                                <strong>Fin:</strong>
-                                <span><?php echo date('d/m/Y', strtotime($active_program->end_date)); ?></span>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    <?php if (isset($active_program->daily_calories) && $active_program->daily_calories) { ?>
-                        <div class="info-item">
-                            <i class="fa fa-fire"></i>
-                            <div>
-                                <strong>Calories:</strong>
-                                <span><?php echo $active_program->daily_calories; ?> kcal/j</span>
-                            </div>
-                        </div>
-                    <?php } ?>
-                </div>
-                <?php if (isset($active_program->objective) && $active_program->objective) { ?>
-                    <hr>
-                    <div style="padding: 16px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #01807B;">
-                        <strong style="color: #2c3e50; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px;">
-                            <i class="fa fa-target"></i> Objectif:
-                        </strong>
-                        <p style="margin: 0; color: #495057; font-size: 14px; line-height: 1.6;"><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
-                    </div>
-                <?php } ?>
-            </div>
-        <?php } else { ?>
-            <div class="alert-modern animate-in">
-                <i class="fa fa-info-circle"></i>
-                <p>Aucun programme actif. Contactez votre diététicien.</p>
-            </div>
+        <?php if ($active_program->objective) { ?>
+        <div class="program-objective">
+            <strong><i class="fa fa-bullseye"></i> Objectif</strong>
+            <p><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
+        </div>
         <?php } ?>
 
-        <!-- Upcoming Consultations -->
-        <?php if (!empty($upcoming_consultations)) { ?>
-            <div class="info-box animate-in">
-                <h3><i class="fa fa-calendar"></i> Prochains Rendez-vous</h3>
-                <hr>
-                <?php foreach ($upcoming_consultations as $consultation) { ?>
+        <?php
+        $this->load->model('dietetic/dietetic_meal_plans_model');
+        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
+        ?>
+
+        <?php if (!empty($meal_plans)) { ?>
+        <div class="meal-plans-section">
+            <h5 class="section-title">
+                <i class="fa fa-utensils"></i>
+                Plans de repas
+            </h5>
+
+            <?php foreach ($meal_plans as $plan) { ?>
+            <div class="meal-plan-item">
+                <div class="meal-plan-name">
+                    <i class="fa fa-calendar-week"></i>
+                    <?php echo $plan->plan_name; ?> - Semaine <?php echo $plan->week_number; ?>
+                </div>
+                <div class="meal-plan-actions">
+                    <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
+                        <i class="fa fa-eye"></i> Voir les détails
+                    </a>
+                    <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-success">
+                        <i class="fa fa-download"></i> Télécharger PDF
+                    </a>
+                </div>
+            </div>
+            <?php } ?>
+        </div>
+        <?php } ?>
+    </div>
+</div>
+<?php } else { ?>
+<div class="no-program-alert">
+    <i class="fa fa-info-circle"></i>
+    <p>Aucun programme actif pour le moment. Votre diététicien vous en assignera un prochainement.</p>
+</div>
+<?php } ?>
+
+<!-- Row for Chart and Consultations -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
+            <canvas id="portalWeightChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="consultations-card">
+            <div class="consultations-header">
+                <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
+            </div>
+            <div class="consultations-body">
+                <?php if (!empty($upcoming_consultations)) { ?>
+                <div class="consultation-timeline">
+                    <?php foreach ($upcoming_consultations as $consultation) { ?>
                     <div class="consultation-item">
-                        <i class="fa fa-calendar-o"></i>
-                        <div class="consultation-info">
+                        <div class="consultation-dot"></div>
+                        <div class="consultation-content">
                             <div class="consultation-date">
-                                <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
+                                <i class="fa fa-clock"></i>
+                                <?php echo _dt($consultation->consultation_date); ?>
                             </div>
                             <div class="consultation-type">
                                 <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
                             </div>
+                            <span class="consultation-badge">
+                                <i class="fa fa-check-circle"></i>
+                                Programmé
+                            </span>
                         </div>
                     </div>
+                    <?php } ?>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn-flat btn-flat-primary">
+                        <i class="fa fa-list"></i> Voir tous les rendez-vous
+                    </a>
+                </div>
+                <?php } else { ?>
+                <div class="empty-consultations">
+                    <i class="fa fa-calendar-times"></i>
+                    <p>Aucun rendez-vous programmé</p>
+                </div>
                 <?php } ?>
             </div>
-        <?php } ?>
+        </div>
     </div>
+</div>
 
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script>
-        // Touch feedback for action cards
-        document.querySelectorAll('.action-card').forEach(function(element) {
-            element.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.97)';
-            });
-            element.addEventListener('touchend', function() {
-                this.style.transform = '';
-            });
-        });
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(function() {
+    <?php if (!empty($weight_evolution)) { ?>
+        var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
+        var weights = [<?php foreach ($weight_evolution as $m) { echo $m->weight . ','; } ?>];
+        var bmis = [<?php foreach ($weight_evolution as $m) { echo $m->bmi . ','; } ?>];
 
-        // Smooth scroll for stats
-        const statsContainer = document.querySelector('.stats-scroll-container');
-        if (statsContainer) {
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            statsContainer.addEventListener('mousedown', (e) => {
-                isDown = true;
-                startX = e.pageX - statsContainer.offsetLeft;
-                scrollLeft = statsContainer.scrollLeft;
-            });
-
-            statsContainer.addEventListener('mouseleave', () => {
-                isDown = false;
-            });
-
-            statsContainer.addEventListener('mouseup', () => {
-                isDown = false;
-            });
-
-            statsContainer.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - statsContainer.offsetLeft;
-                const walk = (x - startX) * 2;
-                statsContainer.scrollLeft = scrollLeft - walk;
-            });
+        if (typeof dietetic_portal !== 'undefined') {
+            dietetic_portal.loadWeightChart('portalWeightChart', weights, bmis, labels);
         }
+    <?php } ?>
+});
+</script>
 
-        // Haptic feedback simulation (for devices that support it)
-        if ('vibrate' in navigator) {
-            document.querySelectorAll('.action-card').forEach(function(card) {
-                card.addEventListener('click', function() {
-                    navigator.vibrate(10);
-                });
-            });
-        }
-
-        // ============================================
-        // MENU TOGGLE FUNCTIONALITY
-        // ============================================
-        const menuToggle = document.getElementById('menuToggle');
-        const slideMenu = document.getElementById('slideMenu');
-        const menuOverlay = document.getElementById('menuOverlay');
-
-        function openMenu() {
-            slideMenu.classList.add('active');
-            menuOverlay.classList.add('active');
-            menuToggle.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeMenu() {
-            slideMenu.classList.remove('active');
-            menuOverlay.classList.remove('active');
-            menuToggle.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        menuToggle.addEventListener('click', function() {
-            if (slideMenu.classList.contains('active')) {
-                closeMenu();
-            } else {
-                openMenu();
-            }
-        });
-
-        menuOverlay.addEventListener('click', closeMenu);
-
-        // Close menu on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && slideMenu.classList.contains('active')) {
-                closeMenu();
-            }
-        });
-
-        // Prevent body scroll when menu is open
-        slideMenu.addEventListener('touchmove', function(e) {
-            e.stopPropagation();
-        });
-    </script>
-
-    <!-- FOOTER MAGNIFIQUE -->
-    <footer class="app-footer">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="footer-item active">
-            <i class="fa fa-home footer-icon"></i>
-            <span class="footer-label">Accueil</span>
-        </a>
-
-        <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item">
-            <i class="fa fa-cutlery footer-icon"></i>
-            <span class="footer-label">Repas</span>
-        </a>
-
-        <?php
-        // Check if food surveys feature is enabled
-        $CI_footer = &get_instance();
-        if ($CI_footer->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-        ?>
-        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="footer-item">
-            <i class="fa fa-list-alt footer-icon"></i>
-            <span class="footer-label">Enquêtes</span>
-        </a>
-        <?php } else { ?>
-        <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="footer-item">
-            <i class="fa fa-plus-circle footer-icon"></i>
-            <span class="footer-label">Mesure</span>
-        </a>
-        <?php } ?>
-
-        <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="footer-item">
-            <i class="fa fa-user-md footer-icon"></i>
-            <span class="footer-label">Contact</span>
-        </a>
-
-        <a href="<?php echo site_url('clients/profile'); ?>" class="footer-item">
-            <i class="fa fa-user footer-icon"></i>
-            <span class="footer-label">Profil</span>
-        </a>
-    </footer>
-</body>
-</html>
+<?php $this->load->view('portal/includes/portal_footer'); ?>
