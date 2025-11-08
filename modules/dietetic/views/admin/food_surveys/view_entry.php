@@ -630,6 +630,144 @@
     box-shadow: var(--shadow-lg);
 }
 
+/* Meal Type Radio Buttons */
+.meal-type-radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.meal-type-radio {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+}
+
+.meal-type-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meal-type-radio-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 10px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    transition: var(--transition);
+    min-height: 85px;
+    position: relative;
+}
+
+.meal-type-radio-btn i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--text-light);
+    transition: var(--transition);
+}
+
+.meal-type-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: center;
+    line-height: 1.3;
+}
+
+.meal-type-count {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--secondary-color);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meal-type-radio:hover .meal-type-radio-btn {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.meal-type-radio:hover .meal-type-radio-btn i {
+    color: var(--primary-color);
+}
+
+.meal-type-radio input[type="radio"]:checked + .meal-type-radio-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #026660 100%);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.2);
+}
+
+.meal-type-radio input[type="radio"]:checked + .meal-type-radio-btn i,
+.meal-type-radio input[type="radio"]:checked + .meal-type-radio-btn .meal-type-label {
+    color: white;
+}
+
+.meal-type-radio input[type="radio"]:checked + .meal-type-radio-btn .meal-type-count {
+    background: white;
+    color: var(--primary-color);
+}
+
+/* Meal Recommendation Badge */
+.meal-recommendation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(243, 145, 29, 0.9);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(243, 145, 29, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(243, 145, 29, 0);
+    }
+}
+
+.meal-recommendation-badge i {
+    font-size: 11px;
+}
+
+/* Clickable Photo Container */
+.meal-photo-container.clickable {
+    cursor: pointer;
+}
+
+.meal-photo-container:not(.clickable) {
+    cursor: default;
+}
+
+.meal-photo-container.clickable::after {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meal-photo-container:not(.clickable)::after {
+    display: none;
+}
+
 .recommendations-list {
     display: grid;
     gap: 20px;
@@ -1202,6 +1340,11 @@
                             <h3>
                                 <i class="fa fa-coffee"></i>
                                 Petit-déjeuner
+                                <?php if (count($recommendations_by_meal['breakfast']) > 0): ?>
+                                    <span class="meal-recommendation-badge" title="<?php echo count($recommendations_by_meal['breakfast']); ?> recommandation(s)">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['breakfast']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->breakfast_time): ?>
                                 <span class="meal-time">
@@ -1211,7 +1354,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container" <?php if ($entry->breakfast_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>')"<?php endif; ?>>
+                            <div class="meal-photo-container <?php echo $entry->breakfast_photo ? 'clickable' : ''; ?>" <?php if ($entry->breakfast_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->breakfast_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
                                 <?php else: ?>
@@ -1242,6 +1385,11 @@
                             <h3>
                                 <i class="fa fa-sun-o"></i>
                                 Déjeuner
+                                <?php if (count($recommendations_by_meal['lunch']) > 0): ?>
+                                    <span class="meal-recommendation-badge" title="<?php echo count($recommendations_by_meal['lunch']); ?> recommandation(s)">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['lunch']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->lunch_time): ?>
                                 <span class="meal-time">
@@ -1251,7 +1399,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container" <?php if ($entry->lunch_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>')"<?php endif; ?>>
+                            <div class="meal-photo-container <?php echo $entry->lunch_photo ? 'clickable' : ''; ?>" <?php if ($entry->lunch_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->lunch_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
                                 <?php else: ?>
@@ -1282,6 +1430,11 @@
                             <h3>
                                 <i class="fa fa-moon-o"></i>
                                 Dîner
+                                <?php if (count($recommendations_by_meal['dinner']) > 0): ?>
+                                    <span class="meal-recommendation-badge" title="<?php echo count($recommendations_by_meal['dinner']); ?> recommandation(s)">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['dinner']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </h3>
                             <?php if ($entry->dinner_time): ?>
                                 <span class="meal-time">
@@ -1291,7 +1444,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container" <?php if ($entry->dinner_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>')"<?php endif; ?>>
+                            <div class="meal-photo-container <?php echo $entry->dinner_photo ? 'clickable' : ''; ?>" <?php if ($entry->dinner_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>')"<?php endif; ?>>
                                 <?php if ($entry->dinner_photo): ?>
                                     <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
                                 <?php else: ?>
@@ -1368,13 +1521,49 @@
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                         <input type="hidden" name="entry_id" value="<?php echo $entry->id; ?>">
                         <div class="form-group">
-                            <label for="meal_type_select">Repas concerné</label>
-                            <select name="meal_type" id="meal_type_select" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 15px;">
-                                <option value="breakfast">🍳 Petit-déjeuner</option>
-                                <option value="lunch">☀️ Déjeuner</option>
-                                <option value="dinner">🌙 Dîner</option>
-                                <option value="global">📋 Recommandation globale</option>
-                            </select>
+                            <label>Repas concerné</label>
+                            <div class="meal-type-radio-group">
+                                <label class="meal-type-radio">
+                                    <input type="radio" name="meal_type" value="breakfast" required>
+                                    <span class="meal-type-radio-btn">
+                                        <i class="fa fa-coffee"></i>
+                                        <span class="meal-type-label">Petit-déjeuner</span>
+                                        <?php if (count($recommendations_by_meal['breakfast']) > 0): ?>
+                                            <span class="meal-type-count"><?php echo count($recommendations_by_meal['breakfast']); ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                                <label class="meal-type-radio">
+                                    <input type="radio" name="meal_type" value="lunch" required>
+                                    <span class="meal-type-radio-btn">
+                                        <i class="fa fa-sun-o"></i>
+                                        <span class="meal-type-label">Déjeuner</span>
+                                        <?php if (count($recommendations_by_meal['lunch']) > 0): ?>
+                                            <span class="meal-type-count"><?php echo count($recommendations_by_meal['lunch']); ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                                <label class="meal-type-radio">
+                                    <input type="radio" name="meal_type" value="dinner" required>
+                                    <span class="meal-type-radio-btn">
+                                        <i class="fa fa-moon-o"></i>
+                                        <span class="meal-type-label">Dîner</span>
+                                        <?php if (count($recommendations_by_meal['dinner']) > 0): ?>
+                                            <span class="meal-type-count"><?php echo count($recommendations_by_meal['dinner']); ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                                <label class="meal-type-radio">
+                                    <input type="radio" name="meal_type" value="global" required>
+                                    <span class="meal-type-radio-btn">
+                                        <i class="fa fa-list-alt"></i>
+                                        <span class="meal-type-label">Globale</span>
+                                        <?php if (count($recommendations_by_meal['global']) > 0): ?>
+                                            <span class="meal-type-count"><?php echo count($recommendations_by_meal['global']); ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="recommendation_text">Recommandation</label>
