@@ -206,6 +206,93 @@
         font-size: 14px;
     }
 
+    /* Date Navigation */
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .date-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        color: white;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .date-nav-btn:hover:not(.disabled) {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .date-nav-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .date-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: white;
+        color: var(--primary-color);
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 16px;
+        box-shadow: var(--shadow);
+    }
+
+    .date-display.is-today {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, #FFA74D 100%);
+        color: white;
+    }
+
+    .today-badge {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 768px) {
+        .date-navigation {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .date-nav-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-display {
+            order: -1;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-nav-label {
+            display: none;
+        }
+    }
+
     /* Back link */
     .back-link {
         display: inline-flex;
@@ -662,7 +749,34 @@
                 <i class="fa fa-camera"></i>
                 <?php echo htmlspecialchars($survey->survey_name); ?>
             </h1>
-            <p>Soumission quotidienne du <?php echo date('d/m/Y'); ?></p>
+
+            <!-- Date Navigation -->
+            <div class="date-navigation">
+                <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id . '/' . $prev_date); ?>" class="date-nav-btn">
+                    <i class="fa fa-chevron-left"></i>
+                    <span class="date-nav-label">Jour précédent</span>
+                </a>
+
+                <div class="date-display <?php echo $is_today ? 'is-today' : ''; ?>">
+                    <i class="fa fa-calendar"></i>
+                    <span><?php echo date('d/m/Y', strtotime($selected_date)); ?></span>
+                    <?php if ($is_today): ?>
+                        <span class="today-badge">Aujourd'hui</span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($can_go_next): ?>
+                    <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id . '/' . $next_date); ?>" class="date-nav-btn">
+                        <span class="date-nav-label">Jour suivant</span>
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                <?php else: ?>
+                    <div class="date-nav-btn disabled">
+                        <span class="date-nav-label">Jour suivant</span>
+                        <i class="fa fa-chevron-right"></i>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Alert area -->
@@ -670,7 +784,7 @@
 
         <form id="dailyEntryForm">
             <input type="hidden" name="survey_id" value="<?php echo $survey->id; ?>">
-            <input type="hidden" name="entry_date" value="<?php echo date('Y-m-d'); ?>">
+            <input type="hidden" name="entry_date" value="<?php echo $selected_date; ?>">
             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <!-- Meals Section -->

@@ -1117,8 +1117,9 @@ class Portal extends App_Controller
      * Daily food survey submission form
      *
      * @param int $survey_id
+     * @param string $date Optional date in Y-m-d format
      */
-    public function food_survey_submit($survey_id)
+    public function food_survey_submit($survey_id, $date = null)
     {
         // Check if client is logged in
         if (!is_client_logged_in()) {
@@ -1152,9 +1153,18 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         $data['client'] = $client;
 
-        // Get today's entry if it exists
-        $today = date('Y-m-d');
-        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $today);
+        // Determine which date to display
+        if ($date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $selected_date = $date;
+        } else {
+            $selected_date = date('Y-m-d');
+        }
+
+        $data['selected_date'] = $selected_date;
+        $data['is_today'] = ($selected_date == date('Y-m-d'));
+
+        // Get entry for the selected date
+        $data['today_entry'] = $this->dietetic_food_surveys_model->get_entry_by_date($survey_id, $selected_date);
 
         // Get existing beverages if entry exists
         if ($data['today_entry']) {
@@ -1162,6 +1172,13 @@ class Portal extends App_Controller
         } else {
             $data['beverages'] = [];
         }
+
+        // Calculate previous and next dates for navigation
+        $prev_date = date('Y-m-d', strtotime($selected_date . ' -1 day'));
+        $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
+        $data['prev_date'] = $prev_date;
+        $data['next_date'] = $next_date;
+        $data['can_go_next'] = (strtotime($next_date) <= strtotime(date('Y-m-d')));
 
         $this->load->view('portal/food_surveys/submit', $data);
     }
