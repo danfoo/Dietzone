@@ -1,5 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <script>
+// Add dietetic-portal-page class to body for scoped styles
+document.body.classList.add('dietetic-portal-page');
+
 // Hamburger Menu Toggle
 document.addEventListener('DOMContentLoaded', function() {
     const hamburgerMenu = document.getElementById('hamburgerMenu');
