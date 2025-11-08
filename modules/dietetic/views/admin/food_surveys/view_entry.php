@@ -1003,59 +1003,15 @@
     color: var(--warning-color);
 }
 
-/* Lightbox */
-.lightbox-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+/* Photo Links */
+.meal-photo-link {
+    display: block;
+    text-decoration: none;
 }
 
-.lightbox-overlay.active {
-    display: flex;
-    opacity: 1;
-}
-
-.lightbox-content {
-    max-width: 90%;
-    max-height: 90%;
-    position: relative;
-}
-
-.lightbox-content img {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.lightbox-close {
-    position: absolute;
-    top: -50px;
-    right: 0;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 20px;
-    transition: var(--transition);
-}
-
-.lightbox-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(90deg);
+.meal-photo-link:hover .meal-photo-container {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Print Styles */
@@ -1337,16 +1293,20 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container <?php echo $entry->breakfast_photo ? 'clickable' : ''; ?>" <?php if ($entry->breakfast_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>')"<?php endif; ?>>
-                                <?php if ($entry->breakfast_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
-                                <?php else: ?>
+                            <?php if ($entry->breakfast_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" target="_blank" class="meal-photo-link">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->breakfast_photo); ?>" alt="Petit-déjeuner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->breakfast_notes): ?>
                                 <div class="meal-notes">
                                     <div class="meal-notes-label">Notes</div>
@@ -1382,16 +1342,20 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container <?php echo $entry->lunch_photo ? 'clickable' : ''; ?>" <?php if ($entry->lunch_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>')"<?php endif; ?>>
-                                <?php if ($entry->lunch_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
-                                <?php else: ?>
+                            <?php if ($entry->lunch_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" target="_blank" class="meal-photo-link">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->lunch_photo); ?>" alt="Déjeuner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->lunch_notes): ?>
                                 <div class="meal-notes">
                                     <div class="meal-notes-label">Notes</div>
@@ -1427,16 +1391,20 @@
                             <?php endif; ?>
                         </div>
                         <div class="meal-card-body">
-                            <div class="meal-photo-container <?php echo $entry->dinner_photo ? 'clickable' : ''; ?>" <?php if ($entry->dinner_photo): ?>onclick="openLightbox('<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>')"<?php endif; ?>>
-                                <?php if ($entry->dinner_photo): ?>
-                                    <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
-                                <?php else: ?>
+                            <?php if ($entry->dinner_photo): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" target="_blank" class="meal-photo-link">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->dinner_photo); ?>" alt="Dîner">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
                                     <div class="meal-photo-placeholder">
                                         <i class="fa fa-image"></i>
                                         <p>Aucune photo</p>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($entry->dinner_notes): ?>
                                 <div class="meal-notes">
                                     <div class="meal-notes-label">Notes</div>
@@ -1667,40 +1635,11 @@
     </div>
 </div>
 
-<!-- Lightbox -->
-<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
-    <div class="lightbox-content" onclick="event.stopPropagation()">
-        <button class="lightbox-close" onclick="closeLightbox()">
-            <i class="fa fa-times"></i>
-        </button>
-        <img src="" alt="Photo repas" id="lightboxImage">
-    </div>
-</div>
-
 <?php init_tail(); ?>
 
 <script>
 (function() {
     'use strict';
-
-    // Lightbox functions
-    window.openLightbox = function(imageUrl) {
-        document.getElementById('lightboxImage').src = imageUrl;
-        document.getElementById('lightbox').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    };
-
-    window.closeLightbox = function() {
-        document.getElementById('lightbox').classList.remove('active');
-        document.body.style.overflow = '';
-    };
-
-    // Close lightbox with ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeLightbox();
-        }
-    });
 
     // Add recommendation form submission
     $('#addRecommendationForm').on('submit', function(e) {
