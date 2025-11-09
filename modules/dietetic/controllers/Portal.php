@@ -353,8 +353,13 @@ class Portal extends App_Controller
                     }
 
                     // For regular form submission, set success message
+                    // Get client info for header display
+                    $this->load->model('clients_model');
+                    $client = $this->clients_model->get($patient->client_id);
+
                     $data['success'] = 'Mesure ajoutée avec succès!';
                     $data['patient'] = $patient;
+                    $data['client'] = $client;
                     $this->load->view('portal_add_measurement', $data);
                     return;
                 } else {
@@ -364,8 +369,13 @@ class Portal extends App_Controller
                         return;
                     }
 
+                    // Get client info for header display
+                    $this->load->model('clients_model');
+                    $client = $this->clients_model->get($patient->client_id);
+
                     $data['error'] = 'Échec de l\'enregistrement de la mesure.';
                     $data['patient'] = $patient;
+                    $data['client'] = $client;
                 }
             } catch (Exception $e) {
                 // Return JSON for AJAX requests
@@ -374,8 +384,13 @@ class Portal extends App_Controller
                     return;
                 }
 
+                // Get client info for header display
+                $this->load->model('clients_model');
+                $client = $this->clients_model->get($patient->client_id);
+
                 $data['error'] = 'Erreur: ' . $e->getMessage();
                 $data['patient'] = $patient;
+                $data['client'] = $client;
             }
         }
 
@@ -385,6 +400,11 @@ class Portal extends App_Controller
         }
         if (!isset($data['patient'])) {
             $data['patient'] = $patient;
+        }
+        if (!isset($data['client'])) {
+            // Get client info for header display
+            $this->load->model('clients_model');
+            $data['client'] = $this->clients_model->get($patient->client_id);
         }
         $this->load->view('portal_add_measurement', $data);
     }
