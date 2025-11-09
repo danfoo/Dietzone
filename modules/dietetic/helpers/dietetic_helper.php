@@ -615,11 +615,6 @@ function dietetic_can_manage_assignments()
  */
 function dietetic_has_feature_permission($permission_key, $staff_id = null)
 {
-    // Admins bypass all permission checks
-    if (dietetic_is_admin()) {
-        return true;
-    }
-
     if ($staff_id === null) {
         $staff_id = dietetic_get_staff_user_id();
     }
@@ -629,6 +624,16 @@ function dietetic_has_feature_permission($permission_key, $staff_id = null)
     }
 
     $CI = &get_instance();
+
+    // Check if the SPECIFIC staff member (not current user) is an admin
+    // Admins bypass all permission checks
+    $CI->db->select('admin');
+    $CI->db->where('staffid', $staff_id);
+    $staff = $CI->db->get(db_prefix() . 'staff')->row();
+
+    if ($staff && $staff->admin == 1) {
+        return true;
+    }
 
     // Check if permissions table exists
     if (!$CI->db->table_exists(db_prefix() . 'dietic_staff_permissions')) {
