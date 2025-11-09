@@ -78,7 +78,8 @@ class Dietetic_measurements_model extends App_Model
         // Auto-calculate BMI if weight and patient height available
         if (!empty($data['weight']) && !isset($data['bmi'])) {
             $this->load->model('dietetic/dietetic_patients_model');
-            $patient = $this->dietetic_patients_model->get($data['patient_id']);
+            // Bypass access check since we already verified permissions above
+            $patient = $this->dietetic_patients_model->get($data['patient_id'], false);
 
             if ($patient && $patient->height) {
                 $data['bmi'] = dietetic_calculate_bmi($data['weight'], $patient->height);

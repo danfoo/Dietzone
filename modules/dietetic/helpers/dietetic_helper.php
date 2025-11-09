@@ -550,9 +550,17 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
         return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
     }
 
+    // Check access in patient_dietitians table first
     $CI->load->model('dietetic/dietetic_patient_dietitians_model');
 
-    return $CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id);
+    if ($CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id)) {
+        return true;
+    }
+
+    // Fallback: If no assignment found, check dietitian_id in patients table
+    // This handles patients created before the many-to-many system or missing assignments
+    $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+    return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
 }
 
 /**
@@ -582,11 +590,18 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
     }
 
     if ($staff_id) {
-        // Join with patient_dietitians table and filter by current staff
+        // Use LEFT JOIN to include patients without assignments
+        // This handles both the new system (patient_dietitians) and old system (dietitian_id field)
         $db->join(db_prefix() . 'dietic_patient_dietitians ' . $table_alias,
-                  $table_alias . '.patient_id = p.id', 'inner');
+                  $table_alias . '.patient_id = p.id AND ' . $table_alias . '.status = "active"', 'left');
+
+        // Show patients where EITHER:
+        // 1. Staff is assigned in patient_dietitians table (new system)
+        // 2. Staff matches the dietitian_id field (old system / fallback)
+        $db->group_start();
         $db->where($table_alias . '.dietitian_id', $staff_id);
-        $db->where($table_alias . '.status', 'active');
+        $db->or_where('p.dietitian_id', $staff_id);
+        $db->group_end();
     } else {
         // No staff user and not a client = no access
         $db->where('1', '0'); // Always false

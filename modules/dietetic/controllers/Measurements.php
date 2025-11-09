@@ -40,10 +40,12 @@ class Measurements extends AdminController
             return;
         }
 
+        // Get patient - check access but use proper permission function
         $data['patient'] = $this->dietetic_patients_model->get($patient_id);
 
         if (!$data['patient']) {
-            set_alert('danger', 'Patient not found');
+            // Patient not found or no access
+            set_alert('danger', 'Patient not found or access denied');
             redirect(admin_url('dietetic/patients'));
             return;
         }
