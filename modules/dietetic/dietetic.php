@@ -250,6 +250,27 @@ function dietetic_add_head_components()
 }
 
 /**
+ * Add CSS for menu toggle animation (in head, before page loads)
+ */
+hooks()->add_action('app_admin_head', 'dietetic_add_menu_styles');
+
+function dietetic_add_menu_styles()
+{
+    echo '<style>
+    /* Dietetic menu animation */
+    .menu-item-dietetic ul {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    .menu-item-dietetic ul.in {
+        max-height: 2000px;
+        transition: max-height 0.5s ease-in;
+    }
+    </style>';
+}
+
+/**
  * Add custom JS for admin area (in footer, after jQuery is loaded)
  */
 hooks()->add_action('app_admin_footer', 'dietetic_add_footer_components');
