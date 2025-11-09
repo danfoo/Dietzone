@@ -52,11 +52,11 @@ class Dietetic_patients_model extends App_Model
                 $patient->dietitians_count = 0;
             }
 
-            // Get latest measurement
-            $patient->latest_measurement = $this->get_latest_measurement($id);
+            // Get latest measurement (bypass access check if main check was bypassed)
+            $patient->latest_measurement = $this->get_latest_measurement($id, !$check_access);
 
-            // Get active programs count
-            $patient->active_programs = $this->count_active_programs($id);
+            // Get active programs count (bypass access check if main check was bypassed)
+            $patient->active_programs = $this->count_active_programs($id, !$check_access);
         }
 
         return $patient;
@@ -233,12 +233,13 @@ class Dietetic_patients_model extends App_Model
      * Get latest measurement for patient
      *
      * @param int $patient_id
+     * @param bool $bypass_access_check If true, skip permission check
      * @return object|null
      */
-    public function get_latest_measurement($patient_id)
+    public function get_latest_measurement($patient_id, $bypass_access_check = false)
     {
-        // Check access permissions
-        if (!dietetic_can_access_patient($patient_id)) {
+        // Check access permissions (unless bypassed)
+        if (!$bypass_access_check && !dietetic_can_access_patient($patient_id)) {
             return null;
         }
 
@@ -255,12 +256,13 @@ class Dietetic_patients_model extends App_Model
      *
      * @param int $patient_id
      * @param int $limit
+     * @param bool $bypass_access_check If true, skip permission check
      * @return array
      */
-    public function get_weight_evolution($patient_id, $limit = 12)
+    public function get_weight_evolution($patient_id, $limit = 12, $bypass_access_check = false)
     {
-        // Check access permissions
-        if (!dietetic_can_access_patient($patient_id)) {
+        // Check access permissions (unless bypassed)
+        if (!$bypass_access_check && !dietetic_can_access_patient($patient_id)) {
             return [];
         }
 
@@ -279,10 +281,10 @@ class Dietetic_patients_model extends App_Model
      * @param int $patient_id
      * @return int
      */
-    public function count_active_programs($patient_id)
+    public function count_active_programs($patient_id, $bypass_access_check = false)
     {
-        // Check access permissions
-        if (!dietetic_can_access_patient($patient_id)) {
+        // Check access permissions (unless bypassed)
+        if (!$bypass_access_check && !dietetic_can_access_patient($patient_id)) {
             return 0;
         }
 
