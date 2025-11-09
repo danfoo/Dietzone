@@ -1103,26 +1103,8 @@ body {
     </div>
 
     <div class="program-body">
+        <?php if ($active_program->daily_calories) { ?>
         <div class="program-info-grid">
-            <div class="info-item">
-                <i class="fa fa-calendar-alt"></i>
-                <div class="info-content">
-                    <div class="info-label">Date de début</div>
-                    <div class="info-value"><?php echo _d($active_program->start_date); ?></div>
-                </div>
-            </div>
-
-            <?php if ($active_program->end_date) { ?>
-            <div class="info-item">
-                <i class="fa fa-calendar-check"></i>
-                <div class="info-content">
-                    <div class="info-label">Date de fin</div>
-                    <div class="info-value"><?php echo _d($active_program->end_date); ?></div>
-                </div>
-            </div>
-            <?php } ?>
-
-            <?php if ($active_program->daily_calories) { ?>
             <div class="info-item">
                 <i class="fa fa-fire"></i>
                 <div class="info-content">
@@ -1130,51 +1112,13 @@ body {
                     <div class="info-value"><?php echo $active_program->daily_calories; ?> kcal</div>
                 </div>
             </div>
-            <?php } ?>
-
-            <?php if ($active_program->daily_protein) { ?>
-            <div class="info-item">
-                <i class="fa fa-drumstick-bite"></i>
-                <div class="info-content">
-                    <div class="info-label">Protéines</div>
-                    <div class="info-value"><?php echo $active_program->daily_protein; ?>g</div>
-                </div>
-            </div>
-            <?php } ?>
         </div>
+        <?php } ?>
 
         <?php if ($active_program->objective) { ?>
         <div class="program-objective">
             <strong><i class="fa fa-bullseye"></i> Objectif</strong>
             <p><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
-        </div>
-        <?php } ?>
-
-        <?php
-        $this->load->model('dietetic/dietetic_meal_plans_model');
-        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
-        ?>
-
-        <?php if (!empty($meal_plans)) { ?>
-        <div class="meal-plans-section">
-            <h5 class="section-title">
-                <i class="fa fa-utensils"></i>
-                Plans de repas
-            </h5>
-
-            <?php foreach ($meal_plans as $plan) { ?>
-            <div class="meal-plan-item">
-                <div class="meal-plan-name">
-                    <i class="fa fa-calendar-week"></i>
-                    <?php echo $plan->plan_name; ?> - Semaine <?php echo $plan->week_number; ?>
-                </div>
-                <div class="meal-plan-actions">
-                    <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
-                        <i class="fa fa-eye"></i> Voir les détails
-                    </a>
-                </div>
-            </div>
-            <?php } ?>
         </div>
         <?php } ?>
     </div>
