@@ -259,67 +259,22 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Load menu toggle script on ALL admin pages (so menu works everywhere)
+    // Simple vanilla JS menu toggle (no jQuery dependency, no conflicts)
     echo '<script>
-    // Defensive check for jQuery before executing
-    if (typeof jQuery !== "undefined") {
-        (function($) {
-            // Use a slight delay to ensure all Perfex scripts have initialized
-            setTimeout(function() {
-                console.log("Dietetic menu toggle: Initializing...");
-
-                // Use event delegation on document to survive DOM manipulations
-                $(document).off("click.dieteticToggle", ".menu-item-dietetic > a[href=\"#\"]");
-                $(document).on("click.dieteticToggle", ".menu-item-dietetic > a[href=\"#\"]", function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    console.log("Dietetic menu clicked");
-
-                    var $this = $(this);
-                    var $dieteticMenuItem = $this.closest(".menu-item-dietetic");
-                    var $submenu = $dieteticMenuItem.find("> ul.nav-second-level, > ul.collapse");
-
-                    if ($submenu.length) {
-                        // Use ONLY the "in" class for state detection (not :visible which fails during animations)
-                        var isExpanded = $submenu.hasClass("in");
-
-                        console.log("Current state - Expanded: " + isExpanded + ", Display: " + $submenu.css("display"));
-
-                        if (isExpanded) {
-                            // Collapse
-                            $submenu.removeClass("in");
-                            $submenu.slideUp(300, function() {
-                                // Ensure display:none is set after animation
-                                $(this).css("display", "none");
-                            });
-                            $this.attr("aria-expanded", "false");
-                            $dieteticMenuItem.removeClass("active");
-                            console.log("Menu collapsing...");
-                        } else {
-                            // Expand
-                            $submenu.addClass("in");
-                            $submenu.slideDown(300, function() {
-                                // Ensure display:block is set after animation
-                                $(this).css("display", "block");
-                            });
-                            $this.attr("aria-expanded", "true");
-                            $dieteticMenuItem.addClass("active");
-                            console.log("Menu expanding...");
-                        }
-                    } else {
-                        console.log("Submenu not found");
-                    }
-
-                    return false;
-                });
-
-                console.log("Dietetic menu toggle: Initialized successfully");
-            }, 100); // Small delay to let Perfex initialize
-        })(jQuery);
-    } else {
-        console.error("Dietetic menu toggle: jQuery not loaded!");
-    }
+    document.addEventListener("DOMContentLoaded", function() {
+        var menuLink = document.querySelector(".menu-item-dietetic > a[href=\"#\"]");
+        if (menuLink) {
+            menuLink.addEventListener("click", function(e) {
+                e.preventDefault();
+                var menuItem = this.closest(".menu-item-dietetic");
+                var submenu = menuItem.querySelector("ul");
+                if (submenu) {
+                    submenu.classList.toggle("in");
+                    menuItem.classList.toggle("active");
+                }
+            });
+        }
+    });
     </script>';
 
     // Load full dietetic.js only on dietetic pages
