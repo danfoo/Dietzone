@@ -82,11 +82,14 @@ function dietetic_module_init_menu_items()
     // Load dietetic helper for permission functions
     $CI->load->helper('dietetic/dietetic');
 
-    if (has_permission('dietetic', '', 'view')) {
+    // Check if user has access to dietetic module
+    $has_view_permission = has_permission('dietetic', '', 'view') || is_admin();
+
+    if ($has_view_permission) {
         $CI->app_menu->add_sidebar_menu_item('dietetic', [
             'name'     => _l('dietetic'),
             'icon'     => 'fa fa-heartbeat',
-            'href'     => admin_url('dietetic'),
+            'href'     => admin_url('dietetic/patients'),
             'position' => 15,
         ]);
 
@@ -95,7 +98,7 @@ function dietetic_module_init_menu_items()
             'slug'     => 'dietetic-dashboard',
             'name'     => _l('dietetic_dashboard'),
             'icon'     => 'fa fa-tachometer',
-            'href'     => admin_url('dietetic'),
+            'href'     => admin_url('dietetic/dashboard'),
             'position' => 1,
         ]);
 
@@ -126,8 +129,8 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
-        // Food Surveys (Enquêtes Alimentaires) - Only show if user has permission
-        if (function_exists('dietetic_has_feature_permission') && dietetic_has_feature_permission('food_surveys')) {
+        // Food Surveys (Enquêtes Alimentaires) - Show if table exists
+        if ($CI->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
                 'slug'     => 'dietetic-food-surveys',
                 'name'     => 'Enquêtes Alimentaires',
@@ -137,21 +140,19 @@ function dietetic_module_init_menu_items()
             ]);
         }
 
-        // Notifications - Only show to admins or users with notifications_manage permission
-        if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
-            if (function_exists('dietetic_has_feature_permission') && dietetic_has_feature_permission('notifications_manage')) {
-                $CI->app_menu->add_sidebar_children_item('dietetic', [
-                    'slug'     => 'dietetic-notifications',
-                    'name'     => 'Notifications',
-                    'icon'     => 'fa fa-bell',
-                    'href'     => admin_url('dietetic/notifications'),
-                    'position' => 5.5,
-                ]);
-            }
+        // Notifications - Show if table exists and user is admin
+        if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-notifications',
+                'name'     => 'Notifications',
+                'icon'     => 'fa fa-bell',
+                'href'     => admin_url('dietetic/notifications'),
+                'position' => 5.5,
+            ]);
         }
 
-        // Dietitians (with ratings) - requires view_dietitians permission
-        if (has_permission('dietetic', '', 'view_dietitians')) {
+        // Dietitians - Show to admins only
+        if (is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
                 'slug'     => 'dietetic-dietitians',
                 'name'     => 'Diététiciens',
@@ -161,16 +162,14 @@ function dietetic_module_init_menu_items()
             ]);
         }
 
-        // Foods Database - requires manage_foods permission
-        if (has_permission('dietetic', '', 'manage_foods')) {
-            $CI->app_menu->add_sidebar_children_item('dietetic', [
-                'slug'     => 'dietetic-foods',
-                'name'     => _l('dietetic_foods'),
-                'icon'     => 'fa fa-cutlery',
-                'href'     => admin_url('dietetic/foods'),
-                'position' => 7,
-            ]);
-        }
+        // Foods Database - Show to everyone with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-foods',
+            'name'     => _l('dietetic_foods'),
+            'icon'     => 'fa fa-cutlery',
+            'href'     => admin_url('dietetic/foods'),
+            'position' => 7,
+        ]);
 
         // Staff Permissions - Admin only
         if (is_admin()) {
@@ -184,7 +183,7 @@ function dietetic_module_init_menu_items()
         }
 
         // Settings - requires settings permission
-        if (has_permission('dietetic', '', 'settings')) {
+        if (has_permission('dietetic', '', 'settings') || is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
                 'slug'     => 'dietetic-settings',
                 'name'     => _l('settings'),
