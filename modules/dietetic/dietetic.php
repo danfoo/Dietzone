@@ -263,34 +263,50 @@ function dietetic_add_footer_components()
     echo '<script>
     (function() {
         if (typeof jQuery !== "undefined") {
-            jQuery(document).ready(function($) {
-                var $menuItem = $(".menu-item-dietetic");
-                if ($menuItem.length) {
-                    var $link = $menuItem.find("> a");
-                    var $submenu = $menuItem.find("> ul");
+            jQuery(window).on("load", function($) {
+                // Add delay to ensure sidebar is fully rendered
+                setTimeout(function() {
+                    var $menuItem = jQuery(".menu-item-dietetic");
+                    if ($menuItem.length) {
+                        var $link = $menuItem.find("> a");
+                        var $submenu = $menuItem.find("> ul");
 
-                    if ($link.length && $submenu.length) {
-                        // Add unique ID to submenu
-                        $submenu.attr("id", "dietetic-submenu");
+                        if ($link.length && $submenu.length) {
+                            console.log("Dietetic menu: Initializing Bootstrap collapse...");
 
-                        // Configure link for Bootstrap collapse
-                        $link.attr({
-                            "data-toggle": "collapse",
-                            "data-target": "#dietetic-submenu",
-                            "href": "#dietetic-submenu"
-                        });
+                            // Add unique ID to submenu
+                            $submenu.attr("id", "dietetic-submenu");
+                            $submenu.addClass("collapse");
 
-                        // Initialize Bootstrap collapse
-                        $submenu.collapse({toggle: false});
+                            // Configure link for Bootstrap collapse
+                            $link.attr({
+                                "data-toggle": "collapse",
+                                "data-target": "#dietetic-submenu",
+                                "href": "#dietetic-submenu"
+                            });
 
-                        // Handle click
-                        $link.on("click", function(e) {
-                            e.preventDefault();
-                            $submenu.collapse("toggle");
-                            $menuItem.toggleClass("active");
-                        });
+                            // Initialize Bootstrap collapse
+                            if (typeof $submenu.collapse === "function") {
+                                $submenu.collapse({toggle: false});
+                                console.log("Dietetic menu: Bootstrap collapse initialized");
+                            } else {
+                                console.error("Dietetic menu: Bootstrap collapse not available");
+                            }
+
+                            // Handle click
+                            $link.on("click", function(e) {
+                                e.preventDefault();
+                                console.log("Dietetic menu: Clicked");
+                                $submenu.collapse("toggle");
+                                $menuItem.toggleClass("active");
+                            });
+                        } else {
+                            console.log("Dietetic menu: Link or submenu not found");
+                        }
+                    } else {
+                        console.log("Dietetic menu: Menu item not found");
                     }
-                }
+                }, 500);
             });
         }
     })();
