@@ -1,19 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#01807B">
-    <title><?php echo isset($title) ? htmlspecialchars($title) : 'Soumission Quotidienne'; ?> - <?php echo get_option('companyname'); ?></title>
-    <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
-        <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
-    <?php } ?>
-
-    <!-- Bootstrap & Font Awesome from CDN -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<?php
+$active_page = 'food_surveys';
+$page_title = isset($title) ? $title : 'Soumission Quotidienne';
+$this->load->view('portal/includes/portal_header');
+?>
 
     <style>
     :root {
@@ -821,8 +811,7 @@
         }
     }
     </style>
-</head>
-<body>
+
     <!-- Unified Header -->
     <header class="portal-header">
         <div class="portal-header-content">
@@ -1499,5 +1488,5 @@
             <span>Déconnexion</span>
         </a>
     </nav>
-</body>
-</html>
+
+<?php $this->load->view("portal/includes/portal_footer"); ?>
