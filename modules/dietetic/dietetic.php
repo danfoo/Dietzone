@@ -250,27 +250,6 @@ function dietetic_add_head_components()
 }
 
 /**
- * Add CSS for menu toggle animation (in head, before page loads)
- */
-hooks()->add_action('app_admin_head', 'dietetic_add_menu_styles');
-
-function dietetic_add_menu_styles()
-{
-    echo '<style>
-    /* Dietetic menu animation */
-    .menu-item-dietetic ul {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease-out;
-    }
-    .menu-item-dietetic ul.in {
-        max-height: 2000px;
-        transition: max-height 0.5s ease-in;
-    }
-    </style>';
-}
-
-/**
  * Add custom JS for admin area (in footer, after jQuery is loaded)
  */
 hooks()->add_action('app_admin_footer', 'dietetic_add_footer_components');
@@ -280,22 +259,41 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Simple vanilla JS menu toggle (no jQuery dependency, no conflicts)
+    // Initialize Dietetic menu toggle using Bootstrap collapse
     echo '<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var menuLink = document.querySelector(".menu-item-dietetic > a[href=\"#\"]");
-        if (menuLink) {
-            menuLink.addEventListener("click", function(e) {
-                e.preventDefault();
-                var menuItem = this.closest(".menu-item-dietetic");
-                var submenu = menuItem.querySelector("ul");
-                if (submenu) {
-                    submenu.classList.toggle("in");
-                    menuItem.classList.toggle("active");
+    (function() {
+        if (typeof jQuery !== "undefined") {
+            jQuery(document).ready(function($) {
+                var $menuItem = $(".menu-item-dietetic");
+                if ($menuItem.length) {
+                    var $link = $menuItem.find("> a");
+                    var $submenu = $menuItem.find("> ul");
+
+                    if ($link.length && $submenu.length) {
+                        // Add unique ID to submenu
+                        $submenu.attr("id", "dietetic-submenu");
+
+                        // Configure link for Bootstrap collapse
+                        $link.attr({
+                            "data-toggle": "collapse",
+                            "data-target": "#dietetic-submenu",
+                            "href": "#dietetic-submenu"
+                        });
+
+                        // Initialize Bootstrap collapse
+                        $submenu.collapse({toggle: false});
+
+                        // Handle click
+                        $link.on("click", function(e) {
+                            e.preventDefault();
+                            $submenu.collapse("toggle");
+                            $menuItem.toggleClass("active");
+                        });
+                    }
                 }
             });
         }
-    });
+    })();
     </script>';
 
     // Load full dietetic.js only on dietetic pages
