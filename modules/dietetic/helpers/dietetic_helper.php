@@ -513,11 +513,6 @@ function dietetic_get_staff_user_id()
  */
 function dietetic_can_access_patient($patient_id, $dietitian_id = null)
 {
-    // Admins can access all patients
-    if (dietetic_is_admin()) {
-        return true;
-    }
-
     $CI = &get_instance();
 
     // Check if this is a client (patient) accessing their own data
@@ -533,6 +528,12 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
         }
     }
 
+    // Only super admin (user ID 1) can access all patients
+    // Other admins must be assigned to the patient
+    if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
+        return true;
+    }
+
     // Check staff access
     if ($dietitian_id === null) {
         $dietitian_id = dietetic_get_staff_user_id();
@@ -540,6 +541,13 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
 
     if (!$dietitian_id) {
         return false;
+    }
+
+    // Check if patient_dietitians table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+        // Fallback to old system - check dietitian_id in patients table
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
     }
 
     $CI->load->model('dietetic/dietetic_patient_dietitians_model');
@@ -593,8 +601,8 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
  */
 function dietetic_get_accessible_patient_ids($dietitian_id = null)
 {
-    // Admins see all patients
-    if (dietetic_is_admin()) {
+    // Only super admin (user ID 1) sees all patients
+    if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
         return null; // null means "all patients"
     }
 
@@ -607,6 +615,21 @@ function dietetic_get_accessible_patient_ids($dietitian_id = null)
     }
 
     $CI = &get_instance();
+
+    // Check if patient_dietitians table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+        // Fallback to old system - query patients table directly
+        $CI->db->select('id');
+        $CI->db->where('dietitian_id', $dietitian_id);
+        $results = $CI->db->get(db_prefix() . 'dietic_patients')->result();
+
+        $patient_ids = [];
+        foreach ($results as $row) {
+            $patient_ids[] = $row->id;
+        }
+        return $patient_ids;
+    }
+
     $CI->load->model('dietetic/dietetic_patient_dietitians_model');
 
     $assignments = $CI->dietetic_patient_dietitians_model->get_dietitian_patients($dietitian_id, 'active');
