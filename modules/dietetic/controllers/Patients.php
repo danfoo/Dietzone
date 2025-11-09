@@ -87,8 +87,12 @@ class Patients extends AdminController
         if ($this->input->post()) {
             $data = $this->input->post();
 
-            // Set dietitian
-            if (!isset($data['dietitian_id'])) {
+            // Set dietitian - force to current user if not admin
+            if (!is_admin()) {
+                // Non-admins can only create patients for themselves
+                $data['dietitian_id'] = get_staff_user_id();
+            } elseif (!isset($data['dietitian_id'])) {
+                // Admins: default to themselves if not specified
                 $data['dietitian_id'] = get_staff_user_id();
             }
 
@@ -104,11 +108,42 @@ class Patients extends AdminController
 
         $data['title'] = _l('dietetic_new_patient');
 
-        // Get all clients
-        $data['clients'] = $this->clients_model->get();
+        // Get clients - filtered by permissions
+        if (is_admin()) {
+            // Admins can see all clients
+            $data['clients'] = $this->clients_model->get();
+        } else {
+            // Non-admins only see clients from their patients
+            $current_staff_id = get_staff_user_id();
+            $my_patients = $this->dietetic_patients_model->get_all(['p.dietitian_id' => $current_staff_id]);
 
-        // Get staff members (dietitians)
-        $data['staff'] = $this->staff_model->get();
+            // Get unique client IDs from patients
+            $client_ids = [];
+            foreach ($my_patients as $patient) {
+                if ($patient->client_id && !in_array($patient->client_id, $client_ids)) {
+                    $client_ids[] = $patient->client_id;
+                }
+            }
+
+            // Get these clients
+            $data['clients'] = [];
+            foreach ($client_ids as $client_id) {
+                $client = $this->clients_model->get($client_id);
+                if ($client) {
+                    $data['clients'][] = $client;
+                }
+            }
+        }
+
+        // Get staff members (dietitians) - filtered by permissions
+        if (is_admin()) {
+            // Admins can assign to any dietitian
+            $data['staff'] = $this->staff_model->get('', ['active' => 1]);
+        } else {
+            // Non-admins can only assign to themselves
+            $current_staff_id = get_staff_user_id();
+            $data['staff'] = $this->staff_model->get('', ['staffid' => $current_staff_id, 'active' => 1]);
+        }
 
         $this->load->view('admin/patients/form', $data);
     }
@@ -146,6 +181,12 @@ class Patients extends AdminController
                 }
             }
 
+            // Security: Non-admins cannot change the dietitian
+            if (!is_admin() && isset($update_data['dietitian_id'])) {
+                // Force dietitian_id to remain the current user for non-admins
+                $update_data['dietitian_id'] = get_staff_user_id();
+            }
+
             if ($this->dietetic_patients_model->update($id, $update_data)) {
                 set_alert('success', _l('updated_successfully'));
                 redirect(admin_url('dietetic/patients/view/' . $id));
@@ -156,8 +197,15 @@ class Patients extends AdminController
 
         $data['title'] = _l('dietetic_edit_patient');
 
-        // Get staff members (dietitians)
-        $data['staff'] = $this->staff_model->get();
+        // Get staff members (dietitians) - filtered by permissions
+        if (is_admin()) {
+            // Admins can assign to any dietitian
+            $data['staff'] = $this->staff_model->get('', ['active' => 1]);
+        } else {
+            // Non-admins can only assign to themselves
+            $current_staff_id = get_staff_user_id();
+            $data['staff'] = $this->staff_model->get('', ['staffid' => $current_staff_id, 'active' => 1]);
+        }
 
         $this->load->view('admin/patients/form', $data);
     }
