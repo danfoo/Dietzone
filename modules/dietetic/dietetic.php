@@ -279,22 +279,31 @@ function dietetic_add_footer_components()
                 var $submenu = $dieteticMenuItem.find("> ul.nav-second-level, > ul.collapse");
 
                 if ($submenu.length) {
-                    var isExpanded = $submenu.hasClass("in") || $submenu.is(":visible");
+                    // Use ONLY the "in" class for state detection (not :visible which fails during animations)
+                    var isExpanded = $submenu.hasClass("in");
 
-                    console.log("Current state - Expanded: " + isExpanded);
+                    console.log("Current state - Expanded: " + isExpanded + ", Display: " + $submenu.css("display"));
 
                     if (isExpanded) {
                         // Collapse
-                        $submenu.removeClass("in").slideUp(300);
+                        $submenu.removeClass("in");
+                        $submenu.slideUp(300, function() {
+                            // Ensure display:none is set after animation
+                            $(this).css("display", "none");
+                        });
                         $this.attr("aria-expanded", "false");
                         $dieteticMenuItem.removeClass("active");
-                        console.log("Menu collapsed");
+                        console.log("Menu collapsing...");
                     } else {
                         // Expand
-                        $submenu.addClass("in").slideDown(300);
+                        $submenu.addClass("in");
+                        $submenu.slideDown(300, function() {
+                            // Ensure display:block is set after animation
+                            $(this).css("display", "block");
+                        });
                         $this.attr("aria-expanded", "true");
                         $dieteticMenuItem.addClass("active");
-                        console.log("Menu expanded");
+                        console.log("Menu expanding...");
                     }
                 } else {
                     console.log("Submenu not found");
