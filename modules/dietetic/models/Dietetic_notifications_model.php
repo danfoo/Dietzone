@@ -17,10 +17,21 @@ class Dietetic_notifications_model extends App_Model
     // ==================== PREFERENCES ====================
 
     /**
-     * Get patient notification preferences
+     * Get patient notification preferences (with cache)
      */
     public function get_preferences($patient_id)
     {
+        // Check cache first
+        $cache_key = 'dietic_notif_prefs_' . $patient_id;
+
+        if ($this->app_object_cache->get($cache_key)) {
+            $cached = $this->app_object_cache->get($cache_key);
+            if ($cached) {
+                return $cached;
+            }
+        }
+
+        // Not in cache, fetch from DB
         $this->db->where('patient_id', $patient_id);
         $prefs = $this->db->get(db_prefix() . $this->table_preferences)->row();
 
@@ -29,6 +40,9 @@ class Dietetic_notifications_model extends App_Model
             $this->create_default_preferences($patient_id);
             return $this->get_preferences($patient_id);
         }
+
+        // Store in cache for 1 hour
+        $this->app_object_cache->add($cache_key, $prefs, 3600);
 
         return $prefs;
     }
@@ -53,6 +67,7 @@ class Dietetic_notifications_model extends App_Model
             'channel_email' => 1,
             'channel_sms' => 0,
             'channel_whatsapp' => 0,
+            'channel_push' => 1,
             'created_at' => date('Y-m-d H:i:s')
         ];
 
@@ -68,6 +83,10 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('patient_id', $patient_id);
 
         if ($this->db->update(db_prefix() . $this->table_preferences, $data)) {
+            // Clear cache
+            $cache_key = 'dietic_notif_prefs_' . $patient_id;
+            $this->app_object_cache->delete($cache_key);
+
             return true;
         }
 
@@ -360,6 +379,17 @@ class Dietetic_notifications_model extends App_Model
             );
         }
 
+        // Push Notifications (Firebase)
+        if (!empty($params['channels']['push'])) {
+            $results['push'] = $this->send_push_notification(
+                $params['patient_id'],
+                $params['type'],
+                $params['subject'] ?? 'Notification',
+                $params['message'],
+                $params['push_data'] ?? []
+            );
+        }
+
         return $results;
     }
 
@@ -533,6 +563,66 @@ class Dietetic_notifications_model extends App_Model
         // À implémenter selon le provider (Twilio, Meta Business API, etc.)
         // Pour l'instant, retourne un placeholder
         return ['success' => false, 'error' => 'WhatsApp provider not fully configured'];
+    }
+
+    /**
+     * Send push notification via Firebase Cloud Messaging
+     */
+    private function send_push_notification($patient_id, $type, $title, $message, $data = [])
+    {
+        $log_data = [
+            'patient_id' => $patient_id,
+            'notification_type' => $type,
+            'channel' => 'push',
+            'recipient' => 'firebase_token',
+            'subject' => $title,
+            'message' => $message,
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        try {
+            // Load Firebase library
+            $this->load->library('dietetic/firebase_cloud_messaging');
+
+            if (!$this->firebase_cloud_messaging->is_enabled()) {
+                throw new Exception('Push notifications are not enabled');
+            }
+
+            // Prepare notification options
+            $options = [
+                'click_action' => $data['click_action'] ?? site_url('dietetic/portal'),
+                'icon' => $data['icon'] ?? base_url('uploads/company/favicon.png'),
+            ];
+
+            if (isset($data['image'])) {
+                $options['image'] = $data['image'];
+            }
+
+            // Send to patient (all devices)
+            $result = $this->firebase_cloud_messaging->send_to_patient(
+                $patient_id,
+                $title,
+                $message,
+                $data,
+                $options
+            );
+
+            if ($result['success'] || (isset($result['success_count']) && $result['success_count'] > 0)) {
+                $log_data['status'] = 'sent';
+                $log_data['sent_at'] = date('Y-m-d H:i:s');
+                $log_data['recipient'] = ($result['success_count'] ?? 1) . ' device(s)';
+            } else {
+                $log_data['status'] = 'failed';
+                $log_data['error_message'] = $result['error'] ?? 'Push notification failed';
+            }
+        } catch (Exception $e) {
+            $log_data['status'] = 'failed';
+            $log_data['error_message'] = $e->getMessage();
+        }
+
+        $this->db->insert(db_prefix() . $this->table_logs, $log_data);
+        return $log_data['status'] === 'sent';
     }
 
     /**

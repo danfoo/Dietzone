@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS `tbldietic_notification_preferences` (
   `channel_email` tinyint(1) DEFAULT 1,
   `channel_sms` tinyint(1) DEFAULT 0,
   `channel_whatsapp` tinyint(1) DEFAULT 0,
+  `channel_push` tinyint(1) DEFAULT 1 COMMENT 'Firebase push notifications',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),

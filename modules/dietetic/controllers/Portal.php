@@ -59,7 +59,10 @@ class Portal extends App_Controller
             'upload_photo',
             'delete_photo',
             'notification_preferences',
-            'save_notification_preferences'
+            'save_notification_preferences',
+            'save_fcm_token',
+            'delete_fcm_token',
+            'get_firebase_config'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -1799,6 +1802,7 @@ class Portal extends App_Controller
             'channel_email' => $this->input->post('channel_email') ? 1 : 0,
             'channel_sms' => $this->input->post('channel_sms') ? 1 : 0,
             'channel_whatsapp' => $this->input->post('channel_whatsapp') ? 1 : 0,
+            'channel_push' => $this->input->post('channel_push') ? 1 : 0,
         ];
 
         // Update preferences
@@ -1813,6 +1817,147 @@ class Portal extends App_Controller
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur lors de l\'enregistrement des préférences'
+            ]);
+        }
+    }
+
+    /**
+     * Get Firebase configuration for push notifications
+     */
+    public function get_firebase_config()
+    {
+        header('Content-Type: application/json');
+
+        // Load Firebase library
+        $this->load->library('dietetic/firebase_cloud_messaging');
+
+        $config = $this->firebase_cloud_messaging->get_web_config();
+
+        if ($config) {
+            echo json_encode([
+                'success' => true,
+                'config' => $config
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Firebase push notifications not configured'
+            ]);
+        }
+    }
+
+    /**
+     * Save FCM token to database
+     */
+    public function save_fcm_token()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient not found'
+            ]);
+            return;
+        }
+
+        // Get POST data
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (empty($data['token'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token is required'
+            ]);
+            return;
+        }
+
+        // Load Firebase library
+        $this->load->library('dietetic/firebase_cloud_messaging');
+
+        // Prepare device info
+        $device_info = [
+            'device_name' => $data['device_name'] ?? 'Unknown',
+            'user_agent' => $data['user_agent'] ?? $_SERVER['HTTP_USER_AGENT'] ?? null,
+            'ip_address' => $this->input->ip_address(),
+        ];
+
+        // Register token
+        $result = $this->firebase_cloud_messaging->register_token(
+            $patient->id,
+            $data['token'],
+            $data['device_type'] ?? 'web',
+            $device_info
+        );
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Token registered successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to register token'
+            ]);
+        }
+    }
+
+    /**
+     * Delete FCM token from database
+     */
+    public function delete_fcm_token()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get POST data
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (empty($data['token'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token is required'
+            ]);
+            return;
+        }
+
+        // Load Firebase library
+        $this->load->library('dietetic/firebase_cloud_messaging');
+
+        // Unregister token
+        $result = $this->firebase_cloud_messaging->unregister_token($data['token']);
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Token deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token not found or already deleted'
             ]);
         }
     }

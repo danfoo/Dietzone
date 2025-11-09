@@ -132,6 +132,17 @@ function dietetic_module_init_menu_items()
             'position' => 5,
         ]);
 
+        // Notifications - Check if notifications table exists
+        if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-notifications',
+                'name'     => 'Notifications',
+                'icon'     => 'fa fa-bell',
+                'href'     => admin_url('dietetic/notifications'),
+                'position' => 5.5,
+            ]);
+        }
+
         // Dietitians (with ratings) - requires view_dietitians permission
         if (has_permission('dietetic', '', 'view_dietitians')) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
