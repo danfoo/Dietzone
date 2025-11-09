@@ -8,7 +8,7 @@ $this->load->view('portal/includes/portal_header');
 /* Modern Stats Cards with Animations */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
     margin-bottom: 30px;
 }
@@ -16,7 +16,7 @@ $this->load->view('portal/includes/portal_header');
 .stat-card {
     background: white;
     border-radius: 16px;
-    padding: 28px 24px;
+    padding: 24px 20px;
     text-align: center;
     border: none;
     transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -47,14 +47,14 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-card .stat-icon {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    margin: 0 auto 18px;
+    margin: 0 auto 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 24px;
     position: relative;
     animation: float 3s ease-in-out infinite;
 }
@@ -105,10 +105,10 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-card .stat-value {
-    font-size: 36px;
+    font-size: 28px;
     font-weight: 800;
     color: #212529;
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     line-height: 1;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     -webkit-background-clip: text;
@@ -117,11 +117,11 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-card .stat-label {
-    font-size: 13px;
+    font-size: 11px;
     color: #6c757d;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .stat-value.text-success {
@@ -532,56 +532,19 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .carousel-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    margin-top: 16px;
+    display: none; /* Masquer pour plus de professionnalisme */
 }
 
 .carousel-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
-    color: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 12px rgba(44, 95, 111, 0.3);
-}
-
-.carousel-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(44, 95, 111, 0.4);
-}
-
-.carousel-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+    display: none;
 }
 
 .carousel-dots {
-    display: flex;
-    gap: 8px;
+    display: none;
 }
 
 .carousel-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e9ecef;
-    transition: all 0.3s;
-    cursor: pointer;
-}
-
-.carousel-dot.active {
-    background: #2c5f6f;
-    width: 24px;
-    border-radius: 4px;
+    display: none;
 }
 
 .view-more-btn {
@@ -659,6 +622,24 @@ $this->load->view('portal/includes/portal_header');
     font-size: 24px;
 }
 
+.chart-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.chart-empty-state i {
+    font-size: 64px;
+    color: #4299e1;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.chart-empty-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
 .no-program-alert {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     border: 2px solid #4299e1;
@@ -681,20 +662,16 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
-/* Quick Actions Section - Enhanced */
+/* Quick Actions Section - Compact Rectangles */
 .quick-actions {
-    background: white;
-    border-radius: 20px;
-    padding: 28px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .quick-actions-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: #2c3e50;
-    margin: 0 0 24px 0;
+    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -702,75 +679,44 @@ $this->load->view('portal/includes/portal_header');
 
 .quick-actions-title i {
     color: #f5a54a;
-    font-size: 24px;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+    font-size: 20px;
 }
 
 .actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
 }
 
 .action-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 24px 16px;
-    background: white;
-    border: 2px solid #f1f3f5;
-    border-radius: 16px;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 12px;
     text-decoration: none;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    position: relative;
-    overflow: hidden;
-}
-
-.action-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(245, 165, 74, 0.1), transparent);
-    transition: left 0.5s;
-}
-
-.action-btn:hover::before {
-    left: 100%;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .action-btn:hover {
-    border-color: #f5a54a;
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 12px 24px rgba(245, 165, 74, 0.2);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     text-decoration: none;
 }
 
 .action-btn-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 18px;
     color: white;
-    position: relative;
-    z-index: 1;
-    transition: transform 0.3s;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.action-btn:hover .action-btn-icon {
-    transform: rotate(360deg);
+    flex-shrink: 0;
 }
 
 .action-btn-icon.add {
@@ -790,12 +736,10 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .action-btn-label {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #2c3e50;
-    text-align: center;
-    position: relative;
-    z-index: 1;
+    white-space: nowrap;
 }
 
 /* Progress Ring for Stats */
@@ -900,10 +844,10 @@ $this->load->view('portal/includes/portal_header');
 <div class="stats-grid">
     <div class="stat-card weight">
         <div class="stat-icon">
-            <i class="fa fa-weight"></i>
+            <i class="fa fa-balance-scale"></i>
         </div>
         <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
-        <div class="stat-label">Poids actuel (kg)</div>
+        <div class="stat-label">Poids actuel</div>
     </div>
 
     <div class="stat-card target">
@@ -911,7 +855,7 @@ $this->load->view('portal/includes/portal_header');
             <i class="fa fa-bullseye"></i>
         </div>
         <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
-        <div class="stat-label">Objectif (kg)</div>
+        <div class="stat-label">Objectif</div>
     </div>
 
     <div class="stat-card bmi">
@@ -925,12 +869,12 @@ $this->load->view('portal/includes/portal_header');
     <?php if ($weight_progress->weight_change !== null) { ?>
     <div class="stat-card progress">
         <div class="stat-icon">
-            <i class="fa fa-chart-line"></i>
+            <i class="fa fa-line-chart"></i>
         </div>
         <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
             <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
         </div>
-        <div class="stat-label">Progression (kg)</div>
+        <div class="stat-label">Progression</div>
     </div>
     <?php } ?>
 </div>
@@ -1113,7 +1057,14 @@ $this->load->view('portal/includes/portal_header');
 <!-- Weight Evolution Chart - Full Width -->
 <div class="chart-card">
     <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
-    <canvas id="portalWeightChart" height="150"></canvas>
+    <?php if (!empty($weight_evolution)) { ?>
+        <canvas id="portalWeightChart" height="150"></canvas>
+    <?php } else { ?>
+        <div class="chart-empty-state">
+            <i class="fa fa-chart-line"></i>
+            <p>Aucune donnée de poids disponible pour le moment.<br>Ajoutez vos mesures pour voir votre progression.</p>
+        </div>
+    <?php } ?>
 </div>
 
 <!-- Consultations Carousel -->
