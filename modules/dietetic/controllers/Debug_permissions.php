@@ -97,8 +97,34 @@ class Debug_permissions extends AdminController
         }
         echo "<hr>";
 
-        // 6. Recommendation
-        echo "<h2>6. Recommandation</h2>";
+        // 6. Check staff data retrieval
+        echo "<h2>6. Test de Récupération des Données Staff</h2>";
+        $this->db->select('staffid, firstname, lastname, email, admin, active, is_not_staff');
+        $this->db->where('active', 1);
+        $this->db->limit(5);
+        $staff_query = $this->db->get(db_prefix() . 'staff');
+
+        if ($staff_query->num_rows() > 0) {
+            echo "<p>✅ Staff trouvés: " . $staff_query->num_rows() . " (limité à 5)</p>";
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>ID</th><th>Nom</th><th>Email</th><th>Admin</th><th>Active</th></tr>";
+            foreach ($staff_query->result() as $staff) {
+                echo "<tr>";
+                echo "<td>{$staff->staffid}</td>";
+                echo "<td>{$staff->firstname} {$staff->lastname}</td>";
+                echo "<td>{$staff->email}</td>";
+                echo "<td>" . ($staff->admin ? 'Oui' : 'Non') . "</td>";
+                echo "<td>" . ($staff->active ? 'Oui' : 'Non') . "</td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p>❌ Aucun staff actif trouvé</p>";
+        }
+        echo "<hr>";
+
+        // 7. Recommendation
+        echo "<h2>7. Recommandation</h2>";
         if (!$exists) {
             echo "<div style='background: #f44336; color: white; padding: 15px; border-radius: 5px;'>";
             echo "<h3>❌ PROBLÈME DÉTECTÉ</h3>";

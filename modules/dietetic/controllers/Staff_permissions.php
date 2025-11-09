@@ -30,8 +30,12 @@ class Staff_permissions extends AdminController
 
         $data['title'] = 'Gestion des Permissions Diététiciens';
 
-        // Get all active staff members
-        $data['staff_members'] = $this->staff_model->get('', ['active' => 1]);
+        // Get all active staff members with all necessary columns
+        $this->db->select('staffid, firstname, lastname, email, admin, active, is_not_staff');
+        $this->db->where('active', 1);
+        $this->db->order_by('firstname', 'ASC');
+        $query = $this->db->get(db_prefix() . 'staff');
+        $data['staff_members'] = $query->result();
 
         // Get available permissions
         $data['available_permissions'] = dietetic_get_available_permissions();
