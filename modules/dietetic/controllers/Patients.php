@@ -323,8 +323,10 @@ class Patients extends AdminController
      */
     public function assign_dietitian($patient_id)
     {
-        // Only admins can manage assignments
-        if (!is_admin()) {
+        // Check permissions: Admins OR dietitian who owns the patient can manage assignments
+        $current_staff_id = get_staff_user_id();
+
+        if (!is_admin() && !dietetic_can_access_patient($patient_id, $current_staff_id)) {
             echo json_encode(['success' => false, 'message' => 'Accès refusé']);
             return;
         }
@@ -369,8 +371,10 @@ class Patients extends AdminController
      */
     public function set_primary_dietitian($patient_id)
     {
-        // Only admins can manage assignments
-        if (!is_admin()) {
+        // Check permissions: Admins OR dietitian who owns the patient can manage assignments
+        $current_staff_id = get_staff_user_id();
+
+        if (!is_admin() && !dietetic_can_access_patient($patient_id, $current_staff_id)) {
             echo json_encode(['success' => false, 'message' => 'Accès refusé']);
             return;
         }
@@ -409,8 +413,10 @@ class Patients extends AdminController
      */
     public function remove_dietitian($patient_id)
     {
-        // Only admins can manage assignments
-        if (!is_admin()) {
+        // Check permissions: Admins OR dietitian who owns the patient can manage assignments
+        $current_staff_id = get_staff_user_id();
+
+        if (!is_admin() && !dietetic_can_access_patient($patient_id, $current_staff_id)) {
             echo json_encode(['success' => false, 'message' => 'Accès refusé']);
             return;
         }
