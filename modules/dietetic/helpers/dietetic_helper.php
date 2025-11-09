@@ -524,10 +524,8 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
     if (is_client_logged_in()) {
         $client_id = get_client_user_id();
 
-        // Load patient model to check if this client owns this patient record
-        // Pass false to avoid recursive permission check
-        $CI->load->model('dietetic/dietetic_patients_model');
-        $patient = $CI->dietetic_patients_model->get($patient_id, false);
+        // Query database directly to avoid model conflicts
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
 
         if ($patient && $patient->client_id == $client_id) {
             // Patient is accessing their own data
