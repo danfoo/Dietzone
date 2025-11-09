@@ -244,187 +244,191 @@ class Portal extends App_Controller
     }
 
     /**
-     * Add measurement from portal - supports both AJAX and regular form submission
+     * Add measurement from portal - Rewritten for robustness
      */
     public function add_measurement()
     {
+        // Step 1: Check authentication
         if (!is_client_logged_in()) {
             if ($this->input->is_ajax_request()) {
-                echo json_encode(['success' => false, 'message' => 'Not logged in']);
-                return;
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Non connecté']);
+                exit;
             }
             redirect(site_url('authentication/login'));
-            return;
+            exit;
         }
 
         $client_id = get_client_user_id();
 
-        // Get patient
+        // Step 2: Get patient record
         try {
             $patient = $this->dietetic_patients_model->get_by_client($client_id);
         } catch (Exception $e) {
+            log_activity('Portal add_measurement - Error getting patient: ' . $e->getMessage());
             $patient = null;
         }
 
         if (!$patient) {
             if ($this->input->is_ajax_request()) {
-                echo json_encode(['success' => false, 'message' => 'Patient not found']);
-                return;
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+                exit;
             }
             $this->load->view('portal_no_access');
             return;
         }
 
-        // Handle form submission (both AJAX and regular)
+        // Step 3: Handle form submission
         if ($this->input->post()) {
-            $weight = $this->input->post('weight');
-            $body_fat_input = $this->input->post('body_fat');
-            $muscle_mass_input = $this->input->post('muscle_mass');
-
-            // Calculate BMI if height is available
-            $bmi = null;
-            if ($patient->height && $weight) {
-                $height_m = $patient->height / 100; // Convert cm to meters
-                $bmi = $weight / ($height_m * $height_m);
-            }
-
-            // Auto-calculate body fat percentage if not provided
-            $body_fat = $body_fat_input;
-            if (empty($body_fat) && $bmi && $patient->birth_date) {
-                // Calculate age
-                $birth_date = new DateTime($patient->birth_date);
-                $today = new DateTime();
-                $age = $today->diff($birth_date)->y;
-
-                // Gender: 1 for male, 0 for female
-                $gender = ($patient->gender === 'male') ? 1 : 0;
-
-                // Body Fat % = (1.20 × BMI) + (0.23 × Age) − (10.8 × Gender) − 5.4
-                $body_fat = (1.20 * $bmi) + (0.23 * $age) - (10.8 * $gender) - 5.4;
-                $body_fat = max(0, min(100, $body_fat)); // Clamp between 0-100
-            }
-
-            // Auto-calculate muscle mass if not provided
-            $muscle_mass = $muscle_mass_input;
-            if (empty($muscle_mass) && $weight && $body_fat) {
-                // Muscle Mass = Weight − (Weight × Body Fat % / 100)
-                $body_fat_kg = $weight * ($body_fat / 100);
-                $muscle_mass = (($weight - $body_fat_kg) / $weight) * 100;
-                $muscle_mass = max(0, min(100, $muscle_mass)); // Clamp between 0-100
-            }
-
-            // Helper function to convert empty strings to NULL for numeric fields
-            $numeric_or_null = function($value) {
-                return ($value === '' || $value === null) ? null : $value;
-            };
-
-            $measurement_data = [
-                'patient_id' => $patient->id,
-                'measurement_date' => $this->input->post('measurement_date'),
-                'weight' => $weight,
-                'bmi' => $bmi,
-                'body_fat' => $body_fat,
-                'muscle_mass' => $muscle_mass,
-                'waist' => $numeric_or_null($this->input->post('waist')),
-                'hips' => $numeric_or_null($this->input->post('hips')),
-                'chest' => $numeric_or_null($this->input->post('chest')),
-                'arms' => $numeric_or_null($this->input->post('arms')),
-                'thighs' => $numeric_or_null($this->input->post('thighs')),
-                'notes' => $this->input->post('notes'),
-                'added_by' => $client_id,
-                'added_by_type' => 'client'
-            ];
+            log_activity('Portal add_measurement - POST received for patient: ' . $patient->id);
 
             try {
+                // Get form data
+                $weight = $this->input->post('weight');
+                $measurement_date = $this->input->post('measurement_date');
+
+                // Validate required fields
+                if (empty($weight) || empty($measurement_date)) {
+                    throw new Exception('Le poids et la date sont requis');
+                }
+
+                // Calculate BMI if height available
+                $bmi = null;
+                if (!empty($patient->height) && $weight > 0) {
+                    $height_m = floatval($patient->height) / 100;
+                    if ($height_m > 0) {
+                        $bmi = floatval($weight) / ($height_m * $height_m);
+                        $bmi = round($bmi, 2);
+                    }
+                }
+
+                // Calculate body fat percentage if not provided
+                $body_fat = $this->input->post('body_fat');
+                if (empty($body_fat) && $bmi && !empty($patient->birth_date)) {
+                    try {
+                        $birth_date = new DateTime($patient->birth_date);
+                        $today = new DateTime();
+                        $age = $today->diff($birth_date)->y;
+                        $gender = ($patient->gender === 'male') ? 1 : 0;
+                        $body_fat = (1.20 * $bmi) + (0.23 * $age) - (10.8 * $gender) - 5.4;
+                        $body_fat = max(0, min(100, round($body_fat, 2)));
+                    } catch (Exception $e) {
+                        log_activity('Portal add_measurement - Body fat calculation error: ' . $e->getMessage());
+                        $body_fat = null;
+                    }
+                }
+
+                // Calculate muscle mass if not provided
+                $muscle_mass = $this->input->post('muscle_mass');
+                if (empty($muscle_mass) && !empty($weight) && !empty($body_fat)) {
+                    $body_fat_kg = floatval($weight) * (floatval($body_fat) / 100);
+                    $muscle_mass = ((floatval($weight) - $body_fat_kg) / floatval($weight)) * 100;
+                    $muscle_mass = max(0, min(100, round($muscle_mass, 2)));
+                }
+
+                // Prepare measurement data
+                $measurement_data = [
+                    'patient_id' => $patient->id,
+                    'measurement_date' => $measurement_date,
+                    'weight' => !empty($weight) ? floatval($weight) : null,
+                    'bmi' => $bmi,
+                    'body_fat' => !empty($body_fat) ? floatval($body_fat) : null,
+                    'muscle_mass' => !empty($muscle_mass) ? floatval($muscle_mass) : null,
+                    'waist' => !empty($this->input->post('waist')) ? floatval($this->input->post('waist')) : null,
+                    'hips' => !empty($this->input->post('hips')) ? floatval($this->input->post('hips')) : null,
+                    'chest' => !empty($this->input->post('chest')) ? floatval($this->input->post('chest')) : null,
+                    'arms' => !empty($this->input->post('arms')) ? floatval($this->input->post('arms')) : null,
+                    'thighs' => !empty($this->input->post('thighs')) ? floatval($this->input->post('thighs')) : null,
+                    'notes' => $this->input->post('notes'),
+                    'added_by' => $client_id,
+                    'added_by_type' => 'client'
+                ];
+
+                log_activity('Portal add_measurement - Attempting to save measurement');
+
+                // Save measurement
                 $measurement_id = $this->dietetic_measurements_model->add($measurement_data);
 
-                if ($measurement_id) {
-                    // Check for milestones (wrapped in try-catch to not block measurement creation)
+                if (!$measurement_id) {
+                    throw new Exception('Échec de l\'enregistrement de la mesure');
+                }
+
+                log_activity('Portal add_measurement - Measurement saved successfully: ' . $measurement_id);
+
+                // Try to check milestones (non-blocking)
+                if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
                     try {
-                        if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
-                            $this->load->model('dietetic/dietetic_notifications_model');
-                            $this->dietetic_notifications_model->check_milestones($patient->id);
-                        }
+                        $this->load->model('dietetic/dietetic_notifications_model');
+                        $this->dietetic_notifications_model->check_milestones($patient->id);
                     } catch (Exception $e) {
-                        // Log error but don't fail the measurement creation
-                        log_activity('Dietetic milestone check error: ' . $e->getMessage());
+                        log_activity('Portal add_measurement - Milestone check error: ' . $e->getMessage());
                     }
+                }
 
-                    // Send notification to dietitian (wrapped in try-catch to not block measurement creation)
-                    if ($patient->dietitian_id) {
-                        try {
-                            // Get client info for patient name
-                            $this->load->model('clients_model');
-                            $client = $this->clients_model->get($patient->client_id);
-                            $patient_name = $client ? $client->company : 'Patient';
+                // Try to notify dietitian (non-blocking)
+                if (!empty($patient->dietitian_id)) {
+                    try {
+                        $this->load->model('clients_model');
+                        $client = $this->clients_model->get($patient->client_id);
+                        $patient_name = $client ? $client->company : 'Patient';
 
-                            // Notify dietitian about new measurement
+                        if (function_exists('dietetic_notify_measurement_added')) {
                             dietetic_notify_measurement_added(
                                 $patient->id,
                                 $patient->dietitian_id,
                                 $patient_name,
                                 $weight
                             );
-                        } catch (Exception $e) {
-                            // Log error but don't fail the measurement creation
-                            log_activity('Dietetic notification error: ' . $e->getMessage());
                         }
+                    } catch (Exception $e) {
+                        log_activity('Portal add_measurement - Notification error: ' . $e->getMessage());
                     }
-
-                    // Return JSON for AJAX requests
-                    if ($this->input->is_ajax_request()) {
-                        echo json_encode(['success' => true, 'message' => 'Measurement added successfully!']);
-                        return;
-                    }
-
-                    // For regular form submission, redirect with success message
-                    $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
-                    redirect(site_url('dietetic/portal/measurements'));
-                    return;
-                } else {
-                    // Return JSON for AJAX requests
-                    if ($this->input->is_ajax_request()) {
-                        echo json_encode(['success' => false, 'message' => 'Failed to save measurement']);
-                        return;
-                    }
-
-                    // Get client info for header display
-                    $this->load->model('clients_model');
-                    $client = $this->clients_model->get($patient->client_id);
-
-                    $data['error'] = 'Échec de l\'enregistrement de la mesure.';
-                    $data['patient'] = $patient;
-                    $data['client'] = $client;
                 }
-            } catch (Exception $e) {
-                // Return JSON for AJAX requests
+
+                // Return success response
                 if ($this->input->is_ajax_request()) {
-                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-                    return;
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Mesure ajoutée avec succès!',
+                        'measurement_id' => $measurement_id
+                    ]);
+                    exit;
                 }
 
-                // Get client info for header display
-                $this->load->model('clients_model');
-                $client = $this->clients_model->get($patient->client_id);
+                // Redirect with success message
+                $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
+                redirect(site_url('dietetic/portal/measurements'));
+                exit;
 
+            } catch (Exception $e) {
+                log_activity('Portal add_measurement - Error: ' . $e->getMessage());
+
+                if ($this->input->is_ajax_request()) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Erreur: ' . $e->getMessage()
+                    ]);
+                    exit;
+                }
+
+                // Show form with error
                 $data['error'] = 'Erreur: ' . $e->getMessage();
                 $data['patient'] = $patient;
-                $data['client'] = $client;
+                $this->load->model('clients_model');
+                $data['client'] = $this->clients_model->get($patient->client_id);
+                $this->load->view('portal_add_measurement', $data);
+                return;
             }
         }
 
-        // Display form for GET requests or after errors
-        if (!isset($data)) {
-            $data = [];
-        }
-        if (!isset($data['patient'])) {
-            $data['patient'] = $patient;
-        }
-        if (!isset($data['client'])) {
-            // Get client info for header display
-            $this->load->model('clients_model');
-            $data['client'] = $this->clients_model->get($patient->client_id);
-        }
+        // Step 4: Display form (GET request)
+        $data = [];
+        $data['patient'] = $patient;
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
         $this->load->view('portal_add_measurement', $data);
     }
 
