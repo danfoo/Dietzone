@@ -527,7 +527,7 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
         // Query database directly to avoid model conflicts
         $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
 
-        if ($patient && $patient->client_id == $client_id) {
+        if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
             // Patient is accessing their own data
             return true;
         }

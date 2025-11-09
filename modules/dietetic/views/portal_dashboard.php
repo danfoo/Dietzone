@@ -152,6 +152,9 @@ $this->load->view('portal/includes/portal_header');
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
 }
 
 .program-card::before {
@@ -439,6 +442,9 @@ $this->load->view('portal/includes/portal_header');
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 30px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
 }
 
 .consultations-header {
@@ -550,6 +556,11 @@ $this->load->view('portal/includes/portal_header');
     margin-bottom: 30px;
     text-align: center;
     box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .weight-progress-icon {
@@ -612,7 +623,7 @@ $this->load->view('portal/includes/portal_header');
 /* Floating Action Button with Modal */
 .fab-container {
     position: fixed;
-    bottom: 80px;
+    bottom: 50px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1002;
@@ -1264,9 +1275,9 @@ body {
 
 <!-- Custom Dashboard Footer -->
 <footer class="dashboard-footer">
-    <a href="<?php echo site_url('dietetic/portal'); ?>" class="footer-link active">
-        <i class="fa fa-trophy footer-link-icon"></i>
-        <span class="footer-link-label">Programmes</span>
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="footer-link active">
+        <i class="fa fa-list-alt footer-link-icon"></i>
+        <span class="footer-link-label">Enquête</span>
     </a>
 
     <div class="footer-spacer"></div>
