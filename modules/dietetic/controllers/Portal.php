@@ -172,6 +172,28 @@ class Portal extends App_Controller
             $data['weight_evolution'] = [];
         }
 
+        // Get active food survey
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                $this->load->model('dietetic/dietetic_food_surveys_model');
+                $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
+                $data['active_survey'] = !empty($active_surveys) ? $active_surveys[0] : null;
+
+                // Get completion percentage if there's an active survey
+                if ($data['active_survey']) {
+                    $data['survey_completion'] = $this->dietetic_food_surveys_model->get_completion_percentage($data['active_survey']->id);
+                } else {
+                    $data['survey_completion'] = 0;
+                }
+            } else {
+                $data['active_survey'] = null;
+                $data['survey_completion'] = 0;
+            }
+        } catch (Exception $e) {
+            $data['active_survey'] = null;
+            $data['survey_completion'] = 0;
+        }
+
         $this->load->view('portal_dashboard', $data);
     }
 
@@ -355,8 +377,8 @@ class Portal extends App_Controller
                     }
 
                     // For regular form submission, redirect with success message
-                    set_alert('success', 'Mesure ajoutée avec succès!');
-                    redirect(site_url('dietetic/portal/add_measurement'));
+                    $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
+                    redirect('dietetic/portal/add_measurement');
                     return;
                 } else {
                     // Return JSON for AJAX requests

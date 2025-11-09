@@ -357,6 +357,129 @@ $this->load->view('portal/includes/portal_header');
     font-size: 14px;
 }
 
+/* Food Survey Card - Orange Design */
+.survey-card {
+    background: linear-gradient(135deg, #F3911D 0%, #e07d0a 100%);
+    border-radius: 24px;
+    padding: 32px 28px;
+    margin-bottom: 30px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(243, 145, 29, 0.3);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.survey-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.survey-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.survey-info-left {
+    flex: 1;
+}
+
+.survey-greeting {
+    font-size: 15px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.survey-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+}
+
+.survey-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.survey-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.25) 100%);
+    color: white;
+    text-decoration: none;
+}
+
+.survey-status {
+    margin-top: 12px;
+    font-size: 13px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.survey-status i {
+    font-size: 8px;
+    color: #a3f3a3;
+    animation: pulse 2s infinite;
+}
+
+.survey-progress-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.progress-ring-fill-orange {
+    fill: none;
+    stroke: white;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.survey-body {
+    position: relative;
+    z-index: 1;
+}
+
+.survey-dates {
+    font-size: 14px;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.survey-dates i {
+    margin-right: 6px;
+}
+
 /* Meal Plans Section */
 .meal-plans-section {
     margin-top: 20px;
@@ -1127,6 +1250,50 @@ body {
 <div class="no-program-alert">
     <i class="fa fa-info-circle"></i>
     <p>Aucun programme actif pour le moment. Votre diététicien vous en assignera un prochainement.</p>
+</div>
+<?php } ?>
+
+<!-- Food Survey Card -->
+<?php if ($active_survey) { ?>
+    <?php
+    // Circle calculation for SVG
+    $radius = 42;
+    $circumference = 2 * pi() * $radius;
+    $stroke_offset = $circumference - ($survey_completion / 100) * $circumference;
+    ?>
+
+<div class="survey-card">
+    <div class="survey-header">
+        <div class="survey-info-left">
+            <div class="survey-greeting">Votre enquête alimentaire</div>
+            <div class="survey-title"><?php echo $active_survey->survey_name; ?></div>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="survey-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <div class="survey-status">
+                <i class="fa fa-circle"></i>
+                Enquête active
+            </div>
+        </div>
+
+        <div class="survey-progress-ring">
+            <svg width="100" height="100">
+                <circle class="progress-ring-bg" cx="50" cy="50" r="<?php echo $radius; ?>"/>
+                <circle class="progress-ring-fill-orange" cx="50" cy="50" r="<?php echo $radius; ?>"
+                        style="stroke-dasharray: <?php echo $circumference; ?>; stroke-dashoffset: <?php echo $stroke_offset; ?>;"/>
+            </svg>
+            <div class="progress-ring-text"><?php echo round($survey_completion); ?>%</div>
+        </div>
+    </div>
+
+    <div class="survey-body">
+        <?php if ($active_survey->start_date && $active_survey->end_date) { ?>
+        <div class="survey-dates">
+            <span><i class="fa fa-calendar"></i> Du <?php echo _d($active_survey->start_date); ?> au <?php echo _d($active_survey->end_date); ?></span>
+        </div>
+        <?php } ?>
+    </div>
 </div>
 <?php } ?>
 
