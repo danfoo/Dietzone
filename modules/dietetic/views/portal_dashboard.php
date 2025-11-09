@@ -79,56 +79,120 @@ $this->load->view('portal/includes/portal_header');
     color: #48bb78 !important;
 }
 
-/* Program Card - Flat Design */
+/* Program Card - Modern Design with Progress Ring */
 .program-card {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 2px solid #f1f3f5;
-    margin-bottom: 30px;
-}
-
-.program-header {
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    border-radius: 24px;
     padding: 32px 28px;
+    margin-bottom: 30px;
     color: white;
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
 }
 
-.program-header::before {
+.program-card::before {
     content: '';
     position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
 }
 
-.program-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
+.program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
     position: relative;
     z-index: 1;
+}
+
+.program-info-left {
+    flex: 1;
+}
+
+.program-greeting {
+    font-size: 15px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.program-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+}
+
+.program-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.3);
+}
+
+.program-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 165, 74, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.program-progress-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 8;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: #f5a54a;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 700;
+    color: #f5a54a;
 }
 
 .program-status {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(245, 165, 74, 0.2);
     padding: 6px 16px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    position: relative;
-    z-index: 1;
-}
-
-.program-status i {
-    animation: pulse 2s infinite;
+    color: #f5a54a;
+    margin-top: 12px;
 }
 
 @keyframes pulse {
@@ -137,14 +201,15 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .program-body {
-    padding: 28px;
+    position: relative;
+    z-index: 1;
 }
 
 .program-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .info-item {
@@ -152,14 +217,15 @@ $this->load->view('portal/includes/portal_header');
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 4px solid #01807B;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 3px solid #f5a54a;
+    backdrop-filter: blur(10px);
 }
 
 .info-item i {
     font-size: 20px;
-    color: #01807B;
+    color: #f5a54a;
     margin-top: 2px;
 }
 
@@ -168,84 +234,94 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .info-label {
-    font-size: 12px;
-    color: #6c757d;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .info-value {
     font-size: 16px;
-    color: #212529;
-    font-weight: 600;
+    color: white;
+    font-weight: 700;
 }
 
 .program-objective {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 18px;
     border-radius: 12px;
-    border-left: 4px solid #F3911D;
+    border-left: 3px solid #f5a54a;
     margin: 20px 0;
+    backdrop-filter: blur(10px);
 }
 
 .program-objective strong {
     display: block;
-    color: #01807B;
-    font-size: 14px;
+    color: #f5a54a;
+    font-size: 13px;
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 700;
 }
 
 .program-objective p {
-    color: #495057;
-    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.7;
     margin: 0;
+    font-size: 14px;
 }
 
 /* Meal Plans Section */
 .meal-plans-section {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 2px solid #f1f3f5;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    color: #212529;
-    margin: 0 0 20px 0;
+    color: white;
+    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .section-title i {
-    color: #01807B;
+    color: #f5a54a;
 }
 
 .meal-plan-item {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px;
+    padding: 18px;
     margin-bottom: 12px;
     transition: all 0.3s;
+    backdrop-filter: blur(10px);
 }
 
 .meal-plan-item:hover {
-    border-color: #01807B;
+    border-color: #f5a54a;
     transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.1);
+    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.2);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .meal-plan-name {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    color: #212529;
+    color: white;
     margin-bottom: 12px;
+}
+
+.meal-plan-name i {
+    color: #f5a54a;
+    margin-right: 8px;
 }
 
 .meal-plan-actions {
@@ -268,14 +344,15 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .btn-flat-primary {
-    background: #01807B;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
     color: white;
+    box-shadow: 0 3px 10px rgba(245, 165, 74, 0.3);
 }
 
 .btn-flat-primary:hover {
-    background: #026660;
+    background: linear-gradient(135deg, #e8944a 0%, #d67f3a 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 5px 15px rgba(245, 165, 74, 0.4);
     color: white;
     text-decoration: none;
 }
@@ -293,105 +370,126 @@ $this->load->view('portal/includes/portal_header');
     text-decoration: none;
 }
 
-/* Consultations Card - Timeline Design */
-.consultations-card {
+/* Consultations Card - Today's Schedule Style */
+.consultations-section {
     background: white;
-    border-radius: 16px;
-    border: 2px solid #f1f3f5;
-    overflow: hidden;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 30px;
 }
 
 .consultations-header {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-    padding: 20px 24px;
-    color: white;
+    margin-bottom: 20px;
 }
 
 .consultations-header h4 {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
+    color: #2c3e50;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.consultations-body {
-    padding: 24px;
+.consultations-header h4 i {
+    color: #2c5f6f;
 }
 
-.consultation-timeline {
+.consultations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.consultation-card {
+    background: linear-gradient(135deg, #fef4e8 0%, #f5e6d3 100%);
+    border-radius: 16px;
+    padding: 20px;
     position: relative;
+    transition: all 0.3s;
+    border: 2px solid transparent;
 }
 
-.consultation-timeline::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(180deg, #4299e1 0%, #e9ecef 100%);
+.consultation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(245, 165, 74, 0.2);
+    border-color: #f5a54a;
 }
 
-.consultation-item {
-    position: relative;
-    padding-left: 56px;
-    margin-bottom: 24px;
-}
-
-.consultation-item:last-child {
-    margin-bottom: 0;
-}
-
-.consultation-dot {
-    position: absolute;
-    left: 12px;
-    top: 4px;
-    width: 18px;
-    height: 18px;
-    background: #4299e1;
-    border: 3px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px #4299e1;
-    z-index: 1;
-}
-
-.consultation-content {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 10px;
-    border-left: 3px solid #4299e1;
-}
-
-.consultation-date {
-    font-size: 14px;
-    font-weight: 700;
-    color: #01807B;
-    margin-bottom: 6px;
+.consultation-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b6f47;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.consultation-type {
-    font-size: 13px;
-    color: #495057;
-    margin-bottom: 8px;
+.consultation-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 6px;
+    line-height: 1.4;
 }
 
-.consultation-badge {
+.consultation-type-label {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+.consultation-status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: #4299e1;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
+    gap: 6px;
+    background: white;
+    color: #2c5f6f;
+    padding: 6px 14px;
+    border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.consultation-illustration {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    opacity: 0.15;
+    font-size: 48px;
+    color: #2c5f6f;
+}
+
+.view-more-btn {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.view-more-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(44, 95, 111, 0.3);
+}
+
+.view-more-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(44, 95, 111, 0.4);
+    color: white;
+    text-decoration: none;
 }
 
 .empty-consultations {
@@ -734,12 +832,50 @@ $this->load->view('portal/includes/portal_header');
 
 <!-- Program Card -->
 <?php if ($active_program) { ?>
+    <?php
+    // Calculate program progress
+    $progress_percentage = 50; // Default
+    if ($active_program->start_date && $active_program->end_date) {
+        $start = strtotime($active_program->start_date);
+        $end = strtotime($active_program->end_date);
+        $now = time();
+        if ($now >= $start && $now <= $end) {
+            $total_duration = $end - $start;
+            $elapsed = $now - $start;
+            $progress_percentage = round(($elapsed / $total_duration) * 100);
+        } elseif ($now > $end) {
+            $progress_percentage = 100;
+        }
+    }
+
+    // Circle calculation for SVG
+    $radius = 42;
+    $circumference = 2 * pi() * $radius;
+    $stroke_offset = $circumference - ($progress_percentage / 100) * $circumference;
+    ?>
+
 <div class="program-card">
     <div class="program-header">
-        <div class="program-title"><i class="fa fa-trophy"></i> <?php echo $active_program->program_name; ?></div>
-        <div class="program-status">
-            <i class="fa fa-circle"></i>
-            Programme actif
+        <div class="program-info-left">
+            <div class="program-greeting">Excellent, votre programme</div>
+            <div class="program-title"><?php echo $active_program->program_name; ?></div>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="program-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <div class="program-status">
+                <i class="fa fa-circle"></i>
+                Programme actif
+            </div>
+        </div>
+
+        <div class="program-progress-ring">
+            <svg width="100" height="100">
+                <circle class="progress-ring-bg" cx="50" cy="50" r="<?php echo $radius; ?>"/>
+                <circle class="progress-ring-fill" cx="50" cy="50" r="<?php echo $radius; ?>"
+                        style="stroke-dasharray: <?php echo $circumference; ?>; stroke-dashoffset: <?php echo $stroke_offset; ?>;"/>
+            </svg>
+            <div class="progress-ring-text"><?php echo $progress_percentage; ?>%</div>
         </div>
     </div>
 
@@ -837,45 +973,46 @@ $this->load->view('portal/includes/portal_header');
     </div>
 
     <div class="col-md-6">
-        <div class="consultations-card">
+        <div class="consultations-section">
             <div class="consultations-header">
                 <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
             </div>
-            <div class="consultations-body">
-                <?php if (!empty($upcoming_consultations)) { ?>
-                <div class="consultation-timeline">
-                    <?php foreach ($upcoming_consultations as $consultation) { ?>
-                    <div class="consultation-item">
-                        <div class="consultation-dot"></div>
-                        <div class="consultation-content">
-                            <div class="consultation-date">
-                                <i class="fa fa-clock"></i>
-                                <?php echo _dt($consultation->consultation_date); ?>
-                            </div>
-                            <div class="consultation-type">
-                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
-                            </div>
-                            <span class="consultation-badge">
-                                <i class="fa fa-check-circle"></i>
-                                Programmé
-                            </span>
-                        </div>
-                    </div>
-                    <?php } ?>
-                </div>
 
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn-flat btn-flat-primary">
-                        <i class="fa fa-list"></i> Voir tous les rendez-vous
-                    </a>
-                </div>
-                <?php } else { ?>
-                <div class="empty-consultations">
-                    <i class="fa fa-calendar-times"></i>
-                    <p>Aucun rendez-vous programmé</p>
+            <?php if (!empty($upcoming_consultations)) { ?>
+            <div class="consultations-grid">
+                <?php foreach ($upcoming_consultations as $index => $consultation) { ?>
+                <div class="consultation-card">
+                    <div class="consultation-time">
+                        <i class="fa fa-clock"></i>
+                        <?php echo date('H:i', strtotime($consultation->consultation_date)); ?>
+                    </div>
+                    <div class="consultation-title">
+                        Consultation avec votre diététicien
+                    </div>
+                    <div class="consultation-type-label">
+                        <?php echo _d($consultation->consultation_date); ?>
+                    </div>
+                    <span class="consultation-status-badge">
+                        <i class="fa fa-check-circle"></i>
+                        Programmé
+                    </span>
+                    <i class="fa fa-user-md consultation-illustration"></i>
                 </div>
                 <?php } ?>
             </div>
+
+            <div class="view-more-btn">
+                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="view-more-link">
+                    <span>Voir tous les rendez-vous</span>
+                    <i class="fa fa-arrow-right"></i>
+                </a>
+            </div>
+            <?php } else { ?>
+            <div class="empty-consultations">
+                <i class="fa fa-calendar-times"></i>
+                <p>Aucun rendez-vous programmé</p>
+            </div>
+            <?php } ?>
         </div>
     </div>
 </div>
