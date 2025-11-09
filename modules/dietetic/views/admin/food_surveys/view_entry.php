@@ -967,6 +967,7 @@
                 if ($entry->breakfast_photo || $entry->breakfast_notes) $meals_logged++;
                 if ($entry->lunch_photo || $entry->lunch_notes) $meals_logged++;
                 if ($entry->dinner_photo || $entry->dinner_notes) $meals_logged++;
+                if (!empty($entry->snack_photo) || !empty($entry->snack_notes)) $meals_logged++;
                 $completion_percentage = round(($meals_logged / $total_meals) * 100);
                 ?>
 
@@ -1199,6 +1200,55 @@
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <!-- Snack / Collation -->
+                    <div class="meal-card <?php echo !empty($entry->snack_photo) ? 'has-data' : ''; ?>">
+                        <div class="meal-card-header">
+                            <h3>
+                                <i class="fa fa-apple"></i>
+                                Collation
+                                <?php if (count($recommendations_by_meal['snack']) > 0): ?>
+                                    <span class="meal-recommendation-badge">
+                                        <i class="fa fa-lightbulb-o"></i> <?php echo count($recommendations_by_meal['snack']); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </h3>
+                            <?php if (!empty($entry->snack_time)): ?>
+                                <span class="meal-time">
+                                    <i class="fa fa-clock-o"></i>
+                                    <?php echo date('H:i', strtotime($entry->snack_time)); ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="meal-card-body">
+                            <?php if (!empty($entry->snack_photo)): ?>
+                                <a href="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->snack_photo); ?>" target="_blank">
+                                    <div class="meal-photo-container clickable">
+                                        <img src="<?php echo base_url('uploads/dietetic/food_surveys/' . $entry->snack_photo); ?>" alt="Collation">
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="meal-photo-container">
+                                    <div class="meal-photo-placeholder">
+                                        <i class="fa fa-image"></i>
+                                        <p>Aucune photo</p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($entry->snack_notes)): ?>
+                                <div class="meal-notes">
+                                    <div class="meal-notes-label"><i class="fa fa-sticky-note-o"></i> Notes</div>
+                                    <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->snack_notes)); ?></div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (empty($entry->snack_photo) && empty($entry->snack_notes)): ?>
+                                <div class="no-data">
+                                    <i class="fa fa-info-circle"></i>
+                                    <p>Aucune donnée enregistrée</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1271,6 +1321,13 @@
                                     <span class="meal-radio-label">
                                         <i class="fa fa-moon-o"></i>
                                         <span class="meal-name">Dîner</span>
+                                    </span>
+                                </label>
+                                <label class="meal-radio-option">
+                                    <input type="radio" name="meal_type" value="snack" required>
+                                    <span class="meal-radio-label">
+                                        <i class="fa fa-apple"></i>
+                                        <span class="meal-name">Collation</span>
                                     </span>
                                 </label>
                                 <label class="meal-radio-option">

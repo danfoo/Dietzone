@@ -700,9 +700,9 @@ class Food_surveys extends AdminController
                 return;
             }
 
-            // Add meal_type column
+            // Add meal_type column with snack option
             $sql = "ALTER TABLE `" . db_prefix() . "dietic_food_survey_recommendations`
-                    ADD COLUMN `meal_type` ENUM('breakfast', 'lunch', 'dinner', 'global') DEFAULT 'global'
+                    ADD COLUMN `meal_type` ENUM('breakfast', 'lunch', 'dinner', 'snack', 'global') DEFAULT 'global'
                     AFTER `entry_id`,
                     ADD INDEX `idx_meal_type` (`meal_type`)";
 
@@ -718,5 +718,44 @@ class Food_surveys extends AdminController
                 'message' => 'Erreur lors de la migration : ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Add snack (collation) to food surveys
+     * Adds snack_photo, snack_time, snack_notes columns
+     */
+    public function add_snack()
+    {
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        require_once(__DIR__ . '/../add_snack_to_food_surveys.php');
+        $migration = new Add_snack_migration();
+
+        // Check if migration is needed
+        if (!$migration->is_needed()) {
+            set_alert('info', 'Les colonnes collation existent déjà');
+            redirect(admin_url('dietetic/food_surveys'));
+            return;
+        }
+
+        // If form submitted, run migration
+        if ($this->input->post('do_migrate')) {
+            $result = $migration->run();
+
+            if ($result['success']) {
+                set_alert('success', $result['message']);
+            } else {
+                set_alert('danger', $result['message']);
+            }
+
+            redirect(admin_url('dietetic/food_surveys'));
+            return;
+        }
+
+        // Show confirmation page
+        $data['title'] = 'Ajouter Collation aux Enquêtes Alimentaires';
+        $this->load->view('admin/food_surveys/add_snack_confirmation', $data);
     }
 }
