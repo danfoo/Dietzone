@@ -1,10 +1,21 @@
 <?php
+/**
+ * Portal Patient Dashboard
+ *
+ * @author Eric Gilles SAGNA
+ * @website https://maestrodan.art
+ */
 $active_page = 'dashboard';
 $page_title = 'Mon Programme';
 $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
+/* Fix Bootstrap progress bar height conflict */
+.stat-card.progress {
+    height: auto !important;
+}
+
 /* Modern Stats Cards with Animations */
 .stats-grid {
     display: grid;
@@ -422,13 +433,12 @@ $this->load->view('portal/includes/portal_header');
     text-decoration: none;
 }
 
-/* Consultations Carousel - Modern Style */
+/* Single Consultation Card */
 .consultations-section {
     background: white;
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 30px;
-    position: relative;
 }
 
 .consultations-header {
@@ -449,62 +459,37 @@ $this->load->view('portal/includes/portal_header');
     color: #2c5f6f;
 }
 
-.consultations-carousel {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.carousel-wrapper {
-    overflow: hidden;
-    position: relative;
-}
-
-.carousel-track {
-    display: flex;
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    gap: 16px;
-}
-
 .consultation-card {
     background: linear-gradient(135deg, #fef4e8 0%, #f5e6d3 100%);
     border-radius: 16px;
-    padding: 20px;
+    padding: 24px;
     position: relative;
     transition: all 0.3s;
     border: 2px solid transparent;
-    min-width: 280px;
-    flex-shrink: 0;
-}
-
-.consultation-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(245, 165, 74, 0.2);
-    border-color: #f5a54a;
+    margin-bottom: 16px;
 }
 
 .consultation-time {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #8b6f47;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
 .consultation-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     color: #2c3e50;
-    margin-bottom: 6px;
-    line-height: 1.4;
+    margin-bottom: 8px;
 }
 
 .consultation-type-label {
-    font-size: 13px;
+    font-size: 14px;
     color: #6c757d;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .consultation-status-badge {
@@ -513,61 +498,32 @@ $this->load->view('portal/includes/portal_header');
     gap: 6px;
     background: white;
     color: #2c5f6f;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.consultation-illustration {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    opacity: 0.15;
-    font-size: 48px;
-    color: #2c5f6f;
-}
-
-.carousel-nav {
-    display: none; /* Masquer pour plus de professionnalisme */
-}
-
-.carousel-btn {
-    display: none;
-}
-
-.carousel-dots {
-    display: none;
-}
-
-.carousel-dot {
-    display: none;
-}
-
-.view-more-btn {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.view-more-link {
+.consultation-view-all-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
     color: white;
-    padding: 12px 28px;
+    padding: 12px 24px;
     border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s;
     box-shadow: 0 4px 12px rgba(44, 95, 111, 0.3);
+    margin-top: 12px;
 }
 
-.view-more-link:hover {
+.consultation-view-all-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(44, 95, 111, 0.4);
     color: white;
@@ -586,58 +542,49 @@ $this->load->view('portal/includes/portal_header');
     margin-bottom: 12px;
 }
 
-.chart-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+/* Weight Progress Simple Card */
+.weight-progress-card {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
     border-radius: 20px;
-    padding: 28px;
-    border: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    padding: 32px;
     margin-bottom: 30px;
-    position: relative;
-    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
 }
 
-.chart-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #4299e1 0%, #48bb78 50%, #ed8936 100%);
-}
-
-.chart-card h4 {
-    font-size: 20px;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 24px 0;
+.weight-progress-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
 }
 
-.chart-card h4 i {
-    color: #4299e1;
-    font-size: 24px;
+.weight-progress-icon i {
+    font-size: 40px;
+    color: white;
 }
 
-.chart-empty-state {
-    text-align: center;
-    padding: 60px 20px;
+.weight-progress-value {
+    font-size: 48px;
+    font-weight: 800;
+    color: #38a169;
+    margin-bottom: 8px;
+}
+
+.weight-progress-label {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.weight-progress-empty {
+    font-size: 16px;
     color: #6c757d;
-}
-
-.chart-empty-state i {
-    font-size: 64px;
-    color: #4299e1;
-    opacity: 0.3;
-    margin-bottom: 16px;
-}
-
-.chart-empty-state p {
-    font-size: 14px;
-    margin: 0;
 }
 
 .no-program-alert {
@@ -662,9 +609,13 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
-/* Quick Actions Section - Compact Rectangles */
+/* Quick Actions Section - Cadré et Compact */
 .quick-actions {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
     margin-bottom: 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .quick-actions-title {
@@ -812,6 +763,15 @@ $this->load->view('portal/includes/portal_header');
     cursor: help;
 }
 
+/* Hide footer on dashboard page */
+.app-footer {
+    display: none !important;
+}
+
+body {
+    padding-bottom: 20px !important;
+}
+
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -877,48 +837,6 @@ $this->load->view('portal/includes/portal_header');
         <div class="stat-label">Progression</div>
     </div>
     <?php } ?>
-</div>
-
-<!-- Quick Actions -->
-<div class="quick-actions fade-in-up">
-    <h4 class="quick-actions-title">
-        <i class="fa fa-bolt"></i>
-        Actions rapides
-    </h4>
-    <div class="actions-grid">
-        <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-btn">
-            <div class="action-btn-icon add">
-                <i class="fa fa-plus"></i>
-            </div>
-            <span class="action-btn-label">Ajouter une mesure</span>
-        </a>
-
-        <?php
-        // Check if food surveys feature is enabled
-        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-        ?>
-        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-btn">
-            <div class="action-btn-icon survey">
-                <i class="fa fa-list-alt"></i>
-            </div>
-            <span class="action-btn-label">Enquête alimentaire</span>
-        </a>
-        <?php } ?>
-
-        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn">
-            <div class="action-btn-icon consult">
-                <i class="fa fa-calendar"></i>
-            </div>
-            <span class="action-btn-label">Mes consultations</span>
-        </a>
-
-        <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-btn">
-            <div class="action-btn-icon dietitian">
-                <i class="fa fa-user-md"></i>
-            </div>
-            <span class="action-btn-label">Mon diététicien</span>
-        </a>
-    </div>
 </div>
 
 <!-- Program Card -->
@@ -1054,162 +972,100 @@ $this->load->view('portal/includes/portal_header');
 </div>
 <?php } ?>
 
-<!-- Weight Evolution Chart - Full Width -->
-<div class="chart-card">
-    <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
-    <?php if (!empty($weight_evolution)) { ?>
-        <canvas id="portalWeightChart" height="150"></canvas>
-    <?php } else { ?>
-        <div class="chart-empty-state">
-            <i class="fa fa-chart-line"></i>
-            <p>Aucune donnée de poids disponible pour le moment.<br>Ajoutez vos mesures pour voir votre progression.</p>
+<!-- Weight Progress Simple -->
+<div class="weight-progress-card">
+    <?php if ($weight_progress->weight_change !== null) { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
         </div>
+        <div class="weight-progress-value">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
+        </div>
+        <div class="weight-progress-label">Évolution du poids</div>
+    <?php } else { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-balance-scale"></i>
+        </div>
+        <div class="weight-progress-empty">Aucune évolution disponible</div>
     <?php } ?>
 </div>
 
-<!-- Consultations Carousel -->
+<!-- Single Consultation -->
 <div class="consultations-section">
     <div class="consultations-header">
-        <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
+        <h4><i class="fa fa-calendar-alt"></i> Prochain rendez-vous</h4>
     </div>
 
     <?php if (!empty($upcoming_consultations)) { ?>
-    <div class="consultations-carousel">
-        <div class="carousel-wrapper">
-            <div class="carousel-track" id="consultationsTrack">
-                <?php foreach ($upcoming_consultations as $index => $consultation) { ?>
-                <div class="consultation-card">
-                    <div class="consultation-time">
-                        <i class="fa fa-clock"></i>
-                        <?php echo date('H:i', strtotime($consultation->consultation_date)); ?>
-                    </div>
-                    <div class="consultation-title">
-                        Consultation avec votre diététicien
-                    </div>
-                    <div class="consultation-type-label">
-                        <?php echo _d($consultation->consultation_date); ?>
-                    </div>
-                    <span class="consultation-status-badge">
-                        <i class="fa fa-check-circle"></i>
-                        Programmé
-                    </span>
-                    <i class="fa fa-user-md consultation-illustration"></i>
-                </div>
-                <?php } ?>
+        <?php $next_consultation = $upcoming_consultations[0]; ?>
+        <div class="consultation-card">
+            <div class="consultation-time">
+                <i class="fa fa-clock"></i>
+                <?php echo date('H:i', strtotime($next_consultation->consultation_date)); ?>
             </div>
-        </div>
-
-        <?php if (count($upcoming_consultations) > 1) { ?>
-        <div class="carousel-nav">
-            <button class="carousel-btn" id="prevBtn" onclick="moveCarousel(-1)">
-                <i class="fa fa-chevron-left"></i>
-            </button>
-
-            <div class="carousel-dots" id="carouselDots">
-                <?php for ($i = 0; $i < count($upcoming_consultations); $i++) { ?>
-                <div class="carousel-dot <?php echo $i === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $i; ?>)"></div>
-                <?php } ?>
+            <div class="consultation-title">
+                Consultation avec votre diététicien
             </div>
-
-            <button class="carousel-btn" id="nextBtn" onclick="moveCarousel(1)">
-                <i class="fa fa-chevron-right"></i>
-            </button>
+            <div class="consultation-type-label">
+                <?php echo _d($next_consultation->consultation_date); ?>
+            </div>
+            <span class="consultation-status-badge">
+                <i class="fa fa-check-circle"></i>
+                Programmé
+            </span>
+            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="consultation-view-all-btn">
+                <span>Voir tous les rendez-vous</span>
+                <i class="fa fa-arrow-right"></i>
+            </a>
         </div>
-        <?php } ?>
-    </div>
-
-    <div class="view-more-btn">
-        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="view-more-link">
-            <span>Voir tous les rendez-vous</span>
-            <i class="fa fa-arrow-right"></i>
-        </a>
-    </div>
     <?php } else { ?>
-    <div class="empty-consultations">
-        <i class="fa fa-calendar-times"></i>
-        <p>Aucun rendez-vous programmé</p>
-    </div>
+        <div class="empty-consultations">
+            <i class="fa fa-calendar-times"></i>
+            <p>Aucun rendez-vous programmé</p>
+        </div>
     <?php } ?>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-// ============================================
-// WEIGHT CHART
-// ============================================
-$(function() {
-    <?php if (!empty($weight_evolution)) { ?>
-        var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
-        var weights = [<?php foreach ($weight_evolution as $m) { echo $m->weight . ','; } ?>];
-        var bmis = [<?php foreach ($weight_evolution as $m) { echo $m->bmi . ','; } ?>];
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <h4 class="quick-actions-title">
+        <i class="fa fa-bolt"></i>
+        Actions rapides
+    </h4>
+    <div class="actions-grid">
+        <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-btn">
+            <div class="action-btn-icon add">
+                <i class="fa fa-plus"></i>
+            </div>
+            <span class="action-btn-label">Ajouter une mesure</span>
+        </a>
 
-        if (typeof dietetic_portal !== 'undefined') {
-            dietetic_portal.loadWeightChart('portalWeightChart', weights, bmis, labels);
-        }
-    <?php } ?>
-});
+        <?php
+        // Check if food surveys feature is enabled
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+        ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-btn">
+            <div class="action-btn-icon survey">
+                <i class="fa fa-list-alt"></i>
+            </div>
+            <span class="action-btn-label">Enquête alimentaire</span>
+        </a>
+        <?php } ?>
 
-// ============================================
-// CONSULTATIONS CAROUSEL
-// ============================================
-let currentSlide = 0;
-const track = document.getElementById('consultationsTrack');
-const dots = document.querySelectorAll('.carousel-dot');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
+        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn">
+            <div class="action-btn-icon consult">
+                <i class="fa fa-calendar"></i>
+            </div>
+            <span class="action-btn-label">Mes consultations</span>
+        </a>
 
-function updateCarousel() {
-    if (!track) return;
-
-    const cardWidth = 280; // min-width of consultation-card
-    const gap = 16;
-    const offset = currentSlide * (cardWidth + gap);
-
-    track.style.transform = `translateX(-${offset}px)`;
-
-    // Update dots
-    dots.forEach((dot, index) => {
-        if (index === currentSlide) {
-            dot.classList.add('active');
-        } else {
-            dot.classList.remove('active');
-        }
-    });
-
-    // Update buttons
-    if (prevBtn) prevBtn.disabled = currentSlide === 0;
-    if (nextBtn) nextBtn.disabled = currentSlide === dots.length - 1;
-}
-
-function moveCarousel(direction) {
-    const maxSlide = dots.length - 1;
-    currentSlide += direction;
-
-    if (currentSlide < 0) currentSlide = 0;
-    if (currentSlide > maxSlide) currentSlide = maxSlide;
-
-    updateCarousel();
-}
-
-function goToSlide(index) {
-    currentSlide = index;
-    updateCarousel();
-}
-
-// Auto-advance carousel every 5 seconds
-<?php if (!empty($upcoming_consultations) && count($upcoming_consultations) > 1) { ?>
-setInterval(function() {
-    if (currentSlide < dots.length - 1) {
-        moveCarousel(1);
-    } else {
-        currentSlide = 0;
-        updateCarousel();
-    }
-}, 5000);
-<?php } ?>
-
-// Initialize
-updateCarousel();
-</script>
+        <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-btn">
+            <div class="action-btn-icon dietitian">
+                <i class="fa fa-user-md"></i>
+            </div>
+            <span class="action-btn-label">Mon diététicien</span>
+        </a>
+    </div>
+</div>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
