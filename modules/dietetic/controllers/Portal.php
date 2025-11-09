@@ -1153,7 +1153,7 @@ class Portal extends App_Controller
         }
 
         // Get survey
-        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+        $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
         if (!$survey || $survey->patient_id != $patient->id) {
             show_404();
@@ -1231,7 +1231,7 @@ class Portal extends App_Controller
 
             // Get survey
             $survey_id = $this->input->post('survey_id');
-            $survey = $this->dietetic_food_surveys_model->get($survey_id);
+            $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
             if (!$survey || $survey->patient_id != $patient->id) {
                 echo json_encode([
@@ -1356,7 +1356,7 @@ class Portal extends App_Controller
         }
 
         // Get survey
-        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+        $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
         if (!$survey || $survey->patient_id != $patient->id) {
             show_404();
