@@ -11,6 +11,18 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
+/* Welcome Message */
+.welcome-message {
+    font-size: 18px;
+    color: #495057;
+    margin-bottom: 24px;
+}
+
+.welcome-message .patient-name {
+    font-weight: 700;
+    color: #212529;
+}
+
 /* Fix Bootstrap progress bar height conflict */
 .stat-card.progress {
     height: auto !important;
@@ -34,6 +46,11 @@ $this->load->view('portal/includes/portal_header');
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .stat-card::before {
@@ -623,7 +640,7 @@ $this->load->view('portal/includes/portal_header');
 /* Floating Action Button with Modal */
 .fab-container {
     position: fixed;
-    bottom: 35px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1002;
@@ -977,6 +994,11 @@ body {
     }
 }
 </style>
+
+<!-- Welcome Message -->
+<div class="welcome-message">
+    Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
+</div>
 
 <!-- Stats Cards -->
 <div class="stats-grid">
