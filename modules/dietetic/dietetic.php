@@ -259,6 +259,38 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
+    // Load menu toggle script on ALL admin pages (so menu works everywhere)
+    echo '<script>
+    (function($) {
+        $(document).ready(function() {
+            // Initialize Dietetic menu toggle functionality
+            var $dieteticMenuItem = $(".menu-item-dietetic");
+            if ($dieteticMenuItem.length) {
+                var $mainLink = $dieteticMenuItem.find("> a[href=\"#\"]");
+                if ($mainLink.length) {
+                    $mainLink.off("click.dieteticToggle").on("click.dieteticToggle", function(e) {
+                        e.preventDefault();
+                        var $submenu = $dieteticMenuItem.find("> ul.nav-second-level");
+                        if ($submenu.length) {
+                            var isExpanded = $submenu.hasClass("in");
+                            if (isExpanded) {
+                                $submenu.removeClass("in").slideUp(300);
+                                $(this).attr("aria-expanded", "false");
+                                $dieteticMenuItem.removeClass("active");
+                            } else {
+                                $submenu.addClass("in").slideDown(300);
+                                $(this).attr("aria-expanded", "true");
+                                $dieteticMenuItem.addClass("active");
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    })(jQuery);
+    </script>';
+
+    // Load full dietetic.js only on dietetic pages
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<script src="' . $module_path . 'assets/js/dietetic.js?v=' . time() . '"></script>';
     }

@@ -460,7 +460,7 @@ if (typeof jQuery === 'undefined') {
         initDatePickers();
         initConsultationCalendar();
 
-        // Force expand Diététique menu on dietetic pages
+        // Force expand Diététique menu on dietetic pages (menu toggle is handled globally in dietetic.php)
         expandDieteticMenu();
 
         // Auto-calculate BMI
