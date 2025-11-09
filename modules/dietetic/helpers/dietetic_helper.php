@@ -505,6 +505,7 @@ function dietetic_get_staff_user_id()
 
 /**
  * Check if a dietitian has access to a patient
+ * Also allows patients to access their own data from the client portal
  *
  * @param int $patient_id
  * @param int $dietitian_id If null, uses current staff user
@@ -517,6 +518,24 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
         return true;
     }
 
+    $CI = &get_instance();
+
+    // Check if this is a client (patient) accessing their own data
+    if (is_client_logged_in()) {
+        $client_id = get_client_user_id();
+
+        // Load patient model to check if this client owns this patient record
+        // Pass false to avoid recursive permission check
+        $CI->load->model('dietetic/dietetic_patients_model');
+        $patient = $CI->dietetic_patients_model->get($patient_id, false);
+
+        if ($patient && $patient->client_id == $client_id) {
+            // Patient is accessing their own data
+            return true;
+        }
+    }
+
+    // Check staff access
     if ($dietitian_id === null) {
         $dietitian_id = dietetic_get_staff_user_id();
     }
@@ -525,7 +544,6 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
         return false;
     }
 
-    $CI = &get_instance();
     $CI->load->model('dietetic/dietetic_patient_dietitians_model');
 
     return $CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id);
