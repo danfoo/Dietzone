@@ -379,7 +379,7 @@ class Portal extends App_Controller
 
                     // For regular form submission, redirect with success message
                     $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
-                    redirect('dietetic/portal/measurements');
+                    redirect(site_url('dietetic/portal/measurements'));
                     return;
                 } else {
                     // Return JSON for AJAX requests
