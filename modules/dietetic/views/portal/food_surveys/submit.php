@@ -1079,6 +1079,47 @@ $this->load->view('portal/includes/portal_header');
                                   placeholder="Décrivez ce que vous avez mangé..."><?php echo $today_entry ? htmlspecialchars($today_entry->dinner_notes) : ''; ?></textarea>
                     </div>
                 </div>
+
+                <!-- Snack / Collation -->
+                <div class="meal-card <?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'has-photo' : ''; ?>" id="snackCard">
+                    <div class="meal-card-title">
+                        <i class="fa fa-apple"></i>
+                        Collation
+                    </div>
+
+                    <div class="photo-upload-area" data-meal="snack" style="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'display: none;' : ''; ?>">
+                        <input type="file" id="snackPhoto" accept="image/*" data-meal="snack">
+                        <input type="hidden" name="snack_photo" id="snack_photo_value" value="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? htmlspecialchars($today_entry->snack_photo) : ''; ?>">
+                        <div class="photo-upload-icon">
+                            <i class="fa fa-camera"></i>
+                        </div>
+                        <div class="photo-upload-text">Cliquez ou glissez une photo</div>
+                        <div class="photo-upload-hint">JPEG, PNG ou GIF - Max 5MB</div>
+                    </div>
+
+                    <div id="snackPreview" class="photo-preview" style="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? '' : 'display: none;'; ?>">
+                        <img src="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? base_url('uploads/dietetic/food_surveys/' . $today_entry->snack_photo) : ''; ?>" alt="Collation">
+                        <button type="button" class="photo-preview-remove" data-meal="snack">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="snack_time">
+                            <i class="fa fa-clock-o"></i> Heure de la collation
+                        </label>
+                        <input type="time" class="form-control time-input" name="snack_time" id="snack_time"
+                               value="<?php echo ($today_entry && !empty($today_entry->snack_time)) ? date('H:i', strtotime($today_entry->snack_time)) : '16:00'; ?>"
+                               placeholder="16:00">
+                        <small class="time-hint">Recommandé: entre 15h et 18h</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="snack_notes">Notes (optionnel)</label>
+                        <textarea class="form-control" name="snack_notes" id="snack_notes"
+                                  placeholder="Décrivez votre collation..."><?php echo ($today_entry && !empty($today_entry->snack_notes)) ? htmlspecialchars($today_entry->snack_notes) : ''; ?></textarea>
+                    </div>
+                </div>
             </div>
 
             <!-- Water Section -->
