@@ -449,6 +449,180 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
+/* Quick Actions Section */
+.quick-actions {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    border: 2px solid #f1f3f5;
+}
+
+.quick-actions-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quick-actions-title i {
+    color: #01807B;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(1, 128, 123, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn:hover {
+    border-color: #01807B;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    text-decoration: none;
+}
+
+.action-btn-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.action-btn-icon.add {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.action-btn-icon.survey {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.action-btn-icon.consult {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.action-btn-icon.dietitian {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.action-btn-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #212529;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Progress Ring for Stats */
+.stat-progress {
+    position: relative;
+    width: 56px;
+    height: 56px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.5s;
+    stroke-dasharray: 176;
+    stroke-dashoffset: 0;
+}
+
+/* Skeleton Loader */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stats-grid > * {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stats-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.stats-grid > *:nth-child(2) { animation-delay: 0.2s; }
+.stats-grid > *:nth-child(3) { animation-delay: 0.3s; }
+.stats-grid > *:nth-child(4) { animation-delay: 0.4s; }
+
+/* Tooltip */
+.tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(1, 128, 123, 0.15);
+    color: #01807B;
+    font-size: 11px;
+    margin-left: 5px;
+    cursor: help;
+}
+
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -465,6 +639,14 @@ $this->load->view('portal/includes/portal_header');
     .btn-flat {
         width: 100%;
         justify-content: center;
+    }
+
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .action-btn {
+        padding: 16px 12px;
     }
 }
 </style>
@@ -506,6 +688,48 @@ $this->load->view('portal/includes/portal_header');
         <div class="stat-label">Progression (kg)</div>
     </div>
     <?php } ?>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions fade-in-up">
+    <h4 class="quick-actions-title">
+        <i class="fa fa-bolt"></i>
+        Actions rapides
+    </h4>
+    <div class="actions-grid">
+        <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-btn">
+            <div class="action-btn-icon add">
+                <i class="fa fa-plus"></i>
+            </div>
+            <span class="action-btn-label">Ajouter une mesure</span>
+        </a>
+
+        <?php
+        // Check if food surveys feature is enabled
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+        ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-btn">
+            <div class="action-btn-icon survey">
+                <i class="fa fa-list-alt"></i>
+            </div>
+            <span class="action-btn-label">Enquête alimentaire</span>
+        </a>
+        <?php } ?>
+
+        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn">
+            <div class="action-btn-icon consult">
+                <i class="fa fa-calendar"></i>
+            </div>
+            <span class="action-btn-label">Mes consultations</span>
+        </a>
+
+        <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-btn">
+            <div class="action-btn-icon dietitian">
+                <i class="fa fa-user-md"></i>
+            </div>
+            <span class="action-btn-label">Mon diététicien</span>
+        </a>
+    </div>
 </div>
 
 <!-- Program Card -->
@@ -586,11 +810,8 @@ $this->load->view('portal/includes/portal_header');
                     <?php echo $plan->plan_name; ?> - Semaine <?php echo $plan->week_number; ?>
                 </div>
                 <div class="meal-plan-actions">
-                    <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
+                    <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
                         <i class="fa fa-eye"></i> Voir les détails
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-success">
-                        <i class="fa fa-download"></i> Télécharger PDF
                     </a>
                 </div>
             </div>
