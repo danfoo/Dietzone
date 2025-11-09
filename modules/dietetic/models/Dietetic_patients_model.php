@@ -42,21 +42,38 @@ class Dietetic_patients_model extends App_Model
             // Get dietitian info (primary dietitian)
             $patient->dietitian = $this->staff_model->get($patient->dietitian_id);
 
-            // Get all assigned dietitians (many-to-many)
-            if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-                $this->load->model('dietetic/dietetic_patient_dietitians_model');
-                $patient->dietitians = $this->dietetic_patient_dietitians_model->get_patient_dietitians($id, 'active');
-                $patient->dietitians_count = count($patient->dietitians);
-            } else {
+            // Get all assigned dietitians (many-to-many) - with error handling
+            try {
+                if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+                    $this->load->model('dietetic/dietetic_patient_dietitians_model');
+                    $patient->dietitians = $this->dietetic_patient_dietitians_model->get_patient_dietitians($id, 'active');
+                    $patient->dietitians_count = count($patient->dietitians);
+                } else {
+                    $patient->dietitians = [];
+                    $patient->dietitians_count = 0;
+                }
+            } catch (Exception $e) {
+                // Fallback to empty array on error
+                log_activity('Error loading patient dietitians: ' . $e->getMessage());
                 $patient->dietitians = [];
                 $patient->dietitians_count = 0;
             }
 
             // Get latest measurement (bypass access check if main check was bypassed)
-            $patient->latest_measurement = $this->get_latest_measurement($id, !$check_access);
+            try {
+                $patient->latest_measurement = $this->get_latest_measurement($id, !$check_access);
+            } catch (Exception $e) {
+                log_activity('Error loading latest measurement: ' . $e->getMessage());
+                $patient->latest_measurement = null;
+            }
 
             // Get active programs count (bypass access check if main check was bypassed)
-            $patient->active_programs = $this->count_active_programs($id, !$check_access);
+            try {
+                $patient->active_programs = $this->count_active_programs($id, !$check_access);
+            } catch (Exception $e) {
+                log_activity('Error counting active programs: ' . $e->getMessage());
+                $patient->active_programs = 0;
+            }
         }
 
         return $patient;
