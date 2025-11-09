@@ -79,6 +79,9 @@ function dietetic_module_init_menu_items()
 {
     $CI = &get_instance();
 
+    // Load dietetic helper for permission functions
+    $CI->load->helper('dietetic/dietetic');
+
     if (has_permission('dietetic', '', 'view')) {
         $CI->app_menu->add_sidebar_menu_item('dietetic', [
             'name'     => _l('dietetic'),
