@@ -513,54 +513,60 @@ function dietetic_get_staff_user_id()
  */
 function dietetic_can_access_patient($patient_id, $dietitian_id = null)
 {
-    $CI = &get_instance();
+    try {
+        $CI = &get_instance();
 
-    // Check if this is a client (patient) accessing their own data
-    if (is_client_logged_in()) {
-        $client_id = get_client_user_id();
+        // Check if this is a client (patient) accessing their own data
+        if (is_client_logged_in()) {
+            $client_id = get_client_user_id();
 
-        // Query database directly to avoid model conflicts
-        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            // Query database directly to avoid model conflicts
+            $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
 
-        if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
-            // Patient is accessing their own data
+            if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
+                // Patient is accessing their own data
+                return true;
+            }
+        }
+
+        // Only super admin (user ID 1) can access all patients
+        // Other admins must be assigned to the patient
+        if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
             return true;
         }
-    }
 
-    // Only super admin (user ID 1) can access all patients
-    // Other admins must be assigned to the patient
-    if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
-        return true;
-    }
+        // Check staff access
+        if ($dietitian_id === null) {
+            $dietitian_id = dietetic_get_staff_user_id();
+        }
 
-    // Check staff access
-    if ($dietitian_id === null) {
-        $dietitian_id = dietetic_get_staff_user_id();
-    }
+        if (!$dietitian_id) {
+            return false;
+        }
 
-    if (!$dietitian_id) {
-        return false;
-    }
+        // Check if patient_dietitians table exists
+        if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            // Fallback to old system - check dietitian_id in patients table
+            $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
+        }
 
-    // Check if patient_dietitians table exists
-    if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-        // Fallback to old system - check dietitian_id in patients table
+        // Check access in patient_dietitians table first
+        $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        if ($CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id)) {
+            return true;
+        }
+
+        // Fallback: If no assignment found, check dietitian_id in patients table
+        // This handles patients created before the many-to-many system or missing assignments
         $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
         return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
+    } catch (Exception $e) {
+        // Log error and deny access by default
+        log_activity('Error in dietetic_can_access_patient: ' . $e->getMessage());
+        return false;
     }
-
-    // Check access in patient_dietitians table first
-    $CI->load->model('dietetic/dietetic_patient_dietitians_model');
-
-    if ($CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id)) {
-        return true;
-    }
-
-    // Fallback: If no assignment found, check dietitian_id in patients table
-    // This handles patients created before the many-to-many system or missing assignments
-    $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
-    return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
 }
 
 /**

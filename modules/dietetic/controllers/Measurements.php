@@ -40,12 +40,26 @@ class Measurements extends AdminController
             return;
         }
 
-        // Get patient - check access but use proper permission function
-        $data['patient'] = $this->dietetic_patients_model->get($patient_id);
+        // Check access to patient explicitly first
+        if (!dietetic_can_access_patient($patient_id)) {
+            set_alert('danger', 'Access denied to this patient');
+            redirect(admin_url('dietetic/patients'));
+            return;
+        }
+
+        // Get patient - bypass access check since we already verified above
+        try {
+            $data['patient'] = $this->dietetic_patients_model->get($patient_id, false);
+        } catch (Exception $e) {
+            log_activity('Error loading patient in measurements/create: ' . $e->getMessage());
+            set_alert('danger', 'Error loading patient data');
+            redirect(admin_url('dietetic/patients'));
+            return;
+        }
 
         if (!$data['patient']) {
-            // Patient not found or no access
-            set_alert('danger', 'Patient not found or access denied');
+            // Patient not found
+            set_alert('danger', 'Patient not found');
             redirect(admin_url('dietetic/patients'));
             return;
         }
@@ -155,7 +169,15 @@ class Measurements extends AdminController
             show_404();
         }
 
-        $data['patient'] = $this->dietetic_patients_model->get($data['measurement']->patient_id);
+        // Check access to patient explicitly first
+        if (!dietetic_can_access_patient($data['measurement']->patient_id)) {
+            set_alert('danger', 'Access denied to this patient');
+            redirect(admin_url('dietetic/patients'));
+            return;
+        }
+
+        // Get patient - bypass access check since we already verified above
+        $data['patient'] = $this->dietetic_patients_model->get($data['measurement']->patient_id, false);
         if (!$data['patient']) {
             show_404();
         }
