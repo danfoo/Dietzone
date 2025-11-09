@@ -165,8 +165,9 @@ class Portal extends App_Controller
 
         // Get weight evolution for chart (last 5 entries only for better visibility)
         try {
-            $all_evolution = $this->dietetic_patients_model->get_weight_evolution($patient->id);
-            // Keep only the last 5 entries
+            // Get all measurements (up to 1000) to ensure we get the most recent ones
+            $all_evolution = $this->dietetic_patients_model->get_weight_evolution($patient->id, 1000);
+            // Keep only the last 5 entries (most recent)
             $data['weight_evolution'] = array_slice($all_evolution, -5);
         } catch (Exception $e) {
             $data['weight_evolution'] = [];
@@ -378,7 +379,7 @@ class Portal extends App_Controller
 
                     // For regular form submission, redirect with success message
                     $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
-                    redirect('dietetic/portal/add_measurement');
+                    redirect('dietetic/portal/measurements');
                     return;
                 } else {
                     // Return JSON for AJAX requests
