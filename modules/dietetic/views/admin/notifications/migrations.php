@@ -1,0 +1,655 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php init_head(); ?>
+
+<style>
+.migrations-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.migrations-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.migrations-header h1 {
+    color: #01807B;
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.migrations-header p {
+    color: #718096;
+    font-size: 16px;
+}
+
+.migrations-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.migration-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.migration-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.migration-card-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #01807B 0%, #026660 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.migration-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.migration-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.migration-status.pending {
+    background: #fef5e7;
+    color: #d68910;
+}
+
+.migration-status.completed {
+    background: #d5f4e6;
+    color: #0e6655;
+}
+
+.migration-status.error {
+    background: #fadbd8;
+    color: #943126;
+}
+
+.migration-card-body {
+    padding: 20px;
+}
+
+.migration-description {
+    color: #4a5568;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.migration-tables {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.migration-tables h4 {
+    color: #2d3748;
+    font-size: 14px;
+    margin: 0 0 10px 0;
+}
+
+.migration-tables ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.migration-tables li {
+    color: #718096;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.migration-tables code {
+    background: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.migration-card-footer {
+    padding: 15px 20px;
+    background: #f7fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.migration-meta {
+    color: #718096;
+    font-size: 13px;
+}
+
+.migration-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-migrate {
+    padding: 8px 20px;
+    background: #01807B;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-migrate:hover {
+    background: #026660;
+}
+
+.btn-migrate:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+}
+
+.btn-check {
+    padding: 8px 20px;
+    background: #718096;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-check:hover {
+    background: #4a5568;
+}
+
+.global-actions {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.global-actions h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 18px;
+}
+
+.global-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-primary-large {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #01807B 0%, #026660 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary-large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(1, 128, 123, 0.3);
+}
+
+.btn-primary-large:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary-large {
+    padding: 12px 30px;
+    background: white;
+    color: #01807B;
+    border: 2px solid #01807B;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary-large:hover {
+    background: #f7fafc;
+}
+
+.alert-box {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.alert-box.success {
+    background: #d5f4e6;
+    border-left: 4px solid #0e6655;
+    color: #0e6655;
+}
+
+.alert-box.error {
+    background: #fadbd8;
+    border-left: 4px solid #943126;
+    color: #943126;
+}
+
+.alert-box.info {
+    background: #d6eaf8;
+    border-left: 4px solid #1f618d;
+    color: #1f618d;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+    display: none;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #01807B 0%, #026660 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+</style>
+
+<div id="wrapper">
+    <div class="content">
+        <div class="migrations-container">
+            <!-- Header -->
+            <div class="migrations-header">
+                <h1>
+                    <i class="fa fa-database"></i>
+                    Migrations Système de Notifications
+                </h1>
+                <p>Installez et gérez les migrations SQL pour le système de notifications complet</p>
+            </div>
+
+            <!-- Alert Box -->
+            <div id="alertBox" class="alert-box"></div>
+
+            <!-- Global Actions -->
+            <div class="global-actions">
+                <h3>Actions groupées</h3>
+                <div class="global-buttons">
+                    <button id="checkAllBtn" class="btn-secondary-large" onclick="checkAllMigrations()">
+                        <i class="fa fa-search"></i>
+                        Vérifier tout
+                    </button>
+                    <button id="runAllBtn" class="btn-primary-large" onclick="runAllMigrations()">
+                        <i class="fa fa-rocket"></i>
+                        Tout installer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+
+            <!-- Migrations Grid -->
+            <div class="migrations-grid">
+                <!-- Migration 1: Base Notifications -->
+                <div class="migration-card" data-migration="notifications">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-bell"></i>
+                            Système de Notifications de Base
+                        </h3>
+                        <span class="migration-status pending" id="status-notifications">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Installation du système de notifications complet avec préférences patients, logs, jalons et paramètres SMS/WhatsApp.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_notification_preferences</code> - Préférences par patient</li>
+                                <li><code>tbldietic_notification_logs</code> - Historique notifications</li>
+                                <li><code>tbldietic_milestones</code> - Jalons atteints</li>
+                                <li><code>tbldietic_notification_settings</code> - Configuration globale</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_notifications_system.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('notifications')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('notifications')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Migration 2: Firebase Push -->
+                <div class="migration-card" data-migration="firebase">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-mobile"></i>
+                            Notifications Push Firebase
+                        </h3>
+                        <span class="migration-status pending" id="status-firebase">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Ajout du support des notifications push via Firebase Cloud Messaging. Permet d'envoyer des notifications instantanées sur web et mobile.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Ajouts :</h4>
+                            <ul>
+                                <li><code>tbldietic_fcm_tokens</code> - Tokens Firebase par appareil</li>
+                                <li><code>channel_push</code> - Nouveau canal dans preferences</li>
+                                <li><code>push</code> - Nouveau type dans notification_logs</li>
+                                <li>Paramètres Firebase dans settings</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_firebase_push_notifications.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('firebase')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('firebase')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Migration 3: Performance Optimizations -->
+                <div class="migration-card" data-migration="optimizations">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-tachometer"></i>
+                            Optimisations Performance
+                        </h3>
+                        <span class="migration-status pending" id="status-optimizations">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Ajout d'index composites pour améliorer les performances des requêtes fréquentes. Accélère les recherches et les statistiques.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Index ajoutés :</h4>
+                            <ul>
+                                <li><code>idx_patient_created</code> - Logs par patient et date</li>
+                                <li><code>idx_status_created</code> - Recherche par statut</li>
+                                <li><code>idx_patient_active</code> - Tokens FCM actifs</li>
+                                <li><code>idx_reminder_weight</code> - Rappels de pesée</li>
+                                <li>+ 6 autres index de performance</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> optimize_notifications_performance.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('optimizations')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('optimizations')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Link -->
+            <a href="<?php echo admin_url('dietetic/notifications/settings'); ?>" class="btn btn-default">
+                <i class="fa fa-arrow-left"></i>
+                Retour aux paramètres
+            </a>
+        </div>
+    </div>
+</div>
+
+<?php init_tail(); ?>
+
+<script>
+// Migration configurations
+const migrations = {
+    notifications: {
+        name: 'Système de Notifications',
+        file: 'add_notifications_system.sql',
+        tables: ['dietic_notification_preferences', 'dietic_notification_logs', 'dietic_milestones', 'dietic_notification_settings']
+    },
+    firebase: {
+        name: 'Firebase Push',
+        file: 'add_firebase_push_notifications.sql',
+        tables: ['dietic_fcm_tokens']
+    },
+    optimizations: {
+        name: 'Optimisations Performance',
+        file: 'optimize_notifications_performance.sql',
+        indexes: true
+    }
+};
+
+// Check single migration
+function checkMigration(migrationId) {
+    const btn = event.target;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification...';
+
+    $.ajax({
+        url: admin_url + 'dietetic/notifications/check_migration',
+        type: 'POST',
+        data: { migration: migrationId },
+        dataType: 'json',
+        success: function(response) {
+            updateMigrationStatus(migrationId, response.installed, response.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        },
+        error: function() {
+            alert_float('danger', 'Erreur lors de la vérification');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+}
+
+// Check all migrations
+function checkAllMigrations() {
+    const btn = document.getElementById('checkAllBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification...';
+
+    let checked = 0;
+    const total = Object.keys(migrations).length;
+
+    Object.keys(migrations).forEach(migrationId => {
+        $.ajax({
+            url: admin_url + 'dietetic/notifications/check_migration',
+            type: 'POST',
+            data: { migration: migrationId },
+            dataType: 'json',
+            success: function(response) {
+                updateMigrationStatus(migrationId, response.installed, response.message);
+                checked++;
+
+                if (checked === total) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-search"></i> Vérifier tout';
+                    showAlert('info', 'Vérification terminée pour ' + total + ' migration(s)');
+                }
+            }
+        });
+    });
+}
+
+// Run single migration
+function runMigration(migrationId) {
+    const btn = event.target;
+    const originalHtml = btn.innerHTML;
+
+    if (!confirm('Voulez-vous vraiment exécuter cette migration ?')) {
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Installation...';
+
+    $.ajax({
+        url: admin_url + 'dietetic/notifications/execute_migration',
+        type: 'POST',
+        data: { migration: migrationId },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                updateMigrationStatus(migrationId, true, response.message);
+                showAlert('success', response.message);
+                btn.innerHTML = '<i class="fa fa-check"></i> Installé';
+            } else {
+                showAlert('error', response.message);
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.message || 'Erreur lors de l\'installation';
+            showAlert('error', message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+}
+
+// Run all migrations
+function runAllMigrations() {
+    const btn = document.getElementById('runAllBtn');
+
+    if (!confirm('Voulez-vous installer toutes les migrations manquantes ?')) {
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Installation...';
+
+    const progressBar = document.getElementById('progressBar');
+    const progressBarFill = document.getElementById('progressBarFill');
+    progressBar.style.display = 'block';
+
+    const migrationIds = Object.keys(migrations);
+    let completed = 0;
+    let errors = 0;
+
+    function runNext(index) {
+        if (index >= migrationIds.length) {
+            // All done
+            progressBar.style.display = 'none';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-rocket"></i> Tout installer';
+
+            if (errors === 0) {
+                showAlert('success', 'Toutes les migrations ont été installées avec succès !');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showAlert('error', errors + ' migration(s) ont échoué');
+            }
+            return;
+        }
+
+        const migrationId = migrationIds[index];
+        const progress = ((index + 1) / migrationIds.length) * 100;
+        progressBarFill.style.width = progress + '%';
+
+        $.ajax({
+            url: admin_url + 'dietetic/notifications/execute_migration',
+            type: 'POST',
+            data: { migration: migrationId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success || response.already_exists) {
+                    updateMigrationStatus(migrationId, true, response.message);
+                } else {
+                    errors++;
+                    updateMigrationStatus(migrationId, false, 'Erreur');
+                }
+                runNext(index + 1);
+            },
+            error: function() {
+                errors++;
+                updateMigrationStatus(migrationId, false, 'Erreur');
+                runNext(index + 1);
+            }
+        });
+    }
+
+    runNext(0);
+}
+
+// Update migration status
+function updateMigrationStatus(migrationId, installed, message) {
+    const statusEl = document.getElementById('status-' + migrationId);
+    if (!statusEl) return;
+
+    statusEl.className = 'migration-status ' + (installed ? 'completed' : 'pending');
+    statusEl.textContent = installed ? 'Installé' : 'En attente';
+}
+
+// Show alert
+function showAlert(type, message) {
+    const alertBox = document.getElementById('alertBox');
+    alertBox.className = 'alert-box ' + type;
+    alertBox.innerHTML = '<i class="fa fa-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle') + '"></i> ' + message;
+    alertBox.style.display = 'block';
+
+    setTimeout(() => {
+        alertBox.style.display = 'none';
+    }, 5000);
+}
+
+// Check all migrations on load
+$(document).ready(function() {
+    checkAllMigrations();
+});
+</script>
