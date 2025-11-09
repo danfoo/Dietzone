@@ -163,9 +163,11 @@ class Portal extends App_Controller
             $data['upcoming_consultations'] = [];
         }
 
-        // Get weight evolution for chart
+        // Get weight evolution for chart (last 5 entries only for better visibility)
         try {
-            $data['weight_evolution'] = $this->dietetic_patients_model->get_weight_evolution($patient->id);
+            $all_evolution = $this->dietetic_patients_model->get_weight_evolution($patient->id);
+            // Keep only the last 5 entries
+            $data['weight_evolution'] = array_slice($all_evolution, -5);
         } catch (Exception $e) {
             $data['weight_evolution'] = [];
         }
@@ -352,15 +354,9 @@ class Portal extends App_Controller
                         return;
                     }
 
-                    // For regular form submission, set success message
-                    // Get client info for header display
-                    $this->load->model('clients_model');
-                    $client = $this->clients_model->get($patient->client_id);
-
-                    $data['success'] = 'Mesure ajoutée avec succès!';
-                    $data['patient'] = $patient;
-                    $data['client'] = $client;
-                    $this->load->view('portal_add_measurement', $data);
+                    // For regular form submission, redirect with success message
+                    set_alert('success', 'Mesure ajoutée avec succès!');
+                    redirect(site_url('dietetic/portal/add_measurement'));
                     return;
                 } else {
                     // Return JSON for AJAX requests

@@ -169,7 +169,7 @@ $this->load->view('portal/includes/portal_header');
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
-    min-height: 280px;
+    min-height: 220px;
     display: flex;
     flex-direction: column;
 }
