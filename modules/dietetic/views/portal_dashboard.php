@@ -623,7 +623,7 @@ $this->load->view('portal/includes/portal_header');
 /* Floating Action Button with Modal */
 .fab-container {
     position: fixed;
-    bottom: 50px;
+    bottom: 35px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1002;
@@ -1283,7 +1283,7 @@ body {
     <div class="footer-spacer"></div>
 
     <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-link">
-        <i class="fa fa-utensils footer-link-icon"></i>
+        <i class="fa fa-cutlery footer-link-icon"></i>
         <span class="footer-link-label">Repas</span>
     </a>
 </footer>

@@ -562,6 +562,14 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
         return;
     }
 
+    // Check if this is a client (patient) accessing their own data
+    if (is_client_logged_in()) {
+        $client_id = get_client_user_id();
+        // Filter to show only their own patient records
+        $db->where('p.client_id', $client_id);
+        return;
+    }
+
     $staff_id = dietetic_get_staff_user_id();
 
     if ($staff_id) {
@@ -571,7 +579,7 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
         $db->where($table_alias . '.dietitian_id', $staff_id);
         $db->where($table_alias . '.status', 'active');
     } else {
-        // No staff user = no access
+        // No staff user and not a client = no access
         $db->where('1', '0'); // Always false
     }
 }
