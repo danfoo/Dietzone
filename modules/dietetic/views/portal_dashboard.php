@@ -615,6 +615,20 @@ $this->load->view('portal/includes/portal_header');
     color: #6c757d;
 }
 
+.weight-chart-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weight-chart-title i {
+    color: #48bb78;
+}
+
 .no-program-alert {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     border: 2px solid #4299e1;
@@ -1172,9 +1186,12 @@ body {
 </div>
 <?php } ?>
 
-<!-- Weight Progress Simple -->
+<!-- Weight Evolution Chart -->
 <div class="weight-progress-card">
-    <?php if ($weight_progress->weight_change !== null) { ?>
+    <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+        <h4 class="weight-chart-title"><i class="fa fa-line-chart"></i> Évolution du Poids</h4>
+        <canvas id="weightEvolutionChart" height="100"></canvas>
+    <?php } elseif ($weight_progress->weight_change !== null) { ?>
         <div class="weight-progress-icon">
             <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
         </div>
@@ -1310,7 +1327,90 @@ body {
     </a>
 </footer>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
 <script>
+// Weight Evolution Chart
+<?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('weightEvolutionChart');
+    if (ctx) {
+        ctx = ctx.getContext('2d');
+        var weightChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [
+                    <?php foreach ($weight_evolution as $point) {
+                        echo '"' . date('d/m', strtotime($point->measurement_date)) . '",';
+                    } ?>
+                ],
+                datasets: [{
+                    label: 'Poids (kg)',
+                    data: [
+                        <?php foreach ($weight_evolution as $point) {
+                            echo $point->weight . ',';
+                        } ?>
+                    ],
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#48bb78',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false,
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            zeroLineColor: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            display: false
+                        }
+                    }]
+                },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                        fontSize: 13,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltips: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                    bodyFontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                    cornerRadius: 8,
+                    displayColors: false
+                }
+            }
+        });
+    }
+});
+<?php } ?>
+
 function toggleFabModal() {
     const modal = document.getElementById('fabModal');
     modal.classList.toggle('active');
