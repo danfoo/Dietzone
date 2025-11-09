@@ -279,9 +279,9 @@ $this->load->view('portal/includes/portal_header');
             <p>Enregistrez vos progrès</p>
         </div>
 
-        <?php if (isset($success) && $success) { ?>
+        <?php if ((isset($success) && $success) || $this->session->flashdata('success')) { ?>
             <div class="alert alert-success animate-in delay-1">
-                <i class="fa fa-check-circle"></i> Votre mesure a été enregistrée avec succès !
+                <i class="fa fa-check-circle"></i> <?php echo $this->session->flashdata('success') ?: 'Votre mesure a été enregistrée avec succès !'; ?>
             </div>
         <?php } ?>
 

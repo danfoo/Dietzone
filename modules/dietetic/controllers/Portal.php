@@ -163,11 +163,36 @@ class Portal extends App_Controller
             $data['upcoming_consultations'] = [];
         }
 
-        // Get weight evolution for chart
+        // Get weight evolution for chart (last 5 entries only for better visibility)
         try {
-            $data['weight_evolution'] = $this->dietetic_patients_model->get_weight_evolution($patient->id);
+            // Get all measurements (up to 1000) to ensure we get the most recent ones
+            $all_evolution = $this->dietetic_patients_model->get_weight_evolution($patient->id, 1000);
+            // Keep only the last 5 entries (most recent)
+            $data['weight_evolution'] = array_slice($all_evolution, -5);
         } catch (Exception $e) {
             $data['weight_evolution'] = [];
+        }
+
+        // Get active food survey
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                $this->load->model('dietetic/dietetic_food_surveys_model');
+                $active_surveys = $this->dietetic_food_surveys_model->get_active_by_patient($patient->id);
+                $data['active_survey'] = !empty($active_surveys) ? $active_surveys[0] : null;
+
+                // Get completion percentage if there's an active survey
+                if ($data['active_survey']) {
+                    $data['survey_completion'] = $this->dietetic_food_surveys_model->get_completion_percentage($data['active_survey']->id);
+                } else {
+                    $data['survey_completion'] = 0;
+                }
+            } else {
+                $data['active_survey'] = null;
+                $data['survey_completion'] = 0;
+            }
+        } catch (Exception $e) {
+            $data['active_survey'] = null;
+            $data['survey_completion'] = 0;
         }
 
         $this->load->view('portal_dashboard', $data);
@@ -352,10 +377,9 @@ class Portal extends App_Controller
                         return;
                     }
 
-                    // For regular form submission, set success message
-                    $data['success'] = 'Mesure ajoutée avec succès!';
-                    $data['patient'] = $patient;
-                    $this->load->view('portal_add_measurement', $data);
+                    // For regular form submission, redirect with success message
+                    $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
+                    redirect('dietetic/portal/measurements');
                     return;
                 } else {
                     // Return JSON for AJAX requests
@@ -364,8 +388,13 @@ class Portal extends App_Controller
                         return;
                     }
 
+                    // Get client info for header display
+                    $this->load->model('clients_model');
+                    $client = $this->clients_model->get($patient->client_id);
+
                     $data['error'] = 'Échec de l\'enregistrement de la mesure.';
                     $data['patient'] = $patient;
+                    $data['client'] = $client;
                 }
             } catch (Exception $e) {
                 // Return JSON for AJAX requests
@@ -374,8 +403,13 @@ class Portal extends App_Controller
                     return;
                 }
 
+                // Get client info for header display
+                $this->load->model('clients_model');
+                $client = $this->clients_model->get($patient->client_id);
+
                 $data['error'] = 'Erreur: ' . $e->getMessage();
                 $data['patient'] = $patient;
+                $data['client'] = $client;
             }
         }
 
@@ -385,6 +419,11 @@ class Portal extends App_Controller
         }
         if (!isset($data['patient'])) {
             $data['patient'] = $patient;
+        }
+        if (!isset($data['client'])) {
+            // Get client info for header display
+            $this->load->model('clients_model');
+            $data['client'] = $this->clients_model->get($patient->client_id);
         }
         $this->load->view('portal_add_measurement', $data);
     }
@@ -1153,7 +1192,7 @@ class Portal extends App_Controller
         }
 
         // Get survey
-        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+        $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
         if (!$survey || $survey->patient_id != $patient->id) {
             show_404();
@@ -1231,7 +1270,7 @@ class Portal extends App_Controller
 
             // Get survey
             $survey_id = $this->input->post('survey_id');
-            $survey = $this->dietetic_food_surveys_model->get($survey_id);
+            $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
             if (!$survey || $survey->patient_id != $patient->id) {
                 echo json_encode([
@@ -1356,7 +1395,7 @@ class Portal extends App_Controller
         }
 
         // Get survey
-        $survey = $this->dietetic_food_surveys_model->get($survey_id);
+        $survey = $this->dietetic_food_surveys_model->get($survey_id, false); // Don't check access here, we'll verify patient_id manually below
 
         if (!$survey || $survey->patient_id != $patient->id) {
             show_404();

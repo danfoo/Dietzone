@@ -524,12 +524,10 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
     if (is_client_logged_in()) {
         $client_id = get_client_user_id();
 
-        // Load patient model to check if this client owns this patient record
-        // Pass false to avoid recursive permission check
-        $CI->load->model('dietetic/dietetic_patients_model');
-        $patient = $CI->dietetic_patients_model->get($patient_id, false);
+        // Query database directly to avoid model conflicts
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
 
-        if ($patient && $patient->client_id == $client_id) {
+        if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
             // Patient is accessing their own data
             return true;
         }
@@ -564,6 +562,14 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
         return;
     }
 
+    // Check if this is a client (patient) accessing their own data
+    if (is_client_logged_in()) {
+        $client_id = get_client_user_id();
+        // Filter to show only their own patient records
+        $db->where('p.client_id', $client_id);
+        return;
+    }
+
     $staff_id = dietetic_get_staff_user_id();
 
     if ($staff_id) {
@@ -573,7 +579,7 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
         $db->where($table_alias . '.dietitian_id', $staff_id);
         $db->where($table_alias . '.status', 'active');
     } else {
-        // No staff user = no access
+        // No staff user and not a client = no access
         $db->where('1', '0'); // Always false
     }
 }

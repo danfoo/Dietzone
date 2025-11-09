@@ -1,16 +1,10 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#01807B">
-    <title><?php echo $meal_plan->plan_name; ?></title>
-    <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
-        <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">
-    <?php } ?>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<?php
+$active_page = 'meal_plans';
+$page_title = isset($meal_plan->plan_name) ? $meal_plan->plan_name : 'Plan de Repas';
+$this->load->view('portal/includes/portal_header');
+?>
+
     <style>
         * {
             margin: 0;
@@ -652,61 +646,6 @@
         }
     </style>
 </head>
-<body>
-    <div class="portal-header">
-        <div class="container-fluid">
-            <div class="portal-header-content">
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
-                    <?php
-                    $logo_path = get_option('company_logo_dark');
-                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                        $logo_path = get_option('company_logo');
-                    }
-
-                    if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                    ?>
-                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-                    <?php } else { ?>
-                        <div class="portal-logo-text">
-                            <i class="fa fa-heartbeat"></i>
-                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
-                        </div>
-                    <?php } ?>
-                </a>
-
-                <nav class="portal-nav-desktop">
-                    <a href="<?php echo site_url('dietetic/portal'); ?>">
-                        <i class="fa fa-home"></i> Accueil
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="active">
-                        <i class="fa fa-cutlery"></i> Repas
-                    </a>
-                    <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
-                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>">
-                        <i class="fa fa-clipboard-list"></i> Enquêtes
-                    </a>
-                    <?php } ?>
-                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Diététicien
-                    </a>
-                    <a href="<?php echo site_url('clients/profile'); ?>">
-                        <i class="fa fa-user"></i> Profil
-                    </a>
-                </nav>
-
-                <!-- Hamburger Menu (Mobile) -->
-                <div class="hamburger-menu" id="hamburgerMenu">
-                    <div class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-container">
         <div class="page-header-mobile animate-in">
             <h1><i class="fa fa-cutlery"></i> <?php echo htmlspecialchars($meal_plan->plan_name); ?></h1>
             <p><?php echo htmlspecialchars($program->program_name); ?> - Semaine <?php echo $meal_plan->week_number; ?></p>
@@ -984,6 +923,5 @@
                 this.style.opacity = '';
             });
         });
-    </script>
-</body>
-</html>
+
+<?php $this->load->view("portal/includes/portal_footer"); ?>

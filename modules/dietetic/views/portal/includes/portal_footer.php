@@ -42,6 +42,11 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
+        // Define site_url for dietetic_portal.js
+        var site_url = '<?php echo site_url(); ?>';
+    </script>
+    <script src="<?php echo module_dir_url('dietetic', 'assets/js/dietetic_portal.js'); ?>"></script>
+    <script>
         // ============================================
         // MENU TOGGLE FUNCTIONALITY
         // ============================================

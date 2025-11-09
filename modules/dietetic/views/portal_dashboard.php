@@ -1,31 +1,77 @@
 <?php
+/**
+ * Portal Patient Dashboard
+ *
+ * @author Eric Gilles SAGNA
+ * @website https://maestrodan.art
+ */
 $active_page = 'dashboard';
 $page_title = 'Mon Programme';
 $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-/* Flat Design - Stats Cards */
+/* Welcome Message */
+.welcome-message {
+    font-size: 18px;
+    color: #495057;
+    margin-bottom: 24px;
+}
+
+.welcome-message .patient-name {
+    font-weight: 700;
+    color: #212529;
+}
+
+/* Fix Bootstrap progress bar height conflict */
+.stat-card.progress {
+    height: auto !important;
+}
+
+/* Modern Stats Cards with Animations */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
     margin-bottom: 30px;
 }
 
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 16px;
+    padding: 24px 20px;
     text-align: center;
-    border: 2px solid #f1f3f5;
-    transition: all 0.3s;
+    border: none;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-card:hover {
-    border-color: #01807B;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
 .stat-card .stat-icon {
@@ -37,98 +83,199 @@ $this->load->view('portal/includes/portal_header');
     align-items: center;
     justify-content: center;
     font-size: 24px;
+    position: relative;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.stat-card.weight {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
 .stat-card.weight .stat-icon {
     background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(66, 153, 225, 0.3);
+}
+
+.stat-card.target {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
 .stat-card.target .stat-icon {
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+}
+
+.stat-card.bmi {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
 }
 
 .stat-card.bmi .stat-icon {
     background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(237, 137, 54, 0.3);
+}
+
+.stat-card.progress {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
 }
 
 .stat-card.progress .stat-icon {
     background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(159, 122, 234, 0.3);
 }
 
 .stat-card .stat-value {
-    font-size: 32px;
-    font-weight: 700;
+    font-size: 28px;
+    font-weight: 800;
     color: #212529;
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     line-height: 1;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-card .stat-label {
-    font-size: 14px;
+    font-size: 11px;
     color: #6c757d;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .stat-value.text-success {
-    color: #48bb78 !important;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* Program Card - Flat Design */
+/* Program Card - Modern Design with Progress Ring */
 .program-card {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 2px solid #f1f3f5;
-    margin-bottom: 30px;
-}
-
-.program-header {
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    border-radius: 24px;
     padding: 32px 28px;
+    margin-bottom: 30px;
     color: white;
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
 }
 
-.program-header::before {
+.program-card::before {
     content: '';
     position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
 }
 
-.program-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
+.program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
     position: relative;
     z-index: 1;
+}
+
+.program-info-left {
+    flex: 1;
+}
+
+.program-greeting {
+    font-size: 15px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.program-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+}
+
+.program-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.3);
+}
+
+.program-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 165, 74, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.program-progress-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 8;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke: #f5a54a;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 700;
+    color: #f5a54a;
 }
 
 .program-status {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(245, 165, 74, 0.2);
     padding: 6px 16px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    position: relative;
-    z-index: 1;
-}
-
-.program-status i {
-    animation: pulse 2s infinite;
+    color: #f5a54a;
+    margin-top: 12px;
 }
 
 @keyframes pulse {
@@ -137,14 +284,15 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .program-body {
-    padding: 28px;
+    position: relative;
+    z-index: 1;
 }
 
 .program-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .info-item {
@@ -152,14 +300,15 @@ $this->load->view('portal/includes/portal_header');
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 4px solid #01807B;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 3px solid #f5a54a;
+    backdrop-filter: blur(10px);
 }
 
 .info-item i {
     font-size: 20px;
-    color: #01807B;
+    color: #f5a54a;
     margin-top: 2px;
 }
 
@@ -168,84 +317,217 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .info-label {
-    font-size: 12px;
-    color: #6c757d;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .info-value {
     font-size: 16px;
-    color: #212529;
-    font-weight: 600;
+    color: white;
+    font-weight: 700;
 }
 
 .program-objective {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 18px;
     border-radius: 12px;
-    border-left: 4px solid #F3911D;
+    border-left: 3px solid #f5a54a;
     margin: 20px 0;
+    backdrop-filter: blur(10px);
 }
 
 .program-objective strong {
     display: block;
-    color: #01807B;
-    font-size: 14px;
+    color: #f5a54a;
+    font-size: 13px;
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 700;
 }
 
 .program-objective p {
-    color: #495057;
-    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.7;
     margin: 0;
+    font-size: 14px;
+}
+
+/* Food Survey Card - Orange Design */
+.survey-card {
+    background: linear-gradient(135deg, #F3911D 0%, #e07d0a 100%);
+    border-radius: 24px;
+    padding: 32px 28px;
+    margin-bottom: 30px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(243, 145, 29, 0.3);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.survey-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.survey-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.survey-info-left {
+    flex: 1;
+}
+
+.survey-greeting {
+    font-size: 15px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.survey-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+}
+
+.survey-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.survey-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.25) 100%);
+    color: white;
+    text-decoration: none;
+}
+
+.survey-status {
+    margin-top: 12px;
+    font-size: 13px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.survey-status i {
+    font-size: 8px;
+    color: #a3f3a3;
+    animation: pulse 2s infinite;
+}
+
+.survey-progress-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.progress-ring-fill-orange {
+    fill: none;
+    stroke: white;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.survey-body {
+    position: relative;
+    z-index: 1;
+}
+
+.survey-dates {
+    font-size: 14px;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.survey-dates i {
+    margin-right: 6px;
 }
 
 /* Meal Plans Section */
 .meal-plans-section {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 2px solid #f1f3f5;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    color: #212529;
-    margin: 0 0 20px 0;
+    color: white;
+    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .section-title i {
-    color: #01807B;
+    color: #f5a54a;
 }
 
 .meal-plan-item {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px;
+    padding: 18px;
     margin-bottom: 12px;
     transition: all 0.3s;
+    backdrop-filter: blur(10px);
 }
 
 .meal-plan-item:hover {
-    border-color: #01807B;
+    border-color: #f5a54a;
     transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.1);
+    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.2);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .meal-plan-name {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    color: #212529;
+    color: white;
     margin-bottom: 12px;
+}
+
+.meal-plan-name i {
+    color: #f5a54a;
+    margin-right: 8px;
 }
 
 .meal-plan-actions {
@@ -268,14 +550,15 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .btn-flat-primary {
-    background: #01807B;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
     color: white;
+    box-shadow: 0 3px 10px rgba(245, 165, 74, 0.3);
 }
 
 .btn-flat-primary:hover {
-    background: #026660;
+    background: linear-gradient(135deg, #e8944a 0%, #d67f3a 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 5px 15px rgba(245, 165, 74, 0.4);
     color: white;
     text-decoration: none;
 }
@@ -293,138 +576,225 @@ $this->load->view('portal/includes/portal_header');
     text-decoration: none;
 }
 
-/* Consultations Card - Timeline Design */
+/* Consultations Card - Peach Design #FFE9D2 */
 .consultations-card {
-    background: white;
-    border-radius: 16px;
-    border: 2px solid #f1f3f5;
+    background: linear-gradient(135deg, #FFE9D2 0%, #f5d9bd 100%);
+    border-radius: 24px;
+    padding: 32px 28px;
+    margin-bottom: 30px;
+    color: #5a3e2b;
+    position: relative;
     overflow: hidden;
+    box-shadow: 0 8px 24px rgba(255, 233, 210, 0.4);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.consultations-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
 }
 
 .consultations-header {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-    padding: 20px 24px;
-    color: white;
-}
-
-.consultations-header h4 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
     display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.consultations-body {
-    padding: 24px;
-}
-
-.consultation-timeline {
-    position: relative;
-}
-
-.consultation-timeline::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: linear-gradient(180deg, #4299e1 0%, #e9ecef 100%);
-}
-
-.consultation-item {
-    position: relative;
-    padding-left: 56px;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 24px;
-}
-
-.consultation-item:last-child {
-    margin-bottom: 0;
-}
-
-.consultation-dot {
-    position: absolute;
-    left: 12px;
-    top: 4px;
-    width: 18px;
-    height: 18px;
-    background: #4299e1;
-    border: 3px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px #4299e1;
+    position: relative;
     z-index: 1;
 }
 
-.consultation-content {
-    background: #f8f9fa;
+.consultations-info-left {
+    flex: 1;
+}
+
+.consultations-greeting {
+    font-size: 15px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+    color: #5a3e2b;
+}
+
+.consultations-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+    color: #5a3e2b;
+}
+
+.consultations-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(90, 62, 43, 0.15) 0%, rgba(90, 62, 43, 0.1) 100%);
+    color: #5a3e2b;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(90, 62, 43, 0.15);
+}
+
+.consultations-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(90, 62, 43, 0.25);
+    background: linear-gradient(135deg, rgba(90, 62, 43, 0.25) 0%, rgba(90, 62, 43, 0.15) 100%);
+    color: #5a3e2b;
+    text-decoration: none;
+}
+
+.consultations-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(90, 62, 43, 0.15);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a3e2b;
+    margin-top: 12px;
+}
+
+.consultations-status i {
+    font-size: 8px;
+    color: #48bb78;
+    animation: pulse 2s infinite;
+}
+
+.consultations-icon-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(90, 62, 43, 0.15);
+}
+
+.consultations-icon-ring i {
+    font-size: 40px;
+    color: #5a3e2b;
+}
+
+.consultations-body {
+    position: relative;
+    z-index: 1;
+}
+
+.consultations-info {
+    background: rgba(255, 255, 255, 0.4);
     padding: 16px;
-    border-radius: 10px;
-    border-left: 3px solid #4299e1;
+    border-radius: 12px;
+    border-left: 3px solid #5a3e2b;
+    backdrop-filter: blur(10px);
 }
 
 .consultation-date {
     font-size: 14px;
-    font-weight: 700;
-    color: #01807B;
-    margin-bottom: 6px;
+    font-weight: 600;
+    color: #5a3e2b;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
-.consultation-type {
+.consultation-date i {
+    color: #d4a574;
+}
+
+.consultation-time {
     font-size: 13px;
-    color: #495057;
-    margin-bottom: 8px;
-}
-
-.consultation-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #4299e1;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: rgba(90, 62, 43, 0.8);
 }
 
 .empty-consultations {
     text-align: center;
-    padding: 32px 20px;
-    color: #6c757d;
+    padding: 20px;
+    color: rgba(90, 62, 43, 0.6);
 }
 
 .empty-consultations i {
+    font-size: 32px;
+    opacity: 0.4;
+    margin-bottom: 8px;
+}
+
+/* Weight Progress Simple Card */
+.weight-progress-card {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 30px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.weight-progress-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+}
+
+.weight-progress-icon i {
+    font-size: 40px;
+    color: white;
+}
+
+.weight-progress-value {
     font-size: 48px;
-    opacity: 0.3;
-    margin-bottom: 12px;
+    font-weight: 800;
+    color: #38a169;
+    margin-bottom: 8px;
 }
 
-.chart-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    border: 2px solid #f1f3f5;
+.weight-progress-label {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
 }
 
-.chart-card h4 {
+.weight-progress-empty {
+    font-size: 16px;
+    color: #6c757d;
+}
+
+.weight-chart-title {
     font-size: 18px;
     font-weight: 700;
-    color: #212529;
+    color: #2c3e50;
     margin: 0 0 20px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.chart-card h4 i {
-    color: #01807B;
+.weight-chart-title i {
+    color: #48bb78;
 }
 
 .no-program-alert {
@@ -449,6 +819,336 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
+/* Floating Action Button with Modal */
+.fab-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1002;
+}
+
+.fab-button {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 24px rgba(245, 165, 74, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    transition: all 0.3s;
+    animation: pulse-fab 2s infinite;
+}
+
+@keyframes pulse-fab {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 24px rgba(245, 165, 74, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(245, 165, 74, 0.6);
+    }
+}
+
+.fab-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(245, 165, 74, 0.6);
+}
+
+.fab-button:active {
+    transform: scale(0.95);
+}
+
+/* Modal for Quick Actions */
+.fab-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-modal.active {
+    display: flex;
+}
+
+.fab-modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.fab-modal.active .fab-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.fab-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.fab-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fab-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f3f5;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fab-modal-close:hover {
+    background: #e9ecef;
+    transform: rotate(90deg);
+}
+
+.fab-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fab-action-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.fab-action-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+.fab-action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.fab-action-icon.add {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.fab-action-icon.survey {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.fab-action-icon.consult {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.fab-action-icon.dietitian {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.fab-action-text {
+    flex: 1;
+}
+
+.fab-action-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 2px;
+}
+
+.fab-action-desc {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Custom Dashboard Footer */
+.dashboard-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 75px;
+    background: white;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+}
+
+.dashboard-footer::before {
+    content: '';
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.footer-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #6c757d;
+    transition: all 0.3s;
+    padding: 8px 24px;
+    border-radius: 12px;
+}
+
+.footer-link:hover {
+    background: #f8f9fa;
+    color: #2c5f6f;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.footer-link.active {
+    color: #2c5f6f;
+}
+
+.footer-link-icon {
+    font-size: 24px;
+}
+
+.footer-link-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer-spacer {
+    width: 100px;
+}
+
+/* Progress Ring for Stats */
+.stat-progress {
+    position: relative;
+    width: 56px;
+    height: 56px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.5s;
+    stroke-dasharray: 176;
+    stroke-dashoffset: 0;
+}
+
+/* Skeleton Loader */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stats-grid > * {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stats-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.stats-grid > *:nth-child(2) { animation-delay: 0.2s; }
+.stats-grid > *:nth-child(3) { animation-delay: 0.3s; }
+.stats-grid > *:nth-child(4) { animation-delay: 0.4s; }
+
+/* Tooltip */
+.tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(1, 128, 123, 0.15);
+    color: #01807B;
+    font-size: 11px;
+    margin-left: 5px;
+    cursor: help;
+}
+
+/* Hide footer on dashboard page */
+.app-footer {
+    display: none !important;
+}
+
+body {
+    padding-bottom: 20px !important;
+}
+
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -466,17 +1166,30 @@ $this->load->view('portal/includes/portal_header');
         width: 100%;
         justify-content: center;
     }
+
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .action-btn {
+        padding: 16px 12px;
+    }
 }
 </style>
+
+<!-- Welcome Message -->
+<div class="welcome-message">
+    Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
+</div>
 
 <!-- Stats Cards -->
 <div class="stats-grid">
     <div class="stat-card weight">
         <div class="stat-icon">
-            <i class="fa fa-weight"></i>
+            <i class="fa fa-balance-scale"></i>
         </div>
         <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
-        <div class="stat-label">Poids actuel (kg)</div>
+        <div class="stat-label">Poids actuel</div>
     </div>
 
     <div class="stat-card target">
@@ -484,7 +1197,7 @@ $this->load->view('portal/includes/portal_header');
             <i class="fa fa-bullseye"></i>
         </div>
         <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
-        <div class="stat-label">Objectif (kg)</div>
+        <div class="stat-label">Objectif</div>
     </div>
 
     <div class="stat-card bmi">
@@ -498,48 +1211,89 @@ $this->load->view('portal/includes/portal_header');
     <?php if ($weight_progress->weight_change !== null) { ?>
     <div class="stat-card progress">
         <div class="stat-icon">
-            <i class="fa fa-chart-line"></i>
+            <i class="fa fa-line-chart"></i>
         </div>
         <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
             <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
         </div>
-        <div class="stat-label">Progression (kg)</div>
+        <div class="stat-label">Progression</div>
     </div>
+    <?php } ?>
+</div>
+
+<!-- Weight Evolution Chart -->
+<div class="weight-progress-card">
+    <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+        <h4 class="weight-chart-title"><i class="fa fa-line-chart"></i> Évolution du Poids</h4>
+        <canvas id="weightEvolutionChart" height="100"></canvas>
+    <?php } elseif ($weight_progress->weight_change !== null) { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
+        </div>
+        <div class="weight-progress-value">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
+        </div>
+        <div class="weight-progress-label">Évolution du poids</div>
+    <?php } else { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-balance-scale"></i>
+        </div>
+        <div class="weight-progress-empty">Aucune évolution disponible</div>
     <?php } ?>
 </div>
 
 <!-- Program Card -->
 <?php if ($active_program) { ?>
+    <?php
+    // Calculate program progress
+    $progress_percentage = 50; // Default
+    if ($active_program->start_date && $active_program->end_date) {
+        $start = strtotime($active_program->start_date);
+        $end = strtotime($active_program->end_date);
+        $now = time();
+        if ($now >= $start && $now <= $end) {
+            $total_duration = $end - $start;
+            $elapsed = $now - $start;
+            $progress_percentage = round(($elapsed / $total_duration) * 100);
+        } elseif ($now > $end) {
+            $progress_percentage = 100;
+        }
+    }
+
+    // Circle calculation for SVG
+    $radius = 42;
+    $circumference = 2 * pi() * $radius;
+    $stroke_offset = $circumference - ($progress_percentage / 100) * $circumference;
+    ?>
+
 <div class="program-card">
     <div class="program-header">
-        <div class="program-title"><i class="fa fa-trophy"></i> <?php echo $active_program->program_name; ?></div>
-        <div class="program-status">
-            <i class="fa fa-circle"></i>
-            Programme actif
+        <div class="program-info-left">
+            <div class="program-greeting">Excellent, votre programme</div>
+            <div class="program-title"><?php echo $active_program->program_name; ?></div>
+            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="program-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <div class="program-status">
+                <i class="fa fa-circle"></i>
+                Programme actif
+            </div>
+        </div>
+
+        <div class="program-progress-ring">
+            <svg width="100" height="100">
+                <circle class="progress-ring-bg" cx="50" cy="50" r="<?php echo $radius; ?>"/>
+                <circle class="progress-ring-fill" cx="50" cy="50" r="<?php echo $radius; ?>"
+                        style="stroke-dasharray: <?php echo $circumference; ?>; stroke-dashoffset: <?php echo $stroke_offset; ?>;"/>
+            </svg>
+            <div class="progress-ring-text"><?php echo $progress_percentage; ?>%</div>
         </div>
     </div>
 
     <div class="program-body">
+        <?php if ($active_program->daily_calories) { ?>
         <div class="program-info-grid">
-            <div class="info-item">
-                <i class="fa fa-calendar-alt"></i>
-                <div class="info-content">
-                    <div class="info-label">Date de début</div>
-                    <div class="info-value"><?php echo _d($active_program->start_date); ?></div>
-                </div>
-            </div>
-
-            <?php if ($active_program->end_date) { ?>
-            <div class="info-item">
-                <i class="fa fa-calendar-check"></i>
-                <div class="info-content">
-                    <div class="info-label">Date de fin</div>
-                    <div class="info-value"><?php echo _d($active_program->end_date); ?></div>
-                </div>
-            </div>
-            <?php } ?>
-
-            <?php if ($active_program->daily_calories) { ?>
             <div class="info-item">
                 <i class="fa fa-fire"></i>
                 <div class="info-content">
@@ -547,54 +1301,13 @@ $this->load->view('portal/includes/portal_header');
                     <div class="info-value"><?php echo $active_program->daily_calories; ?> kcal</div>
                 </div>
             </div>
-            <?php } ?>
-
-            <?php if ($active_program->daily_protein) { ?>
-            <div class="info-item">
-                <i class="fa fa-drumstick-bite"></i>
-                <div class="info-content">
-                    <div class="info-label">Protéines</div>
-                    <div class="info-value"><?php echo $active_program->daily_protein; ?>g</div>
-                </div>
-            </div>
-            <?php } ?>
         </div>
+        <?php } ?>
 
         <?php if ($active_program->objective) { ?>
         <div class="program-objective">
             <strong><i class="fa fa-bullseye"></i> Objectif</strong>
             <p><?php echo nl2br(htmlspecialchars($active_program->objective)); ?></p>
-        </div>
-        <?php } ?>
-
-        <?php
-        $this->load->model('dietetic/dietetic_meal_plans_model');
-        $meal_plans = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
-        ?>
-
-        <?php if (!empty($meal_plans)) { ?>
-        <div class="meal-plans-section">
-            <h5 class="section-title">
-                <i class="fa fa-utensils"></i>
-                Plans de repas
-            </h5>
-
-            <?php foreach ($meal_plans as $plan) { ?>
-            <div class="meal-plan-item">
-                <div class="meal-plan-name">
-                    <i class="fa fa-calendar-week"></i>
-                    <?php echo $plan->plan_name; ?> - Semaine <?php echo $plan->week_number; ?>
-                </div>
-                <div class="meal-plan-actions">
-                    <a href="<?php echo site_url('dietetic/portal/meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-primary">
-                        <i class="fa fa-eye"></i> Voir les détails
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/download_meal_plan/' . $plan->id); ?>" class="btn-flat btn-flat-success">
-                        <i class="fa fa-download"></i> Télécharger PDF
-                    </a>
-                </div>
-            </div>
-            <?php } ?>
         </div>
         <?php } ?>
     </div>
@@ -606,71 +1319,290 @@ $this->load->view('portal/includes/portal_header');
 </div>
 <?php } ?>
 
-<!-- Row for Chart and Consultations -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
-            <canvas id="portalWeightChart" height="200"></canvas>
+<!-- Food Survey Card -->
+<?php if ($active_survey) { ?>
+    <?php
+    // Circle calculation for SVG
+    $radius = 42;
+    $circumference = 2 * pi() * $radius;
+    $stroke_offset = $circumference - ($survey_completion / 100) * $circumference;
+    ?>
+
+<div class="survey-card">
+    <div class="survey-header">
+        <div class="survey-info-left">
+            <div class="survey-greeting">Votre enquête alimentaire</div>
+            <div class="survey-title"><?php echo $active_survey->survey_name; ?></div>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="survey-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <div class="survey-status">
+                <i class="fa fa-circle"></i>
+                Enquête active
+            </div>
+        </div>
+
+        <div class="survey-progress-ring">
+            <svg width="100" height="100">
+                <circle class="progress-ring-bg" cx="50" cy="50" r="<?php echo $radius; ?>"/>
+                <circle class="progress-ring-fill-orange" cx="50" cy="50" r="<?php echo $radius; ?>"
+                        style="stroke-dasharray: <?php echo $circumference; ?>; stroke-dashoffset: <?php echo $stroke_offset; ?>;"/>
+            </svg>
+            <div class="progress-ring-text"><?php echo round($survey_completion); ?>%</div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="consultations-card">
-            <div class="consultations-header">
-                <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
-            </div>
-            <div class="consultations-body">
-                <?php if (!empty($upcoming_consultations)) { ?>
-                <div class="consultation-timeline">
-                    <?php foreach ($upcoming_consultations as $consultation) { ?>
-                    <div class="consultation-item">
-                        <div class="consultation-dot"></div>
-                        <div class="consultation-content">
-                            <div class="consultation-date">
-                                <i class="fa fa-clock"></i>
-                                <?php echo _dt($consultation->consultation_date); ?>
-                            </div>
-                            <div class="consultation-type">
-                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
-                            </div>
-                            <span class="consultation-badge">
-                                <i class="fa fa-check-circle"></i>
-                                Programmé
-                            </span>
-                        </div>
-                    </div>
-                    <?php } ?>
-                </div>
+    <div class="survey-body">
+        <?php if ($active_survey->start_date && $active_survey->end_date) { ?>
+        <div class="survey-dates">
+            <span><i class="fa fa-calendar"></i> Du <?php echo _d($active_survey->start_date); ?> au <?php echo _d($active_survey->end_date); ?></span>
+        </div>
+        <?php } ?>
+    </div>
+</div>
+<?php } ?>
 
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="btn-flat btn-flat-primary">
-                        <i class="fa fa-list"></i> Voir tous les rendez-vous
-                    </a>
-                </div>
+<!-- Consultation Card -->
+<div class="consultations-card">
+    <div class="consultations-header">
+        <div class="consultations-info-left">
+            <div class="consultations-greeting">Vos rendez-vous</div>
+            <div class="consultations-title">
+                <?php if (!empty($upcoming_consultations)) { ?>
+                    Prochain rendez-vous prévu
                 <?php } else { ?>
-                <div class="empty-consultations">
-                    <i class="fa fa-calendar-times"></i>
-                    <p>Aucun rendez-vous programmé</p>
-                </div>
+                    Rendez-vous
                 <?php } ?>
             </div>
+            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="consultations-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <?php if (!empty($upcoming_consultations)) { ?>
+                <div class="consultations-status">
+                    <i class="fa fa-circle"></i>
+                    Rendez-vous programmé
+                </div>
+            <?php } ?>
+        </div>
+
+        <div class="consultations-icon-ring">
+            <i class="fa fa-calendar"></i>
+        </div>
+    </div>
+
+    <div class="consultations-body">
+        <?php if (!empty($upcoming_consultations)) { ?>
+            <?php $next_consultation = $upcoming_consultations[0]; ?>
+            <div class="consultations-info">
+                <div class="consultation-date">
+                    <i class="fa fa-calendar-check-o"></i>
+                    <?php echo _d($next_consultation->consultation_date); ?>
+                </div>
+                <div class="consultation-time">
+                    <i class="fa fa-clock-o"></i>
+                    <?php echo date('H:i', strtotime($next_consultation->consultation_date)); ?>
+                </div>
+            </div>
+        <?php } else { ?>
+            <div class="empty-consultations">
+                <i class="fa fa-calendar-times-o"></i>
+                <p>Aucun rendez-vous programmé</p>
+            </div>
+        <?php } ?>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="fab-container">
+    <button class="fab-button" id="fabBtn" onclick="toggleFabModal()">
+        <i class="fa fa-rocket"></i>
+    </button>
+</div>
+
+<!-- FAB Modal for Quick Actions -->
+<div class="fab-modal" id="fabModal" onclick="closeFabModal(event)">
+    <div class="fab-modal-content" onclick="event.stopPropagation()">
+        <div class="fab-modal-header">
+            <h3 class="fab-modal-title">
+                <i class="fa fa-bolt"></i>
+                Actions rapides
+            </h3>
+            <button class="fab-modal-close" onclick="closeFabModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+
+        <div class="fab-actions-list">
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="fab-action-item">
+                <div class="fab-action-icon add">
+                    <i class="fa fa-plus"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Ajouter une mesure</div>
+                    <div class="fab-action-desc">Enregistrer votre poids et mesures</div>
+                </div>
+            </a>
+
+            <?php
+            // Check if food surveys feature is enabled
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="fab-action-item">
+                <div class="fab-action-icon survey">
+                    <i class="fa fa-list-alt"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Enquête alimentaire</div>
+                    <div class="fab-action-desc">Remplir votre journal alimentaire</div>
+                </div>
+            </a>
+            <?php } ?>
+
+            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="fab-action-item">
+                <div class="fab-action-icon consult">
+                    <i class="fa fa-calendar"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Mes consultations</div>
+                    <div class="fab-action-desc">Voir tous mes rendez-vous</div>
+                </div>
+            </a>
+
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="fab-action-item">
+                <div class="fab-action-icon dietitian">
+                    <i class="fa fa-user-md"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Mon diététicien</div>
+                    <div class="fab-action-desc">Contacter mon diététicien</div>
+                </div>
+            </a>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-$(function() {
-    <?php if (!empty($weight_evolution)) { ?>
-        var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
-        var weights = [<?php foreach ($weight_evolution as $m) { echo $m->weight . ','; } ?>];
-        var bmis = [<?php foreach ($weight_evolution as $m) { echo $m->bmi . ','; } ?>];
+<!-- Custom Dashboard Footer -->
+<footer class="dashboard-footer">
+    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="footer-link active">
+        <i class="fa fa-list-alt footer-link-icon"></i>
+        <span class="footer-link-label">Enquête</span>
+    </a>
 
-        if (typeof dietetic_portal !== 'undefined') {
-            dietetic_portal.loadWeightChart('portalWeightChart', weights, bmis, labels);
-        }
-    <?php } ?>
+    <div class="footer-spacer"></div>
+
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-link">
+        <i class="fa fa-cutlery footer-link-icon"></i>
+        <span class="footer-link-label">Repas</span>
+    </a>
+</footer>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+<script>
+// Weight Evolution Chart
+<?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('weightEvolutionChart');
+    if (ctx) {
+        ctx = ctx.getContext('2d');
+        var weightChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [
+                    <?php foreach ($weight_evolution as $point) {
+                        echo '"' . date('d/m', strtotime($point->measurement_date)) . '",';
+                    } ?>
+                ],
+                datasets: [{
+                    label: 'Poids (kg)',
+                    data: [
+                        <?php foreach ($weight_evolution as $point) {
+                            echo $point->weight . ',';
+                        } ?>
+                    ],
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#48bb78',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false,
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            zeroLineColor: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                            fontSize: 12
+                        },
+                        gridLines: {
+                            display: false
+                        }
+                    }]
+                },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                        fontSize: 13,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltips: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                    bodyFontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                    cornerRadius: 8,
+                    displayColors: false
+                }
+            }
+        });
+    }
+});
+<?php } ?>
+
+function toggleFabModal() {
+    const modal = document.getElementById('fabModal');
+    modal.classList.toggle('active');
+}
+
+function closeFabModal(event) {
+    const modal = document.getElementById('fabModal');
+    if (event) {
+        // Only close if clicking the overlay, not the content
+        modal.classList.remove('active');
+    } else {
+        // Close button clicked
+        modal.classList.remove('active');
+    }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeFabModal();
+    }
 });
 </script>
 
