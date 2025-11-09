@@ -9,18 +9,31 @@ class Dietetic_measurements_model extends App_Model
     public function __construct()
     {
         parent::__construct();
+
+        // Load dietetic helper for permissions
+        $this->load->helper('dietetic/dietetic');
     }
 
     /**
      * Get measurement by ID
      *
      * @param int $id
+     * @param bool $check_access If true, verify user has access to this measurement
      * @return object|null
      */
-    public function get($id)
+    public function get($id, $check_access = true)
     {
         $this->db->where('id', $id);
-        return $this->db->get(db_prefix() . $this->table)->row();
+        $measurement = $this->db->get(db_prefix() . $this->table)->row();
+
+        if ($measurement && $check_access) {
+            // Check access permissions
+            if (!dietetic_can_access_patient($measurement->patient_id)) {
+                return null;
+            }
+        }
+
+        return $measurement;
     }
 
     /**
@@ -32,6 +45,12 @@ class Dietetic_measurements_model extends App_Model
      */
     public function get_by_patient($patient_id, $limit = null)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access measurements for Patient ID ' . $patient_id);
+            return [];
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->order_by('measurement_date', 'DESC');
 
@@ -50,6 +69,12 @@ class Dietetic_measurements_model extends App_Model
      */
     public function add($data)
     {
+        // Check access permissions to patient
+        if (isset($data['patient_id']) && !dietetic_can_access_patient($data['patient_id'])) {
+            log_activity('Unauthorized attempt to add measurement for Patient ID ' . $data['patient_id']);
+            return false;
+        }
+
         // Auto-calculate BMI if weight and patient height available
         if (!empty($data['weight']) && !isset($data['bmi'])) {
             $this->load->model('dietetic/dietetic_patients_model');
@@ -80,21 +105,35 @@ class Dietetic_measurements_model extends App_Model
      */
     public function update($id, $data)
     {
+        // Get measurement to check access
+        $measurement = $this->get($id);
+        if (!$measurement) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($measurement->patient_id)) {
+            log_activity('Unauthorized attempt to update measurement [ID: ' . $id . ']');
+            return false;
+        }
+
         // Recalculate BMI if weight changed
         if (!empty($data['weight'])) {
-            $measurement = $this->get($id);
-            if ($measurement) {
-                $this->load->model('dietetic/dietetic_patients_model');
-                $patient = $this->dietetic_patients_model->get($measurement->patient_id);
+            $this->load->model('dietetic/dietetic_patients_model');
+            $patient = $this->dietetic_patients_model->get($measurement->patient_id);
 
-                if ($patient && $patient->height) {
-                    $data['bmi'] = dietetic_calculate_bmi($data['weight'], $patient->height);
-                }
+            if ($patient && $patient->height) {
+                $data['bmi'] = dietetic_calculate_bmi($data['weight'], $patient->height);
             }
         }
 
         $this->db->where('id', $id);
-        return $this->db->update(db_prefix() . $this->table, $data);
+        if ($this->db->update(db_prefix() . $this->table, $data)) {
+            log_activity('Measurement Updated [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -105,8 +144,25 @@ class Dietetic_measurements_model extends App_Model
      */
     public function delete($id)
     {
+        // Get measurement to check access
+        $measurement = $this->get($id, false); // Don't check access yet, we'll do it manually
+        if (!$measurement) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($measurement->patient_id)) {
+            log_activity('Unauthorized attempt to delete measurement [ID: ' . $id . ']');
+            return false;
+        }
+
         $this->db->where('id', $id);
-        return $this->db->delete(db_prefix() . $this->table);
+        if ($this->db->delete(db_prefix() . $this->table)) {
+            log_activity('Measurement Deleted [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -117,6 +173,12 @@ class Dietetic_measurements_model extends App_Model
      */
     public function get_latest($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access latest measurement for Patient ID ' . $patient_id);
+            return null;
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->order_by('measurement_date', 'DESC');
         $this->db->order_by('id', 'DESC'); // Secondary sort by ID to get most recently added
@@ -133,6 +195,17 @@ class Dietetic_measurements_model extends App_Model
      */
     public function get_weight_progress($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access weight progress for Patient ID ' . $patient_id);
+            return (object) [
+                'initial_weight' => null,
+                'current_weight' => null,
+                'weight_change' => null,
+                'percentage_change' => null
+            ];
+        }
+
         $progress = new stdClass();
 
         // Get initial measurement

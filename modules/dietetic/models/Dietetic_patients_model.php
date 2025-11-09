@@ -182,6 +182,12 @@ class Dietetic_patients_model extends App_Model
      */
     public function update($id, $data)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($id)) {
+            log_activity('Unauthorized attempt to update patient [ID: ' . $id . ']');
+            return false;
+        }
+
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         $this->db->where('id', $id);
@@ -202,6 +208,12 @@ class Dietetic_patients_model extends App_Model
      */
     public function delete($id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($id)) {
+            log_activity('Unauthorized attempt to delete patient [ID: ' . $id . ']');
+            return false;
+        }
+
         $this->db->where('id', $id);
 
         if ($this->db->delete(db_prefix() . $this->table)) {
@@ -220,6 +232,11 @@ class Dietetic_patients_model extends App_Model
      */
     public function get_latest_measurement($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            return null;
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->order_by('measurement_date', 'DESC');
         $this->db->order_by('id', 'DESC'); // Secondary sort by ID to get most recently added
@@ -237,6 +254,11 @@ class Dietetic_patients_model extends App_Model
      */
     public function get_weight_evolution($patient_id, $limit = 12)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            return [];
+        }
+
         $this->db->select('measurement_date, weight, bmi');
         $this->db->where('patient_id', $patient_id);
         $this->db->where('weight IS NOT NULL');
@@ -254,6 +276,11 @@ class Dietetic_patients_model extends App_Model
      */
     public function count_active_programs($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            return 0;
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->where('status', 'active');
 

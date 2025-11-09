@@ -13,6 +13,9 @@ class Dietetic_food_surveys_model extends App_Model
     public function __construct()
     {
         parent::__construct();
+
+        // Load dietetic helper for permissions
+        $this->load->helper('dietetic/dietetic');
     }
 
     /**
@@ -37,6 +40,18 @@ class Dietetic_food_surveys_model extends App_Model
             $this->db->where($where);
         }
 
+        // Apply staff permissions using new many-to-many system
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            // Use new permission system
+            dietetic_apply_dietitian_filter($this->db, 'pd');
+        } else {
+            // Fallback to old system if table doesn't exist yet
+            if (!is_admin()) {
+                $this->db->where($this->table_surveys . '.dietitian_id', get_staff_user_id());
+            }
+        }
+
+        $this->db->group_by($this->table_surveys . '.id'); // Group by to avoid duplicates from join
         $this->db->order_by($this->table_surveys . '.created_at', 'DESC');
 
         return $this->db->get()->result();
@@ -46,9 +61,10 @@ class Dietetic_food_surveys_model extends App_Model
      * Get single food survey
      *
      * @param int $id
+     * @param bool $check_access If true, verify user has access to this survey
      * @return object|null
      */
-    public function get($id)
+    public function get($id, $check_access = true)
     {
         $this->db->select($this->table_surveys . '.*,
             CONCAT(tblclients.company) as patient_name,
@@ -62,7 +78,16 @@ class Dietetic_food_surveys_model extends App_Model
         $this->db->join('tbldietic_programs', 'tbldietic_programs.id = ' . $this->table_surveys . '.program_id', 'left');
         $this->db->where($this->table_surveys . '.id', $id);
 
-        return $this->db->get()->row();
+        $survey = $this->db->get()->row();
+
+        if ($survey && $check_access) {
+            // Check access permissions if not admin
+            if (!dietetic_can_access_patient($survey->patient_id)) {
+                return null;
+            }
+        }
+
+        return $survey;
     }
 
     /**
@@ -73,6 +98,12 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function add($data)
     {
+        // Check access permissions to patient
+        if (isset($data['patient_id']) && !dietetic_can_access_patient($data['patient_id'])) {
+            log_activity('Unauthorized attempt to create food survey for Patient ID ' . $data['patient_id']);
+            return false;
+        }
+
         // Calculate end date based on duration
         if (isset($data['start_date']) && isset($data['duration_days'])) {
             $start_date = new DateTime($data['start_date']);
@@ -83,7 +114,9 @@ class Dietetic_food_surveys_model extends App_Model
         $data['created_at'] = date('Y-m-d H:i:s');
 
         if ($this->db->insert($this->table_surveys, $data)) {
-            return $this->db->insert_id();
+            $survey_id = $this->db->insert_id();
+            log_activity('New Food Survey Created [ID: ' . $survey_id . ']');
+            return $survey_id;
         }
 
         return false;
@@ -98,9 +131,20 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function update($id, $data)
     {
+        // Get survey to check access
+        $survey = $this->get($id);
+        if (!$survey) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($survey->patient_id)) {
+            log_activity('Unauthorized attempt to update food survey [ID: ' . $id . ']');
+            return false;
+        }
+
         // Recalculate end date if start_date or duration changed
         if (isset($data['start_date']) || isset($data['duration_days'])) {
-            $survey = $this->get($id);
             $start_date = isset($data['start_date']) ? $data['start_date'] : $survey->start_date;
             $duration = isset($data['duration_days']) ? $data['duration_days'] : $survey->duration_days;
 
@@ -112,7 +156,12 @@ class Dietetic_food_surveys_model extends App_Model
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         $this->db->where('id', $id);
-        return $this->db->update($this->table_surveys, $data);
+        if ($this->db->update($this->table_surveys, $data)) {
+            log_activity('Food Survey Updated [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -123,8 +172,25 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function delete($id)
     {
+        // Get survey to check access
+        $survey = $this->get($id, false); // Don't check access yet, we'll do it manually
+        if (!$survey) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($survey->patient_id)) {
+            log_activity('Unauthorized attempt to delete food survey [ID: ' . $id . ']');
+            return false;
+        }
+
         $this->db->where('id', $id);
-        return $this->db->delete($this->table_surveys);
+        if ($this->db->delete($this->table_surveys)) {
+            log_activity('Food Survey Deleted [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -495,6 +561,12 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function get_by_patient($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access food surveys for Patient ID ' . $patient_id);
+            return [];
+        }
+
         return $this->get_all([$this->table_surveys . '.patient_id' => $patient_id]);
     }
 
@@ -506,6 +578,12 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function get_active_by_patient($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access active food surveys for Patient ID ' . $patient_id);
+            return [];
+        }
+
         return $this->get_all([
             $this->table_surveys . '.patient_id' => $patient_id,
             $this->table_surveys . '.status' => 'active'
@@ -520,7 +598,7 @@ class Dietetic_food_surveys_model extends App_Model
      */
     public function get_completion_percentage($survey_id)
     {
-        $survey = $this->get($survey_id);
+        $survey = $this->get($survey_id); // This already checks access
         if (!$survey) {
             return 0;
         }

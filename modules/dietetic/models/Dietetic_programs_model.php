@@ -97,6 +97,12 @@ class Dietetic_programs_model extends App_Model
      */
     public function get_by_patient($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access programs for Patient ID ' . $patient_id);
+            return [];
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->order_by('created_at', 'DESC');
 
@@ -111,6 +117,12 @@ class Dietetic_programs_model extends App_Model
      */
     public function get_active_program($patient_id)
     {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access active program for Patient ID ' . $patient_id);
+            return null;
+        }
+
         $this->db->where('patient_id', $patient_id);
         $this->db->where('status', 'active');
         $this->db->order_by('start_date', 'DESC');
@@ -127,6 +139,12 @@ class Dietetic_programs_model extends App_Model
      */
     public function add($data)
     {
+        // Check access permissions to patient
+        if (isset($data['patient_id']) && !dietetic_can_access_patient($data['patient_id'])) {
+            log_activity('Unauthorized attempt to create program for Patient ID ' . $data['patient_id']);
+            return false;
+        }
+
         $data['created_at'] = date('Y-m-d H:i:s');
 
         if ($this->db->insert(db_prefix() . $this->table, $data)) {
@@ -147,6 +165,18 @@ class Dietetic_programs_model extends App_Model
      */
     public function update($id, $data)
     {
+        // Get program to check access
+        $program = $this->get($id);
+        if (!$program) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($program->patient_id)) {
+            log_activity('Unauthorized attempt to update program [ID: ' . $id . ']');
+            return false;
+        }
+
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         $this->db->where('id', $id);
@@ -167,8 +197,25 @@ class Dietetic_programs_model extends App_Model
      */
     public function delete($id)
     {
+        // Get program to check access
+        $program = $this->get($id, false); // Don't check access yet, we'll do it manually
+        if (!$program) {
+            return false;
+        }
+
+        // Check access permissions
+        if (!dietetic_can_access_patient($program->patient_id)) {
+            log_activity('Unauthorized attempt to delete program [ID: ' . $id . ']');
+            return false;
+        }
+
         $this->db->where('id', $id);
-        return $this->db->delete(db_prefix() . $this->table);
+        if ($this->db->delete(db_prefix() . $this->table)) {
+            log_activity('Dietetic Program Deleted [ID: ' . $id . ']');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -179,6 +226,14 @@ class Dietetic_programs_model extends App_Model
      */
     public function get_meal_plans($program_id)
     {
+        // Get program to check access
+        $program = $this->get($program_id);
+        if (!$program) {
+            return [];
+        }
+
+        // Check access permissions (already done by get() method)
+
         $this->db->where('program_id', $program_id);
         $this->db->order_by('week_number', 'ASC');
 
