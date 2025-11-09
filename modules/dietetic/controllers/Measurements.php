@@ -127,7 +127,7 @@ class Measurements extends AdminController
                     }
 
                     set_alert('success', 'Measurement added successfully');
-                    redirect(admin_url('dietetic/patients/view/' . $patient_id));
+                    redirect(admin_url('dietetic/measurements/create?patient_id=' . $patient_id));
                     return;
                 } else {
                     set_alert('danger', 'Failed to add measurement');
