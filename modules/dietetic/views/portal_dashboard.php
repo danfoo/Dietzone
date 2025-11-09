@@ -5,7 +5,7 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-/* Flat Design - Stats Cards */
+/* Modern Stats Cards with Animations */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -15,68 +15,120 @@ $this->load->view('portal/includes/portal_header');
 
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 16px;
+    padding: 28px 24px;
     text-align: center;
-    border: 2px solid #f1f3f5;
-    transition: all 0.3s;
+    border: none;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-card:hover {
-    border-color: #01807B;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
 .stat-card .stat-icon {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    margin: 0 auto 16px;
+    margin: 0 auto 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
+    position: relative;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.stat-card.weight {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
 .stat-card.weight .stat-icon {
     background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(66, 153, 225, 0.3);
+}
+
+.stat-card.target {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
 .stat-card.target .stat-icon {
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+}
+
+.stat-card.bmi {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
 }
 
 .stat-card.bmi .stat-icon {
     background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(237, 137, 54, 0.3);
+}
+
+.stat-card.progress {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
 }
 
 .stat-card.progress .stat-icon {
     background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
     color: white;
+    box-shadow: 0 8px 16px rgba(159, 122, 234, 0.3);
 }
 
 .stat-card .stat-value {
-    font-size: 32px;
-    font-weight: 700;
+    font-size: 36px;
+    font-weight: 800;
     color: #212529;
     margin: 0 0 8px 0;
     line-height: 1;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-card .stat-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #6c757d;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .stat-value.text-success {
-    color: #48bb78 !important;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* Program Card - Modern Design with Progress Ring */
@@ -370,12 +422,13 @@ $this->load->view('portal/includes/portal_header');
     text-decoration: none;
 }
 
-/* Consultations Card - Today's Schedule Style */
+/* Consultations Carousel - Modern Style */
 .consultations-section {
     background: white;
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 30px;
+    position: relative;
 }
 
 .consultations-header {
@@ -396,9 +449,20 @@ $this->load->view('portal/includes/portal_header');
     color: #2c5f6f;
 }
 
-.consultations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+.consultations-carousel {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.carousel-wrapper {
+    overflow: hidden;
+    position: relative;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     gap: 16px;
 }
 
@@ -409,6 +473,8 @@ $this->load->view('portal/includes/portal_header');
     position: relative;
     transition: all 0.3s;
     border: 2px solid transparent;
+    min-width: 280px;
+    flex-shrink: 0;
 }
 
 .consultation-card:hover {
@@ -465,6 +531,59 @@ $this->load->view('portal/includes/portal_header');
     color: #2c5f6f;
 }
 
+.carousel-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.carousel-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(44, 95, 111, 0.3);
+}
+
+.carousel-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(44, 95, 111, 0.4);
+}
+
+.carousel-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.carousel-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e9ecef;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.carousel-dot.active {
+    background: #2c5f6f;
+    width: 24px;
+    border-radius: 4px;
+}
+
 .view-more-btn {
     margin-top: 20px;
     text-align: center;
@@ -505,24 +624,39 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .chart-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    border: 2px solid #f1f3f5;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 28px;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4299e1 0%, #48bb78 50%, #ed8936 100%);
 }
 
 .chart-card h4 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: #212529;
-    margin: 0 0 20px 0;
+    color: #2c3e50;
+    margin: 0 0 24px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .chart-card h4 i {
-    color: #01807B;
+    color: #4299e1;
+    font-size: 24px;
 }
 
 .no-program-alert {
@@ -547,46 +681,53 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
-/* Quick Actions Section */
+/* Quick Actions Section - Enhanced */
 .quick-actions {
     background: white;
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 20px;
+    padding: 28px;
     margin-bottom: 30px;
-    border: 2px solid #f1f3f5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .quick-actions-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: #212529;
-    margin: 0 0 20px 0;
+    color: #2c3e50;
+    margin: 0 0 24px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .quick-actions-title i {
-    color: #01807B;
+    color: #f5a54a;
+    font-size: 24px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
 }
 
 .actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
+    gap: 16px;
 }
 
 .action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 20px 16px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
+    gap: 12px;
+    padding: 24px 16px;
+    background: white;
+    border: 2px solid #f1f3f5;
+    border-radius: 16px;
     text-decoration: none;
-    transition: all 0.3s;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     position: relative;
     overflow: hidden;
 }
@@ -598,7 +739,7 @@ $this->load->view('portal/includes/portal_header');
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(1, 128, 123, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(245, 165, 74, 0.1), transparent);
     transition: left 0.5s;
 }
 
@@ -607,23 +748,29 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .action-btn:hover {
-    border-color: #01807B;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    border-color: #f5a54a;
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 12px 24px rgba(245, 165, 74, 0.2);
     text-decoration: none;
 }
 
 .action-btn-icon {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     color: white;
     position: relative;
     z-index: 1;
+    transition: transform 0.3s;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:hover .action-btn-icon {
+    transform: rotate(360deg);
 }
 
 .action-btn-icon.add {
@@ -643,9 +790,9 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .action-btn-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #212529;
+    color: #2c3e50;
     text-align: center;
     position: relative;
     z-index: 1;
@@ -963,23 +1110,22 @@ $this->load->view('portal/includes/portal_header');
 </div>
 <?php } ?>
 
-<!-- Row for Chart and Consultations -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
-            <canvas id="portalWeightChart" height="200"></canvas>
-        </div>
+<!-- Weight Evolution Chart - Full Width -->
+<div class="chart-card">
+    <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
+    <canvas id="portalWeightChart" height="150"></canvas>
+</div>
+
+<!-- Consultations Carousel -->
+<div class="consultations-section">
+    <div class="consultations-header">
+        <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
     </div>
 
-    <div class="col-md-6">
-        <div class="consultations-section">
-            <div class="consultations-header">
-                <h4><i class="fa fa-calendar-alt"></i> Prochains rendez-vous</h4>
-            </div>
-
-            <?php if (!empty($upcoming_consultations)) { ?>
-            <div class="consultations-grid">
+    <?php if (!empty($upcoming_consultations)) { ?>
+    <div class="consultations-carousel">
+        <div class="carousel-wrapper">
+            <div class="carousel-track" id="consultationsTrack">
                 <?php foreach ($upcoming_consultations as $index => $consultation) { ?>
                 <div class="consultation-card">
                     <div class="consultation-time">
@@ -1000,25 +1146,46 @@ $this->load->view('portal/includes/portal_header');
                 </div>
                 <?php } ?>
             </div>
-
-            <div class="view-more-btn">
-                <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="view-more-link">
-                    <span>Voir tous les rendez-vous</span>
-                    <i class="fa fa-arrow-right"></i>
-                </a>
-            </div>
-            <?php } else { ?>
-            <div class="empty-consultations">
-                <i class="fa fa-calendar-times"></i>
-                <p>Aucun rendez-vous programmé</p>
-            </div>
-            <?php } ?>
         </div>
+
+        <?php if (count($upcoming_consultations) > 1) { ?>
+        <div class="carousel-nav">
+            <button class="carousel-btn" id="prevBtn" onclick="moveCarousel(-1)">
+                <i class="fa fa-chevron-left"></i>
+            </button>
+
+            <div class="carousel-dots" id="carouselDots">
+                <?php for ($i = 0; $i < count($upcoming_consultations); $i++) { ?>
+                <div class="carousel-dot <?php echo $i === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $i; ?>)"></div>
+                <?php } ?>
+            </div>
+
+            <button class="carousel-btn" id="nextBtn" onclick="moveCarousel(1)">
+                <i class="fa fa-chevron-right"></i>
+            </button>
+        </div>
+        <?php } ?>
     </div>
+
+    <div class="view-more-btn">
+        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="view-more-link">
+            <span>Voir tous les rendez-vous</span>
+            <i class="fa fa-arrow-right"></i>
+        </a>
+    </div>
+    <?php } else { ?>
+    <div class="empty-consultations">
+        <i class="fa fa-calendar-times"></i>
+        <p>Aucun rendez-vous programmé</p>
+    </div>
+    <?php } ?>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// ============================================
+// WEIGHT CHART
+// ============================================
 $(function() {
     <?php if (!empty($weight_evolution)) { ?>
         var labels = [<?php foreach ($weight_evolution as $m) { echo '"' . _d($m->measurement_date) . '",'; } ?>];
@@ -1030,6 +1197,68 @@ $(function() {
         }
     <?php } ?>
 });
+
+// ============================================
+// CONSULTATIONS CAROUSEL
+// ============================================
+let currentSlide = 0;
+const track = document.getElementById('consultationsTrack');
+const dots = document.querySelectorAll('.carousel-dot');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function updateCarousel() {
+    if (!track) return;
+
+    const cardWidth = 280; // min-width of consultation-card
+    const gap = 16;
+    const offset = currentSlide * (cardWidth + gap);
+
+    track.style.transform = `translateX(-${offset}px)`;
+
+    // Update dots
+    dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+
+    // Update buttons
+    if (prevBtn) prevBtn.disabled = currentSlide === 0;
+    if (nextBtn) nextBtn.disabled = currentSlide === dots.length - 1;
+}
+
+function moveCarousel(direction) {
+    const maxSlide = dots.length - 1;
+    currentSlide += direction;
+
+    if (currentSlide < 0) currentSlide = 0;
+    if (currentSlide > maxSlide) currentSlide = maxSlide;
+
+    updateCarousel();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateCarousel();
+}
+
+// Auto-advance carousel every 5 seconds
+<?php if (!empty($upcoming_consultations) && count($upcoming_consultations) > 1) { ?>
+setInterval(function() {
+    if (currentSlide < dots.length - 1) {
+        moveCarousel(1);
+    } else {
+        currentSlide = 0;
+        updateCarousel();
+    }
+}, 5000);
+<?php } ?>
+
+// Initialize
+updateCarousel();
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
