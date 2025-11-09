@@ -627,9 +627,8 @@ function dietetic_has_feature_permission($permission_key, $staff_id = null)
 
     // Check if the SPECIFIC staff member (not current user) is an admin
     // Admins bypass all permission checks
-    $CI->db->select('admin');
-    $CI->db->where('staffid', $staff_id);
-    $staff = $CI->db->get(db_prefix() . 'staff')->row();
+    // Use get_where to avoid Query Builder conflicts with active queries
+    $staff = $CI->db->get_where(db_prefix() . 'staff', ['staffid' => $staff_id])->row();
 
     if ($staff && $staff->admin == 1) {
         return true;
@@ -641,10 +640,11 @@ function dietetic_has_feature_permission($permission_key, $staff_id = null)
         return false;
     }
 
-    // Query permission
-    $CI->db->where('staff_id', $staff_id);
-    $CI->db->where('permission_key', $permission_key);
-    $permission = $CI->db->get(db_prefix() . 'dietic_staff_permissions')->row();
+    // Query permission - use get_where to avoid Query Builder conflicts
+    $permission = $CI->db->get_where(db_prefix() . 'dietic_staff_permissions', [
+        'staff_id' => $staff_id,
+        'permission_key' => $permission_key
+    ])->row();
 
     if ($permission) {
         return (bool)$permission->permission_value;

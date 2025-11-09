@@ -27,14 +27,14 @@ class Dietetic_food_surveys_model extends App_Model
     public function get_all($where = [])
     {
         $this->db->select($this->table_surveys . '.*,
-            CONCAT(tblclients.company) as patient_name,
-            CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name,
-            tbldietic_programs.program_name');
+            CONCAT(c.company) as patient_name,
+            CONCAT(s.firstname, " ", s.lastname) as dietitian_name,
+            prog.program_name');
         $this->db->from($this->table_surveys);
-        $this->db->join('tbldietic_patients', 'tbldietic_patients.id = ' . $this->table_surveys . '.patient_id', 'left');
-        $this->db->join('tblclients', 'tblclients.userid = tbldietic_patients.client_id', 'left');
-        $this->db->join('tblstaff', 'tblstaff.staffid = ' . $this->table_surveys . '.dietitian_id', 'left');
-        $this->db->join('tbldietic_programs', 'tbldietic_programs.id = ' . $this->table_surveys . '.program_id', 'left');
+        $this->db->join('tbldietic_patients p', 'p.id = ' . $this->table_surveys . '.patient_id', 'left');
+        $this->db->join('tblclients c', 'c.userid = p.client_id', 'left');
+        $this->db->join('tblstaff s', 's.staffid = ' . $this->table_surveys . '.dietitian_id', 'left');
+        $this->db->join('tbldietic_programs prog', 'prog.id = ' . $this->table_surveys . '.program_id', 'left');
 
         if (!empty($where)) {
             $this->db->where($where);
@@ -42,7 +42,7 @@ class Dietetic_food_surveys_model extends App_Model
 
         // Apply staff permissions using new many-to-many system
         if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-            // Use new permission system
+            // Use new permission system - joins on p.id
             dietetic_apply_dietitian_filter($this->db, 'pd');
         } else {
             // Fallback to old system if table doesn't exist yet
@@ -67,15 +67,15 @@ class Dietetic_food_surveys_model extends App_Model
     public function get($id, $check_access = true)
     {
         $this->db->select($this->table_surveys . '.*,
-            CONCAT(tblclients.company) as patient_name,
-            tbldietic_patients.client_id,
-            CONCAT(tblstaff.firstname, " ", tblstaff.lastname) as dietitian_name,
-            tbldietic_programs.program_name');
+            CONCAT(c.company) as patient_name,
+            p.client_id,
+            CONCAT(s.firstname, " ", s.lastname) as dietitian_name,
+            prog.program_name');
         $this->db->from($this->table_surveys);
-        $this->db->join('tbldietic_patients', 'tbldietic_patients.id = ' . $this->table_surveys . '.patient_id', 'left');
-        $this->db->join('tblclients', 'tblclients.userid = tbldietic_patients.client_id', 'left');
-        $this->db->join('tblstaff', 'tblstaff.staffid = ' . $this->table_surveys . '.dietitian_id', 'left');
-        $this->db->join('tbldietic_programs', 'tbldietic_programs.id = ' . $this->table_surveys . '.program_id', 'left');
+        $this->db->join('tbldietic_patients p', 'p.id = ' . $this->table_surveys . '.patient_id', 'left');
+        $this->db->join('tblclients c', 'c.userid = p.client_id', 'left');
+        $this->db->join('tblstaff s', 's.staffid = ' . $this->table_surveys . '.dietitian_id', 'left');
+        $this->db->join('tbldietic_programs prog', 'prog.id = ' . $this->table_surveys . '.program_id', 'left');
         $this->db->where($this->table_surveys . '.id', $id);
 
         $survey = $this->db->get()->row();
