@@ -108,32 +108,9 @@ class Patients extends AdminController
 
         $data['title'] = _l('dietetic_new_patient');
 
-        // Get clients - filtered by permissions
-        if (is_admin()) {
-            // Admins can see all clients
-            $data['clients'] = $this->clients_model->get();
-        } else {
-            // Non-admins only see clients from their patients
-            $current_staff_id = get_staff_user_id();
-            $my_patients = $this->dietetic_patients_model->get_all(['p.dietitian_id' => $current_staff_id]);
-
-            // Get unique client IDs from patients
-            $client_ids = [];
-            foreach ($my_patients as $patient) {
-                if ($patient->client_id && !in_array($patient->client_id, $client_ids)) {
-                    $client_ids[] = $patient->client_id;
-                }
-            }
-
-            // Get these clients
-            $data['clients'] = [];
-            foreach ($client_ids as $client_id) {
-                $client = $this->clients_model->get($client_id);
-                if ($client) {
-                    $data['clients'][] = $client;
-                }
-            }
-        }
+        // Get clients - all clients are available for patient creation
+        // The form will prevent duplicate patients for the same client
+        $data['clients'] = $this->clients_model->get();
 
         // Get staff members (dietitians) - filtered by permissions
         if (is_admin()) {
