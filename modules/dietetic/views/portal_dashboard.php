@@ -609,88 +609,255 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
-/* Quick Actions Section - Cadré et Compact */
-.quick-actions {
-    background: white;
-    border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+/* Floating Action Button with Modal */
+.fab-container {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1002;
 }
 
-.quick-actions-title {
-    font-size: 18px;
+.fab-button {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 24px rgba(245, 165, 74, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    transition: all 0.3s;
+    animation: pulse-fab 2s infinite;
+}
+
+@keyframes pulse-fab {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 24px rgba(245, 165, 74, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(245, 165, 74, 0.6);
+    }
+}
+
+.fab-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(245, 165, 74, 0.6);
+}
+
+.fab-button:active {
+    transform: scale(0.95);
+}
+
+/* Modal for Quick Actions */
+.fab-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-modal.active {
+    display: flex;
+}
+
+.fab-modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.fab-modal.active .fab-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.fab-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.fab-modal-title {
+    font-size: 20px;
     font-weight: 700;
     color: #2c3e50;
-    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.quick-actions-title i {
-    color: #f5a54a;
-    font-size: 20px;
+.fab-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f3f5;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+.fab-modal-close:hover {
+    background: #e9ecef;
+    transform: rotate(90deg);
+}
+
+.fab-actions-list {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
 }
 
-.action-btn {
+.fab-action-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 14px 18px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 12px;
     text-decoration: none;
     transition: all 0.3s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.action-btn:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+.fab-action-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     text-decoration: none;
 }
 
-.action-btn-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+.fab-action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
     color: white;
     flex-shrink: 0;
 }
 
-.action-btn-icon.add {
+.fab-action-icon.add {
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
 }
 
-.action-btn-icon.survey {
+.fab-action-icon.survey {
     background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
 }
 
-.action-btn-icon.consult {
+.fab-action-icon.consult {
     background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
 }
 
-.action-btn-icon.dietitian {
+.fab-action-icon.dietitian {
     background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
 }
 
-.action-btn-label {
-    font-size: 13px;
+.fab-action-text {
+    flex: 1;
+}
+
+.fab-action-title {
+    font-size: 15px;
     font-weight: 600;
     color: #2c3e50;
-    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.fab-action-desc {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Custom Dashboard Footer */
+.dashboard-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 75px;
+    background: white;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+}
+
+.dashboard-footer::before {
+    content: '';
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.footer-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #6c757d;
+    transition: all 0.3s;
+    padding: 8px 24px;
+    border-radius: 12px;
+}
+
+.footer-link:hover {
+    background: #f8f9fa;
+    color: #2c5f6f;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.footer-link.active {
+    color: #2c5f6f;
+}
+
+.footer-link-icon {
+    font-size: 24px;
+}
+
+.footer-link-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer-spacer {
+    width: 100px;
 }
 
 /* Progress Ring for Stats */
@@ -1026,46 +1193,113 @@ body {
     <?php } ?>
 </div>
 
-<!-- Quick Actions -->
-<div class="quick-actions">
-    <h4 class="quick-actions-title">
-        <i class="fa fa-bolt"></i>
-        Actions rapides
-    </h4>
-    <div class="actions-grid">
-        <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="action-btn">
-            <div class="action-btn-icon add">
-                <i class="fa fa-plus"></i>
-            </div>
-            <span class="action-btn-label">Ajouter une mesure</span>
-        </a>
+<!-- Floating Action Button -->
+<div class="fab-container">
+    <button class="fab-button" id="fabBtn" onclick="toggleFabModal()">
+        <i class="fa fa-rocket"></i>
+    </button>
+</div>
 
-        <?php
-        // Check if food surveys feature is enabled
-        if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
-        ?>
-        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="action-btn">
-            <div class="action-btn-icon survey">
-                <i class="fa fa-list-alt"></i>
-            </div>
-            <span class="action-btn-label">Enquête alimentaire</span>
-        </a>
-        <?php } ?>
+<!-- FAB Modal for Quick Actions -->
+<div class="fab-modal" id="fabModal" onclick="closeFabModal(event)">
+    <div class="fab-modal-content" onclick="event.stopPropagation()">
+        <div class="fab-modal-header">
+            <h3 class="fab-modal-title">
+                <i class="fa fa-bolt"></i>
+                Actions rapides
+            </h3>
+            <button class="fab-modal-close" onclick="closeFabModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
 
-        <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="action-btn">
-            <div class="action-btn-icon consult">
-                <i class="fa fa-calendar"></i>
-            </div>
-            <span class="action-btn-label">Mes consultations</span>
-        </a>
+        <div class="fab-actions-list">
+            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="fab-action-item">
+                <div class="fab-action-icon add">
+                    <i class="fa fa-plus"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Ajouter une mesure</div>
+                    <div class="fab-action-desc">Enregistrer votre poids et mesures</div>
+                </div>
+            </a>
 
-        <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="action-btn">
-            <div class="action-btn-icon dietitian">
-                <i class="fa fa-user-md"></i>
-            </div>
-            <span class="action-btn-label">Mon diététicien</span>
-        </a>
+            <?php
+            // Check if food surveys feature is enabled
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="fab-action-item">
+                <div class="fab-action-icon survey">
+                    <i class="fa fa-list-alt"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Enquête alimentaire</div>
+                    <div class="fab-action-desc">Remplir votre journal alimentaire</div>
+                </div>
+            </a>
+            <?php } ?>
+
+            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="fab-action-item">
+                <div class="fab-action-icon consult">
+                    <i class="fa fa-calendar"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Mes consultations</div>
+                    <div class="fab-action-desc">Voir tous mes rendez-vous</div>
+                </div>
+            </a>
+
+            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="fab-action-item">
+                <div class="fab-action-icon dietitian">
+                    <i class="fa fa-user-md"></i>
+                </div>
+                <div class="fab-action-text">
+                    <div class="fab-action-title">Mon diététicien</div>
+                    <div class="fab-action-desc">Contacter mon diététicien</div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
+
+<!-- Custom Dashboard Footer -->
+<footer class="dashboard-footer">
+    <a href="<?php echo site_url('dietetic/portal'); ?>" class="footer-link active">
+        <i class="fa fa-trophy footer-link-icon"></i>
+        <span class="footer-link-label">Programmes</span>
+    </a>
+
+    <div class="footer-spacer"></div>
+
+    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-link">
+        <i class="fa fa-utensils footer-link-icon"></i>
+        <span class="footer-link-label">Repas</span>
+    </a>
+</footer>
+
+<script>
+function toggleFabModal() {
+    const modal = document.getElementById('fabModal');
+    modal.classList.toggle('active');
+}
+
+function closeFabModal(event) {
+    const modal = document.getElementById('fabModal');
+    if (event) {
+        // Only close if clicking the overlay, not the content
+        modal.classList.remove('active');
+    } else {
+        // Close button clicked
+        modal.classList.remove('active');
+    }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeFabModal();
+    }
+});
+</script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
