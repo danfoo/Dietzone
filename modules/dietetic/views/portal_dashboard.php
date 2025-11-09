@@ -576,116 +576,161 @@ $this->load->view('portal/includes/portal_header');
     text-decoration: none;
 }
 
-/* Single Consultation Card */
-.consultations-section {
-    background: white;
-    border-radius: 20px;
-    padding: 24px;
+/* Consultations Card - Peach Design #FFE9D2 */
+.consultations-card {
+    background: linear-gradient(135deg, #FFE9D2 0%, #f5d9bd 100%);
+    border-radius: 24px;
+    padding: 32px 28px;
     margin-bottom: 30px;
-    min-height: 280px;
+    color: #5a3e2b;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(255, 233, 210, 0.4);
+    min-height: 220px;
     display: flex;
     flex-direction: column;
 }
 
-.consultations-header {
-    margin-bottom: 20px;
+.consultations-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
 }
 
-.consultations-header h4 {
-    margin: 0;
+.consultations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.consultations-info-left {
+    flex: 1;
+}
+
+.consultations-greeting {
+    font-size: 15px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+    color: #5a3e2b;
+}
+
+.consultations-title {
     font-size: 20px;
     font-weight: 700;
-    color: #2c3e50;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    line-height: 1.3;
+    margin: 0 0 16px 0;
+    color: #5a3e2b;
 }
 
-.consultations-header h4 i {
-    color: #2c5f6f;
-}
-
-.consultation-card {
-    background: linear-gradient(135deg, #fef4e8 0%, #f5e6d3 100%);
-    border-radius: 16px;
-    padding: 24px;
-    position: relative;
-    transition: all 0.3s;
-    border: 2px solid transparent;
-    margin-bottom: 16px;
-}
-
-.consultation-time {
-    font-size: 14px;
-    font-weight: 600;
-    color: #8b6f47;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.consultation-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 8px;
-}
-
-.consultation-type-label {
-    font-size: 14px;
-    color: #6c757d;
-    margin-bottom: 16px;
-}
-
-.consultation-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: white;
-    color: #2c5f6f;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.consultation-view-all-btn {
+.consultations-view-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
-    color: white;
+    background: linear-gradient(135deg, rgba(90, 62, 43, 0.15) 0%, rgba(90, 62, 43, 0.1) 100%);
+    color: #5a3e2b;
     padding: 12px 24px;
     border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s;
-    box-shadow: 0 4px 12px rgba(44, 95, 111, 0.3);
+    box-shadow: 0 4px 12px rgba(90, 62, 43, 0.15);
+}
+
+.consultations-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(90, 62, 43, 0.25);
+    background: linear-gradient(135deg, rgba(90, 62, 43, 0.25) 0%, rgba(90, 62, 43, 0.15) 100%);
+    color: #5a3e2b;
+    text-decoration: none;
+}
+
+.consultations-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(90, 62, 43, 0.15);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a3e2b;
     margin-top: 12px;
 }
 
-.consultation-view-all-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(44, 95, 111, 0.4);
-    color: white;
-    text-decoration: none;
+.consultations-status i {
+    font-size: 8px;
+    color: #48bb78;
+    animation: pulse 2s infinite;
+}
+
+.consultations-icon-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(90, 62, 43, 0.15);
+}
+
+.consultations-icon-ring i {
+    font-size: 40px;
+    color: #5a3e2b;
+}
+
+.consultations-body {
+    position: relative;
+    z-index: 1;
+}
+
+.consultations-info {
+    background: rgba(255, 255, 255, 0.4);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 3px solid #5a3e2b;
+    backdrop-filter: blur(10px);
+}
+
+.consultation-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #5a3e2b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.consultation-date i {
+    color: #d4a574;
+}
+
+.consultation-time {
+    font-size: 13px;
+    color: rgba(90, 62, 43, 0.8);
 }
 
 .empty-consultations {
     text-align: center;
-    padding: 32px 20px;
-    color: #6c757d;
+    padding: 20px;
+    color: rgba(90, 62, 43, 0.6);
 }
 
 .empty-consultations i {
-    font-size: 48px;
-    opacity: 0.3;
-    margin-bottom: 12px;
+    font-size: 32px;
+    opacity: 0.4;
+    margin-bottom: 8px;
 }
 
 /* Weight Progress Simple Card */
@@ -1176,6 +1221,27 @@ body {
     <?php } ?>
 </div>
 
+<!-- Weight Evolution Chart -->
+<div class="weight-progress-card">
+    <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+        <h4 class="weight-chart-title"><i class="fa fa-line-chart"></i> Évolution du Poids</h4>
+        <canvas id="weightEvolutionChart" height="100"></canvas>
+    <?php } elseif ($weight_progress->weight_change !== null) { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
+        </div>
+        <div class="weight-progress-value">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
+        </div>
+        <div class="weight-progress-label">Évolution du poids</div>
+    <?php } else { ?>
+        <div class="weight-progress-icon">
+            <i class="fa fa-balance-scale"></i>
+        </div>
+        <div class="weight-progress-empty">Aucune évolution disponible</div>
+    <?php } ?>
+</div>
+
 <!-- Program Card -->
 <?php if ($active_program) { ?>
     <?php
@@ -1297,61 +1363,55 @@ body {
 </div>
 <?php } ?>
 
-<!-- Weight Evolution Chart -->
-<div class="weight-progress-card">
-    <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
-        <h4 class="weight-chart-title"><i class="fa fa-line-chart"></i> Évolution du Poids</h4>
-        <canvas id="weightEvolutionChart" height="100"></canvas>
-    <?php } elseif ($weight_progress->weight_change !== null) { ?>
-        <div class="weight-progress-icon">
-            <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
-        </div>
-        <div class="weight-progress-value">
-            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
-        </div>
-        <div class="weight-progress-label">Évolution du poids</div>
-    <?php } else { ?>
-        <div class="weight-progress-icon">
-            <i class="fa fa-balance-scale"></i>
-        </div>
-        <div class="weight-progress-empty">Aucune évolution disponible</div>
-    <?php } ?>
-</div>
-
-<!-- Single Consultation -->
-<div class="consultations-section">
+<!-- Consultation Card -->
+<div class="consultations-card">
     <div class="consultations-header">
-        <h4><i class="fa fa-calendar-alt"></i> Prochain rendez-vous</h4>
+        <div class="consultations-info-left">
+            <div class="consultations-greeting">Vos rendez-vous</div>
+            <div class="consultations-title">
+                <?php if (!empty($upcoming_consultations)) { ?>
+                    Prochain rendez-vous prévu
+                <?php } else { ?>
+                    Rendez-vous
+                <?php } ?>
+            </div>
+            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="consultations-view-btn">
+                <i class="fa fa-eye"></i>
+                Voir les détails
+            </a>
+            <?php if (!empty($upcoming_consultations)) { ?>
+                <div class="consultations-status">
+                    <i class="fa fa-circle"></i>
+                    Rendez-vous programmé
+                </div>
+            <?php } ?>
+        </div>
+
+        <div class="consultations-icon-ring">
+            <i class="fa fa-calendar"></i>
+        </div>
     </div>
 
-    <?php if (!empty($upcoming_consultations)) { ?>
-        <?php $next_consultation = $upcoming_consultations[0]; ?>
-        <div class="consultation-card">
-            <div class="consultation-time">
-                <i class="fa fa-clock"></i>
-                <?php echo date('H:i', strtotime($next_consultation->consultation_date)); ?>
+    <div class="consultations-body">
+        <?php if (!empty($upcoming_consultations)) { ?>
+            <?php $next_consultation = $upcoming_consultations[0]; ?>
+            <div class="consultations-info">
+                <div class="consultation-date">
+                    <i class="fa fa-calendar-check-o"></i>
+                    <?php echo _d($next_consultation->consultation_date); ?>
+                </div>
+                <div class="consultation-time">
+                    <i class="fa fa-clock-o"></i>
+                    <?php echo date('H:i', strtotime($next_consultation->consultation_date)); ?>
+                </div>
             </div>
-            <div class="consultation-title">
-                Consultation avec votre diététicien
+        <?php } else { ?>
+            <div class="empty-consultations">
+                <i class="fa fa-calendar-times-o"></i>
+                <p>Aucun rendez-vous programmé</p>
             </div>
-            <div class="consultation-type-label">
-                <?php echo _d($next_consultation->consultation_date); ?>
-            </div>
-            <span class="consultation-status-badge">
-                <i class="fa fa-check-circle"></i>
-                Programmé
-            </span>
-            <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="consultation-view-all-btn">
-                <span>Voir tous les rendez-vous</span>
-                <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
-    <?php } else { ?>
-        <div class="empty-consultations">
-            <i class="fa fa-calendar-times"></i>
-            <p>Aucun rendez-vous programmé</p>
-        </div>
-    <?php } ?>
+        <?php } ?>
+    </div>
 </div>
 
 <!-- Floating Action Button -->
