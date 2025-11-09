@@ -262,30 +262,48 @@ function dietetic_add_footer_components()
     // Load menu toggle script on ALL admin pages (so menu works everywhere)
     echo '<script>
     (function($) {
-        $(document).ready(function() {
-            // Initialize Dietetic menu toggle functionality
-            var $dieteticMenuItem = $(".menu-item-dietetic");
-            if ($dieteticMenuItem.length) {
-                var $mainLink = $dieteticMenuItem.find("> a[href=\"#\"]");
-                if ($mainLink.length) {
-                    $mainLink.off("click.dieteticToggle").on("click.dieteticToggle", function(e) {
-                        e.preventDefault();
-                        var $submenu = $dieteticMenuItem.find("> ul.nav-second-level");
-                        if ($submenu.length) {
-                            var isExpanded = $submenu.hasClass("in");
-                            if (isExpanded) {
-                                $submenu.removeClass("in").slideUp(300);
-                                $(this).attr("aria-expanded", "false");
-                                $dieteticMenuItem.removeClass("active");
-                            } else {
-                                $submenu.addClass("in").slideDown(300);
-                                $(this).attr("aria-expanded", "true");
-                                $dieteticMenuItem.addClass("active");
-                            }
-                        }
-                    });
+        // Use window.load to ensure all elements are ready, including sidebar
+        $(window).on("load", function() {
+            console.log("Dietetic menu toggle: Initializing...");
+
+            // Use event delegation on document to survive DOM manipulations
+            $(document).off("click.dieteticToggle", ".menu-item-dietetic > a[href=\"#\"]");
+            $(document).on("click.dieteticToggle", ".menu-item-dietetic > a[href=\"#\"]", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                console.log("Dietetic menu clicked");
+
+                var $this = $(this);
+                var $dieteticMenuItem = $this.closest(".menu-item-dietetic");
+                var $submenu = $dieteticMenuItem.find("> ul.nav-second-level, > ul.collapse");
+
+                if ($submenu.length) {
+                    var isExpanded = $submenu.hasClass("in") || $submenu.is(":visible");
+
+                    console.log("Current state - Expanded: " + isExpanded);
+
+                    if (isExpanded) {
+                        // Collapse
+                        $submenu.removeClass("in").slideUp(300);
+                        $this.attr("aria-expanded", "false");
+                        $dieteticMenuItem.removeClass("active");
+                        console.log("Menu collapsed");
+                    } else {
+                        // Expand
+                        $submenu.addClass("in").slideDown(300);
+                        $this.attr("aria-expanded", "true");
+                        $dieteticMenuItem.addClass("active");
+                        console.log("Menu expanded");
+                    }
+                } else {
+                    console.log("Submenu not found");
                 }
-            }
+
+                return false;
+            });
+
+            console.log("Dietetic menu toggle: Initialized successfully");
         });
     })(jQuery);
     </script>';
