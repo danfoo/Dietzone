@@ -253,10 +253,10 @@ class Portal extends App_Controller
             if ($this->input->is_ajax_request()) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'Non connecté']);
-                exit;
+                die();
             }
-            redirect(site_url('authentication/login'));
-            exit;
+            header('Location: ' . site_url('authentication/login'), true, 302);
+            die();
         }
 
         $client_id = get_client_user_id();
@@ -273,10 +273,10 @@ class Portal extends App_Controller
             if ($this->input->is_ajax_request()) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
-                exit;
+                die();
             }
             $this->load->view('portal_no_access');
-            return;
+            die();
         }
 
         // Step 3: Handle form submission
@@ -394,13 +394,20 @@ class Portal extends App_Controller
                         'message' => 'Mesure ajoutée avec succès!',
                         'measurement_id' => $measurement_id
                     ]);
-                    exit;
+                    die();
                 }
 
-                // Redirect with success message
+                // Redirect with success message - Use direct header to avoid _remap issues
                 $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
-                redirect(site_url('dietetic/portal/measurements'));
-                exit;
+
+                // Stop all output buffering
+                while (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+
+                // Send redirect header
+                header('Location: ' . site_url('dietetic/portal/measurements'), true, 302);
+                die();
 
             } catch (Exception $e) {
                 log_activity('Portal add_measurement - Error: ' . $e->getMessage());
@@ -411,7 +418,7 @@ class Portal extends App_Controller
                         'success' => false,
                         'message' => 'Erreur: ' . $e->getMessage()
                     ]);
-                    exit;
+                    die();
                 }
 
                 // Show form with error
