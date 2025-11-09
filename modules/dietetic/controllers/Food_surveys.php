@@ -12,9 +12,15 @@ class Food_surveys extends AdminController
             // Load helper first
             $this->load->helper('dietetic/dietetic');
 
-            // Check permissions
+            // Check basic permissions
             if (!dietetic_has_permission('view')) {
                 access_denied('dietetic');
+            }
+
+            // Check feature-specific permission for Food Surveys
+            if (!dietetic_has_feature_permission('food_surveys')) {
+                set_alert('warning', 'Vous n\'avez pas accès au module Enquêtes Alimentaires. Contactez votre administrateur.');
+                redirect(admin_url('dietetic/patients'));
             }
 
             // Always load these models (they come from the main dietetic module)

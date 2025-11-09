@@ -12,9 +12,16 @@ class Notifications extends AdminController
             // Load helper first
             $this->load->helper('dietetic/dietetic');
 
-            // Check permissions
+            // Check basic permissions
             if (!dietetic_has_permission('view')) {
                 access_denied('dietetic');
+            }
+
+            // Check feature-specific permission for Notifications Management
+            // Only admins can access notification settings and management
+            if (!dietetic_has_feature_permission('notifications_manage')) {
+                set_alert('warning', 'Vous n\'avez pas accès à la gestion des notifications. Cette fonctionnalité est réservée aux administrateurs.');
+                redirect(admin_url('dietetic/patients'));
             }
 
             // Load required models

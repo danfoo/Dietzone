@@ -123,24 +123,28 @@ function dietetic_module_init_menu_items()
             'position' => 4,
         ]);
 
-        // Food Surveys (Enquêtes Alimentaires)
-        $CI->app_menu->add_sidebar_children_item('dietetic', [
-            'slug'     => 'dietetic-food-surveys',
-            'name'     => 'Enquêtes Alimentaires',
-            'icon'     => 'fa fa-camera',
-            'href'     => admin_url('dietetic/food_surveys'),
-            'position' => 5,
-        ]);
-
-        // Notifications - Check if notifications table exists
-        if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+        // Food Surveys (Enquêtes Alimentaires) - Only show if user has permission
+        if (function_exists('dietetic_has_feature_permission') && dietetic_has_feature_permission('food_surveys')) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
-                'slug'     => 'dietetic-notifications',
-                'name'     => 'Notifications',
-                'icon'     => 'fa fa-bell',
-                'href'     => admin_url('dietetic/notifications'),
-                'position' => 5.5,
+                'slug'     => 'dietetic-food-surveys',
+                'name'     => 'Enquêtes Alimentaires',
+                'icon'     => 'fa fa-camera',
+                'href'     => admin_url('dietetic/food_surveys'),
+                'position' => 5,
             ]);
+        }
+
+        // Notifications - Only show to admins or users with notifications_manage permission
+        if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            if (function_exists('dietetic_has_feature_permission') && dietetic_has_feature_permission('notifications_manage')) {
+                $CI->app_menu->add_sidebar_children_item('dietetic', [
+                    'slug'     => 'dietetic-notifications',
+                    'name'     => 'Notifications',
+                    'icon'     => 'fa fa-bell',
+                    'href'     => admin_url('dietetic/notifications'),
+                    'position' => 5.5,
+                ]);
+            }
         }
 
         // Dietitians (with ratings) - requires view_dietitians permission
@@ -162,6 +166,17 @@ function dietetic_module_init_menu_items()
                 'icon'     => 'fa fa-cutlery',
                 'href'     => admin_url('dietetic/foods'),
                 'position' => 7,
+            ]);
+        }
+
+        // Staff Permissions - Admin only
+        if (is_admin()) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-staff-permissions',
+                'name'     => 'Permissions Diététiciens',
+                'icon'     => 'fa fa-shield',
+                'href'     => admin_url('dietetic/staff_permissions'),
+                'position' => 98,
             ]);
         }
 

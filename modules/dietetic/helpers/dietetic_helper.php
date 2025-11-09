@@ -604,3 +604,166 @@ function dietetic_can_manage_assignments()
 {
     return is_admin();
 }
+
+/**
+ * Check if current staff has a specific granular permission
+ * Examples: 'food_surveys', 'notifications_manage', 'reports_advanced'
+ *
+ * @param string $permission_key Permission key to check
+ * @param int $staff_id If null, uses current staff user
+ * @return bool
+ */
+function dietetic_has_feature_permission($permission_key, $staff_id = null)
+{
+    // Admins bypass all permission checks
+    if (dietetic_is_admin()) {
+        return true;
+    }
+
+    if ($staff_id === null) {
+        $staff_id = dietetic_get_staff_user_id();
+    }
+
+    if (!$staff_id) {
+        return false;
+    }
+
+    $CI = &get_instance();
+
+    // Check if permissions table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_staff_permissions')) {
+        // Table doesn't exist yet - deny by default (secure)
+        return false;
+    }
+
+    // Query permission
+    $CI->db->where('staff_id', $staff_id);
+    $CI->db->where('permission_key', $permission_key);
+    $permission = $CI->db->get(db_prefix() . 'dietic_staff_permissions')->row();
+
+    if ($permission) {
+        return (bool)$permission->permission_value;
+    }
+
+    // No record found - check default setting
+    $default_setting = dietetic_get_option('permissions_default_' . $permission_key, false);
+    return (bool)$default_setting;
+}
+
+/**
+ * Grant a specific permission to a staff member
+ * Only admins can grant permissions
+ *
+ * @param int $staff_id Staff ID to grant permission to
+ * @param string $permission_key Permission key
+ * @param bool $enabled True to enable, false to disable
+ * @param string $notes Optional notes
+ * @return bool
+ */
+function dietetic_grant_permission($staff_id, $permission_key, $enabled = true, $notes = null)
+{
+    if (!is_admin()) {
+        return false;
+    }
+
+    $CI = &get_instance();
+
+    // Check if table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_staff_permissions')) {
+        return false;
+    }
+
+    // Check if permission already exists
+    $CI->db->where('staff_id', $staff_id);
+    $CI->db->where('permission_key', $permission_key);
+    $existing = $CI->db->get(db_prefix() . 'dietic_staff_permissions')->row();
+
+    $data = [
+        'permission_value' => $enabled ? 1 : 0,
+        'granted_by' => get_staff_user_id(),
+        'updated_at' => date('Y-m-d H:i:s'),
+    ];
+
+    if ($notes !== null) {
+        $data['notes'] = $notes;
+    }
+
+    if ($existing) {
+        // Update existing
+        $CI->db->where('id', $existing->id);
+        return $CI->db->update(db_prefix() . 'dietic_staff_permissions', $data);
+    } else {
+        // Insert new
+        $data['staff_id'] = $staff_id;
+        $data['permission_key'] = $permission_key;
+        $data['granted_at'] = date('Y-m-d H:i:s');
+        return $CI->db->insert(db_prefix() . 'dietic_staff_permissions', $data);
+    }
+}
+
+/**
+ * Get all permissions for a staff member
+ *
+ * @param int $staff_id If null, uses current staff user
+ * @return array Associative array of permission_key => enabled
+ */
+function dietetic_get_staff_permissions($staff_id = null)
+{
+    if ($staff_id === null) {
+        $staff_id = dietetic_get_staff_user_id();
+    }
+
+    if (!$staff_id) {
+        return [];
+    }
+
+    $CI = &get_instance();
+
+    // Check if table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_staff_permissions')) {
+        return [];
+    }
+
+    $CI->db->where('staff_id', $staff_id);
+    $permissions = $CI->db->get(db_prefix() . 'dietic_staff_permissions')->result();
+
+    $result = [];
+    foreach ($permissions as $perm) {
+        $result[$perm->permission_key] = (bool)$perm->permission_value;
+    }
+
+    return $result;
+}
+
+/**
+ * Get available permission keys and their descriptions
+ *
+ * @return array
+ */
+function dietetic_get_available_permissions()
+{
+    return [
+        'food_surveys' => [
+            'label' => 'Enquêtes Alimentaires',
+            'description' => 'Accès au module des enquêtes alimentaires',
+            'default' => false,
+        ],
+        'notifications_manage' => [
+            'label' => 'Gestion des Notifications',
+            'description' => 'Accès aux paramètres et gestion des notifications',
+            'default' => false,
+            'admin_only' => true, // This permission is reserved for admins
+        ],
+        'reports_advanced' => [
+            'label' => 'Rapports Avancés',
+            'description' => 'Accès aux rapports et statistiques avancés',
+            'default' => false,
+        ],
+        'settings_module' => [
+            'label' => 'Paramètres du Module',
+            'description' => 'Accès aux paramètres généraux du module diététique',
+            'default' => false,
+            'admin_only' => true,
+        ],
+    ];
+}

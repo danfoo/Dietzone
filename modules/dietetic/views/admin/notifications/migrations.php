@@ -437,6 +437,48 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 4: Staff Permissions System -->
+                <div class="migration-card" data-migration="permissions">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-shield"></i>
+                            Système de Permissions Granulaires
+                        </h3>
+                        <span class="migration-status pending" id="status-permissions">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Système de permissions granulaires permettant de contrôler l'accès de chaque diététicien aux différentes fonctionnalités (Enquêtes alimentaires, Gestion notifications, etc.)
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Ajouts :</h4>
+                            <ul>
+                                <li><code>tbldietic_staff_permissions</code> - Permissions par diététicien</li>
+                                <li>Paramètres par défaut pour nouvelles permissions</li>
+                                <li>Support permissions : food_surveys, notifications_manage, reports_advanced, settings_module</li>
+                                <li>Permissions par défaut pour staff existants</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info" style="margin-top: 15px;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Important :</strong> Après installation, gérez les permissions via <strong>Diététique > Permissions Diététiciens</strong>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_staff_permissions.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('permissions')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('permissions')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -467,6 +509,11 @@ const migrations = {
         name: 'Optimisations Performance',
         file: 'optimize_notifications_performance.sql',
         indexes: true
+    },
+    permissions: {
+        name: 'Permissions Granulaires',
+        file: 'add_staff_permissions.sql',
+        tables: ['dietic_staff_permissions']
     }
 };
 
