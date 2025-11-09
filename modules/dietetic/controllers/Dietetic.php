@@ -22,16 +22,25 @@ class Dietetic extends AdminController
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_reminders_model');
 
-        // Check permission - removed temporarily for testing
-        // if (!dietetic_has_permission('view')) {
-        //     access_denied('dietetic');
-        // }
+        // Check permission
+        if (!dietetic_has_permission('view')) {
+            access_denied('dietetic');
+        }
     }
 
     /**
      * Dashboard - Main view with KPIs and statistics
      */
     public function index()
+    {
+        // Redirect to patients list by default for better UX
+        redirect(admin_url('dietetic/patients'));
+    }
+
+    /**
+     * Dashboard view with statistics
+     */
+    public function dashboard()
     {
         $data['title'] = 'Dietetic Dashboard';
 
