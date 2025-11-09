@@ -557,11 +557,6 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
  */
 function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
 {
-    // Admins see all patients
-    if (dietetic_is_admin()) {
-        return;
-    }
-
     // Check if this is a client (patient) accessing their own data
     if (is_client_logged_in()) {
         $client_id = get_client_user_id();
@@ -571,6 +566,12 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
     }
 
     $staff_id = dietetic_get_staff_user_id();
+
+    // Only super admin (user ID 1) sees all patients
+    // Other staff members (including admins) only see assigned patients
+    if (dietetic_is_admin() && $staff_id == 1) {
+        return; // Super admin sees all
+    }
 
     if ($staff_id) {
         // Join with patient_dietitians table and filter by current staff

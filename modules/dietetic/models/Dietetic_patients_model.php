@@ -87,8 +87,13 @@ class Dietetic_patients_model extends App_Model
             dietetic_apply_dietitian_filter($this->db, 'pd');
         } else {
             // Fallback to old system if table doesn't exist yet
-            if (!is_admin()) {
-                $this->db->where('p.dietitian_id', get_staff_user_id());
+            // Only show all patients to super admins (user ID 1) or users with explicit permission
+            $current_staff_id = get_staff_user_id();
+
+            // Super admin (user ID 1) sees all patients
+            // Other staff members only see their own patients
+            if (!is_admin() || $current_staff_id != 1) {
+                $this->db->where('p.dietitian_id', $current_staff_id);
             }
         }
 
