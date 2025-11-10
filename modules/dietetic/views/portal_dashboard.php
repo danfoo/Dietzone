@@ -1194,13 +1194,12 @@ body {
 .weight-goal-card {
     background: #BAE2E1;
     border-radius: 24px;
-    padding: 32px 28px;
+    padding: 24px 20px;
     margin-bottom: 30px;
     color: #2c3e50;
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(44, 95, 111, 0.15);
-    min-height: 220px;
     display: flex;
     flex-direction: column;
 }
@@ -1220,7 +1219,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     position: relative;
     z-index: 1;
 }
@@ -1230,16 +1229,16 @@ body {
     align-items: center;
     gap: 6px;
     background: rgba(245, 165, 74, 0.25);
-    padding: 6px 16px;
+    padding: 5px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #d67f3a;
     white-space: nowrap;
 }
 
 .weight-goal-status i {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .weight-goal-status.achieved {
@@ -1270,72 +1269,72 @@ body {
 .weight-values-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 16px;
     position: relative;
     z-index: 1;
 }
 
 .weight-value-compact {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.5);
+    background: white;
     border-radius: 12px;
-    border-left: 3px solid #01807B;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    padding: 16px 12px;
+    text-align: center;
+    border: none;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .weight-value-compact:hover {
-    background: rgba(255, 255, 255, 0.7);
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .weight-value-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    border-radius: 12px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    font-size: 20px;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
     box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
 }
 
 .weight-value-icon i {
-    font-size: 24px;
+    font-size: 20px;
     color: white;
 }
 
-.weight-value-content {
-    flex: 1;
-}
-
-.weight-value-compact-label {
-    font-size: 11px;
-    color: #4a5568;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-}
-
 .weight-value-compact-number {
-    font-size: 24px;
-    font-weight: 700;
-    color: #2c3e50;
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #212529;
+    line-height: 1;
+    margin: 0 0 6px 0;
 }
 
 .weight-value-compact-unit {
-    font-size: 14px;
-    color: #4a5568;
+    font-size: 12px;
+    color: #6c757d;
     font-weight: 600;
+}
+
+.weight-value-compact-label {
+    font-size: 10px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .weight-arrow-compact {
@@ -1344,37 +1343,35 @@ body {
 
 .weight-remaining-simple {
     text-align: center;
-    margin-bottom: 20px;
-    padding: 18px;
+    margin-bottom: 12px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
-    border-left: 3px solid #01807B;
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
 }
 
 .weight-remaining-simple-text {
-    font-size: 11px;
+    font-size: 10px;
     color: #4a5568;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .weight-remaining-simple-value {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     color: #2c3e50;
 }
 
 .progress-gauge-container {
-    margin-bottom: 20px;
-    padding: 18px;
+    margin-bottom: 12px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
-    border-left: 3px solid #01807B;
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
@@ -1384,12 +1381,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     gap: 12px;
 }
 
 .progress-gauge-label {
-    font-size: 11px;
+    font-size: 10px;
     color: #4a5568;
     font-weight: 700;
     text-transform: uppercase;
@@ -1401,18 +1398,18 @@ body {
 
 .progress-gauge-label i {
     color: #01807B;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .progress-gauge-percent {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: #2c3e50;
 }
 
 .progress-gauge-bar {
     position: relative;
-    height: 12px;
+    height: 10px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 10px;
     overflow: hidden;
@@ -1443,8 +1440,8 @@ body {
 }
 
 .weight-motivation-simple {
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 13px;
+    line-height: 1.5;
     font-weight: 600;
     text-align: center;
     color: #2c3e50;
@@ -1634,26 +1631,20 @@ if (!$current_weight || !$target_weight) {
             <div class="weight-value-icon">
                 <i class="fa fa-balance-scale"></i>
             </div>
-            <div class="weight-value-content">
-                <div class="weight-value-compact-label">Poids actuel</div>
-                <div class="weight-value-compact-number">
-                    <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?>
-                    <span class="weight-value-compact-unit">kg</span>
-                </div>
+            <div class="weight-value-compact-number">
+                <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
             </div>
+            <div class="weight-value-compact-label">Poids actuel</div>
         </div>
 
         <div class="weight-value-compact">
             <div class="weight-value-icon">
                 <i class="fa fa-bullseye"></i>
             </div>
-            <div class="weight-value-content">
-                <div class="weight-value-compact-label">Poids cible</div>
-                <div class="weight-value-compact-number">
-                    <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?>
-                    <span class="weight-value-compact-unit">kg</span>
-                </div>
+            <div class="weight-value-compact-number">
+                <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
             </div>
+            <div class="weight-value-compact-label">Poids cible</div>
         </div>
     </div>
 
