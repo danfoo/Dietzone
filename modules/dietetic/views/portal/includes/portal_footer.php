@@ -72,16 +72,12 @@
             if (slideMenu.classList.contains('active')) {
                 closeMenu();
             } else {
+                // Close notifications if open
+                const notificationPanel = document.getElementById('notificationPanel');
+                if (notificationPanel && notificationPanel.classList.contains('active')) {
+                    notificationPanel.classList.remove('active');
+                }
                 openMenu();
-            }
-        });
-
-        menuOverlay.addEventListener('click', closeMenu);
-
-        // Close menu on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && slideMenu.classList.contains('active')) {
-                closeMenu();
             }
         });
 
@@ -104,21 +100,32 @@
         // NOTIFICATION BUTTON FUNCTIONALITY
         // ============================================
         const notificationBtn = document.getElementById('notificationBtn');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const notificationClose = document.getElementById('notificationClose');
+
+        function openNotifications() {
+            notificationPanel.classList.add('active');
+            menuOverlay.classList.add('active');
+        }
+
+        function closeNotifications() {
+            notificationPanel.classList.remove('active');
+            if (!slideMenu.classList.contains('active')) {
+                menuOverlay.classList.remove('active');
+            }
+        }
 
         if (notificationBtn) {
             notificationBtn.addEventListener('click', function() {
-                // Check if notification preferences page exists
-                <?php
-                $CI_notif = &get_instance();
-                if ($CI_notif->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
-                ?>
-                    window.location.href = '<?php echo site_url('dietetic/portal/notification_preferences'); ?>';
-                <?php } else { ?>
-                    // Fallback: show simple alert or redirect to profile
-                    alert('Vous avez 3 nouvelles notifications');
-                    // Or redirect to profile/dashboard
-                    // window.location.href = '<?php echo site_url('dietetic/portal'); ?>';
-                <?php } ?>
+                if (notificationPanel.classList.contains('active')) {
+                    closeNotifications();
+                } else {
+                    // Close menu if open
+                    if (slideMenu.classList.contains('active')) {
+                        closeMenu();
+                    }
+                    openNotifications();
+                }
             });
 
             // Add touch feedback for notification button
@@ -129,6 +136,30 @@
                 this.style.opacity = '';
             });
         }
+
+        if (notificationClose) {
+            notificationClose.addEventListener('click', closeNotifications);
+        }
+
+        // Close notifications when clicking overlay
+        menuOverlay.addEventListener('click', function() {
+            if (notificationPanel.classList.contains('active')) {
+                closeNotifications();
+            } else {
+                closeMenu();
+            }
+        });
+
+        // Close menu or notifications on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (notificationPanel && notificationPanel.classList.contains('active')) {
+                    closeNotifications();
+                } else if (slideMenu.classList.contains('active')) {
+                    closeMenu();
+                }
+            }
+        });
     </script>
 </body>
 </html>

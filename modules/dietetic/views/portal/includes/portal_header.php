@@ -39,7 +39,7 @@
             left: 0;
             right: 0;
             height: 60px;
-            background: white;
+            background: #f8f9fa;
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -139,6 +139,141 @@
             justify-content: center;
             padding: 0 4px;
             box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
+        }
+
+        /* Notification Panel */
+        .notification-panel {
+            position: fixed;
+            top: 60px;
+            right: -350px;
+            width: 320px;
+            max-height: calc(100vh - 120px);
+            background: white;
+            z-index: 999;
+            transition: right 0.3s ease;
+            box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 12px 0 0 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notification-panel.active {
+            right: 0;
+        }
+
+        .notification-panel-header {
+            background: #01807B;
+            color: white;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification-panel-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .notification-panel-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .notification-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border-left: 4px solid #01807B;
+            transition: all 0.2s;
+        }
+
+        .notification-item:hover {
+            background: #e9ecef;
+            transform: translateX(-4px);
+        }
+
+        .notification-item.unread {
+            background: #e8f5f4;
+            border-left-color: #ff4757;
+        }
+
+        .notification-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .notification-item-icon {
+            width: 36px;
+            height: 36px;
+            background: #01807B;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .notification-item-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .notification-item-time {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .notification-item-message {
+            font-size: 13px;
+            color: #495057;
+            line-height: 1.4;
+            padding-left: 46px;
+        }
+
+        .notification-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .notification-empty i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 480px) {
+            .notification-panel {
+                width: 100%;
+                right: -100%;
+                border-radius: 0;
+            }
         }
 
         /* Menu Overlay */
@@ -419,5 +554,64 @@
             </a>
         </div>
     </nav>
+
+    <!-- NOTIFICATION PANEL -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <span>Notifications</span>
+            <button class="notification-panel-close" id="notificationClose">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="notification-panel-content">
+            <!-- Exemple de notifications (à remplacer dynamiquement) -->
+            <div class="notification-item unread">
+                <div class="notification-item-header">
+                    <div class="notification-item-icon">
+                        <i class="fa fa-cutlery"></i>
+                    </div>
+                    <div class="notification-item-title">Nouveau plan de repas</div>
+                    <div class="notification-item-time">Il y a 2h</div>
+                </div>
+                <div class="notification-item-message">
+                    Votre diététicien vous a assigné un nouveau plan de repas pour cette semaine.
+                </div>
+            </div>
+
+            <div class="notification-item unread">
+                <div class="notification-item-header">
+                    <div class="notification-item-icon">
+                        <i class="fa fa-calendar"></i>
+                    </div>
+                    <div class="notification-item-title">Rappel de consultation</div>
+                    <div class="notification-item-time">Il y a 5h</div>
+                </div>
+                <div class="notification-item-message">
+                    Votre prochaine consultation est prévue demain à 14h00.
+                </div>
+            </div>
+
+            <div class="notification-item unread">
+                <div class="notification-item-header">
+                    <div class="notification-item-icon">
+                        <i class="fa fa-line-chart"></i>
+                    </div>
+                    <div class="notification-item-title">Objectif atteint</div>
+                    <div class="notification-item-time">Hier</div>
+                </div>
+                <div class="notification-item-message">
+                    Félicitations ! Vous avez atteint votre objectif de poids cette semaine.
+                </div>
+            </div>
+
+            <!-- Vide state (à afficher si aucune notification) -->
+            <!--
+            <div class="notification-empty">
+                <i class="fa fa-bell-slash"></i>
+                <p>Aucune notification</p>
+            </div>
+            -->
+        </div>
+    </div>
 
     <div class="content-container">
