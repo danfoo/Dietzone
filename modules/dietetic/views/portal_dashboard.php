@@ -1270,12 +1270,19 @@ body {
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
+    margin-left: -4px;
+    margin-right: -4px;
+}
+
+.weight-values-compact .col-xs-6 {
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 .weight-value-compact {
     background: white;
     border-radius: 12px;
-    padding: 12px;
+    padding: 10px 16px;
     text-align: center;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1283,9 +1290,9 @@ body {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    min-height: 80px;
+    min-height: 75px;
     transition: all 0.3s ease;
-    gap: 12px;
+    gap: 6px;
 }
 
 .weight-value-compact:hover {
@@ -1294,21 +1301,15 @@ body {
 }
 
 .weight-value-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
 }
 
 .weight-value-icon i {
-    font-size: 16px;
-    color: white;
+    font-size: 20px;
+    color: #01807B;
 }
 
 .weight-value-content {
