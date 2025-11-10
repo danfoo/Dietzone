@@ -1174,6 +1174,259 @@ body {
     .action-btn {
         padding: 16px 12px;
     }
+
+    .weight-goal-card {
+        margin-bottom: 24px;
+    }
+
+    .weight-values {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .weight-arrow {
+        transform: rotate(90deg);
+        margin: 8px 0;
+    }
+}
+
+/* Weight Goal Card - Clean Simple Design */
+.weight-goal-card {
+    background: #DCF4F2;
+    border-radius: 16px;
+    padding: clamp(24px, 5vw, 32px);
+    margin-bottom: 32px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.weight-goal-card:hover {
+    box-shadow: 0 8px 24px rgba(1, 128, 123, 0.12);
+}
+
+.weight-goal-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: clamp(20px, 4vw, 24px);
+}
+
+.weight-goal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: clamp(8px, 2vw, 10px) clamp(16px, 3vw, 20px);
+    border-radius: 50px;
+    font-size: clamp(11px, 2.5vw, 13px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.weight-goal-status i {
+    font-size: clamp(12px, 2.8vw, 14px);
+}
+
+.weight-goal-status.achieved {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.weight-goal-status.on-track {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.weight-goal-status.ahead {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.weight-goal-status.behind {
+    background: linear-gradient(135deg, #F3911D 0%, #dd7711 100%);
+    color: white;
+}
+
+.weight-goal-status.no-data {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    color: #4a5568;
+}
+
+.weight-values-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 3vw, 16px);
+    margin-bottom: clamp(16px, 3vw, 20px);
+    flex-wrap: wrap;
+}
+
+.weight-value-compact {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.weight-value-compact-label {
+    font-size: clamp(11px, 2.5vw, 13px);
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.weight-value-compact-number {
+    font-size: clamp(18px, 4vw, 22px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.weight-value-compact-unit {
+    font-size: clamp(12px, 2.8vw, 14px);
+    color: #718096;
+    font-weight: 600;
+}
+
+.weight-arrow-compact {
+    font-size: clamp(16px, 3.5vw, 20px);
+    color: #01807B;
+}
+
+.weight-remaining-simple {
+    text-align: center;
+    margin-bottom: clamp(16px, 3vw, 20px);
+}
+
+.weight-remaining-simple-text {
+    font-size: clamp(11px, 2.5vw, 12px);
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.weight-remaining-simple-value {
+    font-size: clamp(20px, 4.5vw, 26px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.progress-gauge-container {
+    margin-bottom: clamp(16px, 3vw, 20px);
+}
+
+.progress-gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: clamp(10px, 2vw, 12px);
+    gap: 12px;
+}
+
+.progress-gauge-label {
+    font-size: clamp(11px, 2.5vw, 13px);
+    color: #4a5568;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.progress-gauge-label i {
+    color: #01807B;
+    font-size: clamp(13px, 2.8vw, 15px);
+}
+
+.progress-gauge-percent {
+    font-size: clamp(18px, 4vw, 24px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.progress-gauge-bar {
+    position: relative;
+    height: clamp(16px, 3vw, 20px);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-gauge-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
+    border-radius: 10px;
+    transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.progress-gauge-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.weight-motivation-simple {
+    font-size: clamp(13px, 3vw, 15px);
+    line-height: 1.6;
+    font-weight: 600;
+    text-align: center;
+    color: #2d3748;
+}
+
+.weight-motivation-simple.achieved {
+    color: #1e6b39;
+}
+
+.weight-motivation-simple.on-track {
+    color: #1e40af;
+}
+
+.weight-motivation-simple.ahead {
+    color: #5b21b6;
+}
+
+.weight-motivation-simple.behind {
+    color: #92400e;
+}
+
+.weight-motivation-simple.no-data {
+    color: #4a5568;
+}
+
+.weight-motivation-simple strong {
+    font-weight: 800;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .weight-values-compact {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .weight-arrow-compact {
+        transform: rotate(90deg);
+    }
 }
 </style>
 
@@ -1182,24 +1435,187 @@ body {
     Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
 </div>
 
-<!-- Stats Cards -->
+<?php
+// === Weight Goal Progress Calculation ===
+$current_weight = $patient->latest_measurement ? $patient->latest_measurement->weight : null;
+$target_weight = $patient->target_weight;
+$initial_weight = $weight_progress->initial_weight;
+
+// Calculate remaining weight
+$weight_remaining = null;
+if ($current_weight && $target_weight) {
+    $weight_remaining = abs($current_weight - $target_weight);
+}
+
+// Calculate progress percentage
+// % = (Initial - Current) / (Initial - Target) * 100
+$progress_percent = 0;
+if ($initial_weight && $current_weight && $target_weight && $initial_weight != $target_weight) {
+    $weight_lost = $initial_weight - $current_weight;
+    $total_to_lose = $initial_weight - $target_weight;
+    $progress_percent = ($weight_lost / $total_to_lose) * 100;
+    $progress_percent = max(0, min(100, $progress_percent)); // Clamp between 0-100
+}
+
+// Calculate timeline status if program has dates
+$timeline_status = 'no-data';
+$timeline_message = '';
+$weeks_elapsed = 0;
+$weeks_total = 0;
+$expected_loss = 0;
+$actual_loss = 0;
+
+if ($active_program && $active_program->start_date && $active_program->end_date) {
+    $start = new DateTime($active_program->start_date);
+    $end = new DateTime($active_program->end_date);
+    $now = new DateTime();
+
+    $total_days = $start->diff($end)->days;
+    $elapsed_days = $start->diff($now)->days;
+
+    $weeks_total = ceil($total_days / 7);
+    $weeks_elapsed = ceil($elapsed_days / 7);
+
+    if ($weeks_total > 0 && $initial_weight && $target_weight && $current_weight) {
+        // Expected weekly loss rate
+        $total_to_lose = $initial_weight - $target_weight;
+        $weekly_loss_rate = $total_to_lose / $weeks_total;
+
+        // Expected loss by now
+        $expected_loss = $weekly_loss_rate * $weeks_elapsed;
+
+        // Actual loss
+        $actual_loss = $initial_weight - $current_weight;
+
+        // Determine status
+        $difference = $actual_loss - $expected_loss;
+
+        if ($difference >= 0.5) {
+            $timeline_status = 'ahead';
+        } elseif ($difference <= -0.5) {
+            $timeline_status = 'behind';
+        } else {
+            $timeline_status = 'on-track';
+        }
+    }
+}
+
+// Determine overall status
+$overall_status = 'no-data';
+$status_icon = 'fa-circle';
+
+if (!$current_weight || !$target_weight) {
+    $overall_status = 'no-data';
+    $status_icon = 'fa-exclamation-circle';
+} elseif ($progress_percent >= 100) {
+    $overall_status = 'achieved';
+    $status_icon = 'fa-trophy';
+} elseif ($progress_percent >= 80 || $weight_remaining <= 2) {
+    $overall_status = 'achieved'; // Close enough
+    $status_icon = 'fa-check-circle';
+} else {
+    $overall_status = $timeline_status;
+    if ($timeline_status == 'ahead') {
+        $status_icon = 'fa-rocket';
+    } elseif ($timeline_status == 'on-track') {
+        $status_icon = 'fa-check';
+    } elseif ($timeline_status == 'behind') {
+        $status_icon = 'fa-clock';
+    } else {
+        $status_icon = 'fa-circle';
+    }
+}
+
+// Generate motivation message
+$motivation_message = '';
+if (!$current_weight || !$target_weight) {
+    $motivation_message = 'Entrez votre poids de la semaine pour mettre à jour votre progression.';
+} elseif ($progress_percent >= 100) {
+    $motivation_message = '🎉 <strong>Félicitations !</strong> Objectif atteint.';
+} elseif ($weight_remaining <= 2) {
+    $motivation_message = '<strong>Presque au but</strong> — plus que ' . number_format($weight_remaining, 1) . ' kg.';
+} elseif ($timeline_status == 'ahead') {
+    $ahead_percent = $expected_loss > 0 ? abs(round(($actual_loss - $expected_loss) / $expected_loss * 100)) : 0;
+    $motivation_message = '<strong>Excellent !</strong> Vous devancez le planning de ' . $ahead_percent . ' %.';
+} elseif ($timeline_status == 'on-track') {
+    $end_date = $active_program && $active_program->end_date ? date('d/m', strtotime($active_program->end_date)) : '';
+    $motivation_message = '<strong>Solide !</strong> Vous êtes dans les temps' . ($end_date ? ' pour le ' . $end_date : '') . '.';
+} elseif ($timeline_status == 'behind') {
+    $behind_kg = abs(round($actual_loss - $expected_loss, 1));
+    $motivation_message = '<strong>Courage</strong> — encore ' . $behind_kg . ' kg à rattraper pour revenir dans les temps.';
+} else {
+    $motivation_message = '<strong>Continue comme ça !</strong> Vous progressez vers votre objectif.';
+}
+?>
+
+<!-- Weight Goal Card -->
+<div class="weight-goal-card">
+    <div class="weight-goal-header">
+        <div class="weight-goal-status <?php echo $overall_status; ?>">
+            <i class="fa <?php echo $status_icon; ?>"></i>
+            <?php
+            if ($overall_status == 'achieved') {
+                echo 'Objectif atteint';
+            } elseif ($overall_status == 'ahead') {
+                echo 'En avance';
+            } elseif ($overall_status == 'on-track') {
+                echo 'Dans les temps';
+            } elseif ($overall_status == 'behind') {
+                echo 'En retard';
+            } else {
+                echo 'En cours';
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="weight-values-compact">
+        <div class="weight-value-compact">
+            <span class="weight-value-compact-label">Poids actuel :</span>
+            <span class="weight-value-compact-number"><?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?></span>
+            <span class="weight-value-compact-unit">kg</span>
+        </div>
+
+        <div class="weight-arrow-compact">
+            <i class="fa fa-long-arrow-right"></i>
+        </div>
+
+        <div class="weight-value-compact">
+            <span class="weight-value-compact-label">Poids cible :</span>
+            <span class="weight-value-compact-number"><?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?></span>
+            <span class="weight-value-compact-unit">kg</span>
+        </div>
+    </div>
+
+    <?php if ($weight_remaining !== null) { ?>
+    <div class="weight-remaining-simple">
+        <div class="weight-remaining-simple-text">Encore à perdre</div>
+        <div class="weight-remaining-simple-value"><?php echo number_format($weight_remaining, 1); ?> kg</div>
+    </div>
+    <?php } ?>
+
+    <?php if ($current_weight && $target_weight) { ?>
+    <div class="progress-gauge-container">
+        <div class="progress-gauge-header">
+            <div class="progress-gauge-label">
+                <i class="fa fa-chart-line"></i>
+                Progression
+            </div>
+            <div class="progress-gauge-percent"><?php echo round($progress_percent); ?>%</div>
+        </div>
+        <div class="progress-gauge-bar">
+            <div class="progress-gauge-fill" style="width: <?php echo round($progress_percent); ?>%;"></div>
+        </div>
+    </div>
+    <?php } ?>
+
+    <div class="weight-motivation-simple <?php echo $overall_status; ?>">
+        <?php echo $motivation_message; ?>
+    </div>
+</div>
+
+<!-- Other Stats Cards -->
 <div class="stats-grid">
-    <div class="stat-card weight">
-        <div class="stat-icon">
-            <i class="fa fa-balance-scale"></i>
-        </div>
-        <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
-        <div class="stat-label">Poids actuel</div>
-    </div>
-
-    <div class="stat-card target">
-        <div class="stat-icon">
-            <i class="fa fa-bullseye"></i>
-        </div>
-        <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
-        <div class="stat-label">Objectif</div>
-    </div>
-
     <div class="stat-card bmi">
         <div class="stat-icon">
             <i class="fa fa-heartbeat"></i>

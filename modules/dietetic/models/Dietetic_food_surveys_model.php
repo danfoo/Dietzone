@@ -393,7 +393,7 @@ class Dietetic_food_surveys_model extends App_Model
      * Get recommendations by meal type for an entry
      *
      * @param int $entry_id
-     * @return array Array with keys 'breakfast', 'lunch', 'dinner', 'global'
+     * @return array Array with keys 'breakfast', 'lunch', 'dinner', 'snack', 'global'
      */
     public function get_recommendations_by_meal($entry_id)
     {
@@ -403,6 +403,7 @@ class Dietetic_food_surveys_model extends App_Model
             'breakfast' => [],
             'lunch' => [],
             'dinner' => [],
+            'snack' => [],
             'global' => []
         ];
 

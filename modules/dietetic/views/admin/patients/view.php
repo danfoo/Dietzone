@@ -470,7 +470,7 @@
                             <h4 class="pull-left" style="border-bottom: 3px solid #16a085; padding-bottom: 10px; margin-bottom: 15px;">
                                 <i class="fa fa-users" style="color: #16a085;"></i> Diététiciens Assignés
                             </h4>
-                            <?php if (is_admin() && isset($patient->dietitians_count)) { ?>
+                            <?php if ((is_admin() || dietetic_can_access_patient($patient->id)) && isset($patient->dietitians_count)) { ?>
                                 <button class="btn btn-success btn-xs pull-right" onclick="openAssignDietitianModal()" style="margin-top: 8px;">
                                     <i class="fa fa-plus"></i> Assigner
                                 </button>
@@ -482,7 +482,7 @@
                             <?php foreach ($patient->dietitians as $dietitian) { ?>
                                 <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-left: 4px solid <?php echo $dietitian->is_primary ? '#16a085' : '#95a5a6'; ?>; border-radius: 5px;">
                                     <div class="row">
-                                        <div class="col-xs-<?php echo is_admin() ? '8' : '12'; ?>">
+                                        <div class="col-xs-<?php echo (is_admin() || dietetic_can_access_patient($patient->id)) ? '8' : '12'; ?>">
                                             <strong style="color: #2c3e50;">
                                                 <i class="fa fa-user-md"></i> <?php echo $dietitian->firstname . ' ' . $dietitian->lastname; ?>
                                                 <?php if ($dietitian->is_primary) { ?>
@@ -500,7 +500,7 @@
                                                 <br /><small class="text-muted"><i class="fa fa-sticky-note-o"></i> <?php echo $dietitian->notes; ?></small>
                                             <?php } ?>
                                         </div>
-                                        <?php if (is_admin()) { ?>
+                                        <?php if (is_admin() || dietetic_can_access_patient($patient->id)) { ?>
                                             <div class="col-xs-4 text-right">
                                                 <?php if (!$dietitian->is_primary) { ?>
                                                     <button class="btn btn-info btn-xs" onclick="setPrimaryDietitian(<?php echo $dietitian->dietitian_id; ?>)" title="Définir comme principal" style="margin-bottom: 3px;">

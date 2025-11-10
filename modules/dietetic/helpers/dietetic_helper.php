@@ -513,38 +513,60 @@ function dietetic_get_staff_user_id()
  */
 function dietetic_can_access_patient($patient_id, $dietitian_id = null)
 {
-    // Admins can access all patients
-    if (dietetic_is_admin()) {
-        return true;
-    }
+    try {
+        $CI = &get_instance();
 
-    $CI = &get_instance();
+        // Check if this is a client (patient) accessing their own data
+        if (is_client_logged_in()) {
+            $client_id = get_client_user_id();
 
-    // Check if this is a client (patient) accessing their own data
-    if (is_client_logged_in()) {
-        $client_id = get_client_user_id();
+            // Query database directly to avoid model conflicts
+            $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
 
-        // Query database directly to avoid model conflicts
-        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
+                // Patient is accessing their own data
+                return true;
+            }
+        }
 
-        if ($patient && isset($patient->client_id) && (int)$patient->client_id === (int)$client_id) {
-            // Patient is accessing their own data
+        // Only super admin (user ID 1) can access all patients
+        // Other admins must be assigned to the patient
+        if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
             return true;
         }
-    }
 
-    // Check staff access
-    if ($dietitian_id === null) {
-        $dietitian_id = dietetic_get_staff_user_id();
-    }
+        // Check staff access
+        if ($dietitian_id === null) {
+            $dietitian_id = dietetic_get_staff_user_id();
+        }
 
-    if (!$dietitian_id) {
+        if (!$dietitian_id) {
+            return false;
+        }
+
+        // Check if patient_dietitians table exists
+        if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            // Fallback to old system - check dietitian_id in patients table
+            $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
+        }
+
+        // Check access in patient_dietitians table first
+        $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        if ($CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id)) {
+            return true;
+        }
+
+        // Fallback: If no assignment found, check dietitian_id in patients table
+        // This handles patients created before the many-to-many system or missing assignments
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        return $patient && (int)$patient->dietitian_id === (int)$dietitian_id;
+    } catch (Exception $e) {
+        // Log error and deny access by default
+        log_activity('Error in dietetic_can_access_patient: ' . $e->getMessage());
         return false;
     }
-
-    $CI->load->model('dietetic/dietetic_patient_dietitians_model');
-
-    return $CI->dietetic_patient_dietitians_model->has_access($patient_id, $dietitian_id);
 }
 
 /**
@@ -557,11 +579,6 @@ function dietetic_can_access_patient($patient_id, $dietitian_id = null)
  */
 function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
 {
-    // Admins see all patients
-    if (dietetic_is_admin()) {
-        return;
-    }
-
     // Check if this is a client (patient) accessing their own data
     if (is_client_logged_in()) {
         $client_id = get_client_user_id();
@@ -572,12 +589,25 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
 
     $staff_id = dietetic_get_staff_user_id();
 
+    // Only super admin (user ID 1) sees all patients
+    // Other staff members (including admins) only see assigned patients
+    if (dietetic_is_admin() && $staff_id == 1) {
+        return; // Super admin sees all
+    }
+
     if ($staff_id) {
-        // Join with patient_dietitians table and filter by current staff
+        // Use LEFT JOIN to include patients without assignments
+        // This handles both the new system (patient_dietitians) and old system (dietitian_id field)
         $db->join(db_prefix() . 'dietic_patient_dietitians ' . $table_alias,
-                  $table_alias . '.patient_id = p.id', 'inner');
+                  $table_alias . '.patient_id = p.id AND ' . $table_alias . '.status = "active"', 'left');
+
+        // Show patients where EITHER:
+        // 1. Staff is assigned in patient_dietitians table (new system)
+        // 2. Staff matches the dietitian_id field (old system / fallback)
+        $db->group_start();
         $db->where($table_alias . '.dietitian_id', $staff_id);
-        $db->where($table_alias . '.status', 'active');
+        $db->or_where('p.dietitian_id', $staff_id);
+        $db->group_end();
     } else {
         // No staff user and not a client = no access
         $db->where('1', '0'); // Always false
@@ -592,8 +622,8 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
  */
 function dietetic_get_accessible_patient_ids($dietitian_id = null)
 {
-    // Admins see all patients
-    if (dietetic_is_admin()) {
+    // Only super admin (user ID 1) sees all patients
+    if (dietetic_is_admin() && dietetic_get_staff_user_id() == 1) {
         return null; // null means "all patients"
     }
 
@@ -606,6 +636,21 @@ function dietetic_get_accessible_patient_ids($dietitian_id = null)
     }
 
     $CI = &get_instance();
+
+    // Check if patient_dietitians table exists
+    if (!$CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+        // Fallback to old system - query patients table directly
+        $CI->db->select('id');
+        $CI->db->where('dietitian_id', $dietitian_id);
+        $results = $CI->db->get(db_prefix() . 'dietic_patients')->result();
+
+        $patient_ids = [];
+        foreach ($results as $row) {
+            $patient_ids[] = $row->id;
+        }
+        return $patient_ids;
+    }
+
     $CI->load->model('dietetic/dietetic_patient_dietitians_model');
 
     $assignments = $CI->dietetic_patient_dietitians_model->get_dietitian_patients($dietitian_id, 'active');
