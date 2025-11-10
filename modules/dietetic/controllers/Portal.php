@@ -356,38 +356,12 @@ class Portal extends App_Controller
 
                 log_activity('Portal add_measurement - Measurement saved successfully: ' . $measurement_id);
 
-                // Try to check milestones (non-blocking)
-                if ($this->db->table_exists(db_prefix() . 'dietic_milestones')) {
-                    try {
-                        $this->load->model('dietetic/dietetic_notifications_model');
-                        $this->dietetic_notifications_model->check_milestones($patient->id);
-                    } catch (Exception $e) {
-                        log_activity('Portal add_measurement - Milestone check error: ' . $e->getMessage());
-                    }
-                }
-
-                // Try to notify dietitian (non-blocking)
-                if (!empty($patient->dietitian_id)) {
-                    try {
-                        $this->load->model('clients_model');
-                        $client = $this->clients_model->get($patient->client_id);
-                        $patient_name = $client ? $client->company : 'Patient';
-
-                        if (function_exists('dietetic_notify_measurement_added')) {
-                            dietetic_notify_measurement_added(
-                                $patient->id,
-                                $patient->dietitian_id,
-                                $patient_name,
-                                $weight
-                            );
-                        }
-                    } catch (Exception $e) {
-                        log_activity('Portal add_measurement - Notification error: ' . $e->getMessage());
-                    }
-                }
-
-                // Return success response
+                // AJAX request response
                 if ($this->input->is_ajax_request()) {
+                    // Clear any output buffers for AJAX
+                    while (ob_get_level() > 0) {
+                        ob_end_clean();
+                    }
                     header('Content-Type: application/json');
                     echo json_encode([
                         'success' => true,
@@ -397,17 +371,18 @@ class Portal extends App_Controller
                     die();
                 }
 
-                // Redirect with success message - Use direct header to avoid _remap issues
-                $this->session->set_flashdata('success', 'Mesure ajoutée avec succès!');
-
-                // Stop all output buffering
+                // For regular form submission - immediate redirect
+                // Clear all output buffers first
                 while (ob_get_level() > 0) {
                     ob_end_clean();
                 }
 
-                // Send redirect header
+                // Set success message in session
+                $_SESSION['message-success'] = 'Mesure ajoutée avec succès!';
+
+                // Immediate redirect without any further processing
                 header('Location: ' . site_url('dietetic/portal/measurements'), true, 302);
-                die();
+                exit(0);
 
             } catch (Exception $e) {
                 log_activity('Portal add_measurement - Error: ' . $e->getMessage());
