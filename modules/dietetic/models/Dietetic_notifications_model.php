@@ -8,6 +8,7 @@ class Dietetic_notifications_model extends App_Model
     private $table_logs = 'dietic_notification_logs';
     private $table_milestones = 'dietic_milestones';
     private $table_settings = 'dietic_notification_settings';
+    private $table_patient_notifications = 'dietic_patient_notifications';
 
     public function __construct()
     {
@@ -125,13 +126,14 @@ class Dietetic_notifications_model extends App_Model
         $message .= "🔗 " . site_url('dietetic/portal/measurements/add') . "\n\n";
         $message .= "Courage, vous faites du super travail ! 💪";
 
-        $result = $this->send_notification([
+        $result = $this->send_notification_with_frontend([
             'patient_id' => $patient->patient_id,
             'type' => 'reminder_weight',
             'subject' => '⚖️ Rappel : Pesée Hebdomadaire',
             'message' => $message,
             'email' => $patient->email,
             'phone' => $patient->phonenumber,
+            'url' => site_url('dietetic/portal/add_measurement'),
             'channels' => [
                 'email' => $patient->channel_email,
                 'sms' => $patient->channel_sms,
@@ -1331,5 +1333,181 @@ class Dietetic_notifications_model extends App_Model
         $stats['this_month'] = $this->db->count_all_results(db_prefix() . $this->table_milestones);
 
         return $stats;
+    }
+
+    // ==================== PATIENT NOTIFICATIONS (FRONTEND) ====================
+
+    /**
+     * Create a patient notification for frontend display
+     */
+    public function create_patient_notification($patient_id, $data)
+    {
+        $notification_data = [
+            'patient_id' => $patient_id,
+            'notification_type' => $data['type'],
+            'title' => $data['title'],
+            'message' => $data['message'],
+            'icon' => $data['icon'] ?? 'fa-bell',
+            'url' => $data['url'] ?? null,
+            'is_read' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($this->db->insert(db_prefix() . $this->table_patient_notifications, $notification_data)) {
+            return $this->db->insert_id();
+        }
+
+        return false;
+    }
+
+    /**
+     * Get patient notifications for frontend
+     */
+    public function get_patient_notifications($patient_id, $limit = 50, $unread_only = false)
+    {
+        $this->db->select('*');
+        $this->db->from(db_prefix() . $this->table_patient_notifications);
+        $this->db->where('patient_id', $patient_id);
+
+        if ($unread_only) {
+            $this->db->where('is_read', 0);
+        }
+
+        $this->db->order_by('created_at', 'DESC');
+        $this->db->limit($limit);
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get unread notification count for patient
+     */
+    public function get_unread_count($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 0);
+        return $this->db->count_all_results(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function mark_as_read($notification_id, $patient_id)
+    {
+        $this->db->where('id', $notification_id);
+        $this->db->where('patient_id', $patient_id);
+        return $this->db->update(db_prefix() . $this->table_patient_notifications, [
+            'is_read' => 1,
+            'read_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    /**
+     * Mark all notifications as read for patient
+     */
+    public function mark_all_as_read($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 0);
+        return $this->db->update(db_prefix() . $this->table_patient_notifications, [
+            'is_read' => 1,
+            'read_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    /**
+     * Delete a patient notification
+     */
+    public function delete_patient_notification($notification_id, $patient_id)
+    {
+        $this->db->where('id', $notification_id);
+        $this->db->where('patient_id', $patient_id);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Delete all read notifications for patient (cleanup)
+     */
+    public function delete_all_read($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 1);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Delete old notifications (older than X days)
+     */
+    public function delete_old_notifications($days = 30)
+    {
+        $cutoff_date = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        $this->db->where('created_at <', $cutoff_date);
+        $this->db->where('is_read', 1);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    // ==================== EXTENDED NOTIFICATION SENDING (with frontend creation) ====================
+
+    /**
+     * Enhanced send_notification that also creates frontend notification
+     */
+    public function send_notification_with_frontend($params)
+    {
+        // Send via channels (email, sms, whatsapp, push)
+        $results = $this->send_notification($params);
+
+        // Also create frontend notification
+        $frontend_created = $this->create_patient_notification($params['patient_id'], [
+            'type' => $params['type'],
+            'title' => $params['subject'],
+            'message' => $this->format_message_for_frontend($params['message']),
+            'icon' => $this->get_icon_for_type($params['type']),
+            'url' => $params['url'] ?? null
+        ]);
+
+        $results['frontend'] = $frontend_created !== false;
+
+        return $results;
+    }
+
+    /**
+     * Format message for frontend display (remove excessive newlines, limit length)
+     */
+    private function format_message_for_frontend($message)
+    {
+        // Remove excessive newlines
+        $message = preg_replace("/\n{3,}/", "\n\n", $message);
+
+        // Limit to 200 characters for preview
+        if (strlen($message) > 200) {
+            $message = substr($message, 0, 197) . '...';
+        }
+
+        return trim($message);
+    }
+
+    /**
+     * Get appropriate icon for notification type
+     */
+    private function get_icon_for_type($type)
+    {
+        $icons = [
+            'reminder_weight' => 'fa-balance-scale',
+            'reminder_water' => 'fa-tint',
+            'milestone' => 'fa-trophy',
+            'program_assigned' => 'fa-clipboard',
+            'program_updated' => 'fa-refresh',
+            'program_ending' => 'fa-clock-o',
+            'consultation_scheduled' => 'fa-calendar-plus-o',
+            'consultation_reminder_day' => 'fa-calendar',
+            'consultation_reminder_hour' => 'fa-clock-o',
+            'consultation_cancelled' => 'fa-calendar-times-o',
+            'recommendation_added' => 'fa-lightbulb-o',
+            'comment_added' => 'fa-comment',
+            'food_entry_reminder' => 'fa-cutlery',
+            'default' => 'fa-bell'
+        ];
+
+        return $icons[$type] ?? $icons['default'];
     }
 }

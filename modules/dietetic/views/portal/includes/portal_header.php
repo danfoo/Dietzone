@@ -531,7 +531,7 @@
 
         <button class="notification-btn" id="notificationBtn">
             <i class="fa fa-bell"></i>
-            <span class="notification-badge">3</span>
+            <span class="notification-badge" style="display: none;">0</span>
         </button>
     </header>
 
@@ -622,62 +622,11 @@
             </button>
         </div>
         <div class="notification-panel-content">
-            <!-- Exemple de notifications (à remplacer dynamiquement) -->
-            <div class="notification-item unread" data-notification-id="1">
-                <button class="notification-item-delete" onclick="deleteNotification(this)">
-                    <i class="fa fa-times"></i>
-                </button>
-                <div class="notification-item-header">
-                    <div class="notification-item-icon">
-                        <i class="fa fa-cutlery"></i>
-                    </div>
-                    <div class="notification-item-title">Nouveau plan de repas</div>
-                    <div class="notification-item-time">Il y a 2h</div>
-                </div>
-                <div class="notification-item-message">
-                    Votre diététicien vous a assigné un nouveau plan de repas pour cette semaine.
-                </div>
-            </div>
-
-            <div class="notification-item unread" data-notification-id="2">
-                <button class="notification-item-delete" onclick="deleteNotification(this)">
-                    <i class="fa fa-times"></i>
-                </button>
-                <div class="notification-item-header">
-                    <div class="notification-item-icon">
-                        <i class="fa fa-calendar"></i>
-                    </div>
-                    <div class="notification-item-title">Rappel de consultation</div>
-                    <div class="notification-item-time">Il y a 5h</div>
-                </div>
-                <div class="notification-item-message">
-                    Votre prochaine consultation est prévue demain à 14h00.
-                </div>
-            </div>
-
-            <div class="notification-item unread" data-notification-id="3">
-                <button class="notification-item-delete" onclick="deleteNotification(this)">
-                    <i class="fa fa-times"></i>
-                </button>
-                <div class="notification-item-header">
-                    <div class="notification-item-icon">
-                        <i class="fa fa-line-chart"></i>
-                    </div>
-                    <div class="notification-item-title">Objectif atteint</div>
-                    <div class="notification-item-time">Hier</div>
-                </div>
-                <div class="notification-item-message">
-                    Félicitations ! Vous avez atteint votre objectif de poids cette semaine.
-                </div>
-            </div>
-
-            <!-- Vide state (à afficher si aucune notification) -->
-            <!--
+            <!-- Les notifications seront chargées dynamiquement via JavaScript -->
             <div class="notification-empty">
-                <i class="fa fa-bell-slash"></i>
-                <p>Aucune notification</p>
+                <i class="fa fa-spinner fa-spin"></i>
+                <p>Chargement...</p>
             </div>
-            -->
         </div>
         <?php
         // Add settings link if notification preferences exist

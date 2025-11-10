@@ -62,7 +62,11 @@ class Portal extends App_Controller
             'save_notification_preferences',
             'save_fcm_token',
             'delete_fcm_token',
-            'get_firebase_config'
+            'get_firebase_config',
+            'get_notifications',
+            'delete_notification',
+            'mark_notification_read',
+            'mark_all_notifications_read'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -1984,6 +1988,270 @@ class Portal extends App_Controller
                 'success' => false,
                 'message' => 'Token not found or already deleted'
             ]);
+        }
+    }
+
+    // ==================== NOTIFICATIONS API ====================
+
+    /**
+     * Get patient notifications (AJAX)
+     */
+    public function get_notifications()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient not found'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Get limit from query parameter
+        $limit = $this->input->get('limit') ? (int)$this->input->get('limit') : 50;
+        $unread_only = $this->input->get('unread_only') === 'true';
+
+        // Get notifications
+        $notifications = $this->dietetic_notifications_model->get_patient_notifications(
+            $patient->id,
+            $limit,
+            $unread_only
+        );
+
+        // Get unread count
+        $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+        // Format notifications for frontend
+        $formatted_notifications = [];
+        foreach ($notifications as $notification) {
+            $formatted_notifications[] = [
+                'id' => $notification->id,
+                'type' => $notification->notification_type,
+                'title' => $notification->title,
+                'message' => $notification->message,
+                'icon' => $notification->icon,
+                'url' => $notification->url,
+                'is_read' => (bool)$notification->is_read,
+                'time_ago' => $this->time_ago($notification->created_at),
+                'created_at' => $notification->created_at
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'notifications' => $formatted_notifications,
+            'unread_count' => $unread_count,
+            'total' => count($formatted_notifications)
+        ]);
+    }
+
+    /**
+     * Delete a notification (AJAX)
+     */
+    public function delete_notification()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient not found'
+            ]);
+            return;
+        }
+
+        // Get notification ID from POST
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (empty($data['notification_id'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Notification ID is required'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Delete notification
+        $result = $this->dietetic_notifications_model->delete_patient_notification(
+            $data['notification_id'],
+            $patient->id
+        );
+
+        if ($result) {
+            // Get updated unread count
+            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Notification deleted',
+                'unread_count' => $unread_count
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Notification not found or already deleted'
+            ]);
+        }
+    }
+
+    /**
+     * Mark notification as read (AJAX)
+     */
+    public function mark_notification_read()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient not found'
+            ]);
+            return;
+        }
+
+        // Get notification ID from POST
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (empty($data['notification_id'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Notification ID is required'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Mark as read
+        $result = $this->dietetic_notifications_model->mark_as_read(
+            $data['notification_id'],
+            $patient->id
+        );
+
+        if ($result) {
+            // Get updated unread count
+            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Notification marked as read',
+                'unread_count' => $unread_count
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Notification not found'
+            ]);
+        }
+    }
+
+    /**
+     * Mark all notifications as read (AJAX)
+     */
+    public function mark_all_notifications_read()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Patient not found'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        // Mark all as read
+        $result = $this->dietetic_notifications_model->mark_all_as_read($patient->id);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'All notifications marked as read',
+            'unread_count' => 0
+        ]);
+    }
+
+    /**
+     * Helper function to convert timestamp to "time ago" format
+     */
+    private function time_ago($timestamp)
+    {
+        $time = strtotime($timestamp);
+        $diff = time() - $time;
+
+        if ($diff < 60) {
+            return 'À l\'instant';
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return 'Il y a ' . $minutes . ' min';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return 'Il y a ' . $hours . 'h';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return 'Il y a ' . $days . ' jour' . ($days > 1 ? 's' : '');
+        } else {
+            return date('d/m/Y', $time);
         }
     }
 }
