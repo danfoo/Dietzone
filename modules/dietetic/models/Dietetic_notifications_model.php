@@ -677,6 +677,11 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_setting($key, $value)
     {
+        // Skip empty values (but allow '0')
+        if ($value === null || $value === '') {
+            return true; // Consider empty values as successful (no-op)
+        }
+
         // Check if setting exists
         $this->db->where('setting_key', $key);
         $existing = $this->db->get(db_prefix() . $this->table_settings)->row();
@@ -684,18 +689,30 @@ class Dietetic_notifications_model extends App_Model
         if ($existing) {
             // Update existing setting
             $this->db->where('setting_key', $key);
-            return $this->db->update(db_prefix() . $this->table_settings, [
+            $result = $this->db->update(db_prefix() . $this->table_settings, [
                 'setting_value' => $value,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
+
+            if (!$result) {
+                log_activity("Failed to UPDATE setting {$key}: " . $this->db->error()['message']);
+            }
+
+            return $result;
         } else {
             // Insert new setting
-            return $this->db->insert(db_prefix() . $this->table_settings, [
+            $result = $this->db->insert(db_prefix() . $this->table_settings, [
                 'setting_key' => $key,
                 'setting_value' => $value,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
+
+            if (!$result) {
+                log_activity("Failed to INSERT setting {$key}: " . $this->db->error()['message']);
+            }
+
+            return $result;
         }
     }
 

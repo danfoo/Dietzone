@@ -104,11 +104,32 @@ class Notifications extends AdminController
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
             ];
 
+            // Log for debugging
+            log_activity('Notification settings save attempt: ' . json_encode($settings));
+
+            $success_count = 0;
+            $error_count = 0;
             foreach ($settings as $key => $value) {
-                $this->dietetic_notifications_model->update_setting($key, $value);
+                try {
+                    if ($this->dietetic_notifications_model->update_setting($key, $value)) {
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                        log_activity('Failed to save setting: ' . $key);
+                    }
+                } catch (Exception $e) {
+                    $error_count++;
+                    log_activity('Error saving setting ' . $key . ': ' . $e->getMessage());
+                }
             }
 
-            set_alert('success', 'Paramètres de notification mis à jour avec succès');
+            log_activity("Notification settings saved: {$success_count} succeeded, {$error_count} failed");
+
+            if ($error_count > 0) {
+                set_alert('warning', "Paramètres partiellement enregistrés ({$success_count} réussis, {$error_count} échoués). Consultez les logs pour plus de détails.");
+            } else {
+                set_alert('success', 'Paramètres de notification mis à jour avec succès');
+            }
             redirect(admin_url('dietetic/notifications/settings'));
         }
 
