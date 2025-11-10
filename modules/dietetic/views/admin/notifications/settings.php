@@ -294,6 +294,7 @@ input:checked + .toggle-slider:before {
             </div>
 
             <form method="POST" action="<?php echo admin_url('dietetic/notifications/settings'); ?>">
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                 <!-- Master Toggle -->
                 <div class="master-toggle">
                     <div class="master-toggle-content">
