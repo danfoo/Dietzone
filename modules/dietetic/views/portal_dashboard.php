@@ -1278,17 +1278,17 @@ body {
 .weight-value-compact {
     background: white;
     border-radius: 12px;
-    padding: 16px 18px;
+    padding: 20px 16px;
     text-align: center;
     border: none;
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    flex: 1;
+    justify-content: center;
+    min-height: 140px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
     animation: slideInUp 0.6s ease-out forwards;
@@ -1335,9 +1335,10 @@ body {
 }
 
 .weight-value-icon {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
+    margin: 0 auto 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1345,7 +1346,6 @@ body {
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     color: white;
     box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
-    flex-shrink: 0;
     animation: iconPulse 2s ease-in-out infinite;
 }
 
@@ -1378,31 +1378,25 @@ body {
     }
 }
 
-.weight-value-content {
-    flex: 1;
-    text-align: left;
-}
-
-.weight-value-compact-label {
-    font-size: 9px;
-    color: #6c757d;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
 .weight-value-compact-number {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     color: #212529;
     line-height: 1;
-    margin: 0;
+    margin: 0 0 8px 0;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: numberScale 0.6s ease-out;
+}
+
+.weight-value-compact-label {
+    font-size: 10px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 @keyframes numberScale {
@@ -1719,24 +1713,20 @@ if (!$current_weight || !$target_weight) {
             <div class="weight-value-icon">
                 <i class="fa fa-balance-scale"></i>
             </div>
-            <div class="weight-value-content">
-                <div class="weight-value-compact-label">Poids actuel</div>
-                <div class="weight-value-compact-number">
-                    <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
-                </div>
+            <div class="weight-value-compact-number">
+                <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
             </div>
+            <div class="weight-value-compact-label">Poids actuel</div>
         </div>
 
         <div class="weight-value-compact">
             <div class="weight-value-icon">
                 <i class="fa fa-bullseye"></i>
             </div>
-            <div class="weight-value-content">
-                <div class="weight-value-compact-label">Poids cible</div>
-                <div class="weight-value-compact-number">
-                    <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
-                </div>
+            <div class="weight-value-compact-number">
+                <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
             </div>
+            <div class="weight-value-compact-label">Poids cible</div>
         </div>
     </div>
 
