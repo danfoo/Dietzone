@@ -85,13 +85,23 @@ class Notifications extends AdminController
         // Handle form submission
         if ($this->input->post('save_settings')) {
             $settings = [
+                // General settings
+                'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
+
+                // SMS provider settings
                 'sms_provider' => $this->input->post('sms_provider'),
-                'sms_lam_api_key' => $this->input->post('sms_lam_api_key'),
+
+                // LAM SMS API credentials (new format)
+                'sms_lam_account_id' => $this->input->post('sms_lam_account_id'),
+                'sms_lam_password' => $this->input->post('sms_lam_password'),
                 'sms_lam_sender_id' => $this->input->post('sms_lam_sender_id'),
+                'sms_lam_ret_url' => $this->input->post('sms_lam_ret_url'),
+                'sms_lam_priority' => $this->input->post('sms_lam_priority'),
+
+                // WhatsApp settings
                 'whatsapp_provider' => $this->input->post('whatsapp_provider'),
                 'whatsapp_api_key' => $this->input->post('whatsapp_api_key'),
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
-                'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
             ];
 
             foreach ($settings as $key => $value) {

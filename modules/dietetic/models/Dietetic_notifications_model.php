@@ -677,11 +677,26 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_setting($key, $value)
     {
+        // Check if setting exists
         $this->db->where('setting_key', $key);
-        return $this->db->update(db_prefix() . $this->table_settings, [
-            'setting_value' => $value,
-            'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        $existing = $this->db->get(db_prefix() . $this->table_settings)->row();
+
+        if ($existing) {
+            // Update existing setting
+            $this->db->where('setting_key', $key);
+            return $this->db->update(db_prefix() . $this->table_settings, [
+                'setting_value' => $value,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            // Insert new setting
+            return $this->db->insert(db_prefix() . $this->table_settings, [
+                'setting_key' => $key,
+                'setting_value' => $value,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+        }
     }
 
     /**
