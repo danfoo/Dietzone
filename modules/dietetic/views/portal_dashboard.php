@@ -1190,147 +1190,217 @@ body {
     }
 }
 
-/* Weight Goal Card - Clean Simple Design */
+/* Weight Goal Card - Program Style Design */
 .weight-goal-card {
-    background: #DCF4F2;
-    border-radius: 16px;
-    padding: clamp(24px, 5vw, 32px);
-    margin-bottom: 32px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    border-radius: 24px;
+    padding: 32px 28px;
+    margin-bottom: 30px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
 }
 
-.weight-goal-card:hover {
-    box-shadow: 0 8px 24px rgba(1, 128, 123, 0.12);
+.weight-goal-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
 }
 
 .weight-goal-header {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    margin-bottom: clamp(20px, 4vw, 24px);
+    justify-content: flex-start;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
 }
 
 .weight-goal-status {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: clamp(8px, 2vw, 10px) clamp(16px, 3vw, 20px);
-    border-radius: 50px;
-    font-size: clamp(11px, 2.5vw, 13px);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    gap: 6px;
+    background: rgba(245, 165, 74, 0.2);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f5a54a;
     white-space: nowrap;
 }
 
 .weight-goal-status i {
-    font-size: clamp(12px, 2.8vw, 14px);
+    font-size: 14px;
 }
 
 .weight-goal-status.achieved {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    color: white;
+    background: rgba(72, 187, 120, 0.2);
+    color: #a3f3a3;
 }
 
 .weight-goal-status.on-track {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-    color: white;
+    background: rgba(66, 153, 225, 0.2);
+    color: #90cdf4;
 }
 
 .weight-goal-status.ahead {
-    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-    color: white;
+    background: rgba(159, 122, 234, 0.2);
+    color: #d6bcfa;
 }
 
 .weight-goal-status.behind {
-    background: linear-gradient(135deg, #F3911D 0%, #dd7711 100%);
-    color: white;
+    background: rgba(243, 145, 29, 0.2);
+    color: #fbd38d;
 }
 
 .weight-goal-status.no-data {
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
-    color: #4a5568;
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .weight-values-compact {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(12px, 3vw, 16px);
-    margin-bottom: clamp(16px, 3vw, 20px);
-    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
 }
 
 .weight-value-compact {
+    flex: 1;
     display: flex;
-    align-items: baseline;
-    gap: 6px;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 3px solid #f5a54a;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.weight-value-compact:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.weight-value-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.3);
+}
+
+.weight-value-icon i {
+    font-size: 24px;
+    color: white;
+}
+
+.weight-value-content {
+    flex: 1;
 }
 
 .weight-value-compact-label {
-    font-size: clamp(11px, 2.5vw, 13px);
-    color: #4a5568;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
 }
 
 .weight-value-compact-number {
-    font-size: clamp(18px, 4vw, 22px);
-    font-weight: 800;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
 }
 
 .weight-value-compact-unit {
-    font-size: clamp(12px, 2.8vw, 14px);
-    color: #718096;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
 }
 
 .weight-arrow-compact {
-    font-size: clamp(16px, 3.5vw, 20px);
-    color: #01807B;
+    font-size: 28px;
+    color: #f5a54a;
+    flex-shrink: 0;
+    animation: pulse-arrow 2s infinite;
+}
+
+@keyframes pulse-arrow {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
 }
 
 .weight-remaining-simple {
     text-align: center;
-    margin-bottom: clamp(16px, 3vw, 20px);
+    margin-bottom: 20px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 3px solid #f5a54a;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
 }
 
 .weight-remaining-simple-text {
-    font-size: clamp(11px, 2.5vw, 12px);
-    color: #4a5568;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
-    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .weight-remaining-simple-value {
-    font-size: clamp(20px, 4.5vw, 26px);
-    font-weight: 900;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
 }
 
 .progress-gauge-container {
-    margin-bottom: clamp(16px, 3vw, 20px);
+    margin-bottom: 20px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border-left: 3px solid #f5a54a;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
 }
 
 .progress-gauge-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: clamp(10px, 2vw, 12px);
+    margin-bottom: 12px;
     gap: 12px;
 }
 
 .progress-gauge-label {
-    font-size: clamp(11px, 2.5vw, 13px);
-    color: #4a5568;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1340,30 +1410,27 @@ body {
 }
 
 .progress-gauge-label i {
-    color: #01807B;
-    font-size: clamp(13px, 2.8vw, 15px);
+    color: #f5a54a;
+    font-size: 14px;
 }
 
 .progress-gauge-percent {
-    font-size: clamp(18px, 4vw, 24px);
-    font-weight: 900;
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
 }
 
 .progress-gauge-bar {
     position: relative;
-    height: clamp(16px, 3vw, 20px);
-    background: rgba(255, 255, 255, 0.6);
+    height: 12px;
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
     overflow: hidden;
 }
 
 .progress-gauge-fill {
     height: 100%;
-    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
+    background: linear-gradient(90deg, #f5a54a 0%, #e8944a 100%);
     border-radius: 10px;
     transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
@@ -1386,46 +1453,58 @@ body {
 }
 
 .weight-motivation-simple {
-    font-size: clamp(13px, 3vw, 15px);
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     font-weight: 600;
     text-align: center;
-    color: #2d3748;
+    color: rgba(255, 255, 255, 0.9);
+    position: relative;
+    z-index: 1;
 }
 
 .weight-motivation-simple.achieved {
-    color: #1e6b39;
+    color: #a3f3a3;
 }
 
 .weight-motivation-simple.on-track {
-    color: #1e40af;
+    color: #90cdf4;
 }
 
 .weight-motivation-simple.ahead {
-    color: #5b21b6;
+    color: #d6bcfa;
 }
 
 .weight-motivation-simple.behind {
-    color: #92400e;
+    color: #fbd38d;
 }
 
 .weight-motivation-simple.no-data {
-    color: #4a5568;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .weight-motivation-simple strong {
     font-weight: 800;
+    color: #f5a54a;
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
     .weight-values-compact {
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
+    }
+
+    .weight-value-compact {
+        width: 100%;
     }
 
     .weight-arrow-compact {
         transform: rotate(90deg);
+        margin: 8px 0;
+    }
+
+    .weight-goal-card {
+        padding: 24px 20px;
     }
 }
 </style>
@@ -1571,9 +1650,16 @@ if (!$current_weight || !$target_weight) {
 
     <div class="weight-values-compact">
         <div class="weight-value-compact">
-            <span class="weight-value-compact-label">Poids actuel :</span>
-            <span class="weight-value-compact-number"><?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?></span>
-            <span class="weight-value-compact-unit">kg</span>
+            <div class="weight-value-icon">
+                <i class="fa fa-balance-scale"></i>
+            </div>
+            <div class="weight-value-content">
+                <div class="weight-value-compact-label">Poids actuel</div>
+                <div class="weight-value-compact-number">
+                    <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?>
+                    <span class="weight-value-compact-unit">kg</span>
+                </div>
+            </div>
         </div>
 
         <div class="weight-arrow-compact">
@@ -1581,9 +1667,16 @@ if (!$current_weight || !$target_weight) {
         </div>
 
         <div class="weight-value-compact">
-            <span class="weight-value-compact-label">Poids cible :</span>
-            <span class="weight-value-compact-number"><?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?></span>
-            <span class="weight-value-compact-unit">kg</span>
+            <div class="weight-value-icon">
+                <i class="fa fa-bullseye"></i>
+            </div>
+            <div class="weight-value-content">
+                <div class="weight-value-compact-label">Poids cible</div>
+                <div class="weight-value-compact-number">
+                    <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?>
+                    <span class="weight-value-compact-unit">kg</span>
+                </div>
+            </div>
         </div>
     </div>
 
