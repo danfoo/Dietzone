@@ -1277,8 +1277,8 @@ body {
 
 .weight-value-compact {
     background: white;
-    border-radius: 16px;
-    padding: 20px 24px;
+    border-radius: 12px;
+    padding: 16px 18px;
     text-align: center;
     border: none;
     position: relative;
@@ -1287,7 +1287,7 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex: 1;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
@@ -1335,13 +1335,13 @@ body {
 }
 
 .weight-value-icon {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     color: white;
     box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
@@ -1361,7 +1361,7 @@ body {
 }
 
 .weight-value-icon i {
-    font-size: 24px;
+    font-size: 20px;
     color: white;
     animation: iconRotate 3s ease-in-out infinite;
 }
@@ -1384,7 +1384,7 @@ body {
 }
 
 .weight-value-compact-label {
-    font-size: 10px;
+    font-size: 9px;
     color: #6c757d;
     font-weight: 600;
     text-transform: uppercase;
@@ -1393,7 +1393,7 @@ body {
 }
 
 .weight-value-compact-number {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 800;
     color: #212529;
     line-height: 1;
@@ -1420,7 +1420,7 @@ body {
 }
 
 .weight-value-compact-unit {
-    font-size: 14px;
+    font-size: 12px;
     color: #6c757d;
     font-weight: 600;
 }
@@ -1725,10 +1725,6 @@ if (!$current_weight || !$target_weight) {
                     <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
                 </div>
             </div>
-        </div>
-
-        <div class="weight-arrow-compact">
-            <i class="fa fa-long-arrow-right"></i>
         </div>
 
         <div class="weight-value-compact">
