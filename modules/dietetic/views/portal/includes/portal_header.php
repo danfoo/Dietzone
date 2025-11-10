@@ -268,6 +268,36 @@
             opacity: 0.5;
         }
 
+        .notification-panel-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 12px;
+        }
+
+        .notification-settings-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #01807B;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .notification-settings-link:hover {
+            background: #e9ecef;
+            color: #01807B;
+            text-decoration: none;
+        }
+
+        .notification-settings-link i {
+            font-size: 14px;
+        }
+
         @media (max-width: 480px) {
             .notification-panel {
                 width: 100%;
@@ -543,6 +573,16 @@
 
             <div class="menu-divider"></div>
 
+            <?php
+            // Check if notification preferences feature is enabled
+            if ($CI_menu->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'notification_preferences') ? 'active' : ''; ?>">
+                <i class="fa fa-bell"></i>
+                <span>Préférences de Notifications</span>
+            </a>
+            <?php } ?>
+
             <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
                 <i class="fa fa-user"></i>
                 <span>Mon Profil</span>
@@ -612,6 +652,18 @@
             </div>
             -->
         </div>
+        <?php
+        // Add settings link if notification preferences exist
+        $CI_notif_panel = &get_instance();
+        if ($CI_notif_panel->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+        ?>
+        <div class="notification-panel-footer">
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="notification-settings-link">
+                <i class="fa fa-cog"></i>
+                <span>Gérer les notifications</span>
+            </a>
+        </div>
+        <?php } ?>
     </div>
 
     <div class="content-container">
