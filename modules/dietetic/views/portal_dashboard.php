@@ -1281,57 +1281,18 @@ body {
     padding: 20px 16px;
     text-align: center;
     border: none;
-    position: relative;
-    overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 140px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
-    animation: slideInUp 0.6s ease-out forwards;
-}
-
-.weight-value-compact:first-child {
-    animation-delay: 0.1s;
-}
-
-.weight-value-compact:last-child {
-    animation-delay: 0.2s;
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    transition: all 0.3s ease;
 }
 
 .weight-value-compact:hover {
-    transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.weight-value-compact::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, transparent 100%);
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.weight-value-compact:hover::before {
-    opacity: 1;
+    transform: translateY(-2px);
 }
 
 .weight-value-icon {
@@ -1346,36 +1307,11 @@ body {
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     color: white;
     box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
-    animation: iconPulse 2s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(1, 128, 123, 0.4);
-    }
 }
 
 .weight-value-icon i {
     font-size: 20px;
     color: white;
-    animation: iconRotate 3s ease-in-out infinite;
-}
-
-@keyframes iconRotate {
-    0%, 100% {
-        transform: rotate(0deg);
-    }
-    25% {
-        transform: rotate(-5deg);
-    }
-    75% {
-        transform: rotate(5deg);
-    }
 }
 
 .weight-value-compact-number {
@@ -1388,7 +1324,6 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: numberScale 0.6s ease-out;
 }
 
 .weight-value-compact-label {
@@ -1397,20 +1332,6 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-@keyframes numberScale {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 
 .weight-value-compact-unit {
