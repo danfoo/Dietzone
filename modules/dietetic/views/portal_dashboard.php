@@ -1174,6 +1174,274 @@ body {
     .action-btn {
         padding: 16px 12px;
     }
+
+    .weight-goal-card {
+        margin-bottom: 24px;
+    }
+
+    .weight-values {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .weight-arrow {
+        transform: rotate(90deg);
+        margin: 8px 0;
+    }
+}
+
+/* Weight Goal Card - Unified Block */
+.weight-goal-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s;
+}
+
+.weight-goal-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(1, 128, 123, 0.15);
+}
+
+.weight-goal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f3f5;
+}
+
+.weight-goal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weight-goal-title i {
+    color: #01807B;
+}
+
+.weight-goal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.weight-goal-status.achieved {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.weight-goal-status.on-track {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.weight-goal-status.ahead {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.weight-goal-status.behind {
+    background: linear-gradient(135deg, #F3911D 0%, #dd7711 100%);
+    color: white;
+}
+
+.weight-goal-status.no-data {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.weight-values {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 28px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.weight-value-item {
+    text-align: center;
+}
+
+.weight-value-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.weight-value-number {
+    font-size: 38px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.weight-value-unit {
+    font-size: 18px;
+    color: #6c757d;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.weight-arrow {
+    font-size: 32px;
+    color: #01807B;
+    animation: pulse-arrow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-arrow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.weight-remaining {
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 14px;
+    border-left: 4px solid #01807B;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.weight-remaining-text {
+    font-size: 13px;
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.weight-remaining-value {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.progress-gauge-container {
+    margin-bottom: 20px;
+}
+
+.progress-gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.progress-gauge-label {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.progress-gauge-percent {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.progress-gauge-bar {
+    position: relative;
+    height: 22px;
+    background: #e9ecef;
+    border-radius: 11px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-gauge-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
+    border-radius: 11px;
+    transition: width 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(1, 128, 123, 0.4);
+}
+
+.progress-gauge-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    animation: shimmer 2.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.weight-motivation-message {
+    padding: 18px 24px;
+    border-radius: 14px;
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 500;
+    text-align: center;
+}
+
+.weight-motivation-message.achieved {
+    background: linear-gradient(135deg, #e6ffed 0%, #d4fce3 100%);
+    border: 2px solid #48bb78;
+    color: #1e6b39;
+}
+
+.weight-motivation-message.on-track {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 2px solid #4299e1;
+    color: #1e40af;
+}
+
+.weight-motivation-message.ahead {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    border: 2px solid #9f7aea;
+    color: #5b21b6;
+}
+
+.weight-motivation-message.behind {
+    background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
+    border: 2px solid #F3911D;
+    color: #92400e;
+}
+
+.weight-motivation-message.no-data {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+}
+
+.weight-motivation-message strong {
+    font-weight: 700;
 }
 </style>
 
@@ -1182,24 +1450,192 @@ body {
     Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
 </div>
 
-<!-- Stats Cards -->
-<div class="stats-grid">
-    <div class="stat-card weight">
-        <div class="stat-icon">
-            <i class="fa fa-balance-scale"></i>
-        </div>
-        <div class="stat-value"><?php echo $patient->latest_measurement ? $patient->latest_measurement->weight : '-'; ?></div>
-        <div class="stat-label">Poids actuel</div>
-    </div>
+<?php
+// === Weight Goal Progress Calculation ===
+$current_weight = $patient->latest_measurement ? $patient->latest_measurement->weight : null;
+$target_weight = $patient->target_weight;
+$initial_weight = $weight_progress->initial_weight;
 
-    <div class="stat-card target">
-        <div class="stat-icon">
+// Calculate remaining weight
+$weight_remaining = null;
+if ($current_weight && $target_weight) {
+    $weight_remaining = abs($current_weight - $target_weight);
+}
+
+// Calculate progress percentage
+// % = (Initial - Current) / (Initial - Target) * 100
+$progress_percent = 0;
+if ($initial_weight && $current_weight && $target_weight && $initial_weight != $target_weight) {
+    $weight_lost = $initial_weight - $current_weight;
+    $total_to_lose = $initial_weight - $target_weight;
+    $progress_percent = ($weight_lost / $total_to_lose) * 100;
+    $progress_percent = max(0, min(100, $progress_percent)); // Clamp between 0-100
+}
+
+// Calculate timeline status if program has dates
+$timeline_status = 'no-data';
+$timeline_message = '';
+$weeks_elapsed = 0;
+$weeks_total = 0;
+$expected_loss = 0;
+$actual_loss = 0;
+
+if ($active_program && $active_program->start_date && $active_program->end_date) {
+    $start = new DateTime($active_program->start_date);
+    $end = new DateTime($active_program->end_date);
+    $now = new DateTime();
+
+    $total_days = $start->diff($end)->days;
+    $elapsed_days = $start->diff($now)->days;
+
+    $weeks_total = ceil($total_days / 7);
+    $weeks_elapsed = ceil($elapsed_days / 7);
+
+    if ($weeks_total > 0 && $initial_weight && $target_weight && $current_weight) {
+        // Expected weekly loss rate
+        $total_to_lose = $initial_weight - $target_weight;
+        $weekly_loss_rate = $total_to_lose / $weeks_total;
+
+        // Expected loss by now
+        $expected_loss = $weekly_loss_rate * $weeks_elapsed;
+
+        // Actual loss
+        $actual_loss = $initial_weight - $current_weight;
+
+        // Determine status
+        $difference = $actual_loss - $expected_loss;
+
+        if ($difference >= 0.5) {
+            $timeline_status = 'ahead';
+        } elseif ($difference <= -0.5) {
+            $timeline_status = 'behind';
+        } else {
+            $timeline_status = 'on-track';
+        }
+    }
+}
+
+// Determine overall status
+$overall_status = 'no-data';
+$status_icon = 'fa-circle';
+
+if (!$current_weight || !$target_weight) {
+    $overall_status = 'no-data';
+    $status_icon = 'fa-exclamation-circle';
+} elseif ($progress_percent >= 100) {
+    $overall_status = 'achieved';
+    $status_icon = 'fa-trophy';
+} elseif ($progress_percent >= 80 || $weight_remaining <= 2) {
+    $overall_status = 'achieved'; // Close enough
+    $status_icon = 'fa-check-circle';
+} else {
+    $overall_status = $timeline_status;
+    if ($timeline_status == 'ahead') {
+        $status_icon = 'fa-rocket';
+    } elseif ($timeline_status == 'on-track') {
+        $status_icon = 'fa-check';
+    } elseif ($timeline_status == 'behind') {
+        $status_icon = 'fa-clock';
+    } else {
+        $status_icon = 'fa-circle';
+    }
+}
+
+// Generate motivation message
+$motivation_message = '';
+if (!$current_weight || !$target_weight) {
+    $motivation_message = 'Entrez votre poids de la semaine pour mettre à jour votre progression.';
+} elseif ($progress_percent >= 100) {
+    $motivation_message = '🎉 <strong>Félicitations !</strong> Objectif atteint.';
+} elseif ($weight_remaining <= 2) {
+    $motivation_message = '<strong>Presque au but</strong> — plus que ' . number_format($weight_remaining, 1) . ' kg.';
+} elseif ($timeline_status == 'ahead') {
+    $ahead_percent = $expected_loss > 0 ? abs(round(($actual_loss - $expected_loss) / $expected_loss * 100)) : 0;
+    $motivation_message = '<strong>Excellent !</strong> Vous devancez le planning de ' . $ahead_percent . ' %.';
+} elseif ($timeline_status == 'on-track') {
+    $end_date = $active_program && $active_program->end_date ? date('d/m', strtotime($active_program->end_date)) : '';
+    $motivation_message = '<strong>Solide !</strong> Vous êtes dans les temps' . ($end_date ? ' pour le ' . $end_date : '') . '.';
+} elseif ($timeline_status == 'behind') {
+    $behind_kg = abs(round($actual_loss - $expected_loss, 1));
+    $motivation_message = '<strong>Courage</strong> — encore ' . $behind_kg . ' kg à rattraper pour revenir dans les temps.';
+} else {
+    $motivation_message = '<strong>Continue comme ça !</strong> Vous progressez vers votre objectif.';
+}
+?>
+
+<!-- Weight Goal Card -->
+<div class="weight-goal-card">
+    <div class="weight-goal-header">
+        <div class="weight-goal-title">
             <i class="fa fa-bullseye"></i>
+            Objectif de poids
         </div>
-        <div class="stat-value"><?php echo $patient->target_weight ? $patient->target_weight : '-'; ?></div>
-        <div class="stat-label">Objectif</div>
+        <div class="weight-goal-status <?php echo $overall_status; ?>">
+            <i class="fa <?php echo $status_icon; ?>"></i>
+            <?php
+            if ($overall_status == 'achieved') {
+                echo 'Objectif atteint';
+            } elseif ($overall_status == 'ahead') {
+                echo 'En avance';
+            } elseif ($overall_status == 'on-track') {
+                echo 'Dans les temps';
+            } elseif ($overall_status == 'behind') {
+                echo 'En retard';
+            } else {
+                echo 'En cours';
+            }
+            ?>
+        </div>
     </div>
 
+    <div class="weight-values">
+        <div class="weight-value-item">
+            <div class="weight-value-label">Poids actuel</div>
+            <div class="weight-value-number">
+                <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?>
+                <span class="weight-value-unit">kg</span>
+            </div>
+        </div>
+
+        <div class="weight-arrow">
+            <i class="fa fa-arrow-right"></i>
+        </div>
+
+        <div class="weight-value-item">
+            <div class="weight-value-label">Poids cible</div>
+            <div class="weight-value-number">
+                <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?>
+                <span class="weight-value-unit">kg</span>
+            </div>
+        </div>
+    </div>
+
+    <?php if ($weight_remaining !== null) { ?>
+    <div class="weight-remaining">
+        <div class="weight-remaining-text">Encore à perdre</div>
+        <div class="weight-remaining-value"><?php echo number_format($weight_remaining, 1); ?> kg</div>
+    </div>
+    <?php } ?>
+
+    <?php if ($current_weight && $target_weight) { ?>
+    <div class="progress-gauge-container">
+        <div class="progress-gauge-header">
+            <div class="progress-gauge-label">Progression</div>
+            <div class="progress-gauge-percent"><?php echo round($progress_percent); ?>%</div>
+        </div>
+        <div class="progress-gauge-bar">
+            <div class="progress-gauge-fill" style="width: <?php echo round($progress_percent); ?>%;"></div>
+        </div>
+    </div>
+    <?php } ?>
+
+    <div class="weight-motivation-message <?php echo $overall_status; ?>">
+        <?php echo $motivation_message; ?>
+    </div>
+</div>
+
+<!-- Other Stats Cards -->
+<div class="stats-grid">
     <div class="stat-card bmi">
         <div class="stat-icon">
             <i class="fa fa-heartbeat"></i>
