@@ -1267,9 +1267,6 @@ body {
 }
 
 .weight-values-compact {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
@@ -1479,11 +1476,6 @@ body {
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-    .weight-values-compact {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
     .weight-goal-card {
         padding: 20px 16px;
     }
