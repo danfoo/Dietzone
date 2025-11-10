@@ -1267,10 +1267,9 @@ body {
 }
 
 .weight-values-compact {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
@@ -1427,55 +1426,23 @@ body {
 }
 
 .weight-arrow-compact {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: rgba(1, 128, 123, 0.1);
-    border-radius: 50%;
-    flex-shrink: 0;
-    animation: arrowBounce 1.5s ease-in-out infinite;
-}
-
-@keyframes arrowBounce {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    50% {
-        transform: translateX(5px);
-    }
-}
-
-.weight-arrow-compact i {
-    font-size: 20px;
-    color: #01807B;
-    animation: arrowPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes arrowPulse {
-    0%, 100% {
-        opacity: 0.6;
-    }
-    50% {
-        opacity: 1;
-    }
+    display: none;
 }
 
 .weight-remaining-simple {
     text-align: center;
     margin-bottom: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.5);
+    padding: 16px 12px;
+    background: #F3911D;
     border-radius: 12px;
-    backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
 }
 
 .weight-remaining-simple-text {
     font-size: 10px;
-    color: #4a5568;
+    color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1485,7 +1452,7 @@ body {
 .weight-remaining-simple-value {
     font-size: 24px;
     font-weight: 700;
-    color: #2c3e50;
+    color: white;
 }
 
 .progress-gauge-container {
@@ -1598,17 +1565,8 @@ body {
 /* Mobile responsive */
 @media (max-width: 768px) {
     .weight-values-compact {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 12px;
-    }
-
-    .weight-value-compact {
-        width: 100%;
-    }
-
-    .weight-arrow-compact {
-        transform: rotate(90deg);
-        margin: 8px 0;
     }
 
     .weight-goal-card {
