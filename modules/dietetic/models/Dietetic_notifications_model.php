@@ -452,16 +452,17 @@ class Dietetic_notifications_model extends App_Model
         ];
 
         try {
-            // Get SMS settings
-            $api_key = $this->get_setting('sms_lam_api_key');
-            $sender_id = $this->get_setting('sms_lam_sender_id');
+            // Get LAM SMS settings
+            $account_id = $this->get_setting('sms_lam_account_id');
+            $password = $this->get_setting('sms_lam_password');
+            $sender_id = $this->get_setting('sms_lam_sender_id') ?: 'API_LAMSMS';
 
-            if (empty($api_key)) {
-                throw new Exception('SMS API key not configured');
+            if (empty($account_id) || empty($password)) {
+                throw new Exception('LAM SMS credentials not configured (account_id and password required)');
             }
 
             // LAM SMS API integration
-            $result = $this->send_lam_sms($phone, $message, $api_key, $sender_id);
+            $result = $this->send_lam_sms($phone, $message, $account_id, $password, $sender_id);
 
             if ($result['success']) {
                 $log_data['status'] = 'sent';
@@ -481,36 +482,70 @@ class Dietetic_notifications_model extends App_Model
 
     /**
      * LAM SMS API call
+     * Documentation: https://developers.lafricamobile.com/docs/sms/introduction
      */
-    private function send_lam_sms($phone, $message, $api_key, $sender_id)
+    private function send_lam_sms($phone, $message, $account_id, $password, $sender_id = 'API_LAMSMS')
     {
-        // LAM SMS API endpoint (à configurer selon la doc LAM)
-        $url = 'https://api.lam.sn/sms/send'; // URL à confirmer
+        // LAM SMS API endpoint
+        $url = 'https://lamsms.lafricamobile.com/api';
 
+        // Get additional settings
+        $ret_url = $this->get_setting('sms_lam_ret_url') ?: site_url('dietetic/sms_callback');
+        $priority = $this->get_setting('sms_lam_priority') ?: '2';
+
+        // Format phone number for LAM API
+        // Ensure phone starts with country code (e.g., 221 for Senegal)
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
+            $phone = '221' . $phone;
+        }
+
+        // Prepare LAM API request
         $data = [
-            'api_key' => $api_key,
+            'accountid' => $account_id,
+            'password' => $password,
             'sender' => $sender_id,
-            'recipient' => $phone,
-            'message' => $message
+            'ret_id' => 'dietetic_' . time(),
+            'ret_url' => $ret_url,
+            'priority' => $priority,
+            'text' => $message,
+            'to' => [
+                [
+                    'ret_id_1' => $phone
+                ]
+            ]
         ];
 
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $api_key
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json'
+            ]
         ]);
 
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
-        if ($http_code == 200) {
-            return ['success' => true];
+        // Log the request for debugging
+        log_activity('LAM SMS sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
+
+        if ($http_code == 200 || $http_code == 201) {
+            $response_data = json_decode($response, true);
+            return ['success' => true, 'response' => $response_data];
         } else {
-            return ['success' => false, 'error' => $response];
+            $error_msg = $curl_error ?: $response;
+            return ['success' => false, 'error' => $error_msg];
         }
     }
 
