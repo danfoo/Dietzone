@@ -1629,25 +1629,29 @@ if (!$current_weight || !$target_weight) {
         </div>
     </div>
 
-    <div class="weight-values-compact">
-        <div class="weight-value-compact">
-            <div class="weight-value-icon">
-                <i class="fa fa-balance-scale"></i>
+    <div class="row weight-values-compact">
+        <div class="col-xs-6">
+            <div class="weight-value-compact">
+                <div class="weight-value-icon">
+                    <i class="fa fa-balance-scale"></i>
+                </div>
+                <div class="weight-value-compact-number">
+                    <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+                </div>
+                <div class="weight-value-compact-label">Poids actuel</div>
             </div>
-            <div class="weight-value-compact-number">
-                <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
-            </div>
-            <div class="weight-value-compact-label">Poids actuel</div>
         </div>
 
-        <div class="weight-value-compact">
-            <div class="weight-value-icon">
-                <i class="fa fa-bullseye"></i>
+        <div class="col-xs-6">
+            <div class="weight-value-compact">
+                <div class="weight-value-icon">
+                    <i class="fa fa-bullseye"></i>
+                </div>
+                <div class="weight-value-compact-number">
+                    <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+                </div>
+                <div class="weight-value-compact-label">Poids cible</div>
             </div>
-            <div class="weight-value-compact-number">
-                <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
-            </div>
-            <div class="weight-value-compact-label">Poids cible</div>
         </div>
     </div>
 
