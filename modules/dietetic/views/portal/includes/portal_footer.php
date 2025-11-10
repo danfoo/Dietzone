@@ -160,6 +160,56 @@
                 }
             }
         });
+
+        // ============================================
+        // DELETE NOTIFICATION FUNCTIONALITY
+        // ============================================
+        window.deleteNotification = function(button) {
+            const notificationItem = button.closest('.notification-item');
+            const notificationId = notificationItem.getAttribute('data-notification-id');
+
+            // Animation de suppression
+            notificationItem.style.transform = 'translateX(100%)';
+            notificationItem.style.opacity = '0';
+
+            // Supprimer l'élément après l'animation
+            setTimeout(function() {
+                notificationItem.remove();
+
+                // Vérifier s'il reste des notifications
+                const remainingNotifications = document.querySelectorAll('.notification-item');
+                if (remainingNotifications.length === 0) {
+                    // Afficher le message "Aucune notification"
+                    const notificationContent = document.querySelector('.notification-panel-content');
+                    notificationContent.innerHTML = '<div class="notification-empty"><i class="fa fa-bell-slash"></i><p>Aucune notification</p></div>';
+                }
+
+                // Mettre à jour le badge
+                updateNotificationBadge();
+
+                // TODO: Appel AJAX pour supprimer la notification côté serveur
+                // fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>', {
+                //     method: 'POST',
+                //     headers: {'Content-Type': 'application/json'},
+                //     body: JSON.stringify({notification_id: notificationId})
+                // });
+            }, 300);
+        };
+
+        // Mettre à jour le badge de notifications
+        function updateNotificationBadge() {
+            const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+            const badge = document.querySelector('.notification-badge');
+
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
     </script>
 </body>
 </html>

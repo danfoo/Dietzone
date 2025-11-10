@@ -45,7 +45,6 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
-            border-bottom: 1px solid #e9ecef;
         }
 
 
@@ -57,42 +56,29 @@
             border: none;
             border-radius: 10px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 5px;
             cursor: pointer;
             transition: all 0.3s;
             padding: 8px;
         }
 
         .hamburger-btn:hover {
-            background: #f8f9fa;
+            background: #e9ecef;
         }
 
         .hamburger-btn:active {
             transform: scale(0.9);
         }
 
-        .hamburger-line {
-            width: 24px;
-            height: 2.5px;
-            background: #2c3e50;
-            border-radius: 2px;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        .hamburger-btn i {
+            font-size: 24px;
+            color: #2c3e50;
+            transition: all 0.3s;
         }
 
-        .hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(7.5px) rotate(45deg);
-        }
-
-        .hamburger-btn.active .hamburger-line:nth-child(2) {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-
-        .hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-7.5px) rotate(-45deg);
+        .hamburger-btn.active i {
+            transform: rotate(90deg);
         }
 
         /* Notification Button */
@@ -206,6 +192,7 @@
             margin-bottom: 10px;
             border-left: 4px solid #01807B;
             transition: all 0.2s;
+            position: relative;
         }
 
         .notification-item:hover {
@@ -254,6 +241,39 @@
             color: #495057;
             line-height: 1.4;
             padding-left: 46px;
+        }
+
+        .notification-item-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+
+        .notification-item:hover .notification-item-delete {
+            opacity: 1;
+        }
+
+        .notification-item-delete:hover {
+            background: #ff4757;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .notification-item-delete:active {
+            transform: scale(0.9);
         }
 
         .notification-empty {
@@ -506,9 +526,7 @@
     <!-- HEADER MAGNIFIQUE -->
     <header class="app-header">
         <button class="hamburger-btn" id="menuToggle">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
+            <i class="fa fa-bars"></i>
         </button>
 
         <button class="notification-btn" id="notificationBtn">
@@ -605,7 +623,10 @@
         </div>
         <div class="notification-panel-content">
             <!-- Exemple de notifications (à remplacer dynamiquement) -->
-            <div class="notification-item unread">
+            <div class="notification-item unread" data-notification-id="1">
+                <button class="notification-item-delete" onclick="deleteNotification(this)">
+                    <i class="fa fa-times"></i>
+                </button>
                 <div class="notification-item-header">
                     <div class="notification-item-icon">
                         <i class="fa fa-cutlery"></i>
@@ -618,7 +639,10 @@
                 </div>
             </div>
 
-            <div class="notification-item unread">
+            <div class="notification-item unread" data-notification-id="2">
+                <button class="notification-item-delete" onclick="deleteNotification(this)">
+                    <i class="fa fa-times"></i>
+                </button>
                 <div class="notification-item-header">
                     <div class="notification-item-icon">
                         <i class="fa fa-calendar"></i>
@@ -631,7 +655,10 @@
                 </div>
             </div>
 
-            <div class="notification-item unread">
+            <div class="notification-item unread" data-notification-id="3">
+                <button class="notification-item-delete" onclick="deleteNotification(this)">
+                    <i class="fa fa-times"></i>
+                </button>
                 <div class="notification-item-header">
                     <div class="notification-item-icon">
                         <i class="fa fa-line-chart"></i>
