@@ -1190,52 +1190,103 @@ body {
     }
 }
 
-/* Weight Goal Card - Unified Block */
+/* Weight Goal Card - Premium Modern Design */
 .weight-goal-card {
-    background: white;
-    border-radius: 20px;
-    padding: 28px 32px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transition: all 0.4s;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafb 100%);
+    border-radius: 24px;
+    padding: clamp(20px, 5vw, 32px);
+    margin-bottom: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.weight-goal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #019B95 50%, #01807B 100%);
+    background-size: 200% 100%;
+    animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .weight-goal-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 28px rgba(1, 128, 123, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(1, 128, 123, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .weight-goal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid #f1f3f5;
+    margin-bottom: clamp(20px, 4vw, 28px);
+    padding-bottom: clamp(16px, 3vw, 20px);
+    border-bottom: 2px solid rgba(1, 128, 123, 0.1);
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .weight-goal-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #212529;
+    font-size: clamp(18px, 4vw, 22px);
+    font-weight: 800;
+    color: #1a202c;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    letter-spacing: -0.5px;
 }
 
 .weight-goal-title i {
-    color: #01807B;
+    width: clamp(40px, 8vw, 48px);
+    height: clamp(40px, 8vw, 48px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+    border-radius: 14px;
+    font-size: clamp(18px, 4vw, 22px);
+    box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
+    flex-shrink: 0;
 }
 
 .weight-goal-status {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 18px;
-    border-radius: 25px;
-    font-size: 13px;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    gap: 8px;
+    padding: clamp(8px, 2vw, 12px) clamp(14px, 3vw, 22px);
+    border-radius: 50px;
+    font-size: clamp(11px, 2.5vw, 13px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    animation: status-appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+}
+
+@keyframes status-appear {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.weight-goal-status i {
+    font-size: clamp(12px, 2.8vw, 14px);
+    animation: icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
 }
 
 .weight-goal-status.achieved {
@@ -1259,130 +1310,204 @@ body {
 }
 
 .weight-goal-status.no-data {
-    background: #e9ecef;
-    color: #6c757d;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    color: #4a5568;
 }
 
 .weight-values {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: 28px;
+    gap: clamp(12px, 4vw, 28px);
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: clamp(20px, 4vw, 28px);
 }
 
 .weight-value-item {
     text-align: center;
+    padding: clamp(12px, 3vw, 18px);
+    background: rgba(1, 128, 123, 0.03);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.weight-value-item:hover {
+    background: rgba(1, 128, 123, 0.08);
+    transform: scale(1.05);
 }
 
 .weight-value-label {
-    font-size: 12px;
-    color: #6c757d;
-    font-weight: 600;
+    font-size: clamp(10px, 2.2vw, 12px);
+    color: #718096;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    letter-spacing: 1px;
+    margin-bottom: clamp(8px, 2vw, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.weight-value-label i {
+    font-size: clamp(12px, 2.8vw, 14px);
+    color: #01807B;
 }
 
 .weight-value-number {
-    font-size: 38px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-}
-
-.weight-value-unit {
-    font-size: 18px;
-    color: #6c757d;
-    font-weight: 600;
-    margin-left: 4px;
-}
-
-.weight-arrow {
-    font-size: 32px;
-    color: #01807B;
-    animation: pulse-arrow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-arrow {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.1); }
-}
-
-.weight-remaining {
-    padding: 18px 24px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 14px;
-    border-left: 4px solid #01807B;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.weight-remaining-text {
-    font-size: 13px;
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.weight-remaining-value {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: clamp(28px, 8vw, 48px);
+    font-weight: 900;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.weight-value-unit {
+    font-size: clamp(12px, 3vw, 18px);
+    color: #718096;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.weight-arrow {
+    font-size: clamp(20px, 5vw, 32px);
+    color: #01807B;
+    animation: arrow-bounce 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(40px, 8vw, 52px);
+    height: clamp(40px, 8vw, 52px);
+    background: rgba(1, 128, 123, 0.1);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@keyframes arrow-bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+}
+
+.weight-remaining {
+    padding: clamp(16px, 3vw, 22px) clamp(20px, 4vw, 28px);
+    background: linear-gradient(135deg, rgba(1, 128, 123, 0.08) 0%, rgba(1, 155, 149, 0.08) 100%);
+    border-radius: 16px;
+    border-left: 5px solid #01807B;
+    text-align: center;
+    margin-bottom: clamp(18px, 3vw, 24px);
+    position: relative;
+    overflow: hidden;
+}
+
+.weight-remaining::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.15) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    animation: pulse-bg 3s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.2; }
+}
+
+.weight-remaining-text {
+    font-size: clamp(10px, 2.2vw, 13px);
+    color: #4a5568;
+    font-weight: 700;
+    margin-bottom: clamp(6px, 1.5vw, 8px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
+}
+
+.weight-remaining-text i {
+    color: #01807B;
+    margin-right: 6px;
+    font-size: clamp(12px, 2.5vw, 14px);
+}
+
+.weight-remaining-value {
+    font-size: clamp(22px, 5.5vw, 32px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -1px;
 }
 
 .progress-gauge-container {
-    margin-bottom: 20px;
+    margin-bottom: clamp(18px, 3vw, 24px);
 }
 
 .progress-gauge-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: clamp(10px, 2vw, 14px);
+    gap: 12px;
 }
 
 .progress-gauge-label {
-    font-size: 13px;
-    color: #6c757d;
-    font-weight: 600;
+    font-size: clamp(10px, 2.2vw, 13px);
+    color: #718096;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-gauge-label i {
+    color: #01807B;
+    font-size: clamp(14px, 3vw, 16px);
 }
 
 .progress-gauge-percent {
-    font-size: 22px;
-    font-weight: 800;
+    font-size: clamp(18px, 4.5vw, 28px);
+    font-weight: 900;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    letter-spacing: -1px;
 }
 
 .progress-gauge-bar {
     position: relative;
-    height: 22px;
-    background: #e9ecef;
-    border-radius: 11px;
+    height: clamp(20px, 4vw, 28px);
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .progress-gauge-fill {
     height: 100%;
-    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
-    border-radius: 11px;
-    transition: width 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    background: linear-gradient(90deg, #01807B 0%, #019B95 50%, #00c9bc 100%);
+    background-size: 200% 100%;
+    border-radius: 14px;
+    transition: width 2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    box-shadow: 0 2px 8px rgba(1, 128, 123, 0.4);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.4);
+    animation: gradient-slide 3s ease infinite;
+}
+
+@keyframes gradient-slide {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .progress-gauge-fill::after {
@@ -1392,7 +1517,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
     animation: shimmer 2.5s infinite;
 }
 
@@ -1402,46 +1527,110 @@ body {
 }
 
 .weight-motivation-message {
-    padding: 18px 24px;
-    border-radius: 14px;
-    font-size: 15px;
+    padding: clamp(16px, 3vw, 22px) clamp(20px, 4vw, 28px);
+    border-radius: 16px;
+    font-size: clamp(13px, 3vw, 16px);
     line-height: 1.7;
-    font-weight: 500;
+    font-weight: 600;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: message-appear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes message-appear {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.weight-motivation-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: message-shine 3s infinite;
+}
+
+@keyframes message-shine {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
 }
 
 .weight-motivation-message.achieved {
-    background: linear-gradient(135deg, #e6ffed 0%, #d4fce3 100%);
-    border: 2px solid #48bb78;
+    background: linear-gradient(135deg, #d4fce3 0%, #c6f6d5 100%);
+    border: 3px solid #48bb78;
     color: #1e6b39;
+    box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
 }
 
 .weight-motivation-message.on-track {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    border: 2px solid #4299e1;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 3px solid #4299e1;
     color: #1e40af;
+    box-shadow: 0 4px 16px rgba(66, 153, 225, 0.2);
 }
 
 .weight-motivation-message.ahead {
-    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-    border: 2px solid #9f7aea;
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    border: 3px solid #9f7aea;
     color: #5b21b6;
+    box-shadow: 0 4px 16px rgba(159, 122, 234, 0.2);
 }
 
 .weight-motivation-message.behind {
-    background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
-    border: 2px solid #F3911D;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 3px solid #F3911D;
     color: #92400e;
+    box-shadow: 0 4px 16px rgba(243, 145, 29, 0.2);
 }
 
 .weight-motivation-message.no-data {
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
-    color: #6c757d;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border: 3px solid #cbd5e0;
+    color: #4a5568;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .weight-motivation-message strong {
-    font-weight: 700;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+}
+
+.weight-motivation-message i {
+    margin-right: 8px;
+    font-size: clamp(16px, 3.5vw, 18px);
+    vertical-align: middle;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .weight-values {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .weight-arrow {
+        transform: rotate(90deg);
+    }
+
+    @keyframes arrow-bounce {
+        0%, 100% { transform: rotate(90deg) translateX(0); }
+        50% { transform: rotate(90deg) translateX(6px); }
+    }
+
+    .weight-goal-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .weight-goal-status {
+        align-self: stretch;
+        justify-content: center;
+    }
 }
 </style>
 
@@ -1590,7 +1779,10 @@ if (!$current_weight || !$target_weight) {
 
     <div class="weight-values">
         <div class="weight-value-item">
-            <div class="weight-value-label">Poids actuel</div>
+            <div class="weight-value-label">
+                <i class="fa fa-balance-scale"></i>
+                Poids actuel
+            </div>
             <div class="weight-value-number">
                 <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?>
                 <span class="weight-value-unit">kg</span>
@@ -1598,11 +1790,14 @@ if (!$current_weight || !$target_weight) {
         </div>
 
         <div class="weight-arrow">
-            <i class="fa fa-arrow-right"></i>
+            <i class="fa fa-long-arrow-right"></i>
         </div>
 
         <div class="weight-value-item">
-            <div class="weight-value-label">Poids cible</div>
+            <div class="weight-value-label">
+                <i class="fa fa-flag-checkered"></i>
+                Poids cible
+            </div>
             <div class="weight-value-number">
                 <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?>
                 <span class="weight-value-unit">kg</span>
@@ -1612,7 +1807,10 @@ if (!$current_weight || !$target_weight) {
 
     <?php if ($weight_remaining !== null) { ?>
     <div class="weight-remaining">
-        <div class="weight-remaining-text">Encore à perdre</div>
+        <div class="weight-remaining-text">
+            <i class="fa fa-tachometer"></i>
+            Encore à perdre
+        </div>
         <div class="weight-remaining-value"><?php echo number_format($weight_remaining, 1); ?> kg</div>
     </div>
     <?php } ?>
@@ -1620,7 +1818,10 @@ if (!$current_weight || !$target_weight) {
     <?php if ($current_weight && $target_weight) { ?>
     <div class="progress-gauge-container">
         <div class="progress-gauge-header">
-            <div class="progress-gauge-label">Progression</div>
+            <div class="progress-gauge-label">
+                <i class="fa fa-chart-line"></i>
+                Progression
+            </div>
             <div class="progress-gauge-percent"><?php echo round($progress_percent); ?>%</div>
         </div>
         <div class="progress-gauge-bar">
