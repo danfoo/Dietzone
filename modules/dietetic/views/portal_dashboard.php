@@ -1192,14 +1192,14 @@ body {
 
 /* Weight Goal Card - Program Style Design */
 .weight-goal-card {
-    background: linear-gradient(135deg, #2c5f6f 0%, #1e4a5a 100%);
+    background: #BAE2E1;
     border-radius: 24px;
     padding: 32px 28px;
     margin-bottom: 30px;
-    color: white;
+    color: #2c3e50;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.3);
+    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.15);
     min-height: 220px;
     display: flex;
     flex-direction: column;
@@ -1212,7 +1212,7 @@ body {
     right: -80px;
     width: 250px;
     height: 250px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
 }
 
@@ -1229,12 +1229,12 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(245, 165, 74, 0.2);
+    background: rgba(245, 165, 74, 0.25);
     padding: 6px 16px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    color: #f5a54a;
+    color: #d67f3a;
     white-space: nowrap;
 }
 
@@ -1243,34 +1243,33 @@ body {
 }
 
 .weight-goal-status.achieved {
-    background: rgba(72, 187, 120, 0.2);
-    color: #a3f3a3;
+    background: rgba(72, 187, 120, 0.25);
+    color: #2d7a4f;
 }
 
 .weight-goal-status.on-track {
-    background: rgba(66, 153, 225, 0.2);
-    color: #90cdf4;
+    background: rgba(66, 153, 225, 0.25);
+    color: #2b5a99;
 }
 
 .weight-goal-status.ahead {
-    background: rgba(159, 122, 234, 0.2);
-    color: #d6bcfa;
+    background: rgba(159, 122, 234, 0.25);
+    color: #6b46c1;
 }
 
 .weight-goal-status.behind {
-    background: rgba(243, 145, 29, 0.2);
-    color: #fbd38d;
+    background: rgba(243, 145, 29, 0.25);
+    color: #c77219;
 }
 
 .weight-goal-status.no-data {
-    background: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.1);
+    color: #4a5568;
 }
 
 .weight-values-compact {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 20px;
     position: relative;
@@ -1278,33 +1277,32 @@ body {
 }
 
 .weight-value-compact {
-    flex: 1;
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
-    border-left: 3px solid #f5a54a;
+    border-left: 3px solid #01807B;
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
 
 .weight-value-compact:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.7);
     transform: translateY(-2px);
 }
 
 .weight-value-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #f5a54a 0%, #e8944a 100%);
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(245, 165, 74, 0.3);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
 }
 
 .weight-value-icon i {
@@ -1318,7 +1316,7 @@ body {
 
 .weight-value-compact-label {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
+    color: #4a5568;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1328,7 +1326,7 @@ body {
 .weight-value-compact-number {
     font-size: 24px;
     font-weight: 700;
-    color: white;
+    color: #2c3e50;
     display: flex;
     align-items: baseline;
     gap: 4px;
@@ -1336,29 +1334,21 @@ body {
 
 .weight-value-compact-unit {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
     font-weight: 600;
 }
 
 .weight-arrow-compact {
-    font-size: 28px;
-    color: #f5a54a;
-    flex-shrink: 0;
-    animation: pulse-arrow 2s infinite;
-}
-
-@keyframes pulse-arrow {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 1; }
+    display: none;
 }
 
 .weight-remaining-simple {
     text-align: center;
     margin-bottom: 20px;
     padding: 18px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
-    border-left: 3px solid #f5a54a;
+    border-left: 3px solid #01807B;
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
@@ -1366,7 +1356,7 @@ body {
 
 .weight-remaining-simple-text {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
+    color: #4a5568;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1376,15 +1366,15 @@ body {
 .weight-remaining-simple-value {
     font-size: 32px;
     font-weight: 700;
-    color: white;
+    color: #2c3e50;
 }
 
 .progress-gauge-container {
     margin-bottom: 20px;
     padding: 18px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
-    border-left: 3px solid #f5a54a;
+    border-left: 3px solid #01807B;
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
@@ -1400,7 +1390,7 @@ body {
 
 .progress-gauge-label {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
+    color: #4a5568;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1410,27 +1400,27 @@ body {
 }
 
 .progress-gauge-label i {
-    color: #f5a54a;
+    color: #01807B;
     font-size: 14px;
 }
 
 .progress-gauge-percent {
     font-size: 24px;
     font-weight: 700;
-    color: white;
+    color: #2c3e50;
 }
 
 .progress-gauge-bar {
     position: relative;
     height: 12px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 10px;
     overflow: hidden;
 }
 
 .progress-gauge-fill {
     height: 100%;
-    background: linear-gradient(90deg, #f5a54a 0%, #e8944a 100%);
+    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
     border-radius: 10px;
     transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
@@ -1457,50 +1447,41 @@ body {
     line-height: 1.7;
     font-weight: 600;
     text-align: center;
-    color: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
     position: relative;
     z-index: 1;
 }
 
 .weight-motivation-simple.achieved {
-    color: #a3f3a3;
+    color: #2d7a4f;
 }
 
 .weight-motivation-simple.on-track {
-    color: #90cdf4;
+    color: #2b5a99;
 }
 
 .weight-motivation-simple.ahead {
-    color: #d6bcfa;
+    color: #6b46c1;
 }
 
 .weight-motivation-simple.behind {
-    color: #fbd38d;
+    color: #c77219;
 }
 
 .weight-motivation-simple.no-data {
-    color: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
 }
 
 .weight-motivation-simple strong {
     font-weight: 800;
-    color: #f5a54a;
+    color: #01807B;
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
     .weight-values-compact {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 12px;
-    }
-
-    .weight-value-compact {
-        width: 100%;
-    }
-
-    .weight-arrow-compact {
-        transform: rotate(90deg);
-        margin: 8px 0;
     }
 
     .weight-goal-card {
@@ -1660,10 +1641,6 @@ if (!$current_weight || !$target_weight) {
                     <span class="weight-value-compact-unit">kg</span>
                 </div>
             </div>
-        </div>
-
-        <div class="weight-arrow-compact">
-            <i class="fa fa-long-arrow-right"></i>
         </div>
 
         <div class="weight-value-compact">
