@@ -26,8 +26,8 @@
             background: #f8f9fa;
             font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
-            padding-top: 70px; /* Space for fixed header */
-            padding-bottom: 75px; /* Space for fixed footer */
+            padding-top: 60px; /* Space for fixed header */
+            padding-bottom: 60px; /* Space for fixed footer */
         }
 
         /* ============================================
@@ -38,62 +38,24 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 70px;
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            box-shadow: 0 4px 20px rgba(1, 128, 123, 0.3);
+            height: 60px;
+            background: white;
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
+            border-bottom: 1px solid #e9ecef;
         }
 
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: white;
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
 
-        .header-logo:hover {
-            transform: scale(1.05);
-        }
-
-        .header-logo img {
-            height: 45px;
-            width: auto;
-            filter: brightness(0) invert(1);
-        }
-
-        .header-logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-logo-text i {
-            font-size: 28px;
-            animation: heartbeat 1.5s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1); }
-            50% { transform: scale(1); }
-        }
-
-        /* Hamburger Menu Button */
+        /* Hamburger Menu Button - Mobile App Style */
         .hamburger-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 44px;
+            height: 44px;
+            background: transparent;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -101,28 +63,27 @@
             gap: 5px;
             cursor: pointer;
             transition: all 0.3s;
-            backdrop-filter: blur(10px);
+            padding: 8px;
         }
 
         .hamburger-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            background: #f8f9fa;
         }
 
         .hamburger-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
         .hamburger-line {
-            width: 28px;
-            height: 3px;
-            background: white;
-            border-radius: 3px;
+            width: 24px;
+            height: 2.5px;
+            background: #2c3e50;
+            border-radius: 2px;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
         .hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
+            transform: translateY(7.5px) rotate(45deg);
         }
 
         .hamburger-btn.active .hamburger-line:nth-child(2) {
@@ -131,7 +92,53 @@
         }
 
         .hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
+            transform: translateY(-7.5px) rotate(-45deg);
+        }
+
+        /* Notification Button */
+        .notification-btn {
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .notification-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-btn:active {
+            transform: scale(0.9);
+        }
+
+        .notification-btn i {
+            font-size: 22px;
+            color: #2c3e50;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ff4757;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
         }
 
         /* Menu Overlay */
@@ -245,15 +252,15 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 75px;
+            height: 56px;
             background: white;
-            border-top: 3px solid #01807B;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
             z-index: 1000;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
+            padding: 0 5px;
         }
 
         .footer-item {
@@ -262,12 +269,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            padding: 10px 5px;
+            gap: 3px;
+            padding: 8px 3px;
             color: #6c757d;
             text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s;
+            border-radius: 10px;
+            transition: all 0.2s;
             position: relative;
         }
 
@@ -276,7 +283,7 @@
         }
 
         .footer-item:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
         .footer-item.active {
@@ -286,30 +293,30 @@
         .footer-item.active::before {
             content: '';
             position: absolute;
-            top: -3px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
+            width: 32px;
             height: 3px;
             background: #01807B;
             border-radius: 0 0 3px 3px;
         }
 
         .footer-icon {
-            font-size: 24px;
-            transition: all 0.3s;
+            font-size: 20px;
+            transition: all 0.2s;
         }
 
         .footer-item.active .footer-icon {
-            transform: scale(1.1);
+            transform: scale(1.08);
             color: #01807B;
         }
 
         .footer-label {
-            font-size: 11px;
+            font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .footer-item.active .footer-label {
@@ -333,28 +340,15 @@
 <body>
     <!-- HEADER MAGNIFIQUE -->
     <header class="app-header">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="header-logo">
-            <?php
-            $logo_path = get_option('company_logo_dark');
-            if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                $logo_path = get_option('company_logo');
-            }
-
-            if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-            ?>
-                <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-            <?php } else { ?>
-                <div class="header-logo-text">
-                    <i class="fa fa-heartbeat"></i>
-                    <span><?php echo get_option('companyname') ? get_option('companyname') : 'DietSenegal'; ?></span>
-                </div>
-            <?php } ?>
-        </a>
-
         <button class="hamburger-btn" id="menuToggle">
             <span class="hamburger-line"></span>
             <span class="hamburger-line"></span>
             <span class="hamburger-line"></span>
+        </button>
+
+        <button class="notification-btn" id="notificationBtn">
+            <i class="fa fa-bell"></i>
+            <span class="notification-badge">3</span>
         </button>
     </header>
 

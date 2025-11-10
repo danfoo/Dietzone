@@ -99,6 +99,36 @@
                 this.style.opacity = '';
             });
         });
+
+        // ============================================
+        // NOTIFICATION BUTTON FUNCTIONALITY
+        // ============================================
+        const notificationBtn = document.getElementById('notificationBtn');
+
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', function() {
+                // Check if notification preferences page exists
+                <?php
+                $CI_notif = &get_instance();
+                if ($CI_notif->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                ?>
+                    window.location.href = '<?php echo site_url('dietetic/portal/notification_preferences'); ?>';
+                <?php } else { ?>
+                    // Fallback: show simple alert or redirect to profile
+                    alert('Vous avez 3 nouvelles notifications');
+                    // Or redirect to profile/dashboard
+                    // window.location.href = '<?php echo site_url('dietetic/portal'); ?>';
+                <?php } ?>
+            });
+
+            // Add touch feedback for notification button
+            notificationBtn.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            });
+            notificationBtn.addEventListener('touchend', function() {
+                this.style.opacity = '';
+            });
+        }
     </script>
 </body>
 </html>
