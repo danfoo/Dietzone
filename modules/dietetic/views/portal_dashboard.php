@@ -1267,9 +1267,10 @@ body {
 }
 
 .weight-values-compact {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
@@ -1277,56 +1278,110 @@ body {
 
 .weight-value-compact {
     background: white;
-    border-radius: 12px;
-    padding: 16px 12px;
+    border-radius: 16px;
+    padding: 20px 24px;
     text-align: center;
     border: none;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
+    flex: 1;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    animation: slideInUp 0.6s ease-out forwards;
+}
+
+.weight-value-compact:first-child {
+    animation-delay: 0.1s;
+}
+
+.weight-value-compact:last-child {
+    animation-delay: 0.2s;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .weight-value-compact:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.weight-value-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.weight-value-compact:hover::before {
+    opacity: 1;
 }
 
 .weight-value-icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    margin: 0 auto 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 24px;
     background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
+    flex-shrink: 0;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(1, 128, 123, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(1, 128, 123, 0.4);
+    }
 }
 
 .weight-value-icon i {
-    font-size: 20px;
+    font-size: 24px;
     color: white;
+    animation: iconRotate 3s ease-in-out infinite;
 }
 
-.weight-value-compact-number {
-    font-size: 22px;
-    font-weight: 800;
-    color: #212529;
-    line-height: 1;
-    margin: 0 0 6px 0;
+@keyframes iconRotate {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-5deg);
+    }
+    75% {
+        transform: rotate(5deg);
+    }
 }
 
-.weight-value-compact-unit {
-    font-size: 12px;
-    color: #6c757d;
-    font-weight: 600;
+.weight-value-content {
+    flex: 1;
+    text-align: left;
 }
 
 .weight-value-compact-label {
@@ -1335,10 +1390,76 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.weight-value-compact-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: #212529;
+    line-height: 1;
+    margin: 0;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: numberScale 0.6s ease-out;
+}
+
+@keyframes numberScale {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.weight-value-compact-unit {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 600;
 }
 
 .weight-arrow-compact {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(1, 128, 123, 0.1);
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: arrowBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+}
+
+.weight-arrow-compact i {
+    font-size: 20px;
+    color: #01807B;
+    animation: arrowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
 .weight-remaining-simple {
@@ -1477,12 +1598,21 @@ body {
 /* Mobile responsive */
 @media (max-width: 768px) {
     .weight-values-compact {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 12px;
     }
 
+    .weight-value-compact {
+        width: 100%;
+    }
+
+    .weight-arrow-compact {
+        transform: rotate(90deg);
+        margin: 8px 0;
+    }
+
     .weight-goal-card {
-        padding: 24px 20px;
+        padding: 20px 16px;
     }
 }
 </style>
@@ -1631,20 +1761,28 @@ if (!$current_weight || !$target_weight) {
             <div class="weight-value-icon">
                 <i class="fa fa-balance-scale"></i>
             </div>
-            <div class="weight-value-compact-number">
-                <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+            <div class="weight-value-content">
+                <div class="weight-value-compact-label">Poids actuel</div>
+                <div class="weight-value-compact-number">
+                    <?php echo $current_weight ? number_format($current_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+                </div>
             </div>
-            <div class="weight-value-compact-label">Poids actuel</div>
+        </div>
+
+        <div class="weight-arrow-compact">
+            <i class="fa fa-long-arrow-right"></i>
         </div>
 
         <div class="weight-value-compact">
             <div class="weight-value-icon">
                 <i class="fa fa-bullseye"></i>
             </div>
-            <div class="weight-value-compact-number">
-                <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+            <div class="weight-value-content">
+                <div class="weight-value-compact-label">Poids cible</div>
+                <div class="weight-value-compact-number">
+                    <?php echo $target_weight ? number_format($target_weight, 1) : '-'; ?><span class="weight-value-compact-unit"> kg</span>
+                </div>
             </div>
-            <div class="weight-value-compact-label">Poids cible</div>
         </div>
     </div>
 
