@@ -79,8 +79,11 @@ CREATE TABLE IF NOT EXISTS `tbldietic_notification_settings` (
 -- Insert default SMS/WhatsApp settings
 INSERT INTO `tbldietic_notification_settings` (`setting_key`, `setting_value`, `description`, `updated_at`) VALUES
 ('sms_provider', 'lam', 'SMS Provider: lam or custom', NOW()),
-('sms_lam_api_key', '', 'LAM SMS API Key', NOW()),
-('sms_lam_sender_id', 'DietSenegal', 'LAM SMS Sender ID', NOW()),
+('sms_lam_account_id', '', 'LAM SMS Account ID', NOW()),
+('sms_lam_password', '', 'LAM SMS Password', NOW()),
+('sms_lam_sender_id', 'API_LAMSMS', 'LAM SMS Sender ID', NOW()),
+('sms_lam_ret_url', '', 'LAM SMS Callback URL', NOW()),
+('sms_lam_priority', '2', 'LAM SMS Priority (1-3)', NOW()),
 ('whatsapp_provider', 'twilio', 'WhatsApp Provider: twilio, meta, or custom', NOW()),
 ('whatsapp_api_key', '', 'WhatsApp API Key', NOW()),
 ('whatsapp_phone_number', '', 'WhatsApp Business Phone Number', NOW()),
