@@ -1218,10 +1218,18 @@ body {
 .weight-goal-header {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
+}
+
+.weight-goal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    padding: 0;
 }
 
 .weight-goal-status {
@@ -1612,6 +1620,7 @@ if (!$current_weight || !$target_weight) {
 <!-- Weight Goal Card -->
 <div class="weight-goal-card">
     <div class="weight-goal-header">
+        <h3 class="weight-goal-title">Objectif de poids</h3>
         <div class="weight-goal-status <?php echo $overall_status; ?>">
             <i class="fa <?php echo $status_icon; ?>"></i>
             <?php
