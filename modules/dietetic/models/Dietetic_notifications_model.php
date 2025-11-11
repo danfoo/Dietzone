@@ -1111,6 +1111,13 @@ class Dietetic_notifications_model extends App_Model
      */
     public function notify_dietitian_food_entry($dietitian_id, $patient_name, $date)
     {
+        // TODO: Créer le template email dietetic_food_entry_submitted
+        // Pour l'instant, on désactive l'envoi d'email pour éviter l'erreur
+        log_activity("📝 Enquête alimentaire soumise par {$patient_name} le {$date} - Notification email désactivée temporairement");
+
+        return true; // Retourner true pour ne pas bloquer le processus
+
+        /* Code original commenté temporairement
         $this->load->model('staff_model');
         $dietitian = $this->staff_model->get($dietitian_id);
 
@@ -1132,6 +1139,7 @@ class Dietetic_notifications_model extends App_Model
             'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
             'message' => $message
         ]);
+        */
     }
 
     /**
