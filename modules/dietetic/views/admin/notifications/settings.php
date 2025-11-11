@@ -321,14 +321,14 @@ input:checked + .toggle-slider:before {
                     </div>
 
                     <div class="form-group">
-                        <label>Account ID LAM <span style="color: red;">*</span></label>
-                        <input type="text" name="sms_lam_account_id" value="<?php echo $settings['sms_lam_account_id'] ?? ''; ?>" placeholder="Votre Account ID LAM" required>
+                        <label>Account ID LAM</label>
+                        <input type="text" name="sms_lam_account_id" value="<?php echo $settings['sms_lam_account_id'] ?? ''; ?>" placeholder="Votre Account ID LAM">
                         <span class="help-text">Identifiant de votre compte LAM SMS</span>
                     </div>
 
                     <div class="form-group">
-                        <label>Mot de passe LAM <span style="color: red;">*</span></label>
-                        <input type="password" name="sms_lam_password" value="<?php echo $settings['sms_lam_password'] ?? ''; ?>" placeholder="Votre mot de passe LAM" required>
+                        <label>Mot de passe LAM</label>
+                        <input type="password" name="sms_lam_password" value="<?php echo $settings['sms_lam_password'] ?? ''; ?>" placeholder="Votre mot de passe LAM">
                         <span class="help-text">Mot de passe de votre compte LAM SMS</span>
                     </div>
 
