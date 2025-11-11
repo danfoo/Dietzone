@@ -82,10 +82,10 @@ class Notifications extends AdminController
             $this->load->model('dietetic/dietetic_notifications_model');
         }
 
-        // Handle form submission
-        if ($this->input->post('save_settings')) {
+        // Handle form submission (check if it's a POST request)
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
             // DEBUG: Log that we entered the POST block
-            log_activity('🔍 [DEBUG] POST detected - save_settings button clicked');
+            log_activity('🔍 [DEBUG] POST detected - form submitted');
 
             // Log all POST data (without passwords)
             $all_post = $this->input->post();
