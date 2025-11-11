@@ -312,6 +312,48 @@ class Notifications extends AdminController
     }
 
     /**
+     * Scan all patients for milestones (AJAX)
+     */
+    public function scan_milestones()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        try {
+            $results = $this->dietetic_notifications_model->scan_all_patients_for_milestones();
+
+            echo json_encode([
+                'success' => true,
+                'message' => sprintf(
+                    '%d patients analysés, %d jalons détectés',
+                    $results['patients_checked'],
+                    $results['milestones_detected']
+                ),
+                'data' => $results
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error scanning milestones: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Notification templates page
      */
     public function templates()

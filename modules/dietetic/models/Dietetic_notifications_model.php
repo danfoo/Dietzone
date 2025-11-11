@@ -209,18 +209,32 @@ class Dietetic_notifications_model extends App_Model
         $this->load->model('dietetic/dietetic_measurements_model');
 
         $patient = $this->dietetic_patients_model->get($patient_id);
-        if (!$patient) return false;
+        if (!$patient) {
+            log_activity("check_milestones: Patient {$patient_id} not found");
+            return false;
+        }
 
         $measurements = $this->dietetic_measurements_model->get_all(['patient_id' => $patient_id]);
-        if (empty($measurements)) return false;
+        if (empty($measurements)) {
+            log_activity("check_milestones: No measurements for patient {$patient_id}");
+            return false;
+        }
 
         // Get first and last measurement
         $first_measurement = end($measurements);
         $latest_measurement = reset($measurements);
 
-        $starting_weight = $first_measurement->weight;
-        $current_weight = $latest_measurement->weight;
+        $starting_weight = floatval($first_measurement->weight);
+        $current_weight = floatval($latest_measurement->weight);
         $weight_lost = $starting_weight - $current_weight;
+
+        log_activity("check_milestones: Patient {$patient_id} - Starting: {$starting_weight}kg, Current: {$current_weight}kg, Lost: {$weight_lost}kg");
+
+        // Only process if weight was actually lost
+        if ($weight_lost <= 0) {
+            log_activity("check_milestones: No weight loss for patient {$patient_id}");
+            return false;
+        }
 
         // Check weight loss milestones
         $milestones_to_check = [
@@ -231,16 +245,23 @@ class Dietetic_notifications_model extends App_Model
             25 => 'weight_loss_25kg'
         ];
 
+        $milestones_detected = 0;
         foreach ($milestones_to_check as $kg => $milestone_type) {
             if ($weight_lost >= $kg) {
-                $this->record_milestone($patient_id, $milestone_type, [
+                $milestone_id = $this->record_milestone($patient_id, $milestone_type, [
                     'starting_weight' => $starting_weight,
                     'current_weight' => $current_weight,
                     'weight_lost' => $weight_lost
                 ]);
+
+                if ($milestone_id) {
+                    $milestones_detected++;
+                    log_activity("check_milestones: NEW milestone {$milestone_type} detected for patient {$patient_id}");
+                }
             }
         }
 
+        log_activity("check_milestones: {$milestones_detected} new milestone(s) detected for patient {$patient_id}");
         return true;
     }
 
@@ -255,6 +276,7 @@ class Dietetic_notifications_model extends App_Model
         $existing = $this->db->get(db_prefix() . $this->table_milestones)->row();
 
         if ($existing) {
+            log_activity("record_milestone: Milestone {$milestone_type} already recorded for patient {$patient_id} (ID: {$existing->id})");
             return false; // Already recorded
         }
 
@@ -269,10 +291,19 @@ class Dietetic_notifications_model extends App_Model
             'created_at' => date('Y-m-d H:i:s')
         ];
 
+        log_activity("record_milestone: Creating milestone {$milestone_type} for patient {$patient_id} - Weight lost: " . ($data['weight_lost'] ?? 'N/A') . "kg");
+
         if ($this->db->insert(db_prefix() . $this->table_milestones, $milestone_data)) {
             $milestone_id = $this->db->insert_id();
+            log_activity("record_milestone: Milestone {$milestone_type} recorded successfully (ID: {$milestone_id})");
+
             // Send celebration notification
-            $this->send_milestone_notification($patient_id, $milestone_type, $data);
+            try {
+                $this->send_milestone_notification($patient_id, $milestone_type, $data);
+                log_activity("record_milestone: Notification sent for milestone {$milestone_id}");
+            } catch (Exception $e) {
+                log_activity("record_milestone: Error sending notification: " . $e->getMessage());
+            }
 
             // Mark as notified
             $this->db->where('id', $milestone_id);
@@ -281,6 +312,7 @@ class Dietetic_notifications_model extends App_Model
             return $milestone_id;
         }
 
+        log_activity("record_milestone: Failed to insert milestone {$milestone_type} for patient {$patient_id}");
         return false;
     }
 
@@ -1493,6 +1525,94 @@ class Dietetic_notifications_model extends App_Model
         $this->db->limit($limit);
 
         return $this->db->get()->result();
+    }
+
+    /**
+     * Scan all patients and detect milestones retroactively
+     */
+    public function scan_all_patients_for_milestones()
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get all patients
+        $all_patients = $this->db->get(db_prefix() . 'dietic_patients')->result();
+
+        $results = [
+            'total_patients' => count($all_patients),
+            'patients_checked' => 0,
+            'milestones_detected' => 0,
+            'errors' => []
+        ];
+
+        foreach ($all_patients as $patient) {
+            try {
+                $results['patients_checked']++;
+
+                // Check milestones for this patient
+                $milestones_found = $this->check_milestones_with_count($patient->id);
+                $results['milestones_detected'] += $milestones_found;
+
+            } catch (Exception $e) {
+                $results['errors'][] = "Patient {$patient->id}: " . $e->getMessage();
+                log_activity("Error scanning patient {$patient->id} for milestones: " . $e->getMessage());
+            }
+        }
+
+        log_activity("Milestone scan completed: {$results['patients_checked']} patients checked, {$results['milestones_detected']} milestones detected");
+
+        return $results;
+    }
+
+    /**
+     * Check milestones and return count of new milestones detected
+     */
+    public function check_milestones_with_count($patient_id)
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_measurements_model');
+
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return 0;
+
+        $measurements = $this->dietetic_measurements_model->get_all(['patient_id' => $patient_id]);
+        if (empty($measurements)) return 0;
+
+        // Get first and last measurement
+        $first_measurement = end($measurements);
+        $latest_measurement = reset($measurements);
+
+        $starting_weight = $first_measurement->weight;
+        $current_weight = $latest_measurement->weight;
+        $weight_lost = $starting_weight - $current_weight;
+
+        // Only process if weight was actually lost
+        if ($weight_lost <= 0) return 0;
+
+        // Check weight loss milestones
+        $milestones_to_check = [
+            5 => 'weight_loss_5kg',
+            10 => 'weight_loss_10kg',
+            15 => 'weight_loss_15kg',
+            20 => 'weight_loss_20kg',
+            25 => 'weight_loss_25kg'
+        ];
+
+        $count = 0;
+        foreach ($milestones_to_check as $kg => $milestone_type) {
+            if ($weight_lost >= $kg) {
+                $milestone_id = $this->record_milestone($patient_id, $milestone_type, [
+                    'starting_weight' => $starting_weight,
+                    'current_weight' => $current_weight,
+                    'weight_lost' => $weight_lost
+                ]);
+
+                if ($milestone_id) {
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
     }
 
     /**
