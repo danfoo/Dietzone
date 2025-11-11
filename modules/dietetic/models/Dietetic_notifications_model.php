@@ -214,7 +214,7 @@ class Dietetic_notifications_model extends App_Model
             return false;
         }
 
-        $measurements = $this->dietetic_measurements_model->get_all(['patient_id' => $patient_id]);
+        $measurements = $this->dietetic_measurements_model->get_by_patient($patient_id);
         if (empty($measurements)) {
             log_activity("check_milestones: No measurements for patient {$patient_id}");
             return false;
@@ -1574,15 +1574,19 @@ class Dietetic_notifications_model extends App_Model
         $patient = $this->dietetic_patients_model->get($patient_id);
         if (!$patient) return 0;
 
-        $measurements = $this->dietetic_measurements_model->get_all(['patient_id' => $patient_id]);
+        // Get measurements directly from database (bypass permission check for admin scan)
+        $this->db->where('patient_id', $patient_id);
+        $this->db->order_by('measurement_date', 'DESC');
+        $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result();
+
         if (empty($measurements)) return 0;
 
         // Get first and last measurement
         $first_measurement = end($measurements);
         $latest_measurement = reset($measurements);
 
-        $starting_weight = $first_measurement->weight;
-        $current_weight = $latest_measurement->weight;
+        $starting_weight = floatval($first_measurement->weight);
+        $current_weight = floatval($latest_measurement->weight);
         $weight_lost = $starting_weight - $current_weight;
 
         // Only process if weight was actually lost

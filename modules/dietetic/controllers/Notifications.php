@@ -316,6 +316,11 @@ class Notifications extends AdminController
      */
     public function scan_milestones()
     {
+        // Clear any output buffers
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         header('Content-Type: application/json');
 
         if (!is_admin()) {
@@ -323,7 +328,7 @@ class Notifications extends AdminController
                 'success' => false,
                 'message' => 'Accès refusé'
             ]);
-            return;
+            die();
         }
 
         // Load notifications model
@@ -332,7 +337,11 @@ class Notifications extends AdminController
         }
 
         try {
+            log_activity('scan_milestones: Starting scan...');
+
             $results = $this->dietetic_notifications_model->scan_all_patients_for_milestones();
+
+            log_activity('scan_milestones: Scan completed - ' . $results['milestones_detected'] . ' milestones detected');
 
             echo json_encode([
                 'success' => true,
@@ -345,12 +354,14 @@ class Notifications extends AdminController
             ]);
 
         } catch (Exception $e) {
-            log_activity('Error scanning milestones: ' . $e->getMessage());
+            log_activity('scan_milestones ERROR: ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur: ' . $e->getMessage()
             ]);
         }
+
+        die();
     }
 
     /**
