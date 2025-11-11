@@ -415,60 +415,69 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide previous results
             scanResults.style.display = 'none';
 
-            // Make AJAX request
-            fetch('<?php echo admin_url('dietetic/notifications/scan_milestones'); ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Re-enable button
-                scanBtn.disabled = false;
-                scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
+            // Prepare data with CSRF token
+            var postData = {};
+            postData[csrfData['token_name']] = csrfData['hash'];
 
-                // Show results
-                scanResults.style.display = 'block';
+            // Make AJAX request using jQuery
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/notifications/scan_milestones'); ?>',
+                type: 'POST',
+                data: postData,
+                dataType: 'json',
+                success: function(data) {
+                    // Re-enable button
+                    scanBtn.disabled = false;
+                    scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
 
-                if (data.success) {
-                    scanResults.className = 'alert alert-success';
-                    scanResults.innerHTML = '<i class="fa fa-check-circle"></i> <strong>Scan terminé !</strong> ' + data.message;
+                    // Show results
+                    scanResults.style.display = 'block';
 
-                    // Show details if available
-                    if (data.data) {
-                        let details = '<br><br><strong>Détails :</strong><br>';
-                        details += '- Total patients : ' + data.data.total_patients + '<br>';
-                        details += '- Patients analysés : ' + data.data.patients_checked + '<br>';
-                        details += '- Jalons détectés : ' + data.data.milestones_detected;
+                    if (data.success) {
+                        scanResults.className = 'alert alert-success';
+                        scanResults.innerHTML = '<i class="fa fa-check-circle"></i> <strong>Scan terminé !</strong> ' + data.message;
 
-                        if (data.data.errors && data.data.errors.length > 0) {
-                            details += '<br><br><strong>Erreurs :</strong><br>';
-                            details += data.data.errors.join('<br>');
+                        // Show details if available
+                        if (data.data) {
+                            let details = '<br><br><strong>Détails :</strong><br>';
+                            details += '- Total patients : ' + data.data.total_patients + '<br>';
+                            details += '- Patients analysés : ' + data.data.patients_checked + '<br>';
+                            details += '- Jalons détectés : ' + data.data.milestones_detected;
+
+                            if (data.data.errors && data.data.errors.length > 0) {
+                                details += '<br><br><strong>Erreurs :</strong><br>';
+                                details += data.data.errors.join('<br>');
+                            }
+
+                            scanResults.innerHTML += details;
                         }
 
-                        scanResults.innerHTML += details;
+                        // Reload page after 3 seconds to show new milestones
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 3000);
+
+                    } else {
+                        scanResults.className = 'alert alert-danger';
+                        scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>Erreur :</strong> ' + data.message;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Re-enable button
+                    scanBtn.disabled = false;
+                    scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
+
+                    // Show error
+                    scanResults.style.display = 'block';
+                    scanResults.className = 'alert alert-danger';
+
+                    let errorMsg = 'Erreur réseau : ' + error;
+                    if (xhr.status === 403) {
+                        errorMsg = 'Erreur 403 : Accès refusé (vérifiez vos permissions administrateur)';
                     }
 
-                    // Reload page after 3 seconds to show new milestones
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 3000);
-
-                } else {
-                    scanResults.className = 'alert alert-danger';
-                    scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>Erreur :</strong> ' + data.message;
+                    scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>' + errorMsg + '</strong>';
                 }
-            })
-            .catch(error => {
-                // Re-enable button
-                scanBtn.disabled = false;
-                scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
-
-                // Show error
-                scanResults.style.display = 'block';
-                scanResults.className = 'alert alert-danger';
-                scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>Erreur réseau :</strong> ' + error.message;
             });
         });
     }
