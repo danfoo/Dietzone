@@ -1179,9 +1179,8 @@ $this->load->view('portal/includes/portal_header');
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <script>
-    // Base URL for AJAX calls
+    // Base URL for AJAX calls (site_url is already defined in portal_footer.php)
     const base_url = '<?php echo base_url(); ?>';
-    const site_url = '<?php echo site_url(); ?>';
     let beverageCount = 0;
 
     // Photo upload handling

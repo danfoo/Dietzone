@@ -2012,65 +2012,86 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
+        try {
+            if (!is_client_logged_in()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Not authenticated'
+                ]);
+                return;
+            }
+
+            // Get patient
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient not found'
+                ]);
+                return;
+            }
+
+            // Check if notifications table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_notification_log')) {
+                echo json_encode([
+                    'success' => true,
+                    'notifications' => [],
+                    'unread_count' => 0,
+                    'total' => 0,
+                    'info' => 'Notifications system not yet installed'
+                ]);
+                return;
+            }
+
+            // Load notifications model
+            $this->load->model('dietetic/dietetic_notifications_model');
+
+            // Get limit from query parameter
+            $limit = $this->input->get('limit') ? (int)$this->input->get('limit') : 50;
+            $unread_only = $this->input->get('unread_only') === 'true';
+
+            // Get notifications
+            $notifications = $this->dietetic_notifications_model->get_patient_notifications(
+                $patient->id,
+                $limit,
+                $unread_only
+            );
+
+            // Get unread count
+            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+            // Format notifications for frontend
+            $formatted_notifications = [];
+            foreach ($notifications as $notification) {
+                $formatted_notifications[] = [
+                    'id' => $notification->id,
+                    'type' => $notification->notification_type,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'icon' => $notification->icon,
+                    'url' => $notification->url,
+                    'is_read' => (bool)$notification->is_read,
+                    'time_ago' => $this->time_ago($notification->created_at),
+                    'created_at' => $notification->created_at
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'notifications' => $formatted_notifications,
+                'unread_count' => $unread_count,
+                'total' => count($formatted_notifications)
+            ]);
+        } catch (Exception $e) {
+            log_activity('Error in get_notifications: ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
-                'message' => 'Not authenticated'
+                'message' => 'Error loading notifications',
+                'error' => $e->getMessage()
             ]);
-            return;
         }
-
-        // Get patient
-        $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
-
-        if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Patient not found'
-            ]);
-            return;
-        }
-
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
-
-        // Get limit from query parameter
-        $limit = $this->input->get('limit') ? (int)$this->input->get('limit') : 50;
-        $unread_only = $this->input->get('unread_only') === 'true';
-
-        // Get notifications
-        $notifications = $this->dietetic_notifications_model->get_patient_notifications(
-            $patient->id,
-            $limit,
-            $unread_only
-        );
-
-        // Get unread count
-        $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
-
-        // Format notifications for frontend
-        $formatted_notifications = [];
-        foreach ($notifications as $notification) {
-            $formatted_notifications[] = [
-                'id' => $notification->id,
-                'type' => $notification->notification_type,
-                'title' => $notification->title,
-                'message' => $notification->message,
-                'icon' => $notification->icon,
-                'url' => $notification->url,
-                'is_read' => (bool)$notification->is_read,
-                'time_ago' => $this->time_ago($notification->created_at),
-                'created_at' => $notification->created_at
-            ];
-        }
-
-        echo json_encode([
-            'success' => true,
-            'notifications' => $formatted_notifications,
-            'unread_count' => $unread_count,
-            'total' => count($formatted_notifications)
-        ]);
     }
 
     /**

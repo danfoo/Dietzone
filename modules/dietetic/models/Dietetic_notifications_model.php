@@ -1129,17 +1129,20 @@ class Dietetic_notifications_model extends App_Model
             $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
             $message .= "Bonne journée !";
 
-            // Envoyer par email avec try/catch pour gérer les erreurs de template
-            try {
-                // Essayer d'utiliser le template personnalisé s'il existe
+            // Vérifier si le template mail existe avant de l'utiliser
+            $template_path = FCPATH . 'application/libraries/mails/Dietetic_food_entry_submitted.php';
+
+            if (file_exists($template_path)) {
+                // Template existe, utiliser send_mail_template
+                log_activity("📧 Utilisation du template email personnalisé");
                 $email_sent = send_mail_template('dietetic_food_entry_submitted', [
                     'email' => $dietitian->email,
                     'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
                     'message' => $message
                 ]);
-            } catch (Exception $e) {
-                // Si le template n'existe pas, utiliser l'email simple
-                log_activity("⚠️ Template email non trouvé, envoi email simple");
+            } else {
+                // Template n'existe pas, envoyer email simple
+                log_activity("📧 Template non trouvé, envoi email simple");
 
                 $this->load->library('email');
                 $this->email->clear();
