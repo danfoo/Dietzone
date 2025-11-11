@@ -1283,6 +1283,9 @@ class Portal extends App_Controller
                 'dinner_photo' => $this->input->post('dinner_photo'),
                 'dinner_time' => $this->input->post('dinner_time'),
                 'dinner_notes' => $this->input->post('dinner_notes'),
+                'snack_photo' => $this->input->post('snack_photo'),
+                'snack_time' => $this->input->post('snack_time'),
+                'snack_notes' => $this->input->post('snack_notes'),
                 'water_quantity_ml' => $this->input->post('water_quantity_ml'),
                 'submitted_at' => date('Y-m-d H:i:s')
             ];
