@@ -1323,9 +1323,9 @@ class Portal extends App_Controller
                     }
                 }
 
-                // Send notification to dietitian
+                // Send notifications to dietitian AND patient
                 try {
-                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $patient->dietitian_id) {
+                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
                         $this->load->model('dietetic/dietetic_notifications_model');
                         $this->load->model('clients_model');
 
@@ -1333,15 +1333,24 @@ class Portal extends App_Controller
                         $client = $this->clients_model->get($patient->client_id);
                         $patient_name = $client ? $client->company : 'Un patient';
 
-                        // Send notification
-                        $this->dietetic_notifications_model->notify_dietitian_food_entry(
-                            $patient->dietitian_id,
-                            $patient_name,
+                        // 1. Notify dietitian (email only)
+                        if ($patient->dietitian_id) {
+                            $this->dietetic_notifications_model->notify_dietitian_food_entry(
+                                $patient->dietitian_id,
+                                $patient_name,
+                                $entry_data['entry_date']
+                            );
+                        }
+
+                        // 2. Notify patient (email/SMS/WhatsApp based on preferences)
+                        $this->dietetic_notifications_model->notify_patient_food_entry_received(
+                            $patient->id,
                             $entry_data['entry_date']
                         );
                     }
                 } catch (Exception $e) {
                     log_activity('Food entry notification error: ' . $e->getMessage());
+                    // Don't fail the whole operation if notification fails
                 }
 
                 echo json_encode([

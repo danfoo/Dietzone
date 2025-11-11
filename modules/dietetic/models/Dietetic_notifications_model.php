@@ -1111,35 +1111,125 @@ class Dietetic_notifications_model extends App_Model
      */
     public function notify_dietitian_food_entry($dietitian_id, $patient_name, $date)
     {
-        // TODO: Créer le template email dietetic_food_entry_submitted
-        // Pour l'instant, on désactive l'envoi d'email pour éviter l'erreur
-        log_activity("📝 Enquête alimentaire soumise par {$patient_name} le {$date} - Notification email désactivée temporairement");
+        try {
+            $this->load->model('staff_model');
+            $dietitian = $this->staff_model->get($dietitian_id);
 
-        return true; // Retourner true pour ne pas bloquer le processus
+            if (!$dietitian || empty($dietitian->email)) {
+                log_activity("❌ Diététicien non trouvé ou sans email: ID {$dietitian_id}");
+                return false;
+            }
 
-        /* Code original commenté temporairement
-        $this->load->model('staff_model');
-        $dietitian = $this->staff_model->get($dietitian_id);
+            $formatted_date = date('d/m/Y', strtotime($date));
 
-        if (!$dietitian || empty($dietitian->email)) {
+            // Préparer le message
+            $message = "Bonjour {$dietitian->firstname},\n\n";
+            $message .= "📝 {$patient_name} a soumis son journal alimentaire du {$formatted_date}.\n\n";
+            $message .= "Consultez les détails et ajoutez vos recommandations :\n";
+            $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
+            $message .= "Bonne journée !";
+
+            // Envoyer par email avec try/catch pour gérer les erreurs de template
+            try {
+                // Essayer d'utiliser le template personnalisé s'il existe
+                $email_sent = send_mail_template('dietetic_food_entry_submitted', [
+                    'email' => $dietitian->email,
+                    'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
+                    'message' => $message
+                ]);
+            } catch (Exception $e) {
+                // Si le template n'existe pas, utiliser l'email simple
+                log_activity("⚠️ Template email non trouvé, envoi email simple");
+
+                $this->load->library('email');
+                $this->email->clear();
+                $this->email->from(get_option('smtp_email'), get_option('companyname'));
+                $this->email->to($dietitian->email);
+                $this->email->subject("📝 Nouveau journal alimentaire - {$patient_name}");
+                $this->email->message(nl2br($message));
+                $email_sent = $this->email->send();
+            }
+
+            if ($email_sent) {
+                log_activity("✅ Email envoyé au diététicien {$dietitian->firstname} {$dietitian->lastname} pour {$patient_name}");
+            } else {
+                log_activity("❌ Échec envoi email au diététicien {$dietitian->firstname} {$dietitian->lastname}");
+            }
+
+            return $email_sent;
+
+        } catch (Exception $e) {
+            log_activity("❌ Erreur notification diététicien: " . $e->getMessage());
             return false;
         }
+    }
 
-        $formatted_date = date('d/m/Y', strtotime($date));
+    /**
+     * Notify patient that their food entry was received
+     */
+    public function notify_patient_food_entry_received($patient_id, $date)
+    {
+        try {
+            // Get patient preferences
+            $preferences = $this->get_preferences($patient_id);
+            if (!$preferences || !$preferences->notify_food_entry) {
+                log_activity("⚠️ Patient {$patient_id} n'a pas activé les notifications d'enquête alimentaire");
+                return false;
+            }
 
-        $message = "Bonjour {$dietitian->firstname},\n\n";
-        $message .= "📝 {$patient_name} a soumis son journal alimentaire du {$formatted_date}.\n\n";
-        $message .= "Consultez les détails et ajoutez vos recommandations :\n";
-        $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
-        $message .= "Bonne journée !";
+            // Get patient info
+            $this->load->model('dietetic/dietetic_patients_model');
+            $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            if (!$patient) {
+                log_activity("❌ Patient {$patient_id} non trouvé");
+                return false;
+            }
 
-        // Send email to dietitian
-        return send_mail_template('dietetic_food_entry_submitted', [
-            'email' => $dietitian->email,
-            'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
-            'message' => $message
-        ]);
-        */
+            $this->load->model('clients_model');
+            $client = $this->clients_model->get($patient->client_id);
+            if (!$client) {
+                log_activity("❌ Client du patient {$patient_id} non trouvé");
+                return false;
+            }
+
+            $formatted_date = date('d/m/Y', strtotime($date));
+
+            // Préparer le message
+            $subject = "✅ Journal alimentaire reçu";
+            $message = "Bonjour,\n\n";
+            $message .= "✅ Votre journal alimentaire du {$formatted_date} a bien été reçu.\n\n";
+            $message .= "Votre diététicien va l'examiner et vous faire des recommandations personnalisées.\n\n";
+            $message .= "📱 Consultez vos recommandations dans votre espace patient :\n";
+            $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+            $message .= "Merci de votre engagement ! 💪";
+
+            // Envoyer via le système de notifications multi-canal
+            $result = $this->send_notification([
+                'patient_id' => $patient_id,
+                'type' => 'food_entry_confirmation',
+                'subject' => $subject,
+                'message' => $message,
+                'email' => $client->email,
+                'phone' => $client->phonenumber,
+                'channels' => [
+                    'email' => $preferences->channel_email ? 1 : 0,
+                    'sms' => $preferences->channel_sms ? 1 : 0,
+                    'whatsapp' => $preferences->channel_whatsapp ? 1 : 0
+                ]
+            ]);
+
+            if ($result['email'] || $result['sms'] || $result['whatsapp']) {
+                log_activity("✅ Confirmation envoyée au patient (ID: {$patient_id}) pour enquête du {$formatted_date}");
+                return true;
+            } else {
+                log_activity("❌ Échec envoi confirmation au patient (ID: {$patient_id})");
+                return false;
+            }
+
+        } catch (Exception $e) {
+            log_activity("❌ Erreur notification patient: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
