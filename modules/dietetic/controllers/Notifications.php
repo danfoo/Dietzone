@@ -84,6 +84,16 @@ class Notifications extends AdminController
 
         // Handle form submission
         if ($this->input->post('save_settings')) {
+            // Verify CSRF token manually if there's an issue
+            $csrf_token_name = $this->security->get_csrf_token_name();
+            $csrf_hash = $this->input->post($csrf_token_name);
+
+            if (!$csrf_hash || $csrf_hash !== $this->security->get_csrf_hash()) {
+                set_alert('danger', 'Erreur de sécurité : jeton CSRF invalide. Veuillez réessayer.');
+                redirect(admin_url('dietetic/notifications/settings'));
+                return;
+            }
+
             $settings = [
                 // General settings
                 'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
@@ -325,6 +335,37 @@ class Notifications extends AdminController
         $message = 'Non installé';
 
         switch ($migration) {
+            case 'lam_update':
+                // Check if new LAM SMS settings exist
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                $new_settings_exist = true;
+                $new_settings = ['sms_lam_account_id', 'sms_lam_password', 'sms_lam_ret_url', 'sms_lam_priority'];
+
+                foreach ($new_settings as $setting) {
+                    $value = $this->dietetic_notifications_model->get_setting($setting);
+                    if ($value === null) {
+                        $new_settings_exist = false;
+                        break;
+                    }
+                }
+
+                // Also check if old settings still exist (means update is needed)
+                $old_settings_exist = false;
+                $old_settings = ['lam_api_url', 'lam_api_key', 'sms_lam_api_key'];
+
+                foreach ($old_settings as $setting) {
+                    $this->db->where('setting_key', $setting);
+                    if ($this->db->count_all_results(db_prefix() . 'dietic_notification_settings') > 0) {
+                        $old_settings_exist = true;
+                        break;
+                    }
+                }
+
+                $installed = $new_settings_exist && !$old_settings_exist;
+                $message = $installed ? 'Installé' : ($old_settings_exist ? 'Mise à jour requise' : 'À installer');
+                break;
+
             case 'notifications':
                 // Check if base notification tables exist
                 $tables = [
@@ -407,6 +448,7 @@ class Notifications extends AdminController
 
             // Determine which SQL file to use
             $sql_files = [
+                'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
                 'optimizations' => 'optimize_notifications_performance.sql'
