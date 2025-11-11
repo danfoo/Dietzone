@@ -556,4 +556,142 @@ class Notifications extends AdminController
             ]);
         }
     }
+
+    /**
+     * LAM SMS Configuration Cleanup Page
+     * URL: /admin/dietetic/notifications/cleanup
+     */
+    public function cleanup()
+    {
+        if (!is_admin()) {
+            access_denied('Cleanup');
+        }
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $data['title'] = 'Nettoyage Configuration LAM SMS';
+
+        // Check for old LAM keys
+        $old_keys = ['lam_api_url', 'lam_api_key', 'lam_api_sender', 'sms_lam_api_key'];
+        $data['old_keys_found'] = [];
+
+        foreach ($old_keys as $key) {
+            $this->db->where('setting_key', $key);
+            $result = $this->db->get(db_prefix() . 'dietic_notification_settings')->row();
+            if ($result) {
+                $data['old_keys_found'][] = [
+                    'key' => $key,
+                    'value' => $result->setting_value
+                ];
+            }
+        }
+
+        // Check for new LAM keys
+        $new_keys = ['sms_lam_account_id', 'sms_lam_password', 'sms_lam_sender_id', 'sms_lam_ret_url', 'sms_lam_priority'];
+        $data['new_keys_status'] = [];
+
+        foreach ($new_keys as $key) {
+            $value = $this->dietetic_notifications_model->get_setting($key);
+            $data['new_keys_status'][] = [
+                'key' => $key,
+                'exists' => $value !== null,
+                'value' => $value
+            ];
+        }
+
+        $this->load->view('admin/notifications/cleanup', $data);
+    }
+
+    /**
+     * Execute cleanup of old LAM SMS keys (AJAX)
+     */
+    public function execute_cleanup()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            return;
+        }
+
+        try {
+            $table = db_prefix() . 'dietic_notification_settings';
+            $old_keys = ['lam_api_url', 'lam_api_key', 'lam_api_sender', 'sms_lam_api_key'];
+
+            // Delete old keys
+            $deleted_count = 0;
+            foreach ($old_keys as $key) {
+                $this->db->where('setting_key', $key);
+                if ($this->db->delete($table)) {
+                    if ($this->db->affected_rows() > 0) {
+                        $deleted_count++;
+                    }
+                }
+            }
+
+            // Load notifications model
+            if (!isset($this->dietetic_notifications_model)) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+            }
+
+            // Ensure new keys exist with default values
+            $new_keys_defaults = [
+                'sms_lam_account_id' => '',
+                'sms_lam_password' => '',
+                'sms_lam_sender_id' => 'API_LAMSMS',
+                'sms_lam_ret_url' => '',
+                'sms_lam_priority' => '2',
+                'sms_provider' => 'lam'
+            ];
+
+            $created_count = 0;
+            foreach ($new_keys_defaults as $key => $default_value) {
+                // Check if key exists
+                $existing = $this->dietetic_notifications_model->get_setting($key);
+
+                if ($existing === null) {
+                    // Create with default value
+                    $insert_data = [
+                        'setting_key' => $key,
+                        'setting_value' => $default_value,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ];
+
+                    if ($this->db->insert($table, $insert_data)) {
+                        $created_count++;
+                    }
+                }
+            }
+
+            // Verify cleanup was successful
+            $remaining_old_keys = 0;
+            foreach ($old_keys as $key) {
+                $this->db->where('setting_key', $key);
+                $remaining_old_keys += $this->db->count_all_results($table);
+            }
+
+            log_activity("LAM SMS Cleanup: {$deleted_count} anciennes clés supprimées, {$created_count} nouvelles clés créées");
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Nettoyage terminé avec succès!",
+                'deleted_count' => $deleted_count,
+                'created_count' => $created_count,
+                'remaining_old_keys' => $remaining_old_keys
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Cleanup Error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du nettoyage: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
