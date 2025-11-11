@@ -84,15 +84,33 @@ class Notifications extends AdminController
 
         // Handle form submission
         if ($this->input->post('save_settings')) {
+            // DEBUG: Log that we entered the POST block
+            log_activity('🔍 [DEBUG] POST detected - save_settings button clicked');
+
+            // Log all POST data (without passwords)
+            $all_post = $this->input->post();
+            $safe_post = $all_post;
+            if (isset($safe_post['sms_lam_password'])) {
+                $safe_post['sms_lam_password'] = '***HIDDEN***';
+            }
+            log_activity('🔍 [DEBUG] All POST data: ' . json_encode($safe_post));
+
             // Verify CSRF token manually if there's an issue
             $csrf_token_name = $this->security->get_csrf_token_name();
             $csrf_hash = $this->input->post($csrf_token_name);
 
+            log_activity('🔍 [DEBUG] CSRF token name: ' . $csrf_token_name);
+            log_activity('🔍 [DEBUG] CSRF hash from POST: ' . ($csrf_hash ? 'EXISTS' : 'NULL'));
+            log_activity('🔍 [DEBUG] CSRF hash from security: ' . $this->security->get_csrf_hash());
+
             if (!$csrf_hash || $csrf_hash !== $this->security->get_csrf_hash()) {
+                log_activity('❌ [DEBUG] CSRF validation FAILED');
                 set_alert('danger', 'Erreur de sécurité : jeton CSRF invalide. Veuillez réessayer.');
                 redirect(admin_url('dietetic/notifications/settings'));
                 return;
             }
+
+            log_activity('✅ [DEBUG] CSRF validation PASSED');
 
             $settings = [
                 // General settings
@@ -114,31 +132,50 @@ class Notifications extends AdminController
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
             ];
 
-            // Log for debugging
-            log_activity('Notification settings save attempt: ' . json_encode($settings));
+            // Log for debugging (hide password)
+            $safe_settings = $settings;
+            if (isset($safe_settings['sms_lam_password'])) {
+                $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            log_activity('🔍 [DEBUG] Settings to save: ' . json_encode($safe_settings));
 
             $success_count = 0;
             $error_count = 0;
+            $skipped_count = 0;
+
             foreach ($settings as $key => $value) {
                 try {
-                    if ($this->dietetic_notifications_model->update_setting($key, $value)) {
-                        $success_count++;
+                    // Log each setting before saving
+                    $display_value = ($key === 'sms_lam_password' && $value) ? '***SET***' : $value;
+                    log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
+
+                    $result = $this->dietetic_notifications_model->update_setting($key, $value);
+
+                    if ($result) {
+                        // Check if it was actually saved or skipped
+                        if ($value === null || $value === '') {
+                            $skipped_count++;
+                            log_activity("⚠️ [DEBUG] Setting {$key} SKIPPED (empty value)");
+                        } else {
+                            $success_count++;
+                            log_activity("✅ [DEBUG] Setting {$key} SAVED successfully");
+                        }
                     } else {
                         $error_count++;
-                        log_activity('Failed to save setting: ' . $key);
+                        log_activity("❌ [DEBUG] Setting {$key} FAILED to save");
                     }
                 } catch (Exception $e) {
                     $error_count++;
-                    log_activity('Error saving setting ' . $key . ': ' . $e->getMessage());
+                    log_activity('❌ [DEBUG] Exception for setting ' . $key . ': ' . $e->getMessage());
                 }
             }
 
-            log_activity("Notification settings saved: {$success_count} succeeded, {$error_count} failed");
+            log_activity("📊 [DEBUG] Final results: {$success_count} saved, {$skipped_count} skipped, {$error_count} failed");
 
             if ($error_count > 0) {
                 set_alert('warning', "Paramètres partiellement enregistrés ({$success_count} réussis, {$error_count} échoués). Consultez les logs pour plus de détails.");
             } else {
-                set_alert('success', 'Paramètres de notification mis à jour avec succès');
+                set_alert('success', "Paramètres de notification mis à jour avec succès ({$success_count} enregistrés, {$skipped_count} ignorés car vides)");
             }
             redirect(admin_url('dietetic/notifications/settings'));
         }

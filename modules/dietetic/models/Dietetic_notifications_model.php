@@ -677,38 +677,61 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_setting($key, $value)
     {
+        $display_value = (strpos($key, 'password') !== false && $value) ? '***SET***' : $value;
+        log_activity("🔍 [MODEL DEBUG] update_setting called: key={$key}, value=" . var_export($display_value, true));
+
         // Skip empty values (but allow '0')
         if ($value === null || $value === '') {
+            log_activity("⚠️ [MODEL DEBUG] Skipping {$key} because value is empty/null");
             return true; // Consider empty values as successful (no-op)
         }
 
+        $table = db_prefix() . $this->table_settings;
+        log_activity("🔍 [MODEL DEBUG] Using table: {$table}");
+
         // Check if setting exists
         $this->db->where('setting_key', $key);
-        $existing = $this->db->get(db_prefix() . $this->table_settings)->row();
+        $existing = $this->db->get($table)->row();
 
         if ($existing) {
+            log_activity("🔍 [MODEL DEBUG] Setting {$key} EXISTS - will UPDATE");
+            log_activity("🔍 [MODEL DEBUG] Current value in DB: " . var_export($existing->setting_value, true));
+
             // Update existing setting
             $this->db->where('setting_key', $key);
-            $result = $this->db->update(db_prefix() . $this->table_settings, [
+            $result = $this->db->update($table, [
                 'setting_value' => $value,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
+            $affected_rows = $this->db->affected_rows();
+            log_activity("🔍 [MODEL DEBUG] UPDATE result: " . ($result ? 'TRUE' : 'FALSE') . ", affected_rows: {$affected_rows}");
+
             if (!$result) {
-                log_activity("Failed to UPDATE setting {$key}: " . $this->db->error()['message']);
+                $error = $this->db->error();
+                log_activity("❌ [MODEL DEBUG] UPDATE FAILED for {$key}: " . $error['message']);
+            } else {
+                log_activity("✅ [MODEL DEBUG] UPDATE SUCCESS for {$key}");
             }
 
             return $result;
         } else {
+            log_activity("🔍 [MODEL DEBUG] Setting {$key} DOES NOT EXIST - will INSERT");
+
             // Insert new setting
-            $result = $this->db->insert(db_prefix() . $this->table_settings, [
+            $result = $this->db->insert($table, [
                 'setting_key' => $key,
                 'setting_value' => $value,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
+            log_activity("🔍 [MODEL DEBUG] INSERT result: " . ($result ? 'TRUE' : 'FALSE'));
+
             if (!$result) {
-                log_activity("Failed to INSERT setting {$key}: " . $this->db->error()['message']);
+                $error = $this->db->error();
+                log_activity("❌ [MODEL DEBUG] INSERT FAILED for {$key}: " . $error['message']);
+            } else {
+                log_activity("✅ [MODEL DEBUG] INSERT SUCCESS for {$key}");
             }
 
             return $result;
