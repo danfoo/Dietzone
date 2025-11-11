@@ -5,39 +5,58 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-/* Page-specific styles for food surveys list */
+/* Modern Mobile App Design - No Borders */
 .page-header-mobile {
-    margin-bottom: 25px;
+    background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+    border-radius: 24px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    color: white;
+    box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
 }
 
 .page-header-mobile h1 {
     font-size: 26px;
-    font-weight: 700;
-    color: #212529;
+    font-weight: 800;
     margin: 0 0 8px 0;
     display: flex;
     align-items: center;
     gap: 12px;
+    color: white;
 }
 
 .page-header-mobile h1 i {
-    color: #01807B;
+    color: white;
     font-size: 28px;
 }
 
 .page-header-mobile p {
-    color: #6c757d;
-    font-size: 15px;
     margin: 0;
+    font-size: 15px;
+    opacity: 0.95;
+    font-weight: 500;
+    color: white;
 }
 
 /* Empty State */
 .empty-state {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 60px 20px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
 }
 
 .empty-state i {
@@ -83,10 +102,23 @@ $this->load->view('portal/includes/portal_header');
 /* Survey Card */
 .survey-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+/* Gradient accent bar at top */
+.survey-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+    z-index: 1;
 }
 
 .survey-card:active {

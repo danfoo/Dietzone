@@ -254,10 +254,18 @@
         </div>
 
         <div class="milestones-container">
-            <div class="milestones-header">
-                <h1><i class="fa fa-trophy"></i> Jalons Atteints</h1>
-                <p>Célébrez les réussites de vos patients</p>
+            <div class="milestones-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1><i class="fa fa-trophy"></i> Jalons Atteints</h1>
+                    <p>Célébrez les réussites de vos patients</p>
+                </div>
+                <button id="scan-milestones-btn" class="btn btn-primary" style="height: fit-content;">
+                    <i class="fa fa-refresh"></i> Détecter les jalons existants
+                </button>
             </div>
+
+            <!-- Scan results alert (hidden by default) -->
+            <div id="scan-results" class="alert" style="display: none; margin-bottom: 20px;"></div>
 
             <?php if (!empty($milestone_stats)): ?>
                 <div class="celebration-banner">
@@ -392,3 +400,86 @@
 </div>
 
 <?php init_tail(); ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scanBtn = document.getElementById('scan-milestones-btn');
+    const scanResults = document.getElementById('scan-results');
+
+    if (scanBtn) {
+        scanBtn.addEventListener('click', function() {
+            // Disable button and show loading
+            scanBtn.disabled = true;
+            scanBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Analyse en cours...';
+
+            // Hide previous results
+            scanResults.style.display = 'none';
+
+            // Prepare data with CSRF token
+            var postData = {};
+            postData[csrfData['token_name']] = csrfData['hash'];
+
+            // Make AJAX request using jQuery
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/notifications/scan_milestones'); ?>',
+                type: 'POST',
+                data: postData,
+                dataType: 'json',
+                success: function(data) {
+                    // Re-enable button
+                    scanBtn.disabled = false;
+                    scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
+
+                    // Show results
+                    scanResults.style.display = 'block';
+
+                    if (data.success) {
+                        scanResults.className = 'alert alert-success';
+                        scanResults.innerHTML = '<i class="fa fa-check-circle"></i> <strong>Scan terminé !</strong> ' + data.message;
+
+                        // Show details if available
+                        if (data.data) {
+                            let details = '<br><br><strong>Détails :</strong><br>';
+                            details += '- Total patients : ' + data.data.total_patients + '<br>';
+                            details += '- Patients analysés : ' + data.data.patients_checked + '<br>';
+                            details += '- Jalons détectés : ' + data.data.milestones_detected;
+
+                            if (data.data.errors && data.data.errors.length > 0) {
+                                details += '<br><br><strong>Erreurs :</strong><br>';
+                                details += data.data.errors.join('<br>');
+                            }
+
+                            scanResults.innerHTML += details;
+                        }
+
+                        // Reload page after 3 seconds to show new milestones
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 3000);
+
+                    } else {
+                        scanResults.className = 'alert alert-danger';
+                        scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>Erreur :</strong> ' + data.message;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Re-enable button
+                    scanBtn.disabled = false;
+                    scanBtn.innerHTML = '<i class="fa fa-refresh"></i> Détecter les jalons existants';
+
+                    // Show error
+                    scanResults.style.display = 'block';
+                    scanResults.className = 'alert alert-danger';
+
+                    let errorMsg = 'Erreur réseau : ' + error;
+                    if (xhr.status === 403) {
+                        errorMsg = 'Erreur 403 : Accès refusé (vérifiez vos permissions administrateur)';
+                    }
+
+                    scanResults.innerHTML = '<i class="fa fa-exclamation-circle"></i> <strong>' + errorMsg + '</strong>';
+                }
+            });
+        });
+    }
+});
+</script>

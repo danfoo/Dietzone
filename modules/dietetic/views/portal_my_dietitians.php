@@ -5,15 +5,53 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-        .dietitian-card {
-            background: white;
-            border-left: 4px solid #01807B;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
+/* Modern Mobile App Design - No Borders */
+.page-header-mobile {
+    background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+    border-radius: 24px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    color: white;
+    box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
+}
+
+.page-header-mobile h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-header-mobile p {
+    margin: 0;
+    font-size: 15px;
+    opacity: 0.95;
+    font-weight: 500;
+}
+
+.dietitian-card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Gradient accent bar at top */
+.dietitian-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+}
 
         .dietitian-card:active {
             transform: scale(0.98);
@@ -185,11 +223,23 @@ $this->load->view('portal/includes/portal_header');
 
         .rating-card {
             background: white;
-            border-left: 4px solid #F3911D;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Gradient accent bar at top */
+        .rating-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #F3911D 0%, #01807B 100%);
         }
 
         .rating-header {

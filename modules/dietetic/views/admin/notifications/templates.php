@@ -197,25 +197,27 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.test-section {
-    background: #f7fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 5px;
-    padding: 15px;
-    margin-top: 20px;
-}
-
-.test-section h4 {
-    color: #2d3748;
-    margin-top: 0;
-}
-
 .tab-content {
     display: none;
 }
 
 .tab-content.active {
     display: block;
+}
+
+.char-count {
+    float: right;
+    color: #718096;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.char-count.warning {
+    color: #f59e0b;
+}
+
+.char-count.error {
+    color: #ef4444;
 }
 </style>
 
@@ -239,14 +241,16 @@
                 <p>Personnalisez les messages envoyés aux patients par Email, SMS et WhatsApp</p>
             </div>
 
+            <?php echo form_open(admin_url('dietetic/notifications/templates')); ?>
+
             <div class="template-tabs">
-                <button class="tab-button active" onclick="showTab('email')">
+                <button type="button" class="tab-button active" onclick="showTab('email')">
                     <i class="fa fa-envelope"></i> Email
                 </button>
-                <button class="tab-button" onclick="showTab('sms')">
+                <button type="button" class="tab-button" onclick="showTab('sms')">
                     <i class="fa fa-mobile"></i> SMS
                 </button>
-                <button class="tab-button" onclick="showTab('whatsapp')">
+                <button type="button" class="tab-button" onclick="showTab('whatsapp')">
                     <i class="fa fa-whatsapp"></i> WhatsApp
                 </button>
             </div>
@@ -255,10 +259,10 @@
             <div id="email-tab" class="tab-content active">
                 <div class="alert alert-info">
                     <i class="fa fa-info-circle"></i>
-                    <strong>Note:</strong> Les templates d'email utilisent le système de templates Perfex CRM.
-                    Les variables sont automatiquement remplacées lors de l'envoi.
+                    <strong>Note:</strong> Modifiez les templates selon vos besoins. Les variables entre accolades seront automatiquement remplacées.
                 </div>
 
+                <!-- Recommendation Template -->
                 <div class="template-card">
                     <h3><i class="fa fa-lightbulb-o"></i> Nouvelle Recommandation</h3>
                     <div class="template-description">
@@ -274,25 +278,27 @@
                         <code>{portal_url}</code>
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Sujet</label>
-                            <input type="text" value="💡 Nouvelle Recommandation Diététique" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>Message</label>
-                            <textarea disabled>Bonjour {patient_name},
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="email_recommendation_subject" value="<?php echo htmlspecialchars($templates['email_recommendation']['subject'] ?? '💡 Nouvelle Recommandation Diététique'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="email_recommendation_body"><?php echo htmlspecialchars($templates['email_recommendation']['body'] ?? 'Bonjour {patient_name},
 
 Votre diététicien {dietitian_name} a ajouté une nouvelle recommandation pour votre {meal_type}.
 
 Consultez vos recommandations sur votre portail patient :
 {portal_url}
 
-Suivez ces conseils pour progresser ! 💪</textarea>
-                        </div>
-                    </form>
+Suivez ces conseils pour progresser ! 💪'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="email_recommendation" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
 
+                <!-- Consultation Template -->
                 <div class="template-card">
                     <h3><i class="fa fa-calendar"></i> Consultation Planifiée</h3>
                     <div class="template-description">
@@ -308,14 +314,13 @@ Suivez ces conseils pour progresser ! 💪</textarea>
                         <code>{consultation_type}</code>
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Sujet</label>
-                            <input type="text" value="📅 Nouvelle Consultation Planifiée" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>Message</label>
-                            <textarea disabled>Bonjour {patient_name},
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="email_consultation_subject" value="<?php echo htmlspecialchars($templates['email_consultation']['subject'] ?? '📅 Nouvelle Consultation Planifiée'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="email_consultation_body"><?php echo htmlspecialchars($templates['email_consultation']['body'] ?? 'Bonjour {patient_name},
 
 Une nouvelle consultation a été planifiée :
 
@@ -324,11 +329,14 @@ Une nouvelle consultation a été planifiée :
 🕐 Heure : {consultation_time}
 📝 Type : {consultation_type}
 
-Nous avons hâte de vous voir ! 😊</textarea>
-                        </div>
-                    </form>
+Nous avons hâte de vous voir ! 😊'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="email_consultation" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
 
+                <!-- Milestone Template -->
                 <div class="template-card">
                     <h3><i class="fa fa-trophy"></i> Jalon Atteint</h3>
                     <div class="template-description">
@@ -344,23 +352,24 @@ Nous avons hâte de vous voir ! 😊</textarea>
                         <code>{current_weight}</code>
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Sujet (5kg)</label>
-                            <input type="text" value="🎉 Bravo ! Vous avez perdu 5kg !" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>Message</label>
-                            <textarea disabled>Félicitations {patient_name} !
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="email_milestone_subject" value="<?php echo htmlspecialchars($templates['email_milestone']['subject'] ?? '🎉 Bravo ! Vous avez atteint un objectif !'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="email_milestone_body"><?php echo htmlspecialchars($templates['email_milestone']['body'] ?? 'Félicitations {patient_name} !
 
-Vous venez d'atteindre un jalon important : {weight_lost}kg perdus ! 🎊
+Vous venez d\'atteindre un jalon important : {weight_lost}kg perdus ! 🎊
 
 Poids de départ : {starting_weight}kg
 Poids actuel : {current_weight}kg
 
-C'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne voie ! 💪✨</textarea>
-                        </div>
-                    </form>
+C\'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne voie ! 💪✨'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="email_milestone" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
             </div>
 
@@ -371,47 +380,55 @@ C'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne 
                     <strong>Limite SMS:</strong> Les SMS sont limités à 160 caractères. Au-delà, le message sera divisé en plusieurs SMS.
                 </div>
 
+                <!-- Hydration Reminder -->
                 <div class="template-card">
                     <h3><i class="fa fa-tint"></i> Rappel Hydratation</h3>
                     <div class="template-description">
                         Message court envoyé 3x/jour pour rappeler de boire de l'eau
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Message SMS (max 160 caractères)</label>
-                            <textarea maxlength="160" disabled>💧 N'oubliez pas de boire de l'eau ! Votre corps vous remerciera. 🎯 Objectif : 2L/jour</textarea>
-                            <small style="color: #718096;">0/160 caractères</small>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <label>Message SMS (max 160 caractères)</label>
+                        <textarea name="sms_hydration_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['sms_hydration']['body'] ?? '💧 N\'oubliez pas de boire de l\'eau ! Votre corps vous remerciera. 🎯 Objectif : 2L/jour'); ?></textarea>
+                        <small class="char-count" id="char-count-sms_hydration_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="sms_hydration" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
 
+                <!-- Weight Reminder -->
                 <div class="template-card">
                     <h3><i class="fa fa-scale"></i> Rappel Pesée</h3>
                     <div class="template-description">
                         Rappel hebdomadaire pour enregistrer le poids
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Message SMS</label>
-                            <textarea maxlength="160" disabled>📊 C'est l'heure de votre pesée hebdomadaire ! Prenez quelques minutes pour enregistrer votre poids. 💪</textarea>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <label>Message SMS</label>
+                        <textarea name="sms_weight_reminder_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['sms_weight_reminder']['body'] ?? '📊 C\'est l\'heure de votre pesée hebdomadaire ! Prenez quelques minutes pour enregistrer votre poids. 💪'); ?></textarea>
+                        <small class="char-count" id="char-count-sms_weight_reminder_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="sms_weight_reminder" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
 
+                <!-- Consultation Reminder -->
                 <div class="template-card">
                     <h3><i class="fa fa-clock-o"></i> Rappel Consultation</h3>
                     <div class="template-description">
                         Rappel 1 jour avant la consultation
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Message SMS</label>
-                            <textarea maxlength="160" disabled>⏰ Rappel : Votre consultation est demain ! 👨‍⚕️ N'oubliez pas votre rendez-vous. 📋</textarea>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <label>Message SMS</label>
+                        <textarea name="sms_consultation_reminder_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['sms_consultation_reminder']['body'] ?? '⏰ Rappel : Votre consultation est demain ! 👨‍⚕️ N\'oubliez pas votre rendez-vous. 📋'); ?></textarea>
+                        <small class="char-count" id="char-count-sms_consultation_reminder_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="sms_consultation_reminder" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
             </div>
 
@@ -422,16 +439,24 @@ C'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne 
                     <strong>WhatsApp Business:</strong> Les messages WhatsApp peuvent inclure des emojis, des sauts de ligne et des liens.
                 </div>
 
+                <!-- Program Assigned -->
                 <div class="template-card">
                     <h3><i class="fa fa-clipboard"></i> Programme Assigné</h3>
                     <div class="template-description">
                         Message envoyé lors de l'assignation d'un nouveau programme diététique
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Message WhatsApp</label>
-                            <textarea disabled>Bonjour {patient_name},
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{patient_name}</code>
+                        <code>{dietitian_name}</code>
+                        <code>{program_name}</code>
+                        <code>{portal_url}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="whatsapp_program_assigned_body"><?php echo htmlspecialchars($templates['whatsapp_program_assigned']['body'] ?? 'Bonjour {patient_name},
 
 📋 Votre diététicien {dietitian_name} vous a assigné un nouveau programme :
 
@@ -441,33 +466,45 @@ Consultez votre portail patient pour voir les détails et commencer votre progra
 
 🔗 {portal_url}
 
-Bonne continuation ! 💪</textarea>
-                        </div>
-                    </form>
+Bonne continuation ! 💪'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="whatsapp_program_assigned" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
 
+                <!-- Food Entry Reminder -->
                 <div class="template-card">
                     <h3><i class="fa fa-file-text"></i> Journal Alimentaire</h3>
                     <div class="template-description">
                         Rappel quotidien pour remplir le journal alimentaire
                     </div>
 
-                    <form>
-                        <div class="form-group">
-                            <label>Message WhatsApp</label>
-                            <textarea disabled>Bonjour {patient_name},
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{patient_name}</code>
+                        <code>{portal_url}</code>
+                    </div>
 
-📝 N'oubliez pas de remplir votre journal alimentaire d'aujourd'hui !
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="whatsapp_food_entry_reminder_body"><?php echo htmlspecialchars($templates['whatsapp_food_entry_reminder']['body'] ?? 'Bonjour {patient_name},
+
+📝 N\'oubliez pas de remplir votre journal alimentaire d\'aujourd\'hui !
 
 Quelques minutes suffisent pour noter vos repas et boissons.
 
 🔗 {portal_url}
 
-Votre suivi régulier est la clé du succès ! 🌟</textarea>
-                        </div>
-                    </form>
+Votre suivi régulier est la clé du succès ! 🌟'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="whatsapp_food_entry_reminder" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
                 </div>
             </div>
+
+            <?php echo form_close(); ?>
 
             <div style="margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 8px;">
                 <h4 style="margin-top: 0;">
@@ -477,7 +514,7 @@ Votre suivi régulier est la clé du succès ! 🌟</textarea>
                     <li><strong>Email:</strong> Peut contenir du HTML, des liens et des images. Idéal pour les messages détaillés.</li>
                     <li><strong>SMS:</strong> Court et direct. Utilisez des emojis avec parcimonie. Maximum 160 caractères recommandé.</li>
                     <li><strong>WhatsApp:</strong> Permet les emojis, sauts de ligne et liens. Ton plus personnel et conversationnel.</li>
-                    <li><strong>Variables:</strong> Toujours tester avec des données réelles avant déploiement en production.</li>
+                    <li><strong>Variables:</strong> Utilisez les variables entre accolades (ex: {patient_name}) pour personnaliser vos messages.</li>
                 </ul>
             </div>
         </div>
@@ -504,4 +541,28 @@ function showTab(tabName) {
     // Activate corresponding button
     event.target.closest('.tab-button').classList.add('active');
 }
+
+function updateCharCount(textarea, maxLength) {
+    const charCountId = 'char-count-' + textarea.name;
+    const charCountEl = document.getElementById(charCountId);
+    if (charCountEl) {
+        const currentLength = textarea.value.length;
+        charCountEl.textContent = currentLength + '/' + maxLength;
+
+        // Update color based on length
+        charCountEl.classList.remove('warning', 'error');
+        if (currentLength > maxLength) {
+            charCountEl.classList.add('error');
+        } else if (currentLength > maxLength * 0.8) {
+            charCountEl.classList.add('warning');
+        }
+    }
+}
+
+// Initialize character counts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('textarea[maxlength]').forEach(textarea => {
+        updateCharCount(textarea, parseInt(textarea.getAttribute('maxlength')));
+    });
+});
 </script>

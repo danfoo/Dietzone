@@ -82,23 +82,87 @@ class Notifications extends AdminController
             $this->load->model('dietetic/dietetic_notifications_model');
         }
 
-        // Handle form submission
-        if ($this->input->post('save_settings')) {
+        // Handle form submission (check if it's a POST request)
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            // DEBUG: Log that we entered the POST block
+            log_activity('🔍 [DEBUG] POST detected - form submitted');
+
+            // Log all POST data (without passwords)
+            $all_post = $this->input->post();
+            $safe_post = $all_post;
+            if (isset($safe_post['sms_lam_password'])) {
+                $safe_post['sms_lam_password'] = '***HIDDEN***';
+            }
+            log_activity('🔍 [DEBUG] All POST data: ' . json_encode($safe_post));
+
+            // Note: CSRF is automatically verified by CodeIgniter, no manual check needed
+            log_activity('✅ [DEBUG] CSRF validation PASSED (automatic)');
+
             $settings = [
+                // General settings
+                'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
+
+                // SMS provider settings
                 'sms_provider' => $this->input->post('sms_provider'),
-                'sms_lam_api_key' => $this->input->post('sms_lam_api_key'),
+
+                // LAM SMS API credentials (new format)
+                'sms_lam_account_id' => $this->input->post('sms_lam_account_id'),
+                'sms_lam_password' => $this->input->post('sms_lam_password'),
                 'sms_lam_sender_id' => $this->input->post('sms_lam_sender_id'),
+                'sms_lam_ret_url' => $this->input->post('sms_lam_ret_url'),
+                'sms_lam_priority' => $this->input->post('sms_lam_priority'),
+
+                // WhatsApp settings
                 'whatsapp_provider' => $this->input->post('whatsapp_provider'),
                 'whatsapp_api_key' => $this->input->post('whatsapp_api_key'),
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
-                'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
             ];
 
+            // Log for debugging (hide password)
+            $safe_settings = $settings;
+            if (isset($safe_settings['sms_lam_password'])) {
+                $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            log_activity('🔍 [DEBUG] Settings to save: ' . json_encode($safe_settings));
+
+            $success_count = 0;
+            $error_count = 0;
+            $skipped_count = 0;
+
             foreach ($settings as $key => $value) {
-                $this->dietetic_notifications_model->update_setting($key, $value);
+                try {
+                    // Log each setting before saving
+                    $display_value = ($key === 'sms_lam_password' && $value) ? '***SET***' : $value;
+                    log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
+
+                    $result = $this->dietetic_notifications_model->update_setting($key, $value);
+
+                    if ($result) {
+                        // Check if it was actually saved or skipped
+                        if ($value === null || $value === '') {
+                            $skipped_count++;
+                            log_activity("⚠️ [DEBUG] Setting {$key} SKIPPED (empty value)");
+                        } else {
+                            $success_count++;
+                            log_activity("✅ [DEBUG] Setting {$key} SAVED successfully");
+                        }
+                    } else {
+                        $error_count++;
+                        log_activity("❌ [DEBUG] Setting {$key} FAILED to save");
+                    }
+                } catch (Exception $e) {
+                    $error_count++;
+                    log_activity('❌ [DEBUG] Exception for setting ' . $key . ': ' . $e->getMessage());
+                }
             }
 
-            set_alert('success', 'Paramètres de notification mis à jour avec succès');
+            log_activity("📊 [DEBUG] Final results: {$success_count} saved, {$skipped_count} skipped, {$error_count} failed");
+
+            if ($error_count > 0) {
+                set_alert('warning', "Paramètres partiellement enregistrés ({$success_count} réussis, {$error_count} échoués). Consultez les logs pour plus de détails.");
+            } else {
+                set_alert('success', "Paramètres de notification mis à jour avec succès ({$success_count} enregistrés, {$skipped_count} ignorés car vides)");
+            }
             redirect(admin_url('dietetic/notifications/settings'));
         }
 
@@ -248,12 +312,118 @@ class Notifications extends AdminController
     }
 
     /**
+     * Scan all patients for milestones (AJAX)
+     */
+    public function scan_milestones()
+    {
+        // Clear any output buffers
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/json');
+
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            die();
+        }
+
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        try {
+            log_activity('scan_milestones: Starting scan...');
+
+            $results = $this->dietetic_notifications_model->scan_all_patients_for_milestones();
+
+            log_activity('scan_milestones: Scan completed - ' . $results['milestones_detected'] . ' milestones detected');
+
+            echo json_encode([
+                'success' => true,
+                'message' => sprintf(
+                    '%d patients analysés, %d jalons détectés',
+                    $results['patients_checked'],
+                    $results['milestones_detected']
+                ),
+                'data' => $results
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('scan_milestones ERROR: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+
+        die();
+    }
+
+    /**
      * Notification templates page
      */
     public function templates()
     {
         if (!is_admin()) {
             access_denied('Notification Templates');
+        }
+
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        // Handle form submission
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            $template_key = $this->input->post('template_key');
+            $subject = $this->input->post('subject');
+            $body = $this->input->post('body');
+
+            if ($template_key) {
+                // Save subject if provided
+                if ($subject !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_subject',
+                        $subject
+                    );
+                }
+
+                // Save body
+                if ($body !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_body',
+                        $body
+                    );
+                }
+
+                set_alert('success', 'Modèle enregistré avec succès');
+                redirect(admin_url('dietetic/notifications/templates'));
+            }
+        }
+
+        // Load existing templates from database
+        $template_keys = [
+            // Email templates
+            'email_recommendation', 'email_consultation', 'email_milestone',
+            // SMS templates
+            'sms_hydration', 'sms_weight_reminder', 'sms_consultation_reminder',
+            // WhatsApp templates
+            'whatsapp_program_assigned', 'whatsapp_food_entry_reminder'
+        ];
+
+        $data['templates'] = [];
+        foreach ($template_keys as $key) {
+            $subject = $this->dietetic_notifications_model->get_setting('template_' . $key . '_subject');
+            $body = $this->dietetic_notifications_model->get_setting('template_' . $key . '_body');
+            $data['templates'][$key] = [
+                'subject' => $subject,
+                'body' => $body
+            ];
         }
 
         $data['title'] = 'Modèles de Notifications';
@@ -294,6 +464,37 @@ class Notifications extends AdminController
         $message = 'Non installé';
 
         switch ($migration) {
+            case 'lam_update':
+                // Check if new LAM SMS settings exist
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                $new_settings_exist = true;
+                $new_settings = ['sms_lam_account_id', 'sms_lam_password', 'sms_lam_ret_url', 'sms_lam_priority'];
+
+                foreach ($new_settings as $setting) {
+                    $value = $this->dietetic_notifications_model->get_setting($setting);
+                    if ($value === null) {
+                        $new_settings_exist = false;
+                        break;
+                    }
+                }
+
+                // Also check if old settings still exist (means update is needed)
+                $old_settings_exist = false;
+                $old_settings = ['lam_api_url', 'lam_api_key', 'sms_lam_api_key'];
+
+                foreach ($old_settings as $setting) {
+                    $this->db->where('setting_key', $setting);
+                    if ($this->db->count_all_results(db_prefix() . 'dietic_notification_settings') > 0) {
+                        $old_settings_exist = true;
+                        break;
+                    }
+                }
+
+                $installed = $new_settings_exist && !$old_settings_exist;
+                $message = $installed ? 'Installé' : ($old_settings_exist ? 'Mise à jour requise' : 'À installer');
+                break;
+
             case 'notifications':
                 // Check if base notification tables exist
                 $tables = [
@@ -376,6 +577,7 @@ class Notifications extends AdminController
 
             // Determine which SQL file to use
             $sql_files = [
+                'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
                 'optimizations' => 'optimize_notifications_performance.sql'
@@ -480,6 +682,144 @@ class Notifications extends AdminController
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur lors de la migration: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * LAM SMS Configuration Cleanup Page
+     * URL: /admin/dietetic/notifications/cleanup
+     */
+    public function cleanup()
+    {
+        if (!is_admin()) {
+            access_denied('Cleanup');
+        }
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $data['title'] = 'Nettoyage Configuration LAM SMS';
+
+        // Check for old LAM keys
+        $old_keys = ['lam_api_url', 'lam_api_key', 'lam_api_sender', 'sms_lam_api_key'];
+        $data['old_keys_found'] = [];
+
+        foreach ($old_keys as $key) {
+            $this->db->where('setting_key', $key);
+            $result = $this->db->get(db_prefix() . 'dietic_notification_settings')->row();
+            if ($result) {
+                $data['old_keys_found'][] = [
+                    'key' => $key,
+                    'value' => $result->setting_value
+                ];
+            }
+        }
+
+        // Check for new LAM keys
+        $new_keys = ['sms_lam_account_id', 'sms_lam_password', 'sms_lam_sender_id', 'sms_lam_ret_url', 'sms_lam_priority'];
+        $data['new_keys_status'] = [];
+
+        foreach ($new_keys as $key) {
+            $value = $this->dietetic_notifications_model->get_setting($key);
+            $data['new_keys_status'][] = [
+                'key' => $key,
+                'exists' => $value !== null,
+                'value' => $value
+            ];
+        }
+
+        $this->load->view('admin/notifications/cleanup', $data);
+    }
+
+    /**
+     * Execute cleanup of old LAM SMS keys (AJAX)
+     */
+    public function execute_cleanup()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            return;
+        }
+
+        try {
+            $table = db_prefix() . 'dietic_notification_settings';
+            $old_keys = ['lam_api_url', 'lam_api_key', 'lam_api_sender', 'sms_lam_api_key'];
+
+            // Delete old keys
+            $deleted_count = 0;
+            foreach ($old_keys as $key) {
+                $this->db->where('setting_key', $key);
+                if ($this->db->delete($table)) {
+                    if ($this->db->affected_rows() > 0) {
+                        $deleted_count++;
+                    }
+                }
+            }
+
+            // Load notifications model
+            if (!isset($this->dietetic_notifications_model)) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+            }
+
+            // Ensure new keys exist with default values
+            $new_keys_defaults = [
+                'sms_lam_account_id' => '',
+                'sms_lam_password' => '',
+                'sms_lam_sender_id' => 'API_LAMSMS',
+                'sms_lam_ret_url' => '',
+                'sms_lam_priority' => '2',
+                'sms_provider' => 'lam'
+            ];
+
+            $created_count = 0;
+            foreach ($new_keys_defaults as $key => $default_value) {
+                // Check if key exists
+                $existing = $this->dietetic_notifications_model->get_setting($key);
+
+                if ($existing === null) {
+                    // Create with default value
+                    $insert_data = [
+                        'setting_key' => $key,
+                        'setting_value' => $default_value,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ];
+
+                    if ($this->db->insert($table, $insert_data)) {
+                        $created_count++;
+                    }
+                }
+            }
+
+            // Verify cleanup was successful
+            $remaining_old_keys = 0;
+            foreach ($old_keys as $key) {
+                $this->db->where('setting_key', $key);
+                $remaining_old_keys += $this->db->count_all_results($table);
+            }
+
+            log_activity("LAM SMS Cleanup: {$deleted_count} anciennes clés supprimées, {$created_count} nouvelles clés créées");
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Nettoyage terminé avec succès!",
+                'deleted_count' => $deleted_count,
+                'created_count' => $created_count,
+                'remaining_old_keys' => $remaining_old_keys
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Cleanup Error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du nettoyage: ' . $e->getMessage()
             ]);
         }
     }

@@ -294,6 +294,7 @@ input:checked + .toggle-slider:before {
             </div>
 
             <form method="POST" action="<?php echo admin_url('dietetic/notifications/settings'); ?>">
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                 <!-- Master Toggle -->
                 <div class="master-toggle">
                     <div class="master-toggle-content">
@@ -313,33 +314,58 @@ input:checked + .toggle-slider:before {
                     <div class="form-group">
                         <label>Fournisseur SMS</label>
                         <select name="sms_provider">
-                            <option value="lam" <?php echo ($settings['sms_provider'] ?? 'lam') == 'lam' ? 'selected' : ''; ?>>LAM (Recommandé pour Sénégal)</option>
+                            <option value="lam" <?php echo ($settings['sms_provider'] ?? 'lam') == 'lam' ? 'selected' : ''; ?>>LAM (L'Africamobile - Recommandé pour Sénégal)</option>
                             <option value="custom" <?php echo ($settings['sms_provider'] ?? '') == 'custom' ? 'selected' : ''; ?>>Personnalisé</option>
                         </select>
                         <span class="help-text">Sélectionnez votre fournisseur de service SMS</span>
                     </div>
 
                     <div class="form-group">
-                        <label>Clé API LAM</label>
-                        <input type="password" name="sms_lam_api_key" value="<?php echo $settings['sms_lam_api_key'] ?? ''; ?>" placeholder="Votre clé API LAM">
-                        <span class="help-text">Obtenez votre clé API sur <a href="https://lam.sn" target="_blank">lam.sn</a></span>
+                        <label>Account ID LAM</label>
+                        <input type="text" name="sms_lam_account_id" value="<?php echo $settings['sms_lam_account_id'] ?? ''; ?>" placeholder="Votre Account ID LAM">
+                        <span class="help-text">Identifiant de votre compte LAM SMS</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mot de passe LAM</label>
+                        <input type="password" name="sms_lam_password" value="<?php echo $settings['sms_lam_password'] ?? ''; ?>" placeholder="Votre mot de passe LAM">
+                        <span class="help-text">Mot de passe de votre compte LAM SMS</span>
                     </div>
 
                     <div class="form-group">
                         <label>Sender ID (Nom de l'expéditeur)</label>
-                        <input type="text" name="sms_lam_sender_id" value="<?php echo $settings['sms_lam_sender_id'] ?? 'DietSenegal'; ?>" placeholder="DietSenegal" maxlength="11">
-                        <span class="help-text">Maximum 11 caractères alphanumériques</span>
+                        <input type="text" name="sms_lam_sender_id" value="<?php echo $settings['sms_lam_sender_id'] ?? 'API_LAMSMS'; ?>" placeholder="API_LAMSMS" maxlength="11">
+                        <span class="help-text">Maximum 11 caractères alphanumériques (par défaut: API_LAMSMS)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de retour (Callback URL)</label>
+                        <input type="text" name="sms_lam_ret_url" value="<?php echo $settings['sms_lam_ret_url'] ?? site_url('dietetic/sms_callback'); ?>" placeholder="<?php echo site_url('dietetic/sms_callback'); ?>">
+                        <span class="help-text">URL pour recevoir les notifications de statut d'envoi SMS</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Priorité SMS</label>
+                        <select name="sms_lam_priority">
+                            <option value="1" <?php echo ($settings['sms_lam_priority'] ?? '2') == '1' ? 'selected' : ''; ?>>1 - Haute priorité</option>
+                            <option value="2" <?php echo ($settings['sms_lam_priority'] ?? '2') == '2' ? 'selected' : ''; ?>>2 - Priorité normale (recommandé)</option>
+                            <option value="3" <?php echo ($settings['sms_lam_priority'] ?? '2') == '3' ? 'selected' : ''; ?>>3 - Basse priorité</option>
+                        </select>
+                        <span class="help-text">Niveau de priorité pour l'envoi des SMS</span>
                     </div>
 
                     <div class="provider-info">
-                        <strong>Information LAM :</strong><br>
-                        LAM est le principal opérateur de télécommunications au Sénégal. Pour obtenir vos identifiants API :
+                        <strong>Configuration LAM SMS :</strong><br>
+                        LAM (L'Africamobile) est le fournisseur de services SMS pour le Sénégal. Pour obtenir vos identifiants :
                         <ol style="margin: 10px 0 0 20px;">
-                            <li>Créez un compte sur <a href="https://lam.sn" target="_blank">lam.sn</a></li>
-                            <li>Accédez à votre espace développeur</li>
-                            <li>Générez votre clé API</li>
-                            <li>Configurez votre Sender ID</li>
+                            <li>Visitez <a href="https://developers.lafricamobile.com" target="_blank">developers.lafricamobile.com</a></li>
+                            <li>Créez un compte ou connectez-vous</li>
+                            <li>Obtenez votre <strong>Account ID</strong> et <strong>mot de passe</strong></li>
+                            <li>Configurez votre Sender ID (nom d'expéditeur)</li>
                         </ol>
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <strong>📚 Documentation:</strong> <a href="https://developers.lafricamobile.com/docs/sms/introduction" target="_blank">Guide d'intégration LAM SMS</a>
+                        </div>
                     </div>
                 </div>
 

@@ -5,46 +5,47 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-/* Page-specific styles for meal plans */
+/* Modern Mobile App Design - No Borders */
 .page-header-mobile {
     background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
-    border-radius: 16px;
-    padding: 24px 20px;
+    border-radius: 24px;
+    padding: 28px 24px;
     margin-bottom: 24px;
     color: white;
-    box-shadow: 0 8px 16px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
 }
 
 .page-header-mobile h1 {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 26px;
+    font-weight: 800;
     margin: 0 0 8px 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .page-header-mobile p {
     margin: 0;
     font-size: 15px;
     opacity: 0.95;
+    font-weight: 500;
 }
 
 .program-badge {
     background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
     color: white;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    gap: 16px;
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.25);
 }
 
 .program-badge i {
-    font-size: 24px;
-    opacity: 0.9;
+    font-size: 28px;
+    opacity: 0.95;
 }
 
 .program-badge-text {
@@ -55,13 +56,14 @@ $this->load->view('portal/includes/portal_header');
     font-size: 11px;
     opacity: 0.9;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 
 .program-badge-name {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 800;
 }
 
 .meal-plans-grid {
@@ -71,121 +73,144 @@ $this->load->view('portal/includes/portal_header');
     margin-bottom: 24px;
 }
 
+/* Card without borders - floating effect */
 .meal-plan-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    border-left: 5px solid #01807B;
+    position: relative;
 }
 
 .meal-plan-card:active {
-    transform: scale(0.98);
+    transform: translateY(2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Gradient accent bar - subtle top accent instead of left border */
+.meal-plan-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
 }
 
 .meal-plan-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 20px;
-    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8fcfc 0%, #f0f9f9 100%);
+    padding: 24px;
 }
 
 .week-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: linear-gradient(135deg, #01807B 0%, #026661 100%);
     color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 11px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
+    letter-spacing: 0.6px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.2);
 }
 
 .meal-plan-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #2c3e50;
+    font-size: 19px;
+    font-weight: 800;
+    color: #1a1a1a;
     margin: 0;
+    line-height: 1.4;
 }
 
 .meal-plan-body {
-    padding: 20px;
+    padding: 24px;
 }
 
+/* Notes without border - soft background only */
 .meal-plan-notes {
-    color: #6c757d;
+    color: #495057;
     font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    padding: 14px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 3px solid #01807B;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #f8fcfc 0%, #f0f9f9 100%);
+    border-radius: 16px;
+}
+
+.meal-plan-notes i {
+    color: #01807B;
+    margin-right: 6px;
 }
 
 .meal-plan-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
 .btn-view-meal {
     flex: 1;
     background: linear-gradient(135deg, #01807B 0%, #026661 100%);
     color: white;
-    padding: 14px 20px;
-    border-radius: 10px;
-    font-weight: 600;
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 15px;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-height: 48px;
+    gap: 10px;
+    min-height: 52px;
+    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.25);
 }
 
 .btn-view-meal:active {
-    transform: scale(0.97);
+    transform: translateY(2px);
+    box-shadow: 0 3px 8px rgba(1, 128, 123, 0.3);
 }
 
 .btn-view-meal:hover {
-    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.35);
     color: white;
     text-decoration: none;
+    transform: translateY(-2px);
 }
 
 .empty-state {
     background: white;
-    border-radius: 16px;
-    padding: 50px 30px;
+    border-radius: 24px;
+    padding: 60px 30px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .empty-state-icon {
-    font-size: 56px;
-    color: #dee2e6;
-    margin-bottom: 16px;
+    font-size: 64px;
+    color: #e0e0e0;
+    margin-bottom: 20px;
 }
 
 .empty-state-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #495057;
-    margin-bottom: 8px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 10px;
 }
 
 .empty-state-text {
     color: #6c757d;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     max-width: 400px;
     margin: 0 auto;
 }
@@ -193,29 +218,36 @@ $this->load->view('portal/includes/portal_header');
 .btn-back {
     background: white;
     color: #495057;
-    border: 2px solid #dee2e6;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 48px;
+    gap: 10px;
+    min-height: 52px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .btn-back:hover {
-    background: #f8f9fa;
-    border-color: #01807B;
-    color: #01807B;
+    background: #01807B;
+    color: white;
     text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.25);
+}
+
+.btn-back:active {
+    transform: translateY(1px);
 }
 
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -224,7 +256,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .animate-in {
-    animation: fadeInUp 0.5s ease-out forwards;
+    animation: fadeInUp 0.6s ease-out forwards;
 }
 
 .delay-1 { animation-delay: 0.1s; opacity: 0; }
@@ -232,7 +264,7 @@ $this->load->view('portal/includes/portal_header');
 
 @media (min-width: 769px) {
     .meal-plans-grid {
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 24px;
     }
 }
@@ -243,13 +275,13 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .page-header-mobile {
-        padding: 20px 16px;
-        border-radius: 12px;
+        padding: 24px 20px;
+        border-radius: 20px;
         margin-bottom: 20px;
     }
 
     .page-header-mobile h1 {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .page-header-mobile p {
@@ -257,23 +289,36 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .meal-plan-card {
-        border-radius: 12px;
+        border-radius: 20px;
+    }
+
+    .meal-plan-header {
+        padding: 20px;
+    }
+
+    .meal-plan-body {
+        padding: 20px;
+    }
+
+    .program-badge {
+        border-radius: 18px;
+        padding: 18px 20px;
+    }
+}
+
+@media (max-width: 375px) {
+    .page-header-mobile {
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+
+    .page-header-mobile h1 {
+        font-size: 20px;
     }
 
     .meal-plan-header,
     .meal-plan-body {
         padding: 16px;
-    }
-
-    .program-badge {
-        border-radius: 12px;
-        padding: 14px 16px;
-    }
-}
-
-@media (max-width: 375px) {
-    .page-header-mobile h1 {
-        font-size: 18px;
     }
 }
 </style>

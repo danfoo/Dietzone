@@ -699,10 +699,20 @@ $current_weight = $patient->latest_measurement ? $patient->latest_measurement->w
 $target_weight = $patient->target_weight;
 $initial_weight = $weight_progress->initial_weight;
 
-// Calculate remaining weight
+// Calculate remaining weight and determine goal type
 $weight_remaining = null;
+$goal_type = 'lose'; // 'lose', 'gain', or 'maintain'
 if ($current_weight && $target_weight) {
     $weight_remaining = abs($current_weight - $target_weight);
+
+    // Determine if client needs to lose or gain weight
+    if ($current_weight > $target_weight) {
+        $goal_type = 'lose';
+    } elseif ($current_weight < $target_weight) {
+        $goal_type = 'gain';
+    } else {
+        $goal_type = 'maintain';
+    }
 }
 
 // Calculate progress percentage
@@ -855,8 +865,26 @@ if (!$current_weight || !$target_weight) {
 
     <?php if ($weight_remaining !== null) { ?>
     <div class="weight-remaining">
-        <div class="weight-remaining-text">Encore à perdre</div>
-        <div class="weight-remaining-value"><?php echo number_format($weight_remaining, 1); ?> kg</div>
+        <div class="weight-remaining-text">
+            <?php
+            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                echo 'Objectif atteint !';
+            } elseif ($goal_type == 'gain') {
+                echo 'À rattraper';
+            } else {
+                echo 'Encore à perdre';
+            }
+            ?>
+        </div>
+        <div class="weight-remaining-value">
+            <?php
+            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                echo '🎉';
+            } else {
+                echo number_format($weight_remaining, 1) . ' kg';
+            }
+            ?>
+        </div>
     </div>
     <?php } ?>
 

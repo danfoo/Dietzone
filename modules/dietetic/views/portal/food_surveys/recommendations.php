@@ -20,127 +20,58 @@ $this->load->view('portal/includes/portal_header');
             padding-bottom: 80px;
         }
 
-        /* Header */
-        .portal-header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            padding: 12px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .portal-header .container-fluid {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .portal-header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .portal-logo {
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-        }
-
-        .portal-logo img {
-            max-height: 40px;
-            width: auto;
-        }
-
-        .portal-logo-text {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #01807B;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .portal-logo-text i {
-            font-size: 24px;
-        }
-
-        .portal-nav-desktop {
-            display: none;
-            gap: 5px;
-        }
-
-        @media (min-width: 769px) {
-            .portal-nav-desktop {
-                display: flex;
-            }
-        }
-
-        .portal-nav-desktop a {
-            padding: 10px 16px;
-            color: #6c757d;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .portal-nav-desktop a:hover {
-            background: #f8f9fa;
-            color: #01807B;
-        }
-
-        .portal-nav-desktop a.active {
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            color: white;
-        }
-
-        /* Content Container */
-        .content-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px 15px;
-        }
-
-        /* Page Header */
+        /* Modern Mobile App Design - No Borders */
         .page-header-mobile {
-            margin-bottom: 25px;
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 24px;
+            padding: 28px 24px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
         }
 
         .page-header-mobile h1 {
             font-size: 26px;
-            font-weight: 700;
-            color: #212529;
+            font-weight: 800;
             margin: 0 0 8px 0;
             display: flex;
             align-items: center;
             gap: 12px;
+            color: white;
         }
 
         .page-header-mobile h1 i {
-            color: #01807B;
+            color: white;
             font-size: 28px;
         }
 
         .page-header-mobile p {
-            color: #6c757d;
-            font-size: 15px;
             margin: 0;
+            font-size: 15px;
+            opacity: 0.95;
+            font-weight: 500;
+            color: white;
         }
 
         /* Empty State */
         .empty-state {
             background: white;
-            border-radius: 16px;
+            border-radius: 24px;
             padding: 60px 20px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .empty-state::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
         }
 
         .empty-state i {
@@ -167,10 +98,22 @@ $this->load->view('portal/includes/portal_header');
         /* Entry Card */
         .entry-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
             margin-bottom: 20px;
+            position: relative;
+        }
+
+        .entry-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+            z-index: 1;
         }
 
         .entry-card-header {
@@ -272,10 +215,9 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .recommendation-text {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8fcfc 0%, #f0f9f9 100%);
             padding: 16px;
-            border-radius: 12px;
-            border-left: 4px solid #01807B;
+            border-radius: 16px;
             margin-bottom: 20px;
             line-height: 1.6;
             color: #495057;
@@ -591,103 +533,7 @@ $this->load->view('portal/includes/portal_header');
         }
     </style>
 
-    <!-- Header -->
-    <div class="portal-header">
-        <div class="container-fluid">
-            <div class="portal-header-content">
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="portal-logo">
-                    <?php
-                    $logo_path = get_option('company_logo_dark');
-                    if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                        $logo_path = get_option('company_logo');
-                    }
-
-                    if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                    ?>
-                        <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-                    <?php } else { ?>
-                        <div class="portal-logo-text">
-                            <i class="fa fa-heartbeat"></i>
-                            <span><?php echo get_option('companyname') ? get_option('companyname') : 'Dietetic'; ?></span>
-                        </div>
-                    <?php } ?>
-                </a>
-
-                <!-- Desktop Navigation -->
-                <nav class="portal-nav-desktop">
-                    <a href="<?php echo site_url('dietetic/portal'); ?>">
-                        <i class="fa fa-home"></i> Accueil
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>">
-                        <i class="fa fa-cutlery"></i> Repas
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="active">
-                        <i class="fa fa-clipboard-list"></i> Enquêtes
-                    </a>
-                    <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>">
-                        <i class="fa fa-user-md"></i> Diététicien
-                    </a>
-                    <a href="<?php echo site_url('clients/profile'); ?>">
-                        <i class="fa fa-user"></i> Profil
-                    </a>
-                </nav>
-
-                <!-- Hamburger Menu (Mobile) -->
-                <div class="hamburger-menu" id="hamburgerMenu">
-                    <div class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
-
-    <!-- Mobile Menu Panel -->
-    <div class="mobile-menu-panel" id="mobileMenuPanel">
-        <div class="mobile-menu-items">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="mobile-menu-item">
-                <i class="fa fa-home"></i>
-                <span>Accueil</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="mobile-menu-item">
-                <i class="fa fa-cutlery"></i>
-                <span>Plans de Repas</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="mobile-menu-item active">
-                <i class="fa fa-clipboard-list"></i>
-                <span>Enquêtes Alimentaires</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="mobile-menu-item">
-                <i class="fa fa-heartbeat"></i>
-                <span>Mes Mesures</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="mobile-menu-item">
-                <i class="fa fa-user-md"></i>
-                <span>Mon Diététicien</span>
-            </a>
-            <?php if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) { ?>
-            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="mobile-menu-item">
-                <i class="fa fa-bell"></i>
-                <span>Notifications</span>
-            </a>
-            <?php } ?>
-            <a href="<?php echo site_url('clients/profile'); ?>" class="mobile-menu-item">
-                <i class="fa fa-user"></i>
-                <span>Mon Profil</span>
-            </a>
-            <a href="<?php echo site_url('authentication/logout'); ?>" class="mobile-menu-item">
-                <i class="fa fa-sign-out"></i>
-                <span>Déconnexion</span>
-            </a>
-        </div>
-    </div>
-
-    <div class="content-container">
+<div class="content-container">
         <!-- Page Header -->
         <div class="page-header-mobile">
             <h1>
@@ -813,44 +659,11 @@ $this->load->view('portal/includes/portal_header');
         <?php endif; ?>
     </div>
 
-    <!-- Bottom Navigation (Mobile Only) -->
-    <nav class="bottom-nav">
-        <div class="bottom-nav-items">
-            <a href="<?php echo site_url('dietetic/portal'); ?>" class="bottom-nav-item">
-                <i class="fa fa-home"></i>
-                <span>Accueil</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="bottom-nav-item">
-                <i class="fa fa-cutlery"></i>
-                <span>Repas</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="bottom-nav-item active">
-                <i class="fa fa-clipboard-list"></i>
-                <span>Enquêtes</span>
-            </a>
-            <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="bottom-nav-item">
-                <i class="fa fa-user-md"></i>
-                <span>Contact</span>
-            </a>
-            <a href="<?php echo site_url('clients/profile'); ?>" class="bottom-nav-item">
-                <i class="fa fa-user"></i>
-                <span>Profil</span>
-            </a>
-        </div>
-    </nav>
-
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
         $(function() {
             'use strict';
-
-            // Touch feedback
-            $('.comment-form button, .bottom-nav-item').on('touchstart', function() {
-                $(this).css('opacity', '0.8');
-            }).on('touchend', function() {
-                $(this).css('opacity', '1');
-            });
 
             // Submit comment
             $('.comment-form').on('submit', function(e) {
@@ -937,51 +750,6 @@ $this->load->view('portal/includes/portal_header');
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
             }
-
-            // Hamburger Menu Toggle
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
-            const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-            const mobileMenuPanel = document.getElementById('mobileMenuPanel');
-
-            function toggleMenu() {
-                if (!hamburgerMenu || !mobileMenuOverlay || !mobileMenuPanel) return;
-
-                hamburgerMenu.classList.toggle('active');
-                mobileMenuOverlay.classList.toggle('active');
-                mobileMenuPanel.classList.toggle('active');
-
-                // Prevent body scroll when menu is open
-                if (mobileMenuPanel.classList.contains('active')) {
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    document.body.style.overflow = '';
-                }
-            }
-
-            if (hamburgerMenu) {
-                hamburgerMenu.addEventListener('click', toggleMenu);
-            }
-
-            if (mobileMenuOverlay) {
-                mobileMenuOverlay.addEventListener('click', toggleMenu);
-            }
-
-            // Close menu on escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && mobileMenuPanel && mobileMenuPanel.classList.contains('active')) {
-                    toggleMenu();
-                }
-            });
-
-            // Touch feedback for mobile menu items
-            document.querySelectorAll('.mobile-menu-item').forEach(function(element) {
-                element.addEventListener('touchstart', function() {
-                    this.style.opacity = '0.7';
-                });
-                element.addEventListener('touchend', function() {
-                    this.style.opacity = '';
-                });
-            });
         });
     </script>
 

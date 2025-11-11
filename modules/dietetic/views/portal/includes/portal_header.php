@@ -11,6 +11,9 @@
     <?php } ?>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -21,10 +24,10 @@
 
         body {
             background: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
-            padding-top: 70px; /* Space for fixed header */
-            padding-bottom: 75px; /* Space for fixed footer */
+            padding-top: 60px; /* Space for fixed header */
+            padding-bottom: 60px; /* Space for fixed footer */
         }
 
         /* ============================================
@@ -35,9 +38,8 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 70px;
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            box-shadow: 0 4px 20px rgba(1, 128, 123, 0.3);
+            height: 60px;
+            background: #f8f9fa;
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -45,90 +47,283 @@
             padding: 0 20px;
         }
 
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: white;
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
 
-        .header-logo:hover {
-            transform: scale(1.05);
-        }
-
-        .header-logo img {
-            height: 45px;
-            width: auto;
-            filter: brightness(0) invert(1);
-        }
-
-        .header-logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-logo-text i {
-            font-size: 28px;
-            animation: heartbeat 1.5s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1); }
-            50% { transform: scale(1); }
-        }
-
-        /* Hamburger Menu Button */
+        /* Hamburger Menu Button - Mobile App Style */
         .hamburger-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 44px;
+            height: 44px;
+            background: transparent;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 5px;
             cursor: pointer;
             transition: all 0.3s;
-            backdrop-filter: blur(10px);
+            padding: 8px;
         }
 
         .hamburger-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            background: #e9ecef;
         }
 
         .hamburger-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
-        .hamburger-line {
-            width: 28px;
-            height: 3px;
+        .hamburger-btn i {
+            font-size: 24px;
+            color: #2c3e50;
+            transition: all 0.3s;
+        }
+
+        .hamburger-btn.active i {
+            transform: rotate(90deg);
+        }
+
+        /* Notification Button */
+        .notification-btn {
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .notification-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-btn:active {
+            transform: scale(0.9);
+        }
+
+        .notification-btn i {
+            font-size: 22px;
+            color: #2c3e50;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ff4757;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
+        }
+
+        /* Notification Panel */
+        .notification-panel {
+            position: fixed;
+            top: 60px;
+            right: -350px;
+            width: 320px;
+            max-height: calc(100vh - 120px);
             background: white;
-            border-radius: 3px;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 999;
+            transition: right 0.3s ease;
+            box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 12px 0 0 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
+        .notification-panel.active {
+            right: 0;
         }
 
-        .hamburger-btn.active .hamburger-line:nth-child(2) {
+        .notification-panel-header {
+            background: #01807B;
+            color: white;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification-panel-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .notification-panel-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .notification-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border-left: 4px solid #01807B;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .notification-item:hover {
+            background: #e9ecef;
+            transform: translateX(-4px);
+        }
+
+        .notification-item.unread {
+            background: #e8f5f4;
+            border-left-color: #ff4757;
+        }
+
+        .notification-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .notification-item-icon {
+            width: 36px;
+            height: 36px;
+            background: #01807B;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .notification-item-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .notification-item-time {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .notification-item-message {
+            font-size: 13px;
+            color: #495057;
+            line-height: 1.4;
+            padding-left: 46px;
+        }
+
+        .notification-item-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
             opacity: 0;
-            transform: translateX(20px);
         }
 
-        .hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
+        .notification-item:hover .notification-item-delete {
+            opacity: 1;
+        }
+
+        .notification-item-delete:hover {
+            background: #ff4757;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .notification-item-delete:active {
+            transform: scale(0.9);
+        }
+
+        .notification-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .notification-empty i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .notification-panel-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 12px;
+        }
+
+        .notification-settings-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #01807B;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .notification-settings-link:hover {
+            background: #e9ecef;
+            color: #01807B;
+            text-decoration: none;
+        }
+
+        .notification-settings-link i {
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .notification-panel {
+                width: 100%;
+                right: -100%;
+                border-radius: 0;
+            }
         }
 
         /* Menu Overlay */
@@ -242,15 +437,15 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 75px;
+            height: 56px;
             background: white;
-            border-top: 3px solid #01807B;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
             z-index: 1000;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
+            padding: 0 5px;
         }
 
         .footer-item {
@@ -259,12 +454,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            padding: 10px 5px;
+            gap: 3px;
+            padding: 8px 3px;
             color: #6c757d;
             text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s;
+            border-radius: 10px;
+            transition: all 0.2s;
             position: relative;
         }
 
@@ -273,7 +468,7 @@
         }
 
         .footer-item:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
         .footer-item.active {
@@ -283,30 +478,30 @@
         .footer-item.active::before {
             content: '';
             position: absolute;
-            top: -3px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
+            width: 32px;
             height: 3px;
             background: #01807B;
             border-radius: 0 0 3px 3px;
         }
 
         .footer-icon {
-            font-size: 24px;
-            transition: all 0.3s;
+            font-size: 20px;
+            transition: all 0.2s;
         }
 
         .footer-item.active .footer-icon {
-            transform: scale(1.1);
+            transform: scale(1.08);
             color: #01807B;
         }
 
         .footer-label {
-            font-size: 11px;
+            font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .footer-item.active .footer-label {
@@ -330,28 +525,13 @@
 <body>
     <!-- HEADER MAGNIFIQUE -->
     <header class="app-header">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="header-logo">
-            <?php
-            $logo_path = get_option('company_logo_dark');
-            if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-                $logo_path = get_option('company_logo');
-            }
-
-            if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
-            ?>
-                <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
-            <?php } else { ?>
-                <div class="header-logo-text">
-                    <i class="fa fa-heartbeat"></i>
-                    <span><?php echo get_option('companyname') ? get_option('companyname') : 'DietSenegal'; ?></span>
-                </div>
-            <?php } ?>
-        </a>
-
         <button class="hamburger-btn" id="menuToggle">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
+            <i class="fa fa-bars"></i>
+        </button>
+
+        <button class="notification-btn" id="notificationBtn">
+            <i class="fa fa-bell"></i>
+            <span class="notification-badge" style="display: none;">0</span>
         </button>
     </header>
 
@@ -411,6 +591,16 @@
 
             <div class="menu-divider"></div>
 
+            <?php
+            // Check if notification preferences feature is enabled
+            if ($CI_menu->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'notification_preferences') ? 'active' : ''; ?>">
+                <i class="fa fa-bell"></i>
+                <span>Préférences de Notifications</span>
+            </a>
+            <?php } ?>
+
             <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
                 <i class="fa fa-user"></i>
                 <span>Mon Profil</span>
@@ -422,5 +612,34 @@
             </a>
         </div>
     </nav>
+
+    <!-- NOTIFICATION PANEL -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <span>Notifications</span>
+            <button class="notification-panel-close" id="notificationClose">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="notification-panel-content">
+            <!-- Les notifications seront chargées dynamiquement via JavaScript -->
+            <div class="notification-empty">
+                <i class="fa fa-spinner fa-spin"></i>
+                <p>Chargement...</p>
+            </div>
+        </div>
+        <?php
+        // Add settings link if notification preferences exist
+        $CI_notif_panel = &get_instance();
+        if ($CI_notif_panel->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+        ?>
+        <div class="notification-panel-footer">
+            <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="notification-settings-link">
+                <i class="fa fa-cog"></i>
+                <span>Gérer les notifications</span>
+            </a>
+        </div>
+        <?php } ?>
+    </div>
 
     <div class="content-container">

@@ -5,13 +5,51 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-        .form-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
+/* Modern Mobile App Design - No Borders */
+.page-header-mobile {
+    background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+    border-radius: 24px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    color: white;
+    box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
+}
+
+.page-header-mobile h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-header-mobile p {
+    margin: 0;
+    font-size: 15px;
+    opacity: 0.95;
+    font-weight: 500;
+}
+
+.form-card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+}
 
         .form-section-title {
             font-size: 18px;

@@ -8,6 +8,7 @@ class Dietetic_notifications_model extends App_Model
     private $table_logs = 'dietic_notification_logs';
     private $table_milestones = 'dietic_milestones';
     private $table_settings = 'dietic_notification_settings';
+    private $table_patient_notifications = 'dietic_patient_notifications';
 
     public function __construct()
     {
@@ -125,13 +126,14 @@ class Dietetic_notifications_model extends App_Model
         $message .= "🔗 " . site_url('dietetic/portal/measurements/add') . "\n\n";
         $message .= "Courage, vous faites du super travail ! 💪";
 
-        $result = $this->send_notification([
+        $result = $this->send_notification_with_frontend([
             'patient_id' => $patient->patient_id,
             'type' => 'reminder_weight',
             'subject' => '⚖️ Rappel : Pesée Hebdomadaire',
             'message' => $message,
             'email' => $patient->email,
             'phone' => $patient->phonenumber,
+            'url' => site_url('dietetic/portal/add_measurement'),
             'channels' => [
                 'email' => $patient->channel_email,
                 'sms' => $patient->channel_sms,
@@ -207,18 +209,32 @@ class Dietetic_notifications_model extends App_Model
         $this->load->model('dietetic/dietetic_measurements_model');
 
         $patient = $this->dietetic_patients_model->get($patient_id);
-        if (!$patient) return false;
+        if (!$patient) {
+            log_activity("check_milestones: Patient {$patient_id} not found");
+            return false;
+        }
 
-        $measurements = $this->dietetic_measurements_model->get_all(['patient_id' => $patient_id]);
-        if (empty($measurements)) return false;
+        $measurements = $this->dietetic_measurements_model->get_by_patient($patient_id);
+        if (empty($measurements)) {
+            log_activity("check_milestones: No measurements for patient {$patient_id}");
+            return false;
+        }
 
         // Get first and last measurement
         $first_measurement = end($measurements);
         $latest_measurement = reset($measurements);
 
-        $starting_weight = $first_measurement->weight;
-        $current_weight = $latest_measurement->weight;
+        $starting_weight = floatval($first_measurement->weight);
+        $current_weight = floatval($latest_measurement->weight);
         $weight_lost = $starting_weight - $current_weight;
+
+        log_activity("check_milestones: Patient {$patient_id} - Starting: {$starting_weight}kg, Current: {$current_weight}kg, Lost: {$weight_lost}kg");
+
+        // Only process if weight was actually lost
+        if ($weight_lost <= 0) {
+            log_activity("check_milestones: No weight loss for patient {$patient_id}");
+            return false;
+        }
 
         // Check weight loss milestones
         $milestones_to_check = [
@@ -229,16 +245,23 @@ class Dietetic_notifications_model extends App_Model
             25 => 'weight_loss_25kg'
         ];
 
+        $milestones_detected = 0;
         foreach ($milestones_to_check as $kg => $milestone_type) {
             if ($weight_lost >= $kg) {
-                $this->record_milestone($patient_id, $milestone_type, [
+                $milestone_id = $this->record_milestone($patient_id, $milestone_type, [
                     'starting_weight' => $starting_weight,
                     'current_weight' => $current_weight,
                     'weight_lost' => $weight_lost
                 ]);
+
+                if ($milestone_id) {
+                    $milestones_detected++;
+                    log_activity("check_milestones: NEW milestone {$milestone_type} detected for patient {$patient_id}");
+                }
             }
         }
 
+        log_activity("check_milestones: {$milestones_detected} new milestone(s) detected for patient {$patient_id}");
         return true;
     }
 
@@ -253,6 +276,7 @@ class Dietetic_notifications_model extends App_Model
         $existing = $this->db->get(db_prefix() . $this->table_milestones)->row();
 
         if ($existing) {
+            log_activity("record_milestone: Milestone {$milestone_type} already recorded for patient {$patient_id} (ID: {$existing->id})");
             return false; // Already recorded
         }
 
@@ -267,10 +291,19 @@ class Dietetic_notifications_model extends App_Model
             'created_at' => date('Y-m-d H:i:s')
         ];
 
+        log_activity("record_milestone: Creating milestone {$milestone_type} for patient {$patient_id} - Weight lost: " . ($data['weight_lost'] ?? 'N/A') . "kg");
+
         if ($this->db->insert(db_prefix() . $this->table_milestones, $milestone_data)) {
             $milestone_id = $this->db->insert_id();
+            log_activity("record_milestone: Milestone {$milestone_type} recorded successfully (ID: {$milestone_id})");
+
             // Send celebration notification
-            $this->send_milestone_notification($patient_id, $milestone_type, $data);
+            try {
+                $this->send_milestone_notification($patient_id, $milestone_type, $data);
+                log_activity("record_milestone: Notification sent for milestone {$milestone_id}");
+            } catch (Exception $e) {
+                log_activity("record_milestone: Error sending notification: " . $e->getMessage());
+            }
 
             // Mark as notified
             $this->db->where('id', $milestone_id);
@@ -279,6 +312,7 @@ class Dietetic_notifications_model extends App_Model
             return $milestone_id;
         }
 
+        log_activity("record_milestone: Failed to insert milestone {$milestone_type} for patient {$patient_id}");
         return false;
     }
 
@@ -450,16 +484,17 @@ class Dietetic_notifications_model extends App_Model
         ];
 
         try {
-            // Get SMS settings
-            $api_key = $this->get_setting('sms_lam_api_key');
-            $sender_id = $this->get_setting('sms_lam_sender_id');
+            // Get LAM SMS settings
+            $account_id = $this->get_setting('sms_lam_account_id');
+            $password = $this->get_setting('sms_lam_password');
+            $sender_id = $this->get_setting('sms_lam_sender_id') ?: 'API_LAMSMS';
 
-            if (empty($api_key)) {
-                throw new Exception('SMS API key not configured');
+            if (empty($account_id) || empty($password)) {
+                throw new Exception('LAM SMS credentials not configured (account_id and password required)');
             }
 
             // LAM SMS API integration
-            $result = $this->send_lam_sms($phone, $message, $api_key, $sender_id);
+            $result = $this->send_lam_sms($phone, $message, $account_id, $password, $sender_id);
 
             if ($result['success']) {
                 $log_data['status'] = 'sent';
@@ -479,36 +514,70 @@ class Dietetic_notifications_model extends App_Model
 
     /**
      * LAM SMS API call
+     * Documentation: https://developers.lafricamobile.com/docs/sms/introduction
      */
-    private function send_lam_sms($phone, $message, $api_key, $sender_id)
+    private function send_lam_sms($phone, $message, $account_id, $password, $sender_id = 'API_LAMSMS')
     {
-        // LAM SMS API endpoint (à configurer selon la doc LAM)
-        $url = 'https://api.lam.sn/sms/send'; // URL à confirmer
+        // LAM SMS API endpoint
+        $url = 'https://lamsms.lafricamobile.com/api';
 
+        // Get additional settings
+        $ret_url = $this->get_setting('sms_lam_ret_url') ?: site_url('dietetic/sms_callback');
+        $priority = $this->get_setting('sms_lam_priority') ?: '2';
+
+        // Format phone number for LAM API
+        // Ensure phone starts with country code (e.g., 221 for Senegal)
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
+            $phone = '221' . $phone;
+        }
+
+        // Prepare LAM API request
         $data = [
-            'api_key' => $api_key,
+            'accountid' => $account_id,
+            'password' => $password,
             'sender' => $sender_id,
-            'recipient' => $phone,
-            'message' => $message
+            'ret_id' => 'dietetic_' . time(),
+            'ret_url' => $ret_url,
+            'priority' => $priority,
+            'text' => $message,
+            'to' => [
+                [
+                    'ret_id_1' => $phone
+                ]
+            ]
         ];
 
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $api_key
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json'
+            ]
         ]);
 
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
-        if ($http_code == 200) {
-            return ['success' => true];
+        // Log the request for debugging
+        log_activity('LAM SMS sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
+
+        if ($http_code == 200 || $http_code == 201) {
+            $response_data = json_decode($response, true);
+            return ['success' => true, 'response' => $response_data];
         } else {
-            return ['success' => false, 'error' => $response];
+            $error_msg = $curl_error ?: $response;
+            return ['success' => false, 'error' => $error_msg];
         }
     }
 
@@ -640,11 +709,65 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_setting($key, $value)
     {
+        $display_value = (strpos($key, 'password') !== false && $value) ? '***SET***' : $value;
+        log_activity("🔍 [MODEL DEBUG] update_setting called: key={$key}, value=" . var_export($display_value, true));
+
+        // Skip empty values (but allow '0')
+        if ($value === null || $value === '') {
+            log_activity("⚠️ [MODEL DEBUG] Skipping {$key} because value is empty/null");
+            return true; // Consider empty values as successful (no-op)
+        }
+
+        $table = db_prefix() . $this->table_settings;
+        log_activity("🔍 [MODEL DEBUG] Using table: {$table}");
+
+        // Check if setting exists
         $this->db->where('setting_key', $key);
-        return $this->db->update(db_prefix() . $this->table_settings, [
-            'setting_value' => $value,
-            'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        $existing = $this->db->get($table)->row();
+
+        if ($existing) {
+            log_activity("🔍 [MODEL DEBUG] Setting {$key} EXISTS - will UPDATE");
+            log_activity("🔍 [MODEL DEBUG] Current value in DB: " . var_export($existing->setting_value, true));
+
+            // Update existing setting
+            $this->db->where('setting_key', $key);
+            $result = $this->db->update($table, [
+                'setting_value' => $value,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $affected_rows = $this->db->affected_rows();
+            log_activity("🔍 [MODEL DEBUG] UPDATE result: " . ($result ? 'TRUE' : 'FALSE') . ", affected_rows: {$affected_rows}");
+
+            if (!$result) {
+                $error = $this->db->error();
+                log_activity("❌ [MODEL DEBUG] UPDATE FAILED for {$key}: " . $error['message']);
+            } else {
+                log_activity("✅ [MODEL DEBUG] UPDATE SUCCESS for {$key}");
+            }
+
+            return $result;
+        } else {
+            log_activity("🔍 [MODEL DEBUG] Setting {$key} DOES NOT EXIST - will INSERT");
+
+            // Insert new setting
+            $result = $this->db->insert($table, [
+                'setting_key' => $key,
+                'setting_value' => $value,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            log_activity("🔍 [MODEL DEBUG] INSERT result: " . ($result ? 'TRUE' : 'FALSE'));
+
+            if (!$result) {
+                $error = $this->db->error();
+                log_activity("❌ [MODEL DEBUG] INSERT FAILED for {$key}: " . $error['message']);
+            } else {
+                log_activity("✅ [MODEL DEBUG] INSERT SUCCESS for {$key}");
+            }
+
+            return $result;
+        }
     }
 
     /**
@@ -1020,27 +1143,128 @@ class Dietetic_notifications_model extends App_Model
      */
     public function notify_dietitian_food_entry($dietitian_id, $patient_name, $date)
     {
-        $this->load->model('staff_model');
-        $dietitian = $this->staff_model->get($dietitian_id);
+        try {
+            $this->load->model('staff_model');
+            $dietitian = $this->staff_model->get($dietitian_id);
 
-        if (!$dietitian || empty($dietitian->email)) {
+            if (!$dietitian || empty($dietitian->email)) {
+                log_activity("❌ Diététicien non trouvé ou sans email: ID {$dietitian_id}");
+                return false;
+            }
+
+            $formatted_date = date('d/m/Y', strtotime($date));
+
+            // Préparer le message
+            $message = "Bonjour {$dietitian->firstname},\n\n";
+            $message .= "📝 {$patient_name} a soumis son journal alimentaire du {$formatted_date}.\n\n";
+            $message .= "Consultez les détails et ajoutez vos recommandations :\n";
+            $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
+            $message .= "Bonne journée !";
+
+            // Vérifier si le template mail existe avant de l'utiliser
+            $template_path = FCPATH . 'application/libraries/mails/Dietetic_food_entry_submitted.php';
+
+            if (file_exists($template_path)) {
+                // Template existe, utiliser send_mail_template
+                log_activity("📧 Utilisation du template email personnalisé");
+                $email_sent = send_mail_template('dietetic_food_entry_submitted', [
+                    'email' => $dietitian->email,
+                    'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
+                    'message' => $message
+                ]);
+            } else {
+                // Template n'existe pas, envoyer email simple
+                log_activity("📧 Template non trouvé, envoi email simple");
+
+                $this->load->library('email');
+                $this->email->clear();
+                $this->email->from(get_option('smtp_email'), get_option('companyname'));
+                $this->email->to($dietitian->email);
+                $this->email->subject("📝 Nouveau journal alimentaire - {$patient_name}");
+                $this->email->message(nl2br($message));
+                $email_sent = $this->email->send();
+            }
+
+            if ($email_sent) {
+                log_activity("✅ Email envoyé au diététicien {$dietitian->firstname} {$dietitian->lastname} pour {$patient_name}");
+            } else {
+                log_activity("❌ Échec envoi email au diététicien {$dietitian->firstname} {$dietitian->lastname}");
+            }
+
+            return $email_sent;
+
+        } catch (Exception $e) {
+            log_activity("❌ Erreur notification diététicien: " . $e->getMessage());
             return false;
         }
+    }
 
-        $formatted_date = date('d/m/Y', strtotime($date));
+    /**
+     * Notify patient that their food entry was received
+     */
+    public function notify_patient_food_entry_received($patient_id, $date)
+    {
+        try {
+            // Get patient preferences
+            $preferences = $this->get_preferences($patient_id);
+            if (!$preferences || !$preferences->notify_food_entry) {
+                log_activity("⚠️ Patient {$patient_id} n'a pas activé les notifications d'enquête alimentaire");
+                return false;
+            }
 
-        $message = "Bonjour {$dietitian->firstname},\n\n";
-        $message .= "📝 {$patient_name} a soumis son journal alimentaire du {$formatted_date}.\n\n";
-        $message .= "Consultez les détails et ajoutez vos recommandations :\n";
-        $message .= "🔗 " . admin_url('dietetic/food_surveys') . "\n\n";
-        $message .= "Bonne journée !";
+            // Get patient info
+            $this->load->model('dietetic/dietetic_patients_model');
+            $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            if (!$patient) {
+                log_activity("❌ Patient {$patient_id} non trouvé");
+                return false;
+            }
 
-        // Send email to dietitian
-        return send_mail_template('dietetic_food_entry_submitted', [
-            'email' => $dietitian->email,
-            'subject' => "📝 Nouveau journal alimentaire - {$patient_name}",
-            'message' => $message
-        ]);
+            $this->load->model('clients_model');
+            $client = $this->clients_model->get($patient->client_id);
+            if (!$client) {
+                log_activity("❌ Client du patient {$patient_id} non trouvé");
+                return false;
+            }
+
+            $formatted_date = date('d/m/Y', strtotime($date));
+
+            // Préparer le message
+            $subject = "✅ Journal alimentaire reçu";
+            $message = "Bonjour,\n\n";
+            $message .= "✅ Votre journal alimentaire du {$formatted_date} a bien été reçu.\n\n";
+            $message .= "Votre diététicien va l'examiner et vous faire des recommandations personnalisées.\n\n";
+            $message .= "📱 Consultez vos recommandations dans votre espace patient :\n";
+            $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+            $message .= "Merci de votre engagement ! 💪";
+
+            // Envoyer via le système de notifications multi-canal
+            $result = $this->send_notification([
+                'patient_id' => $patient_id,
+                'type' => 'food_entry_confirmation',
+                'subject' => $subject,
+                'message' => $message,
+                'email' => $client->email,
+                'phone' => $client->phonenumber,
+                'channels' => [
+                    'email' => $preferences->channel_email ? 1 : 0,
+                    'sms' => $preferences->channel_sms ? 1 : 0,
+                    'whatsapp' => $preferences->channel_whatsapp ? 1 : 0
+                ]
+            ]);
+
+            if ($result['email'] || $result['sms'] || $result['whatsapp']) {
+                log_activity("✅ Confirmation envoyée au patient (ID: {$patient_id}) pour enquête du {$formatted_date}");
+                return true;
+            } else {
+                log_activity("❌ Échec envoi confirmation au patient (ID: {$patient_id})");
+                return false;
+            }
+
+        } catch (Exception $e) {
+            log_activity("❌ Erreur notification patient: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -1304,6 +1528,98 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Scan all patients and detect milestones retroactively
+     */
+    public function scan_all_patients_for_milestones()
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get all patients
+        $all_patients = $this->db->get(db_prefix() . 'dietic_patients')->result();
+
+        $results = [
+            'total_patients' => count($all_patients),
+            'patients_checked' => 0,
+            'milestones_detected' => 0,
+            'errors' => []
+        ];
+
+        foreach ($all_patients as $patient) {
+            try {
+                $results['patients_checked']++;
+
+                // Check milestones for this patient
+                $milestones_found = $this->check_milestones_with_count($patient->id);
+                $results['milestones_detected'] += $milestones_found;
+
+            } catch (Exception $e) {
+                $results['errors'][] = "Patient {$patient->id}: " . $e->getMessage();
+                log_activity("Error scanning patient {$patient->id} for milestones: " . $e->getMessage());
+            }
+        }
+
+        log_activity("Milestone scan completed: {$results['patients_checked']} patients checked, {$results['milestones_detected']} milestones detected");
+
+        return $results;
+    }
+
+    /**
+     * Check milestones and return count of new milestones detected
+     */
+    public function check_milestones_with_count($patient_id)
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_measurements_model');
+
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return 0;
+
+        // Get measurements directly from database (bypass permission check for admin scan)
+        $this->db->where('patient_id', $patient_id);
+        $this->db->order_by('measurement_date', 'DESC');
+        $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result();
+
+        if (empty($measurements)) return 0;
+
+        // Get first and last measurement
+        $first_measurement = end($measurements);
+        $latest_measurement = reset($measurements);
+
+        $starting_weight = floatval($first_measurement->weight);
+        $current_weight = floatval($latest_measurement->weight);
+        $weight_lost = $starting_weight - $current_weight;
+
+        // Only process if weight was actually lost
+        if ($weight_lost <= 0) return 0;
+
+        // Check weight loss milestones
+        $milestones_to_check = [
+            5 => 'weight_loss_5kg',
+            10 => 'weight_loss_10kg',
+            15 => 'weight_loss_15kg',
+            20 => 'weight_loss_20kg',
+            25 => 'weight_loss_25kg'
+        ];
+
+        $count = 0;
+        foreach ($milestones_to_check as $kg => $milestone_type) {
+            if ($weight_lost >= $kg) {
+                $milestone_id = $this->record_milestone($patient_id, $milestone_type, [
+                    'starting_weight' => $starting_weight,
+                    'current_weight' => $current_weight,
+                    'weight_lost' => $weight_lost
+                ]);
+
+                if ($milestone_id) {
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Get milestone statistics
      */
     public function get_milestone_statistics()
@@ -1331,5 +1647,181 @@ class Dietetic_notifications_model extends App_Model
         $stats['this_month'] = $this->db->count_all_results(db_prefix() . $this->table_milestones);
 
         return $stats;
+    }
+
+    // ==================== PATIENT NOTIFICATIONS (FRONTEND) ====================
+
+    /**
+     * Create a patient notification for frontend display
+     */
+    public function create_patient_notification($patient_id, $data)
+    {
+        $notification_data = [
+            'patient_id' => $patient_id,
+            'notification_type' => $data['type'],
+            'title' => $data['title'],
+            'message' => $data['message'],
+            'icon' => $data['icon'] ?? 'fa-bell',
+            'url' => $data['url'] ?? null,
+            'is_read' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($this->db->insert(db_prefix() . $this->table_patient_notifications, $notification_data)) {
+            return $this->db->insert_id();
+        }
+
+        return false;
+    }
+
+    /**
+     * Get patient notifications for frontend
+     */
+    public function get_patient_notifications($patient_id, $limit = 50, $unread_only = false)
+    {
+        $this->db->select('*');
+        $this->db->from(db_prefix() . $this->table_patient_notifications);
+        $this->db->where('patient_id', $patient_id);
+
+        if ($unread_only) {
+            $this->db->where('is_read', 0);
+        }
+
+        $this->db->order_by('created_at', 'DESC');
+        $this->db->limit($limit);
+
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get unread notification count for patient
+     */
+    public function get_unread_count($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 0);
+        return $this->db->count_all_results(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function mark_as_read($notification_id, $patient_id)
+    {
+        $this->db->where('id', $notification_id);
+        $this->db->where('patient_id', $patient_id);
+        return $this->db->update(db_prefix() . $this->table_patient_notifications, [
+            'is_read' => 1,
+            'read_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    /**
+     * Mark all notifications as read for patient
+     */
+    public function mark_all_as_read($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 0);
+        return $this->db->update(db_prefix() . $this->table_patient_notifications, [
+            'is_read' => 1,
+            'read_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    /**
+     * Delete a patient notification
+     */
+    public function delete_patient_notification($notification_id, $patient_id)
+    {
+        $this->db->where('id', $notification_id);
+        $this->db->where('patient_id', $patient_id);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Delete all read notifications for patient (cleanup)
+     */
+    public function delete_all_read($patient_id)
+    {
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('is_read', 1);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    /**
+     * Delete old notifications (older than X days)
+     */
+    public function delete_old_notifications($days = 30)
+    {
+        $cutoff_date = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        $this->db->where('created_at <', $cutoff_date);
+        $this->db->where('is_read', 1);
+        return $this->db->delete(db_prefix() . $this->table_patient_notifications);
+    }
+
+    // ==================== EXTENDED NOTIFICATION SENDING (with frontend creation) ====================
+
+    /**
+     * Enhanced send_notification that also creates frontend notification
+     */
+    public function send_notification_with_frontend($params)
+    {
+        // Send via channels (email, sms, whatsapp, push)
+        $results = $this->send_notification($params);
+
+        // Also create frontend notification
+        $frontend_created = $this->create_patient_notification($params['patient_id'], [
+            'type' => $params['type'],
+            'title' => $params['subject'],
+            'message' => $this->format_message_for_frontend($params['message']),
+            'icon' => $this->get_icon_for_type($params['type']),
+            'url' => $params['url'] ?? null
+        ]);
+
+        $results['frontend'] = $frontend_created !== false;
+
+        return $results;
+    }
+
+    /**
+     * Format message for frontend display (remove excessive newlines, limit length)
+     */
+    private function format_message_for_frontend($message)
+    {
+        // Remove excessive newlines
+        $message = preg_replace("/\n{3,}/", "\n\n", $message);
+
+        // Limit to 200 characters for preview
+        if (strlen($message) > 200) {
+            $message = substr($message, 0, 197) . '...';
+        }
+
+        return trim($message);
+    }
+
+    /**
+     * Get appropriate icon for notification type
+     */
+    private function get_icon_for_type($type)
+    {
+        $icons = [
+            'reminder_weight' => 'fa-balance-scale',
+            'reminder_water' => 'fa-tint',
+            'milestone' => 'fa-trophy',
+            'program_assigned' => 'fa-clipboard',
+            'program_updated' => 'fa-refresh',
+            'program_ending' => 'fa-clock-o',
+            'consultation_scheduled' => 'fa-calendar-plus-o',
+            'consultation_reminder_day' => 'fa-calendar',
+            'consultation_reminder_hour' => 'fa-clock-o',
+            'consultation_cancelled' => 'fa-calendar-times-o',
+            'recommendation_added' => 'fa-lightbulb-o',
+            'comment_added' => 'fa-comment',
+            'food_entry_reminder' => 'fa-cutlery',
+            'default' => 'fa-bell'
+        ];
+
+        return $icons[$type] ?? $icons['default'];
     }
 }

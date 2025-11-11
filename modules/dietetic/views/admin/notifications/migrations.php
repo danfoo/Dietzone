@@ -323,6 +323,50 @@
 
             <!-- Migrations Grid -->
             <div class="migrations-grid">
+                <!-- Migration 0: LAM SMS Config Update (CRITICAL FIX) -->
+                <div class="migration-card" data-migration="lam_update" style="border: 2px solid #f39c12;">
+                    <div class="migration-card-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                        <h3>
+                            <i class="fa fa-wrench"></i>
+                            🔧 Mise à jour LAM SMS (IMPORTANT)
+                        </h3>
+                        <span class="migration-status pending" id="status-lam_update">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            <strong>Migration corrective nécessaire :</strong> Met à jour la configuration LAM SMS vers le nouveau format avec accountid + password.
+                            Corrige l'erreur "Duplicate entry 'lam_api_url'" et remplace les anciens paramètres obsolètes.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Actions :</h4>
+                            <ul>
+                                <li>🗑️ Suppression des anciens paramètres : <code>lam_api_url</code>, <code>lam_api_key</code>, <code>sms_lam_api_key</code></li>
+                                <li>✅ Ajout des nouveaux paramètres : <code>sms_lam_account_id</code>, <code>sms_lam_password</code></li>
+                                <li>✅ Ajout de : <code>sms_lam_ret_url</code>, <code>sms_lam_priority</code></li>
+                                <li>✅ Mise à jour du sender_id par défaut : <code>API_LAMSMS</code></li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning" style="margin-top: 15px; background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px;">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <strong>Important :</strong> Cette migration est requise si vous aviez déjà installé le système de notifications avant le 11 novembre 2025.
+                            Elle ne supprime aucune donnée, seulement les clés de configuration obsolètes.
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> update_lam_sms_config.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('lam_update')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('lam_update')" style="background: #f39c12;">
+                                <i class="fa fa-wrench"></i> Appliquer le correctif
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Migration 1: Base Notifications -->
                 <div class="migration-card" data-migration="notifications">
                     <div class="migration-card-header">
@@ -495,6 +539,11 @@
 <script>
 // Migration configurations
 const migrations = {
+    lam_update: {
+        name: 'Mise à jour LAM SMS',
+        file: 'update_lam_sms_config.sql',
+        settings: ['sms_lam_account_id', 'sms_lam_password', 'sms_lam_ret_url', 'sms_lam_priority']
+    },
     notifications: {
         name: 'Système de Notifications',
         file: 'add_notifications_system.sql',

@@ -440,6 +440,7 @@ function dietetic_notify_measurement_added($patient_id, $dietitian_id, $patient_
 
 /**
  * Send SMS via LAM API
+ * Documentation: https://developers.lafricamobile.com/docs/sms/introduction
  *
  * @param string $phone
  * @param string $message
@@ -447,39 +448,74 @@ function dietetic_notify_measurement_added($patient_id, $dietitian_id, $patient_
  */
 function dietetic_send_sms($phone, $message)
 {
-    $api_url = dietetic_get_option('lam_api_url');
-    $api_key = dietetic_get_option('lam_api_key');
-    $sender = dietetic_get_option('lam_api_sender', 'Dietetic');
+    $account_id = dietetic_get_option('sms_lam_account_id');
+    $password = dietetic_get_option('sms_lam_password');
+    $sender = dietetic_get_option('sms_lam_sender_id', 'API_LAMSMS');
 
-    if (empty($api_url) || empty($api_key)) {
-        return ['success' => false, 'message' => 'LAM SMS API not configured'];
+    if (empty($account_id) || empty($password)) {
+        return ['success' => false, 'message' => 'LAM SMS credentials not configured (account_id and password required)'];
     }
 
-    // Clean phone number
-    $phone = preg_replace('/[^0-9+]/', '', $phone);
+    // LAM SMS API endpoint
+    $url = 'https://lamsms.lafricamobile.com/api';
 
+    // Get additional settings
+    $ret_url = dietetic_get_option('sms_lam_ret_url', site_url('dietetic/sms_callback'));
+    $priority = dietetic_get_option('sms_lam_priority', '2');
+
+    // Format phone number for LAM API
+    // Ensure phone starts with country code (e.g., 221 for Senegal)
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+    if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
+        $phone = '221' . $phone;
+    }
+
+    // Prepare LAM API request
     $data = [
-        'api_key' => $api_key,
-        'sender'  => $sender,
-        'to'      => $phone,
-        'message' => $message,
+        'accountid' => $account_id,
+        'password' => $password,
+        'sender' => $sender,
+        'ret_id' => 'dietetic_' . time(),
+        'ret_url' => $ret_url,
+        'priority' => $priority,
+        'text' => $message,
+        'to' => [
+            [
+                'ret_id_1' => $phone
+            ]
+        ]
     ];
 
-    $ch = curl_init($api_url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json'
+        ]
+    ]);
 
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
 
-    if ($http_code == 200) {
-        return ['success' => true, 'message' => 'SMS sent successfully'];
+    // Log the request for debugging
+    log_activity('LAM SMS sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
+
+    if ($http_code == 200 || $http_code == 201) {
+        return ['success' => true, 'message' => 'SMS sent successfully', 'response' => json_decode($response, true)];
     }
 
-    return ['success' => false, 'message' => 'Failed to send SMS: ' . $response];
+    $error_msg = $curl_error ?: $response;
+    return ['success' => false, 'message' => 'Failed to send SMS: ' . $error_msg];
 }
 
 /**
