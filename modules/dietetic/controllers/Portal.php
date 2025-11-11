@@ -360,6 +360,16 @@ class Portal extends App_Controller
 
                 log_activity('Portal add_measurement - Measurement saved successfully: ' . $measurement_id);
 
+                // Check for milestones after successful measurement
+                try {
+                    $this->load->model('dietetic/dietetic_notifications_model');
+                    $this->dietetic_notifications_model->check_milestones($patient->id);
+                    log_activity('Portal add_measurement - Milestone check completed for patient: ' . $patient->id);
+                } catch (Exception $e) {
+                    log_activity('Portal add_measurement - Milestone check error: ' . $e->getMessage());
+                    // Don't fail the measurement save if milestone check fails
+                }
+
                 // AJAX request response
                 if ($this->input->is_ajax_request()) {
                     // Clear any output buffers for AJAX

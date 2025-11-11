@@ -320,6 +320,59 @@ class Notifications extends AdminController
             access_denied('Notification Templates');
         }
 
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        // Handle form submission
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            $template_key = $this->input->post('template_key');
+            $subject = $this->input->post('subject');
+            $body = $this->input->post('body');
+
+            if ($template_key) {
+                // Save subject if provided
+                if ($subject !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_subject',
+                        $subject
+                    );
+                }
+
+                // Save body
+                if ($body !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_body',
+                        $body
+                    );
+                }
+
+                set_alert('success', 'Modèle enregistré avec succès');
+                redirect(admin_url('dietetic/notifications/templates'));
+            }
+        }
+
+        // Load existing templates from database
+        $template_keys = [
+            // Email templates
+            'email_recommendation', 'email_consultation', 'email_milestone',
+            // SMS templates
+            'sms_hydration', 'sms_weight_reminder', 'sms_consultation_reminder',
+            // WhatsApp templates
+            'whatsapp_program_assigned', 'whatsapp_food_entry_reminder'
+        ];
+
+        $data['templates'] = [];
+        foreach ($template_keys as $key) {
+            $subject = $this->dietetic_notifications_model->get_setting('template_' . $key . '_subject');
+            $body = $this->dietetic_notifications_model->get_setting('template_' . $key . '_body');
+            $data['templates'][$key] = [
+                'subject' => $subject,
+                'body' => $body
+            ];
+        }
+
         $data['title'] = 'Modèles de Notifications';
         $this->load->view('admin/notifications/templates', $data);
     }
