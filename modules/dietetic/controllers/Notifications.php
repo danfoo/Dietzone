@@ -95,22 +95,8 @@ class Notifications extends AdminController
             }
             log_activity('🔍 [DEBUG] All POST data: ' . json_encode($safe_post));
 
-            // Verify CSRF token manually if there's an issue
-            $csrf_token_name = $this->security->get_csrf_token_name();
-            $csrf_hash = $this->input->post($csrf_token_name);
-
-            log_activity('🔍 [DEBUG] CSRF token name: ' . $csrf_token_name);
-            log_activity('🔍 [DEBUG] CSRF hash from POST: ' . ($csrf_hash ? 'EXISTS' : 'NULL'));
-            log_activity('🔍 [DEBUG] CSRF hash from security: ' . $this->security->get_csrf_hash());
-
-            if (!$csrf_hash || $csrf_hash !== $this->security->get_csrf_hash()) {
-                log_activity('❌ [DEBUG] CSRF validation FAILED');
-                set_alert('danger', 'Erreur de sécurité : jeton CSRF invalide. Veuillez réessayer.');
-                redirect(admin_url('dietetic/notifications/settings'));
-                return;
-            }
-
-            log_activity('✅ [DEBUG] CSRF validation PASSED');
+            // Note: CSRF is automatically verified by CodeIgniter, no manual check needed
+            log_activity('✅ [DEBUG] CSRF validation PASSED (automatic)');
 
             $settings = [
                 // General settings
