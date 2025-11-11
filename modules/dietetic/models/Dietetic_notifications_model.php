@@ -704,7 +704,6 @@ class Dietetic_notifications_model extends App_Model
             $result = $this->db->insert(db_prefix() . $this->table_settings, [
                 'setting_key' => $key,
                 'setting_value' => $value,
-                'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
