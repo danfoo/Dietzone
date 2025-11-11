@@ -290,6 +290,17 @@ class Dietetic_food_surveys_model extends App_Model
                 $update_data['dinner_notes'] = $data['dinner_notes'];
             }
 
+            // Snack/Collation fields - only update if provided
+            if (!empty($data['snack_photo'])) {
+                $update_data['snack_photo'] = $data['snack_photo'];
+            }
+            if (!empty($data['snack_time']) || isset($data['snack_time'])) {
+                $update_data['snack_time'] = $data['snack_time'];
+            }
+            if (!empty($data['snack_notes']) || isset($data['snack_notes'])) {
+                $update_data['snack_notes'] = $data['snack_notes'];
+            }
+
             // Water quantity - update if provided
             if (isset($data['water_quantity_ml']) && $data['water_quantity_ml'] !== '') {
                 $update_data['water_quantity_ml'] = $data['water_quantity_ml'];
