@@ -1820,6 +1820,7 @@ class Portal extends App_Controller
     {
         // Check if client is logged in
         if (!is_client_logged_in()) {
+            log_activity('📋 [NOTIF PREFS] Access denied - not logged in');
             echo json_encode(['success' => false, 'message' => 'Non autorisé']);
             return;
         }
@@ -1831,9 +1832,16 @@ class Portal extends App_Controller
         $patient = $this->dietetic_patients_model->get_by_client($client_id);
 
         if (!$patient) {
+            log_activity('📋 [NOTIF PREFS] Patient not found for client_id: ' . $client_id);
             echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
             return;
         }
+
+        log_activity('📋 [NOTIF PREFS] Starting save for patient_id: ' . $patient->id);
+
+        // Log all POST data (for debugging)
+        $all_post = $this->input->post();
+        log_activity('📋 [NOTIF PREFS] POST data received: ' . json_encode($all_post));
 
         // Load notifications model
         $this->load->model('dietetic/dietetic_notifications_model');
@@ -1856,10 +1864,18 @@ class Portal extends App_Controller
             'channel_push' => $this->input->post('channel_push') ? 1 : 0,
         ];
 
+        log_activity('📋 [NOTIF PREFS] Preferences to save: ' . json_encode($preferences));
+
         // Update preferences
         $result = $this->dietetic_notifications_model->update_preferences($patient->id, $preferences);
 
+        log_activity('📋 [NOTIF PREFS] Update result: ' . ($result ? 'SUCCESS' : 'FAILED'));
+
         if ($result) {
+            // Verify the save by reading back
+            $saved_prefs = $this->dietetic_notifications_model->get_preferences($patient->id);
+            log_activity('📋 [NOTIF PREFS] Saved preferences verified: ' . json_encode($saved_prefs));
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Vos préférences ont été enregistrées avec succès'

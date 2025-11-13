@@ -294,6 +294,9 @@ $this->load->view('portal/includes/portal_header');
     <div id="alertBox" class="alert-custom"></div>
 
     <form id="preferencesForm">
+        <!-- CSRF Token -->
+        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
         <!-- Reminders Section -->
         <div class="preference-card">
             <h3><i class="fa fa-clock-o"></i> Rappels Automatiques</h3>
