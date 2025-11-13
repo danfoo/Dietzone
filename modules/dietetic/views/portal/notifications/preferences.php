@@ -468,27 +468,43 @@ $this->load->view('portal/includes/portal_header');
 </div>
 
 <script>
+    // Test if jQuery is loaded
+    if (typeof jQuery === 'undefined') {
+        alert('ERREUR: jQuery n\'est pas chargé!');
+    }
+
     $(document).ready(function() {
+        console.log('✅ Document ready - jQuery version:', jQuery.fn.jquery);
+
         // Test AJAX connection button
-        $('#testAjaxBtn').click(function() {
+        $('#testAjaxBtn').on('click', function(e) {
+            e.preventDefault();
             console.log('🧪 Test AJAX button clicked');
-            const resultSpan = $('#testResult');
+            alert('Bouton cliqué! Test en cours...');
+
+            var resultSpan = $('#testResult');
             resultSpan.html('<i class="fa fa-spinner fa-spin"></i> Test en cours...').css('color', '#0066cc');
 
+            var testUrl = '<?php echo site_url('dietetic/portal/test_ajax_endpoint'); ?>';
+            console.log('🔵 URL de test:', testUrl);
+
             $.ajax({
-                url: '<?php echo site_url('dietetic/portal/test_ajax_endpoint'); ?>',
+                url: testUrl,
                 type: 'POST',
                 data: {
                     test: 'ajax_connectivity',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
                 },
                 dataType: 'json',
                 success: function(response) {
                     console.log('✅ Test AJAX Success:', response);
+                    alert('Succès! ' + response.message);
                     resultSpan.html('<i class="fa fa-check-circle"></i> ' + response.message).css('color', '#28a745');
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Test AJAX Error:', {xhr, status, error});
+                    console.error('❌ Test AJAX Error:', {xhr: xhr, status: status, error: error, responseText: xhr.responseText});
+                    alert('Erreur AJAX: ' + status + ' - ' + error);
                     resultSpan.html('<i class="fa fa-times-circle"></i> Échec: ' + error).css('color', '#dc3545');
                 }
             });
