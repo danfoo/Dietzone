@@ -70,7 +70,8 @@ class Portal extends App_Controller
             'mark_all_notifications_read',
             'debug_prefs',
             'debug_firebase',
-            'run_firebase_fix'
+            'run_firebase_fix',
+            'check_notifications_system'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2676,6 +2677,151 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Voir le diagnostic Firebase</a> | ";
         echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences de notifications</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * Check if notifications system is properly installed
+     * URL: /dietetic/portal/check_notifications_system
+     */
+    public function check_notifications_system()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔔 Diagnostic Système de Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}table{width:100%;border-collapse:collapse;margin:15px 0}table td,table th{padding:8px;border:1px solid #ddd;text-align:left}</style>";
+
+        echo "<p>Vérification de l'installation du système de notifications...</p><hr>";
+
+        $all_good = true;
+
+        // Test 1: Check notification_log table
+        echo "<h2>Test 1: Table des logs de notifications</h2>";
+        $log_table = db_prefix() . 'dietic_notification_log';
+        if ($this->db->table_exists($log_table)) {
+            echo "<p class='ok'>✅ Table '{$log_table}' existe</p>";
+
+            $count = $this->db->count_all($log_table);
+            echo "<p class='info'>ℹ️ Nombre de notifications enregistrées: <strong>{$count}</strong></p>";
+
+            // Show table structure
+            $fields = $this->db->field_data($log_table);
+            echo "<details><summary>Voir la structure de la table</summary>";
+            echo "<table><tr><th>Colonne</th><th>Type</th></tr>";
+            foreach ($fields as $field) {
+                echo "<tr><td>{$field->name}</td><td>{$field->type}</td></tr>";
+            }
+            echo "</table></details>";
+        } else {
+            echo "<p class='error'>❌ Table '{$log_table}' n'existe PAS</p>";
+            echo "<p class='warning'>⚠️ Le système de notifications n'est pas installé. Les notifications ne peuvent pas être affichées.</p>";
+            $all_good = false;
+        }
+
+        // Test 2: Check notification_logs table (alternative name)
+        echo "<hr><h2>Test 2: Table alternative des logs</h2>";
+        $logs_table = db_prefix() . 'dietic_notification_logs';
+        if ($this->db->table_exists($logs_table)) {
+            echo "<p class='ok'>✅ Table '{$logs_table}' existe</p>";
+
+            $count = $this->db->count_all($logs_table);
+            echo "<p class='info'>ℹ️ Nombre de notifications: <strong>{$count}</strong></p>";
+        } else {
+            echo "<p class='info'>ℹ️ Table '{$logs_table}' n'existe pas (optionnel)</p>";
+        }
+
+        // Test 3: Check preferences table
+        echo "<hr><h2>Test 3: Table des préférences</h2>";
+        $prefs_table = db_prefix() . 'dietic_notification_preferences';
+        if ($this->db->table_exists($prefs_table)) {
+            echo "<p class='ok'>✅ Table '{$prefs_table}' existe</p>";
+
+            $count = $this->db->count_all($prefs_table);
+            echo "<p class='info'>ℹ️ Nombre de préférences configurées: <strong>{$count}</strong></p>";
+        } else {
+            echo "<p class='error'>❌ Table '{$prefs_table}' n'existe PAS</p>";
+            $all_good = false;
+        }
+
+        // Test 4: Check settings table
+        echo "<hr><h2>Test 4: Table des paramètres</h2>";
+        $settings_table = db_prefix() . 'dietic_notification_settings';
+        if ($this->db->table_exists($settings_table)) {
+            echo "<p class='ok'>✅ Table '{$settings_table}' existe</p>";
+
+            $settings = $this->db->get($settings_table)->result();
+            if (!empty($settings)) {
+                echo "<table><tr><th>Paramètre</th><th>Valeur</th></tr>";
+                foreach ($settings as $setting) {
+                    $value = empty($setting->setting_value) ? '<em>Vide</em>' : '[CONFIGURÉ]';
+                    echo "<tr><td>{$setting->setting_key}</td><td>{$value}</td></tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<p class='warning'>⚠️ Aucun paramètre configuré</p>";
+            }
+        } else {
+            echo "<p class='error'>❌ Table '{$settings_table}' n'existe PAS</p>";
+            $all_good = false;
+        }
+
+        // Test 5: Check FCM tokens table (Firebase)
+        echo "<hr><h2>Test 5: Table des tokens Firebase (Push)</h2>";
+        $fcm_table = db_prefix() . 'dietic_fcm_tokens';
+        if ($this->db->table_exists($fcm_table)) {
+            echo "<p class='ok'>✅ Table '{$fcm_table}' existe</p>";
+
+            $count = $this->db->count_all($fcm_table);
+            echo "<p class='info'>ℹ️ Nombre de tokens enregistrés: <strong>{$count}</strong></p>";
+        } else {
+            echo "<p class='warning'>⚠️ Table '{$fcm_table}' n'existe pas (optionnel - pour notifications push)</p>";
+        }
+
+        // Test 6: Check if notifications model exists
+        echo "<hr><h2>Test 6: Modèle de notifications</h2>";
+        $model_path = FCPATH . 'modules/dietetic/models/Dietetic_notifications_model.php';
+        if (file_exists($model_path)) {
+            echo "<p class='ok'>✅ Modèle de notifications existe</p>";
+            echo "<p class='info'>ℹ️ Chemin: <code>{$model_path}</code></p>";
+        } else {
+            echo "<p class='error'>❌ Modèle de notifications introuvable</p>";
+            $all_good = false;
+        }
+
+        // Summary
+        echo "<hr><h2>📊 Résumé</h2>";
+        if ($all_good) {
+            echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#155724;margin-top:0'>✅ Système de Notifications Installé!</h3>";
+            echo "<p style='color:#155724;margin-bottom:0'>Toutes les tables nécessaires sont présentes. Les notifications devraient s'afficher correctement.</p>";
+            echo "</div>";
+
+            echo "<p style='margin-top:20px'><strong>Pour voir les notifications:</strong></p>";
+            echo "<ol>";
+            echo "<li>Ouvrez la page du portail patient</li>";
+            echo "<li>Cliquez sur l'icône 🔔 en haut à droite</li>";
+            echo "<li>Les notifications s'afficheront dans le panneau</li>";
+            echo "</ol>";
+        } else {
+            echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#721c24;margin-top:0'>⚠️ Système de Notifications Incomplet</h3>";
+            echo "<p style='color:#721c24;margin-bottom:0'>Certaines tables sont manquantes. Le système de notifications doit être installé depuis l'admin.</p>";
+            echo "</div>";
+
+            echo "<p style='margin-top:20px'><strong>Pour installer le système:</strong></p>";
+            echo "<ol>";
+            echo "<li>Connectez-vous en tant qu'admin</li>";
+            echo "<li>Allez dans <strong>Diététique → Notifications → Migrations</strong></li>";
+            echo "<li>Installez la migration 'Système de Notifications'</li>";
+            echo "</ol>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Diagnostic Firebase</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences</a> | ";
         echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
