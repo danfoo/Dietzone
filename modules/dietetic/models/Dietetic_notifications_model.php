@@ -80,31 +80,49 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_preferences($patient_id, $data)
     {
+        log_activity('📊 [MODEL] update_preferences called for patient_id: ' . $patient_id);
+
         // Check if preferences exist for this patient
         $this->db->where('patient_id', $patient_id);
         $existing = $this->db->get(db_prefix() . $this->table_preferences)->row();
 
         if ($existing) {
+            log_activity('📊 [MODEL] Existing preferences found - performing UPDATE');
             // Update existing preferences
             $data['updated_at'] = date('Y-m-d H:i:s');
             $this->db->where('patient_id', $patient_id);
             $result = $this->db->update(db_prefix() . $this->table_preferences, $data);
+
+            if ($this->db->affected_rows() > 0) {
+                log_activity('📊 [MODEL] UPDATE successful - ' . $this->db->affected_rows() . ' row(s) affected');
+            } else {
+                log_activity('⚠️ [MODEL] UPDATE completed but 0 rows affected (data may be identical)');
+            }
         } else {
+            log_activity('📊 [MODEL] No existing preferences - performing INSERT');
             // Insert new preferences
             $data['patient_id'] = $patient_id;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['updated_at'] = date('Y-m-d H:i:s');
             $result = $this->db->insert(db_prefix() . $this->table_preferences, $data);
+
+            if ($result) {
+                log_activity('📊 [MODEL] INSERT successful - new ID: ' . $this->db->insert_id());
+            } else {
+                log_activity('❌ [MODEL] INSERT failed - DB error: ' . $this->db->error()['message']);
+            }
         }
 
-        if ($result) {
+        if ($result || $this->db->affected_rows() >= 0) {
             // Clear cache
             $cache_key = 'dietic_notif_prefs_' . $patient_id;
             $this->app_object_cache->delete($cache_key);
+            log_activity('📊 [MODEL] Cache cleared for key: ' . $cache_key);
 
             return true;
         }
 
+        log_activity('❌ [MODEL] update_preferences FAILED');
         return false;
     }
 
