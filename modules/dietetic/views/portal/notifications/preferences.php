@@ -467,12 +467,10 @@ $this->load->view('portal/includes/portal_header');
     </a>
 </div>
 
-<script>
-    // Test if jQuery is loaded
-    if (typeof jQuery === 'undefined') {
-        alert('ERREUR: jQuery n\'est pas chargé!');
-    }
+<?php $this->load->view('portal/includes/portal_footer'); ?>
 
+<script>
+    // Script placé APRÈS le footer pour que jQuery soit chargé
     $(document).ready(function() {
         console.log('✅ Document ready - jQuery version:', jQuery.fn.jquery);
 
@@ -593,5 +591,3 @@ $this->load->view('portal/includes/portal_header');
         }
     });
 </script>
-
-<?php $this->load->view('portal/includes/portal_footer'); ?>
