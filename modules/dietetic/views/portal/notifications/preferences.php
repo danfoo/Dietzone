@@ -293,6 +293,17 @@ $this->load->view('portal/includes/portal_header');
 
     <div id="alertBox" class="alert-custom"></div>
 
+    <!-- Test AJAX Button (for debugging) -->
+    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="margin: 0 0 10px 0; color: #856404; font-size: 14px;">
+            <strong>🔧 Test de diagnostic AJAX:</strong> Cliquez sur le bouton ci-dessous pour tester si la communication AJAX fonctionne.
+        </p>
+        <button type="button" id="testAjaxBtn" class="btn btn-warning btn-sm">
+            <i class="fa fa-flask"></i> Tester la connexion AJAX
+        </button>
+        <span id="testResult" style="margin-left: 10px; font-weight: bold;"></span>
+    </div>
+
     <form id="preferencesForm">
         <!-- CSRF Token -->
         <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
@@ -458,6 +469,31 @@ $this->load->view('portal/includes/portal_header');
 
 <script>
     $(document).ready(function() {
+        // Test AJAX connection button
+        $('#testAjaxBtn').click(function() {
+            console.log('🧪 Test AJAX button clicked');
+            const resultSpan = $('#testResult');
+            resultSpan.html('<i class="fa fa-spinner fa-spin"></i> Test en cours...').css('color', '#0066cc');
+
+            $.ajax({
+                url: '<?php echo site_url('dietetic/portal/test_ajax_endpoint'); ?>',
+                type: 'POST',
+                data: {
+                    test: 'ajax_connectivity',
+                    timestamp: new Date().toISOString()
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('✅ Test AJAX Success:', response);
+                    resultSpan.html('<i class="fa fa-check-circle"></i> ' + response.message).css('color', '#28a745');
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Test AJAX Error:', {xhr, status, error});
+                    resultSpan.html('<i class="fa fa-times-circle"></i> Échec: ' + error).css('color', '#dc3545');
+                }
+            });
+        });
+
         // Toggle weight reminder details
         $('#reminder_weight').change(function() {
             if ($(this).is(':checked')) {
