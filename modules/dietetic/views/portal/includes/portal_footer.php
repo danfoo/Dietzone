@@ -105,16 +105,29 @@
 
         // Load notifications on page load
         function loadNotifications() {
+            // Check if notification panel exists before loading
+            if (!document.getElementById('notificationPanel')) {
+                return;
+            }
+
             fetch('<?php echo site_url("dietetic/portal/get_notifications"); ?>')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         displayNotifications(data.notifications);
                         updateNotificationBadge(data.unread_count);
+                    } else {
+                        console.log('Notifications: ' + (data.message || data.info || 'Not available'));
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading notifications:', error);
+                    // Silently fail - notifications are not critical
+                    console.log('Notifications not loaded:', error.message);
                 });
         }
 

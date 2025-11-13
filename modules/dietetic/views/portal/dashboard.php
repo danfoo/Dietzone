@@ -954,8 +954,17 @@ if (!$current_weight || !$target_weight) {
                     // Pas atteint : afficher kg restant à perdre
                     echo number_format($weight_diff, 1) . ' kg restants';
                 } elseif (abs($weight_diff) <= 0.5) {
-                    // Atteint : afficher total perdu
+                    // Atteint : afficher total perdu + différence exacte avec objectif
                     echo '🎉 ' . number_format($total_change, 1) . ' kg perdus';
+                    if (abs($weight_diff) > 0) {
+                        if ($weight_diff > 0) {
+                            // Encore un peu à perdre (ex: 100kg pour objectif 99kg = +1kg)
+                            echo '<br><small style="font-size:14px; color: #ff9800;">(encore ' . number_format($weight_diff, 1) . ' kg)</small>';
+                        } else {
+                            // Un peu en dessous (ex: 98kg pour objectif 99kg = -1kg)
+                            echo '<br><small style="font-size:14px; color: #4caf50;">(' . number_format(abs($weight_diff), 1) . ' kg de moins)</small>';
+                        }
+                    }
                 } else {
                     // Dépassé : afficher total perdu + excédent
                     $excess = abs($weight_diff);
@@ -967,8 +976,17 @@ if (!$current_weight || !$target_weight) {
                     // Pas atteint : afficher kg restant à gagner
                     echo number_format($weight_diff_gain, 1) . ' kg restants';
                 } elseif (abs($weight_diff_gain) <= 0.5) {
-                    // Atteint : afficher total gagné
+                    // Atteint : afficher total gagné + différence exacte avec objectif
                     echo '🎉 ' . number_format($total_change, 1) . ' kg gagnés';
+                    if (abs($weight_diff_gain) > 0) {
+                        if ($weight_diff_gain > 0) {
+                            // Encore un peu à gagner
+                            echo '<br><small style="font-size:14px; color: #ff9800;">(encore ' . number_format($weight_diff_gain, 1) . ' kg)</small>';
+                        } else {
+                            // Un peu au-dessus
+                            echo '<br><small style="font-size:14px; color: #4caf50;">(' . number_format(abs($weight_diff_gain), 1) . ' kg de plus)</small>';
+                        }
+                    }
                 } else {
                     // Dépassé : afficher total gagné + excédent
                     $excess = abs($weight_diff_gain);
