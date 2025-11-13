@@ -488,18 +488,24 @@ $this->load->view('portal/includes/portal_header');
         // Handle form submission
         $('#preferencesForm').submit(function(e) {
             e.preventDefault();
+            console.log('🔵 Form submission triggered');
 
             const btn = $('.save-button');
             const originalText = btn.html();
+            const formData = $(this).serialize();
+
+            console.log('🔵 Form data:', formData);
+            console.log('🔵 AJAX URL:', '<?php echo site_url('dietetic/portal/save_notification_preferences'); ?>');
 
             btn.html('<i class="fa fa-spinner fa-spin"></i> Enregistrement...').prop('disabled', true);
 
             $.ajax({
                 url: '<?php echo site_url('dietetic/portal/save_notification_preferences'); ?>',
                 type: 'POST',
-                data: $(this).serialize(),
+                data: formData,
                 dataType: 'json',
                 success: function(response) {
+                    console.log('✅ AJAX Success:', response);
                     showAlert(response.success ? 'success' : 'error', response.message);
 
                     btn.html(originalText).prop('disabled', false);
@@ -509,7 +515,13 @@ $this->load->view('portal/includes/portal_header');
                         $('html, body').animate({scrollTop: 0}, 300);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('❌ AJAX Error:', {
+                        status: status,
+                        error: error,
+                        responseText: xhr.responseText,
+                        statusCode: xhr.status
+                    });
                     showAlert('error', 'Une erreur est survenue lors de l\'enregistrement');
                     btn.html(originalText).prop('disabled', false);
                 }
