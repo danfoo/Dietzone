@@ -66,7 +66,9 @@ class Portal extends App_Controller
             'get_notifications',
             'delete_notification',
             'mark_notification_read',
-            'mark_all_notifications_read'
+            'mark_all_notifications_read',
+            'debug_prefs',
+            'debug_firebase'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2312,6 +2314,191 @@ class Portal extends App_Controller
         } else {
             return date('d/m/Y', $time);
         }
+    }
+
+    // ==================== DIAGNOSTIC TOOLS ====================
+
+    /**
+     * Diagnostic page for notification preferences
+     * Access: /dietetic/portal/debug_prefs
+     */
+    public function debug_prefs()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            set_alert('danger', 'Patient non trouvé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        echo "<h1>Diagnostic Préférences de Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px}pre{background:#f5f5f5;padding:10px;border-radius:5px}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}</style>";
+
+        echo "<h2>Patient</h2>";
+        echo "<p>ID: <strong>{$patient->id}</strong></p>";
+        echo "<p>Nom: <strong>{$patient->firstname} {$patient->lastname}</strong></p>";
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        echo "<h2>Préférences actuelles</h2>";
+        $prefs = $this->dietetic_notifications_model->get_preferences($patient->id);
+        if ($prefs) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Paramètre</th><th>Valeur</th></tr>";
+            foreach ($prefs as $key => $value) {
+                if ($key !== 'id' && $key !== 'patient_id') {
+                    $display_value = $value;
+                    if (is_numeric($value)) {
+                        $display_value = $value ? '✓ Activé' : '✗ Désactivé';
+                    }
+                    echo "<tr><td><strong>$key</strong></td><td>$display_value</td></tr>";
+                }
+            }
+            echo "</table>";
+            echo "<p><em>Dernière mise à jour: {$prefs->updated_at}</em></p>";
+        } else {
+            echo "<p class='error'>❌ Aucune préférence trouvée pour ce patient</p>";
+        }
+
+        echo "<h2>Fichier preferences.php</h2>";
+        $prefs_file = FCPATH . 'modules/dietetic/views/portal/notifications/preferences.php';
+        if (file_exists($prefs_file)) {
+            echo "<p class='ok'>✅ Fichier existe</p>";
+            echo "<p>Dernière modification: <strong>" . date("Y-m-d H:i:s", filemtime($prefs_file)) . "</strong></p>";
+
+            $content = file_get_contents($prefs_file);
+            if (strpos($content, 'CSRF Token') !== false) {
+                echo "<p class='ok'>✅ Token CSRF présent</p>";
+            } else {
+                echo "<p class='error'>❌ Token CSRF absent</p>";
+            }
+        } else {
+            echo "<p class='error'>❌ Fichier n'existe pas à: $prefs_file</p>";
+        }
+
+        echo "<h2>Contrôleur Portal.php</h2>";
+        $portal_file = FCPATH . 'modules/dietetic/controllers/Portal.php';
+        if (file_exists($portal_file)) {
+            echo "<p class='ok'>✅ Fichier existe</p>";
+            echo "<p>Dernière modification: <strong>" . date("Y-m-d H:i:s", filemtime($portal_file)) . "</strong></p>";
+
+            $content = file_get_contents($portal_file);
+            if (strpos($content, '[NOTIF PREFS]') !== false) {
+                echo "<p class='ok'>✅ Logs de débogage présents</p>";
+            } else {
+                echo "<p class='error'>❌ Logs de débogage absents</p>";
+            }
+        }
+
+        echo "<h2>Logs d'activité récents</h2>";
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(10);
+        $this->db->like('description', 'NOTIF PREFS');
+        $logs = $this->db->get(db_prefix() . 'activity_log')->result();
+
+        if (!empty($logs)) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Date</th><th>Description</th></tr>";
+            foreach ($logs as $log) {
+                echo "<tr><td>{$log->date}</td><td>" . htmlspecialchars($log->description) . "</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p class='warning'>⚠️ Aucun log trouvé (normal si aucune sauvegarde récente)</p>";
+        }
+
+        echo "<hr><p><a href='" . site_url('dietetic/portal/notification_preferences') . "'>Retour aux préférences</a></p>";
+    }
+
+    /**
+     * Diagnostic page for Firebase migration status
+     * Access: /dietetic/portal/debug_firebase
+     */
+    public function debug_firebase()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>Diagnostic Migration Firebase</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px}pre{background:#f5f5f5;padding:10px;border-radius:5px}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}</style>";
+
+        echo "<h2>Test 1: Table dietic_fcm_tokens</h2>";
+        $fcm_table_exists = $this->db->table_exists(db_prefix() . 'dietic_fcm_tokens');
+        if ($fcm_table_exists) {
+            echo "<p class='ok'>✅ Table existe</p>";
+
+            $count = $this->db->count_all(db_prefix() . 'dietic_fcm_tokens');
+            echo "<p>Nombre de tokens: <strong>$count</strong></p>";
+        } else {
+            echo "<p class='error'>❌ Table n'existe PAS</p>";
+        }
+
+        echo "<h2>Test 2: Colonne channel_push dans préférences</h2>";
+        $prefs_table_exists = $this->db->table_exists(db_prefix() . 'dietic_notification_preferences');
+        if ($prefs_table_exists) {
+            echo "<p class='ok'>✅ Table dietic_notification_preferences existe</p>";
+
+            $fields = $this->db->field_data(db_prefix() . 'dietic_notification_preferences');
+            $has_channel_push = false;
+            foreach ($fields as $field) {
+                if ($field->name === 'channel_push') {
+                    $has_channel_push = true;
+                    echo "<p class='ok'>✅ Colonne 'channel_push' existe</p>";
+                    echo "<p>Type: <strong>{$field->type}</strong></p>";
+                    break;
+                }
+            }
+
+            if (!$has_channel_push) {
+                echo "<p class='error'>❌ Colonne 'channel_push' n'existe PAS</p>";
+            }
+
+            echo "<h3>Toutes les colonnes:</h3><ul>";
+            foreach ($fields as $field) {
+                echo "<li>{$field->name} ({$field->type})</li>";
+            }
+            echo "</ul>";
+        } else {
+            echo "<p class='error'>❌ Table dietic_notification_preferences n'existe PAS</p>";
+        }
+
+        echo "<h2>Test 3: Paramètres Firebase</h2>";
+        $this->db->like('setting_key', 'firebase');
+        $this->db->or_like('setting_key', 'push_enabled');
+        $settings = $this->db->get(db_prefix() . 'dietic_notification_settings')->result();
+
+        if (!empty($settings)) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Clé</th><th>Valeur</th></tr>";
+            foreach ($settings as $setting) {
+                $value = empty($setting->setting_value) ? '<em>Vide</em>' : '[CONFIGURÉ]';
+                echo "<tr><td>{$setting->setting_key}</td><td>$value</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p class='error'>❌ Aucun paramètre Firebase</p>";
+        }
+
+        echo "<h2>Résumé</h2>";
+        $firebase_installed = $fcm_table_exists && $has_channel_push;
+        if ($firebase_installed) {
+            echo "<p class='ok' style='font-size:18px'>✅ Migration Firebase INSTALLÉE</p>";
+        } else {
+            echo "<p class='error' style='font-size:18px'>❌ Migration Firebase INCOMPLÈTE</p>";
+            echo "<p>Veuillez exécuter la migration depuis: <a href='" . admin_url('dietetic/notifications/migrations') . "'>Admin → Notifications → Migrations</a></p>";
+        }
+
+        echo "<hr><p><a href='" . site_url('dietetic/portal') . "'>Retour au portail</a></p>";
     }
 }
 
