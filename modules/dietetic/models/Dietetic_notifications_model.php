@@ -80,10 +80,24 @@ class Dietetic_notifications_model extends App_Model
      */
     public function update_preferences($patient_id, $data)
     {
-        $data['updated_at'] = date('Y-m-d H:i:s');
+        // Check if preferences exist for this patient
         $this->db->where('patient_id', $patient_id);
+        $existing = $this->db->get(db_prefix() . $this->table_preferences)->row();
 
-        if ($this->db->update(db_prefix() . $this->table_preferences, $data)) {
+        if ($existing) {
+            // Update existing preferences
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            $this->db->where('patient_id', $patient_id);
+            $result = $this->db->update(db_prefix() . $this->table_preferences, $data);
+        } else {
+            // Insert new preferences
+            $data['patient_id'] = $patient_id;
+            $data['created_at'] = date('Y-m-d H:i:s');
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            $result = $this->db->insert(db_prefix() . $this->table_preferences, $data);
+        }
+
+        if ($result) {
             // Clear cache
             $cache_key = 'dietic_notif_prefs_' . $patient_id;
             $this->app_object_cache->delete($cache_key);

@@ -31,7 +31,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .page-header-mobile h1 {
-            font-size: 26px;
+            font-size: 18px;
             font-weight: 800;
             margin: 0 0 8px 0;
             display: flex;
@@ -147,16 +147,16 @@ $this->load->view('portal/includes/portal_header');
 
         .recommendation-header {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            align-items: flex-start;
             gap: 12px;
             margin-bottom: 16px;
         }
 
         .recommendation-author-group {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
+            flex: 1;
         }
 
         .recommendation-meal-badge {
@@ -170,6 +170,7 @@ $this->load->view('portal/includes/portal_header');
             font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
+            margin: 8px 0;
         }
 
         .recommendation-meal-badge i {
@@ -197,8 +198,14 @@ $this->load->view('portal/includes/portal_header');
             object-fit: cover;
         }
 
+        .recommendation-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
         .recommendation-info h4 {
-            margin: 0 0 4px 0;
+            margin: 0;
             font-size: 16px;
             font-weight: 700;
             color: #212529;
@@ -598,16 +605,16 @@ $this->load->view('portal/includes/portal_header');
                                     </div>
                                     <div class="recommendation-info">
                                         <h4><?php echo htmlspecialchars($recommendation->dietitian_name); ?></h4>
+                                        <span class="recommendation-meal-badge">
+                                            <i class="fa <?php echo $meal_labels[$meal_type][1]; ?>"></i>
+                                            <?php echo $meal_labels[$meal_type][0]; ?>
+                                        </span>
                                         <p>
                                             <i class="fa fa-clock-o"></i>
                                             <?php echo date('d/m/Y à H:i', strtotime($recommendation->created_at)); ?>
                                         </p>
                                     </div>
                                 </div>
-                                <span class="recommendation-meal-badge">
-                                    <i class="fa <?php echo $meal_labels[$meal_type][1]; ?>"></i>
-                                    <?php echo $meal_labels[$meal_type][0]; ?>
-                                </span>
                             </div>
 
                             <div class="recommendation-text">
