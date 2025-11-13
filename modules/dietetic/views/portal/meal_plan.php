@@ -292,7 +292,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .page-header-mobile h1 {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             margin: 0 0 4px 0;
         }
@@ -622,7 +622,7 @@ $this->load->view('portal/includes/portal_header');
             }
 
             .page-header-mobile h1 {
-                font-size: 20px;
+                font-size: 18px;
             }
         }
 

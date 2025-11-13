@@ -16,7 +16,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .page-header-mobile h1 {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     margin: 0 0 8px 0;
     display: flex;
@@ -288,7 +288,7 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .page-header-mobile h1 {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .chart-box {
