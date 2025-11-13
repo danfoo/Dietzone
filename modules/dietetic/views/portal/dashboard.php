@@ -798,21 +798,56 @@ if (!$current_weight || !$target_weight) {
 $motivation_message = '';
 if (!$current_weight || !$target_weight) {
     $motivation_message = 'Entrez votre poids de la semaine pour mettre à jour votre progression.';
-} elseif ($progress_percent >= 100) {
-    $motivation_message = '🎉 <strong>Félicitations !</strong> Objectif atteint.';
-} elseif ($weight_remaining <= 2) {
-    $motivation_message = '<strong>Presque au but</strong> — plus que ' . number_format($weight_remaining, 1) . ' kg.';
-} elseif ($timeline_status == 'ahead') {
-    $ahead_percent = abs(round(($actual_loss - $expected_loss) / $expected_loss * 100));
-    $motivation_message = '<strong>Excellent !</strong> Vous devancez le planning de ' . $ahead_percent . ' %.';
-} elseif ($timeline_status == 'on-track') {
-    $end_date = $active_program && $active_program->end_date ? date('d/m', strtotime($active_program->end_date)) : '';
-    $motivation_message = '<strong>Solide !</strong> Vous êtes dans les temps' . ($end_date ? ' pour le ' . $end_date : '') . '.';
-} elseif ($timeline_status == 'behind') {
-    $behind_kg = abs(round($actual_loss - $expected_loss, 1));
-    $motivation_message = '<strong>Courage</strong> — encore ' . $behind_kg . ' kg à rattraper pour revenir dans les temps.';
 } else {
-    $motivation_message = '<strong>Continue comme ça !</strong> Vous progressez vers votre objectif.';
+    // Calculate difference WITH direction for better messaging
+    $weight_diff = $current_weight - $target_weight;
+    $total_change = $initial_weight ? abs($current_weight - $initial_weight) : 0;
+
+    if ($goal_type == 'lose') {
+        if ($weight_diff > 0.5) {
+            // Pas encore atteint
+            if ($weight_remaining <= 2) {
+                $motivation_message = '<strong>Presque au but</strong> — plus que ' . number_format($weight_diff, 1) . ' kg à perdre.';
+            } elseif ($timeline_status == 'ahead') {
+                $ahead_percent = abs(round(($actual_loss - $expected_loss) / $expected_loss * 100));
+                $motivation_message = '<strong>Excellent !</strong> Vous devancez le planning de ' . $ahead_percent . ' %.';
+            } elseif ($timeline_status == 'on-track') {
+                $end_date = $active_program && $active_program->end_date ? date('d/m', strtotime($active_program->end_date)) : '';
+                $motivation_message = '<strong>Solide !</strong> Vous êtes dans les temps' . ($end_date ? ' pour le ' . $end_date : '') . '.';
+            } elseif ($timeline_status == 'behind') {
+                $behind_kg = abs(round($actual_loss - $expected_loss, 1));
+                $motivation_message = '<strong>Courage</strong> — encore ' . $behind_kg . ' kg à rattraper pour revenir dans les temps.';
+            } else {
+                $motivation_message = '<strong>Continue comme ça !</strong> Vous progressez vers votre objectif.';
+            }
+        } elseif (abs($weight_diff) <= 0.5) {
+            // Objectif atteint
+            $motivation_message = '🎉 <strong>Félicitations !</strong> Objectif atteint avec ' . number_format($total_change, 1) . ' kg perdus !';
+        } else {
+            // Objectif dépassé
+            $excess = abs($weight_diff);
+            $motivation_message = '🎉 <strong>Incroyable !</strong> Objectif dépassé ! Vous avez perdu ' . number_format($total_change, 1) . ' kg, soit ' . number_format($excess, 1) . ' kg de plus que l\'objectif.';
+        }
+    } elseif ($goal_type == 'gain') {
+        $weight_diff_gain = $target_weight - $current_weight;
+        if ($weight_diff_gain > 0.5) {
+            // Pas encore atteint
+            if ($weight_diff_gain <= 2) {
+                $motivation_message = '<strong>Presque au but</strong> — plus que ' . number_format($weight_diff_gain, 1) . ' kg à gagner.';
+            } else {
+                $motivation_message = '<strong>Continue comme ça !</strong> Vous progressez vers votre objectif.';
+            }
+        } elseif (abs($weight_diff_gain) <= 0.5) {
+            // Objectif atteint
+            $motivation_message = '🎉 <strong>Félicitations !</strong> Objectif atteint avec ' . number_format($total_change, 1) . ' kg gagnés !';
+        } else {
+            // Objectif dépassé
+            $excess = abs($weight_diff_gain);
+            $motivation_message = '🎉 <strong>Incroyable !</strong> Objectif dépassé ! Vous avez gagné ' . number_format($total_change, 1) . ' kg, soit ' . number_format($excess, 1) . ' kg de plus que l\'objectif.';
+        }
+    } else {
+        $motivation_message = '🎉 <strong>Parfait !</strong> Poids maintenu.';
+    }
 }
 ?>
 
@@ -826,7 +861,19 @@ if (!$current_weight || !$target_weight) {
         <div class="weight-goal-status <?php echo $overall_status; ?>">
             <i class="fa <?php echo $status_icon; ?>"></i>
             <?php
-            if ($overall_status == 'achieved') {
+            // Déterminer si objectif est atteint ou dépassé
+            $weight_diff_status = $current_weight - $target_weight;
+            $is_exceeded = false;
+
+            if ($goal_type == 'lose' && $weight_diff_status < -0.5) {
+                $is_exceeded = true;
+            } elseif ($goal_type == 'gain' && $weight_diff_status > 0.5) {
+                $is_exceeded = true;
+            }
+
+            if ($is_exceeded) {
+                echo 'Objectif dépassé';
+            } elseif ($overall_status == 'achieved') {
                 echo 'Objectif atteint';
             } elseif ($overall_status == 'ahead') {
                 echo 'En avance';
@@ -867,21 +914,68 @@ if (!$current_weight || !$target_weight) {
     <div class="weight-remaining">
         <div class="weight-remaining-text">
             <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo 'Objectif atteint !';
+            // Calculate difference WITH direction (not abs)
+            $weight_diff = $current_weight - $target_weight;
+            $total_change = $initial_weight ? abs($current_weight - $initial_weight) : 0;
+
+            if ($goal_type == 'lose') {
+                // Objectif = PERDRE du poids
+                if ($weight_diff > 0.5) {
+                    // Pas encore atteint
+                    echo 'Encore à perdre';
+                } elseif (abs($weight_diff) <= 0.5) {
+                    // Objectif atteint (dans la marge de 0.5kg)
+                    echo 'Objectif atteint !';
+                } else {
+                    // Dépassé (poids actuel < poids cible)
+                    echo 'Objectif dépassé !';
+                }
             } elseif ($goal_type == 'gain') {
-                echo 'À rattraper';
+                // Objectif = PRENDRE du poids
+                if ($weight_diff < -0.5) {
+                    // Pas encore atteint
+                    echo 'À rattraper';
+                } elseif (abs($weight_diff) <= 0.5) {
+                    // Objectif atteint
+                    echo 'Objectif atteint !';
+                } else {
+                    // Dépassé (poids actuel > poids cible)
+                    echo 'Objectif dépassé !';
+                }
             } else {
-                echo 'Encore à perdre';
+                echo 'Objectif maintenu';
             }
             ?>
         </div>
         <div class="weight-remaining-value">
             <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo '🎉';
+            if ($goal_type == 'lose') {
+                if ($weight_diff > 0.5) {
+                    // Pas atteint : afficher kg restant à perdre
+                    echo number_format($weight_diff, 1) . ' kg restants';
+                } elseif (abs($weight_diff) <= 0.5) {
+                    // Atteint : afficher total perdu
+                    echo '🎉 ' . number_format($total_change, 1) . ' kg perdus';
+                } else {
+                    // Dépassé : afficher total perdu + excédent
+                    $excess = abs($weight_diff);
+                    echo '🎉 ' . number_format($total_change, 1) . ' kg perdus<br><small style="font-size:14px">(+' . number_format($excess, 1) . ' kg de plus)</small>';
+                }
+            } elseif ($goal_type == 'gain') {
+                $weight_diff_gain = $target_weight - $current_weight; // Pour gain, on inverse
+                if ($weight_diff_gain > 0.5) {
+                    // Pas atteint : afficher kg restant à gagner
+                    echo number_format($weight_diff_gain, 1) . ' kg restants';
+                } elseif (abs($weight_diff_gain) <= 0.5) {
+                    // Atteint : afficher total gagné
+                    echo '🎉 ' . number_format($total_change, 1) . ' kg gagnés';
+                } else {
+                    // Dépassé : afficher total gagné + excédent
+                    $excess = abs($weight_diff_gain);
+                    echo '🎉 ' . number_format($total_change, 1) . ' kg gagnés<br><small style="font-size:14px">(+' . number_format($excess, 1) . ' kg de plus)</small>';
+                }
             } else {
-                echo number_format($weight_remaining, 1) . ' kg';
+                echo '🎉';
             }
             ?>
         </div>
