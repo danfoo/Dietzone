@@ -69,7 +69,8 @@ class Portal extends App_Controller
             'mark_notification_read',
             'mark_all_notifications_read',
             'debug_prefs',
-            'debug_firebase'
+            'debug_firebase',
+            'run_firebase_fix'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2519,6 +2520,163 @@ class Portal extends App_Controller
         }
 
         echo "<hr><p><a href='" . site_url('dietetic/portal') . "'>Retour au portail</a></p>";
+    }
+
+    /**
+     * Execute Firebase migration fix automatically
+     * URL: /dietetic/portal/run_firebase_fix
+     */
+    public function run_firebase_fix()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔧 Correction Migration Firebase</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}</style>";
+
+        echo "<p>Cette page va automatiquement corriger la migration Firebase en ajoutant les colonnes manquantes.</p>";
+        echo "<hr>";
+
+        $errors = [];
+        $success = [];
+
+        // Test 1: Check and add channel_push column to preferences table
+        echo "<h2>Étape 1: Colonne channel_push dans tbldietic_notification_preferences</h2>";
+
+        $prefs_table = db_prefix() . 'dietic_notification_preferences';
+        $prefs_table_exists = $this->db->table_exists($prefs_table);
+
+        if ($prefs_table_exists) {
+            $fields = $this->db->field_data($prefs_table);
+            $has_channel_push = false;
+
+            foreach ($fields as $field) {
+                if ($field->name === 'channel_push') {
+                    $has_channel_push = true;
+                    break;
+                }
+            }
+
+            if ($has_channel_push) {
+                echo "<p class='ok'>✅ Colonne 'channel_push' existe déjà - Aucune action nécessaire</p>";
+                $success[] = "Colonne channel_push existe";
+            } else {
+                echo "<p class='warning'>⚠️ Colonne 'channel_push' manquante - Ajout en cours...</p>";
+
+                // Add the column
+                $sql = "ALTER TABLE `{$prefs_table}` ADD COLUMN `channel_push` tinyint(1) DEFAULT 1 AFTER `channel_whatsapp`";
+
+                try {
+                    $result = $this->db->query($sql);
+                    if ($result) {
+                        echo "<p class='ok'>✅ Colonne 'channel_push' ajoutée avec succès!</p>";
+                        $success[] = "Colonne channel_push ajoutée";
+                        log_activity('🔧 [FIREBASE FIX] Colonne channel_push ajoutée à ' . $prefs_table);
+                    } else {
+                        echo "<p class='error'>❌ Erreur lors de l'ajout de la colonne</p>";
+                        $errors[] = "Échec ajout channel_push";
+                    }
+                } catch (Exception $e) {
+                    echo "<p class='error'>❌ Erreur: " . $e->getMessage() . "</p>";
+                    $errors[] = "Exception: " . $e->getMessage();
+                }
+            }
+        } else {
+            echo "<p class='error'>❌ Table {$prefs_table} n'existe pas!</p>";
+            $errors[] = "Table préférences inexistante";
+        }
+
+        // Test 2: Check and update channel enum in logs table
+        echo "<hr><h2>Étape 2: Enum 'channel' dans tbldietic_notification_logs</h2>";
+
+        $logs_table = db_prefix() . 'dietic_notification_logs';
+        $logs_table_exists = $this->db->table_exists($logs_table);
+
+        if ($logs_table_exists) {
+            // Get current enum values
+            $result = $this->db->query("SHOW COLUMNS FROM `{$logs_table}` LIKE 'channel'");
+            $row = $result->row_array();
+
+            if ($row) {
+                $current_type = $row['Type'];
+                echo "<p class='info'>ℹ️ Type actuel: <code>{$current_type}</code></p>";
+
+                // Check if 'push' is already in the enum
+                if (strpos($current_type, "'push'") !== false) {
+                    echo "<p class='ok'>✅ Valeur 'push' existe déjà dans l'enum - Aucune action nécessaire</p>";
+                    $success[] = "Enum channel contient push";
+                } else {
+                    echo "<p class='warning'>⚠️ Valeur 'push' manquante - Mise à jour en cours...</p>";
+
+                    // Update the enum
+                    $sql = "ALTER TABLE `{$logs_table}` MODIFY COLUMN `channel` enum('email','sms','whatsapp','push') NOT NULL";
+
+                    try {
+                        $result = $this->db->query($sql);
+                        if ($result) {
+                            echo "<p class='ok'>✅ Enum 'channel' mis à jour avec succès!</p>";
+                            $success[] = "Enum channel mis à jour";
+                            log_activity('🔧 [FIREBASE FIX] Enum channel mis à jour dans ' . $logs_table);
+                        } else {
+                            echo "<p class='error'>❌ Erreur lors de la mise à jour de l'enum</p>";
+                            $errors[] = "Échec mise à jour enum";
+                        }
+                    } catch (Exception $e) {
+                        echo "<p class='error'>❌ Erreur: " . $e->getMessage() . "</p>";
+                        $errors[] = "Exception: " . $e->getMessage();
+                    }
+                }
+            } else {
+                echo "<p class='error'>❌ Impossible de lire la colonne 'channel'</p>";
+                $errors[] = "Lecture colonne channel échouée";
+            }
+        } else {
+            echo "<p class='error'>❌ Table {$logs_table} n'existe pas!</p>";
+            $errors[] = "Table logs inexistante";
+        }
+
+        // Summary
+        echo "<hr><h2>📊 Résumé</h2>";
+
+        if (count($errors) === 0) {
+            echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#155724;margin-top:0'>✅ Migration Firebase Complète!</h3>";
+            echo "<p style='color:#155724;margin-bottom:0'>Toutes les modifications ont été appliquées avec succès.</p>";
+            echo "</div>";
+
+            echo "<h3>Actions effectuées:</h3><ul>";
+            foreach ($success as $item) {
+                echo "<li class='ok'>✅ {$item}</li>";
+            }
+            echo "</ul>";
+
+            echo "<p style='margin-top:30px'><strong>Prochaine étape:</strong> Allez dans l'admin pour vérifier que le statut de la migration est maintenant 'Installé'.</p>";
+            echo "<p><a href='" . admin_url('dietetic/notifications/migrations') . "' class='btn btn-primary' style='display:inline-block;padding:10px 20px;background:#01807B;color:white;text-decoration:none;border-radius:5px'>Voir les Migrations</a></p>";
+        } else {
+            echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#721c24;margin-top:0'>⚠️ Problèmes détectés</h3>";
+            echo "<ul style='color:#721c24;margin-bottom:0'>";
+            foreach ($errors as $error) {
+                echo "<li>{$error}</li>";
+            }
+            echo "</ul>";
+            echo "</div>";
+
+            if (!empty($success)) {
+                echo "<h3>Actions réussies:</h3><ul>";
+                foreach ($success as $item) {
+                    echo "<li class='ok'>✅ {$item}</li>";
+                }
+                echo "</ul>";
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Voir le diagnostic Firebase</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences de notifications</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 
