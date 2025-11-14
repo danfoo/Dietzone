@@ -2098,6 +2098,44 @@ class Portal extends App_Controller
             // Load notifications model
             $this->load->model('dietetic/dietetic_notifications_model');
 
+            // TEMPORARY FIX: Check if patient_notifications table exists
+            // If not, use notification_logs as fallback
+            if (!$this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                // Use logs table as fallback
+                $this->db->select('id, patient_id, notification_type as type, title, message, created_at, 0 as is_read');
+                $this->db->from(db_prefix() . 'dietic_notification_logs');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('channel', 'push'); // Only push notifications for UI
+                $this->db->order_by('created_at', 'DESC');
+                $this->db->limit(50);
+                $notifications = $this->db->get()->result();
+
+                // Format for frontend
+                $formatted_notifications = [];
+                foreach ($notifications as $notification) {
+                    $formatted_notifications[] = [
+                        'id' => $notification->id,
+                        'type' => $notification->type,
+                        'title' => $notification->title,
+                        'message' => $notification->message,
+                        'icon' => 'fa-bell',
+                        'url' => null,
+                        'is_read' => false,
+                        'time_ago' => $this->time_ago($notification->created_at),
+                        'created_at' => $notification->created_at
+                    ];
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'notifications' => $formatted_notifications,
+                    'unread_count' => count($formatted_notifications),
+                    'total' => count($formatted_notifications),
+                    'info' => 'Using logs table (patient_notifications table not yet created)'
+                ]);
+                return;
+            }
+
             // Get limit from query parameter
             $limit = $this->input->get('limit') ? (int)$this->input->get('limit') : 50;
             $unread_only = $this->input->get('unread_only') === 'true';

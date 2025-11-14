@@ -122,12 +122,17 @@
                         displayNotifications(data.notifications);
                         updateNotificationBadge(data.unread_count);
                     } else {
+                        // Error but valid response - show empty state
                         console.log('Notifications: ' + (data.message || data.info || 'Not available'));
+                        displayNotifications([]);
+                        updateNotificationBadge(0);
                     }
                 })
                 .catch(error => {
-                    // Silently fail - notifications are not critical
+                    // Network or parse error - show empty state
                     console.log('Notifications not loaded:', error.message);
+                    displayNotifications([]);
+                    updateNotificationBadge(0);
                 });
         }
 
