@@ -401,13 +401,22 @@ class Notifications extends AdminController
         log_activity('[TEST_PUSH ENTRY] Method test_push() called at ' . date('Y-m-d H:i:s'));
 
         if (!is_admin()) {
+            log_activity('[TEST_PUSH] Not admin - access denied');
             access_denied('Test Push Notifications');
         }
 
+        log_activity('[TEST_PUSH] Admin check passed');
+
         // Check if tables exist
-        if (!$this->db->table_exists(db_prefix() . 'dietic_fcm_tokens')) {
+        $table_exists = $this->db->table_exists(db_prefix() . 'dietic_fcm_tokens');
+        log_activity('[TEST_PUSH] Table dietic_fcm_tokens exists: ' . ($table_exists ? 'YES' : 'NO'));
+
+        if (!$table_exists) {
+            log_activity('[TEST_PUSH] Redirecting to run_migration');
             redirect(admin_url('dietetic/notifications/run_migration'));
         }
+
+        log_activity('[TEST_PUSH] Loading notifications model');
 
         // Load notifications model
         if (!isset($this->dietetic_notifications_model)) {
@@ -415,6 +424,8 @@ class Notifications extends AdminController
         }
 
         $data['title'] = 'Test des Notifications Push';
+
+        log_activity('[TEST_PUSH] Starting try block for patient query');
 
         try {
             // Debug: Check total tokens first
