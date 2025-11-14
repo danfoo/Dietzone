@@ -440,7 +440,10 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -517,7 +520,10 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({notification_id: notificationId})
+                body: JSON.stringify({
+                    notification_id: notificationId,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -567,7 +573,10 @@
             fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({notification_id: notificationId})
+                body: JSON.stringify({
+                    notification_id: notificationId,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -789,7 +798,10 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ token: token })
+                body: JSON.stringify({
+                    token: token,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                })
             })
                 .then(response => response.json())
                 .then(data => {
