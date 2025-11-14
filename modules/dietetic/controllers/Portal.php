@@ -71,7 +71,8 @@ class Portal extends App_Controller
             'debug_prefs',
             'debug_firebase',
             'run_firebase_fix',
-            'check_notifications_system'
+            'check_notifications_system',
+            'debug_notifications_raw'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2903,6 +2904,117 @@ class Portal extends App_Controller
         echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Diagnostic Firebase</a> | ";
         echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences</a> | ";
         echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * Debug notifications - show raw data
+     * URL: /dietetic/portal/debug_notifications_raw
+     */
+    public function debug_notifications_raw()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔔 Debug Notifications Brutes</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:1200px;margin:0 auto}pre{background:#f5f5f5;padding:15px;border-radius:5px;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}table{width:100%;border-collapse:collapse;margin:15px 0}table td,table th{padding:8px;border:1px solid #ddd;text-align:left;font-size:13px}table th{background:#f7f7f7}</style>";
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+        echo "<hr>";
+
+        // Check table existence
+        $logs_table = db_prefix() . 'dietic_notification_logs';
+        if (!$this->db->table_exists($logs_table)) {
+            echo "<p class='error'>❌ Table {$logs_table} n'existe PAS</p>";
+            echo "<p><a href='" . site_url('dietetic/portal') . "'>Retour</a></p>";
+            return;
+        }
+
+        echo "<p class='ok'>✅ Table {$logs_table} existe</p>";
+
+        // Get ALL notifications for this patient
+        echo "<hr><h2>Notifications dans la base de données</h2>";
+        $this->db->select('*');
+        $this->db->from($logs_table);
+        $this->db->where('patient_id', $patient->id);
+        $this->db->order_by('created_at', 'DESC');
+        $notifications = $this->db->get()->result();
+
+        echo "<p class='info'>ℹ️ Nombre total de notifications pour patient_id={$patient->id}: <strong>" . count($notifications) . "</strong></p>";
+
+        if (count($notifications) > 0) {
+            echo "<table>";
+            echo "<tr><th>ID</th><th>Type</th><th>Message</th><th>Channel</th><th>Status</th><th>Date</th></tr>";
+            foreach ($notifications as $notif) {
+                echo "<tr>";
+                echo "<td>{$notif->id}</td>";
+                echo "<td>{$notif->notification_type}</td>";
+                echo "<td>" . substr($notif->message, 0, 100) . (strlen($notif->message) > 100 ? '...' : '') . "</td>";
+                echo "<td>{$notif->channel}</td>";
+                echo "<td>" . ($notif->status ?? '-') . "</td>";
+                echo "<td>{$notif->created_at}</td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+
+            echo "<hr><h2>JSON brut retourné par l'API</h2>";
+            echo "<p>Voici ce que l'API get_notifications retourne :</p>";
+
+            // Simulate what get_notifications would return
+            $formatted_notifications = [];
+            foreach ($notifications as $notification) {
+                $type = $notification->notification_type ?? 'info';
+                $formatted_notifications[] = [
+                    'id' => $notification->id,
+                    'type' => $type,
+                    'title' => $this->get_notification_title($type),
+                    'message' => $notification->message ?? '',
+                    'icon' => $this->get_notification_icon($type),
+                    'url' => null,
+                    'is_read' => false,
+                    'time_ago' => $this->time_ago($notification->created_at),
+                    'created_at' => $notification->created_at
+                ];
+            }
+
+            $api_response = [
+                'success' => true,
+                'notifications' => $formatted_notifications,
+                'unread_count' => count($formatted_notifications),
+                'total' => count($formatted_notifications)
+            ];
+
+            echo "<pre>" . json_encode($api_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "</pre>";
+        } else {
+            echo "<p class='error'>❌ Aucune notification trouvée pour ce patient</p>";
+
+            echo "<hr><h2>Vérification : Toutes les notifications dans la table</h2>";
+            $this->db->select('patient_id, COUNT(*) as count');
+            $this->db->from($logs_table);
+            $this->db->group_by('patient_id');
+            $all_notifs = $this->db->get()->result();
+
+            if (count($all_notifs) > 0) {
+                echo "<p class='info'>Notifications par patient_id:</p>";
+                echo "<table><tr><th>Patient ID</th><th>Nombre</th></tr>";
+                foreach ($all_notifs as $row) {
+                    echo "<tr><td>{$row->patient_id}</td><td>{$row->count}</td></tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<p class='error'>La table est complètement vide (aucune notification pour aucun patient)</p>";
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a></p>";
     }
 }
 
