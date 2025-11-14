@@ -159,6 +159,39 @@
             justify-content: space-between;
         }
 
+        .notification-panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mark-all-read-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mark-all-read-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .mark-all-read-btn:active {
+            transform: scale(0.95);
+        }
+
+        .mark-all-read-btn.hidden {
+            display: none;
+        }
+
         .notification-panel-close {
             background: transparent;
             border: none;
@@ -177,6 +210,42 @@
 
         .notification-panel-close:hover {
             background: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-filters {
+            display: flex;
+            gap: 8px;
+            padding: 12px 12px 8px 12px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #01807B;
+            color: #01807B;
+        }
+
+        .filter-btn.active {
+            background: #01807B;
+            border-color: #01807B;
+            color: white;
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
         }
 
         .notification-panel-content {
@@ -617,9 +686,20 @@
     <div class="notification-panel" id="notificationPanel">
         <div class="notification-panel-header">
             <span>Notifications</span>
-            <button class="notification-panel-close" id="notificationClose">
-                <i class="fa fa-times"></i>
-            </button>
+            <div class="notification-panel-actions">
+                <button class="mark-all-read-btn hidden" id="markAllReadBtn">
+                    <i class="fa fa-check-double"></i>
+                    <span>Tout lire</span>
+                </button>
+                <button class="notification-panel-close" id="notificationClose">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="notification-filters">
+            <button class="filter-btn active" data-filter="all">Toutes</button>
+            <button class="filter-btn" data-filter="unread">Non lues</button>
+            <button class="filter-btn" data-filter="read">Lues</button>
         </div>
         <div class="notification-panel-content">
             <!-- Les notifications seront chargées dynamiquement via JavaScript -->

@@ -103,6 +103,10 @@
         const notificationPanel = document.getElementById('notificationPanel');
         const notificationClose = document.getElementById('notificationClose');
 
+        // Store all notifications globally for filtering
+        let allNotifications = [];
+        let currentFilter = 'all';
+
         // Load notifications on page load
         function loadNotifications() {
             // Check if notification panel exists before loading
@@ -119,11 +123,13 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        displayNotifications(data.notifications);
+                        allNotifications = data.notifications;
+                        displayNotifications(filterNotifications(allNotifications));
                         updateNotificationBadge(data.unread_count);
                     } else {
                         // Error but valid response - show empty state
                         console.log('Notifications: ' + (data.message || data.info || 'Not available'));
+                        allNotifications = [];
                         displayNotifications([]);
                         updateNotificationBadge(0);
                     }
@@ -131,6 +137,7 @@
                 .catch(error => {
                     // Network or parse error - show empty state
                     console.log('Notifications not loaded:', error.message);
+                    allNotifications = [];
                     displayNotifications([]);
                     updateNotificationBadge(0);
                 });
@@ -142,15 +149,29 @@
 
             if (!notifications || notifications.length === 0) {
                 notificationContent.innerHTML = '<div class="notification-empty"><i class="fa fa-bell-slash"></i><p>Aucune notification</p></div>';
+                updateMarkAllReadButton(0);
                 return;
             }
 
             let html = '';
+            let unreadCount = 0;
             notifications.forEach(notification => {
                 const unreadClass = notification.is_read ? '' : 'unread';
+                const clickableClass = notification.url ? 'clickable' : '';
+                const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+
+                if (!notification.is_read) {
+                    unreadCount++;
+                }
+
                 html += `
-                    <div class="notification-item ${unreadClass}" data-notification-id="${notification.id}">
-                        <button class="notification-item-delete" onclick="deleteNotification(this)">
+                    <div class="notification-item ${unreadClass} ${clickableClass}"
+                         data-notification-id="${notification.id}"
+                         data-url="${notification.url || ''}"
+                         data-is-read="${notification.is_read ? '1' : '0'}"
+                         style="${cursorStyle}"
+                         onclick="handleNotificationClick(this, event)">
+                        <button class="notification-item-delete" onclick="deleteNotification(this, event)">
                             <i class="fa fa-times"></i>
                         </button>
                         <div class="notification-item-header">
@@ -166,10 +187,62 @@
             });
 
             notificationContent.innerHTML = html;
+            updateMarkAllReadButton(unreadCount);
+        }
+
+        // Update "Mark all as read" button visibility
+        function updateMarkAllReadButton(unreadCount) {
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                if (unreadCount > 0) {
+                    markAllReadBtn.classList.remove('hidden');
+                } else {
+                    markAllReadBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        // Filter notifications based on current filter
+        function filterNotifications(notifications) {
+            if (currentFilter === 'all') {
+                return notifications;
+            } else if (currentFilter === 'unread') {
+                return notifications.filter(n => !n.is_read);
+            } else if (currentFilter === 'read') {
+                return notifications.filter(n => n.is_read);
+            }
+            return notifications;
+        }
+
+        // Apply filter and update display
+        function applyFilter(filter) {
+            currentFilter = filter;
+
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Filter and display
+            const filteredNotifications = filterNotifications(allNotifications);
+            displayNotifications(filteredNotifications);
         }
 
         // Load notifications when page loads
         document.addEventListener('DOMContentLoaded', loadNotifications);
+
+        // Add event listeners to filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    applyFilter(filter);
+                });
+            });
+        });
 
         function openNotifications() {
             notificationPanel.classList.add('active');
@@ -230,9 +303,136 @@
         });
 
         // ============================================
+        // MARK ALL AS READ FUNCTIONALITY
+        // ============================================
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                // Disable button during request
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>Chargement...</span>';
+                this.disabled = true;
+
+                fetch('<?php echo site_url("dietetic/portal/mark_all_notifications_read"); ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update allNotifications array - mark all as read
+                        allNotifications = allNotifications.map(n => {
+                            return {...n, is_read: true};
+                        });
+
+                        // Mark all notification items as read in the UI
+                        document.querySelectorAll('.notification-item.unread').forEach(item => {
+                            item.classList.remove('unread');
+                            item.setAttribute('data-is-read', '1');
+                        });
+
+                        // Update badge
+                        updateNotificationBadge(0);
+
+                        // Hide the button
+                        updateMarkAllReadButton(0);
+
+                        // Show success feedback
+                        this.innerHTML = '<i class="fa fa-check"></i> <span>Fait!</span>';
+                        setTimeout(() => {
+                            this.innerHTML = originalHtml;
+                            this.disabled = false;
+                        }, 1000);
+                    } else {
+                        // Re-enable button on error
+                        this.innerHTML = originalHtml;
+                        this.disabled = false;
+                        console.error('Failed to mark all as read:', data.message);
+                    }
+                })
+                .catch(error => {
+                    // Re-enable button on error
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                    console.error('Error marking all as read:', error);
+                });
+            });
+        }
+
+        // ============================================
+        // NOTIFICATION CLICK HANDLER
+        // ============================================
+        window.handleNotificationClick = function(notificationElement, event) {
+            // Don't trigger if clicking on delete button
+            if (event.target.closest('.notification-item-delete')) {
+                return;
+            }
+
+            const notificationId = notificationElement.getAttribute('data-notification-id');
+            const notificationUrl = notificationElement.getAttribute('data-url');
+            const isRead = notificationElement.getAttribute('data-is-read') === '1';
+
+            // Mark as read if not already read
+            if (!isRead) {
+                markNotificationAsRead(notificationId, notificationElement);
+            }
+
+            // Redirect to URL if exists
+            if (notificationUrl && notificationUrl !== 'null' && notificationUrl !== '') {
+                setTimeout(function() {
+                    window.location.href = notificationUrl;
+                }, 200); // Small delay to show the read state change
+            }
+        };
+
+        // Mark single notification as read
+        function markNotificationAsRead(notificationId, notificationElement) {
+            fetch('<?php echo site_url("dietetic/portal/mark_notification_read"); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({notification_id: notificationId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    notificationElement.classList.remove('unread');
+                    notificationElement.setAttribute('data-is-read', '1');
+
+                    // Update the notification in allNotifications array
+                    const notification = allNotifications.find(n => n.id == notificationId);
+                    if (notification) {
+                        notification.is_read = true;
+                    }
+
+                    // Update badge
+                    if (data.unread_count !== undefined) {
+                        updateNotificationBadge(data.unread_count);
+                    }
+
+                    // Update "Mark all as read" button
+                    const unreadCount = allNotifications.filter(n => !n.is_read).length;
+                    updateMarkAllReadButton(unreadCount);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+        }
+
+        // ============================================
         // DELETE NOTIFICATION FUNCTIONALITY
         // ============================================
-        window.deleteNotification = function(button) {
+        window.deleteNotification = function(button, event) {
+            // Stop propagation to prevent triggering notification click
+            if (event) {
+                event.stopPropagation();
+            }
+
             const notificationItem = button.closest('.notification-item');
             const notificationId = notificationItem.getAttribute('data-notification-id');
 
@@ -249,6 +449,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Remove from allNotifications array
+                    allNotifications = allNotifications.filter(n => n.id != notificationId);
+
                     // Supprimer l'élément après l'animation
                     setTimeout(function() {
                         notificationItem.remove();
@@ -265,6 +468,10 @@
                         if (data.unread_count !== undefined) {
                             updateNotificationBadge(data.unread_count);
                         }
+
+                        // Update "Mark all as read" button
+                        const unreadCount = allNotifications.filter(n => !n.is_read).length;
+                        updateMarkAllReadButton(unreadCount);
                     }, 300);
                 } else {
                     // Annuler l'animation si la suppression échoue
