@@ -316,7 +316,13 @@
                             <?php if (isset($patients) && !empty($patients)): ?>
                                 <?php foreach ($patients as $patient): ?>
                                     <option value="<?php echo $patient['id']; ?>">
-                                        <?php echo htmlspecialchars($patient['firstname'] . ' ' . $patient['lastname']); ?>
+                                        <?php
+                                        // Display fullname or company name as fallback
+                                        $display_name = !empty(trim($patient['fullname']))
+                                            ? trim($patient['fullname'])
+                                            : ($patient['company_name'] ?? 'Patient #' . $patient['id']);
+                                        echo htmlspecialchars($display_name);
+                                        ?>
                                         <?php if (!empty($patient['fcm_tokens'])): ?>
                                             (<?php echo $patient['fcm_tokens']; ?> appareil<?php echo $patient['fcm_tokens'] > 1 ? 's' : ''; ?>)
                                         <?php else: ?>

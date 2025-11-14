@@ -420,11 +420,15 @@ class Notifications extends AdminController
             log_activity('[TEST_PUSH DEBUG] Total active tokens in DB: ' . $total_tokens_check);
 
             // Get all patients with FCM tokens
-            $sql = "SELECT p.id, p.firstname, p.lastname,
+            // Note: patient names come from tblclients, not tbldietic_patients
+            $sql = "SELECT p.id,
+                    CONCAT(COALESCE(c.firstname, ''), ' ', COALESCE(c.lastname, '')) as fullname,
+                    c.company as company_name,
                     (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
                      WHERE f.patient_id = p.id AND f.is_active = 1) as fcm_tokens
                     FROM " . db_prefix() . "dietic_patients p
-                    ORDER BY p.firstname ASC";
+                    LEFT JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
+                    ORDER BY c.firstname ASC, c.lastname ASC";
 
             log_activity('[TEST_PUSH DEBUG] SQL Query: ' . $sql);
 
