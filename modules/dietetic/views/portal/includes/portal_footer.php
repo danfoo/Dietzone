@@ -793,15 +793,19 @@
 
         // Save FCM token to server
         function saveFCMToken(token) {
+            // Use URLSearchParams for form-encoded POST (better CSRF compatibility)
+            const formData = new URLSearchParams();
+            formData.append('token', token);
+            formData.append('device_type', 'web');
+            formData.append('device_name', navigator.userAgent.substring(0, 100));
+            formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
             fetch('<?php echo site_url("dietetic/portal/save_fcm_token"); ?>', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: JSON.stringify({
-                    token: token,
-                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-                })
+                body: formData.toString()
             })
                 .then(response => response.json())
                 .then(data => {

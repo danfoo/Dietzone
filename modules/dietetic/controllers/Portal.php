@@ -1960,13 +1960,24 @@ class Portal extends App_Controller
 
             log_activity('[FCM DEBUG] Patient found: ' . $patient->id);
 
-            // Get POST data
-            $json = file_get_contents('php://input');
-            $data = json_decode($json, true);
+            // Get POST data - support both JSON and form-encoded
+            $token = $this->input->post('token');
+            $device_type = $this->input->post('device_type');
+            $device_name = $this->input->post('device_name');
 
-            log_activity('[FCM DEBUG] Received data: ' . ($data ? 'Valid JSON' : 'Invalid JSON'));
+            // If not form POST, try JSON
+            if (empty($token)) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                $token = $data['token'] ?? null;
+                $device_type = $data['device_type'] ?? null;
+                $device_name = $data['device_name'] ?? null;
+                log_activity('[FCM DEBUG] Received data via JSON: ' . ($data ? 'Valid' : 'Invalid'));
+            } else {
+                log_activity('[FCM DEBUG] Received data via POST form');
+            }
 
-            if (empty($data['token'])) {
+            if (empty($token)) {
                 log_activity('[FCM DEBUG] Token missing in request');
                 echo json_encode([
                     'success' => false,
@@ -1975,7 +1986,7 @@ class Portal extends App_Controller
                 return;
             }
 
-            log_activity('[FCM DEBUG] Token received, length: ' . strlen($data['token']));
+            log_activity('[FCM DEBUG] Token received, length: ' . strlen($token));
 
             // Load Firebase library
             $this->load->library('dietetic/firebase_cloud_messaging');
@@ -1983,8 +1994,8 @@ class Portal extends App_Controller
 
             // Prepare device info
             $device_info = [
-                'device_name' => $data['device_name'] ?? 'Unknown',
-                'user_agent' => $data['user_agent'] ?? $_SERVER['HTTP_USER_AGENT'] ?? null,
+                'device_name' => $device_name ?? 'Unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
                 'ip_address' => $this->input->ip_address(),
             ];
 
@@ -1992,8 +2003,8 @@ class Portal extends App_Controller
             log_activity('[FCM DEBUG] Calling register_token for patient: ' . $patient->id);
             $result = $this->firebase_cloud_messaging->register_token(
                 $patient->id,
-                $data['token'],
-                $data['device_type'] ?? 'web',
+                $token,
+                $device_type ?? 'web',
                 $device_info
             );
 
