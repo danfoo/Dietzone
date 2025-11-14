@@ -127,12 +127,22 @@ class Notifications extends AdminController
                 'firebase_app_id' => $this->input->post('firebase_app_id'),
                 'firebase_vapid_key' => $this->input->post('firebase_vapid_key'),
                 'firebase_server_key' => $this->input->post('firebase_server_key'),
+
+                // Firebase API v1 (Modern)
+                'firebase_use_v1_api' => $this->input->post('firebase_use_v1_api') ? '1' : '0',
+                'firebase_service_account_json' => $this->input->post('firebase_service_account_json'),
             ];
 
-            // Log for debugging (hide password)
+            // Log for debugging (hide sensitive data)
             $safe_settings = $settings;
             if (isset($safe_settings['sms_lam_password'])) {
                 $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['firebase_service_account_json'])) {
+                $safe_settings['firebase_service_account_json'] = $settings['firebase_service_account_json'] ? '***JSON_SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['firebase_server_key'])) {
+                $safe_settings['firebase_server_key'] = $settings['firebase_server_key'] ? '***SET***' : '***EMPTY***';
             }
             log_activity('🔍 [DEBUG] Settings to save: ' . json_encode($safe_settings));
 
@@ -142,8 +152,15 @@ class Notifications extends AdminController
 
             foreach ($settings as $key => $value) {
                 try {
-                    // Log each setting before saving
-                    $display_value = ($key === 'sms_lam_password' && $value) ? '***SET***' : $value;
+                    // Log each setting before saving (hide sensitive data)
+                    $display_value = $value;
+                    if ($key === 'sms_lam_password' && $value) {
+                        $display_value = '***SET***';
+                    } elseif ($key === 'firebase_service_account_json' && $value) {
+                        $display_value = '***JSON_SET***';
+                    } elseif ($key === 'firebase_server_key' && $value) {
+                        $display_value = '***SET***';
+                    }
                     log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
 
                     $result = $this->dietetic_notifications_model->update_setting($key, $value);
