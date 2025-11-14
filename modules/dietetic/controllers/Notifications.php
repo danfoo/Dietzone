@@ -101,6 +101,7 @@ class Notifications extends AdminController
             $settings = [
                 // General settings
                 'notifications_enabled' => $this->input->post('notifications_enabled') ? '1' : '0',
+                'push_enabled' => $this->input->post('push_enabled') ? '1' : '0',
 
                 // SMS provider settings
                 'sms_provider' => $this->input->post('sms_provider'),
@@ -116,6 +117,16 @@ class Notifications extends AdminController
                 'whatsapp_provider' => $this->input->post('whatsapp_provider'),
                 'whatsapp_api_key' => $this->input->post('whatsapp_api_key'),
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
+
+                // Firebase Cloud Messaging (Push Notifications)
+                'firebase_api_key' => $this->input->post('firebase_api_key'),
+                'firebase_auth_domain' => $this->input->post('firebase_auth_domain'),
+                'firebase_project_id' => $this->input->post('firebase_project_id'),
+                'firebase_storage_bucket' => $this->input->post('firebase_storage_bucket'),
+                'firebase_messaging_sender_id' => $this->input->post('firebase_messaging_sender_id'),
+                'firebase_app_id' => $this->input->post('firebase_app_id'),
+                'firebase_vapid_key' => $this->input->post('firebase_vapid_key'),
+                'firebase_server_key' => $this->input->post('firebase_server_key'),
             ];
 
             // Log for debugging (hide password)
