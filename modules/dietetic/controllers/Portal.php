@@ -2105,15 +2105,16 @@ class Portal extends App_Controller
                 log_activity('🔔 [NOTIF] Using notification_logs as fallback for patient_id=' . $patient->id);
 
                 try {
-                    // Use logs table as fallback - get ALL notifications for now
+                    // Use logs table as fallback
+                    // Include both patient-specific (patient_id) AND system notifications (patient_id=0)
                     $this->db->select('id, patient_id, notification_type, message, channel, created_at');
                     $this->db->from(db_prefix() . 'dietic_notification_logs');
-                    $this->db->where('patient_id', $patient->id);
+                    $this->db->where_in('patient_id', [$patient->id, 0]); // Include both patient and system notifications
                     $this->db->order_by('created_at', 'DESC');
                     $this->db->limit(50);
 
                     $notifications = $this->db->get()->result();
-                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' total notifications');
+                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id . ' (including system notifications)');
 
                     // Format for frontend
                     $formatted_notifications = [];
