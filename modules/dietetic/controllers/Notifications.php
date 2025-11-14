@@ -414,6 +414,11 @@ class Notifications extends AdminController
         $data['title'] = 'Test des Notifications Push';
 
         try {
+            // Debug: Check total tokens first
+            $total_tokens_check = $this->db->where('is_active', 1)
+                                           ->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+            log_activity('[TEST_PUSH DEBUG] Total active tokens in DB: ' . $total_tokens_check);
+
             // Get all patients with FCM tokens
             $sql = "SELECT p.id, p.firstname, p.lastname,
                     (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
@@ -421,10 +426,21 @@ class Notifications extends AdminController
                     FROM " . db_prefix() . "dietic_patients p
                     ORDER BY p.firstname ASC";
 
+            log_activity('[TEST_PUSH DEBUG] SQL Query: ' . $sql);
+
             $query = $this->db->query($sql);
             $data['patients'] = $query->result_array();
+
+            log_activity('[TEST_PUSH DEBUG] Total patients retrieved: ' . count($data['patients']));
+
+            // Log first few patients with tokens
+            $patients_with_tokens = array_filter($data['patients'], function($p) {
+                return $p['fcm_tokens'] > 0;
+            });
+            log_activity('[TEST_PUSH DEBUG] Patients with tokens: ' . count($patients_with_tokens));
+
         } catch (Exception $e) {
-            log_activity('test_push ERROR: ' . $e->getMessage());
+            log_activity('[TEST_PUSH ERROR] Exception: ' . $e->getMessage());
             $data['patients'] = [];
         }
 
