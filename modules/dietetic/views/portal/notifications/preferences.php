@@ -413,6 +413,27 @@ $this->load->view('portal/includes/portal_header');
             </div>
         </div>
 
+        <!-- Push Notifications -->
+        <div class="preference-card">
+            <h3><i class="fa fa-mobile"></i> Notifications Push</h3>
+            <p style="color: #718096; margin-bottom: 15px;">Recevez des notifications même quand l'application est fermée</p>
+
+            <div class="preference-item">
+                <div class="preference-info">
+                    <h4>Notifications Push du Navigateur</h4>
+                    <p>Activez les notifications push pour recevoir des alertes en temps réel, même quand vous n'êtes pas sur le site</p>
+                </div>
+                <button type="button" id="enablePushBtn" class="btn btn-primary" style="padding: 10px 20px; background: linear-gradient(135deg, #01807B 0%, #026660 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <i class="fa fa-bell"></i> Activer les Notifications
+                </button>
+            </div>
+
+            <div id="pushStatus" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none;">
+                <i class="fa fa-info-circle"></i>
+                <span id="pushStatusText"></span>
+            </div>
+        </div>
+
         <!-- Channels -->
         <div class="preference-card">
             <h3><i class="fa fa-envelope"></i> Canaux de Communication</h3>
@@ -530,5 +551,79 @@ $this->load->view('portal/includes/portal_header');
                 alertBox.fadeOut();
             }, 5000);
         }
+
+        // ============================================
+        // PUSH NOTIFICATIONS HANDLER
+        // ============================================
+
+        // Check push notification status on page load
+        function checkPushStatus() {
+            const btn = $('#enablePushBtn');
+            const statusDiv = $('#pushStatus');
+            const statusText = $('#pushStatusText');
+
+            if (!('Notification' in window)) {
+                btn.prop('disabled', true).html('<i class="fa fa-times"></i> Non supporté');
+                statusDiv.show().css('background', '#fff5f5').css('color', '#c53030').css('border', '1px solid #fc8181');
+                statusText.text('Votre navigateur ne supporte pas les notifications push.');
+                return;
+            }
+
+            const permission = Notification.permission;
+
+            if (permission === 'granted') {
+                btn.html('<i class="fa fa-check"></i> Activé').css('background', '#48bb78');
+                statusDiv.show().css('background', '#f0fff4').css('color', '#22543d').css('border', '1px solid #9ae6b4');
+                statusText.text('Les notifications push sont activées.');
+            } else if (permission === 'denied') {
+                btn.prop('disabled', true).html('<i class="fa fa-ban"></i> Bloqué');
+                statusDiv.show().css('background', '#fff5f5').css('color', '#c53030').css('border', '1px solid #fc8181');
+                statusText.html('Les notifications ont été bloquées. Veuillez les activer dans les paramètres de votre navigateur.');
+            } else {
+                btn.html('<i class="fa fa-bell"></i> Activer les Notifications');
+            }
+        }
+
+        // Handle push enable button click
+        $('#enablePushBtn').on('click', function() {
+            const btn = $(this);
+            const originalHtml = btn.html();
+
+            if (Notification.permission === 'granted') {
+                return; // Already granted
+            }
+
+            btn.html('<i class="fa fa-spinner fa-spin"></i> Activation...').prop('disabled', true);
+
+            // Use the global function from portal_footer.php
+            if (typeof window.requestNotificationPermission === 'function') {
+                window.requestNotificationPermission()
+                    .then(token => {
+                        if (token) {
+                            btn.html('<i class="fa fa-check"></i> Activé').css('background', '#48bb78');
+                            $('#pushStatus').show().css('background', '#f0fff4').css('color', '#22543d').css('border', '1px solid #9ae6b4');
+                            $('#pushStatusText').text('Les notifications push sont maintenant activées!');
+
+                            showAlert('success', 'Notifications push activées avec succès!');
+                        } else {
+                            btn.html(originalHtml).prop('disabled', false);
+                            $('#pushStatus').show().css('background', '#fffaf0').css('color', '#744210').css('border', '1px solid #f6ad55');
+                            $('#pushStatusText').text('Permission refusée. Vous pouvez la réactiver plus tard.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error enabling push:', error);
+                        btn.html(originalHtml).prop('disabled', false);
+                        showAlert('error', 'Erreur lors de l\'activation des notifications push');
+                    });
+            } else {
+                console.error('requestNotificationPermission function not available');
+                btn.html(originalHtml).prop('disabled', false);
+                showAlert('error', 'Système de notifications non initialisé');
+            }
+        });
+
+        // Check status on page load
+        checkPushStatus();
     });
 </script>

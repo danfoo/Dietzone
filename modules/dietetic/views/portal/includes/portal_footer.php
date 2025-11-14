@@ -627,6 +627,193 @@
                 }
             }
         }
+
+        // ============================================
+        // FIREBASE PUSH NOTIFICATIONS
+        // ============================================
+
+        let firebaseApp;
+        let messaging;
+        let fcmToken = null;
+
+        // Initialize Firebase Push Notifications
+        function initFirebasePush() {
+            // Check if browser supports notifications
+            if (!('Notification' in window)) {
+                console.log('This browser does not support notifications');
+                return;
+            }
+
+            // Check if service workers are supported
+            if (!('serviceWorker' in navigator)) {
+                console.log('Service Workers are not supported');
+                return;
+            }
+
+            // Fetch Firebase config from server
+            fetch('<?php echo site_url("dietetic/portal/get_firebase_config"); ?>')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.config) {
+                        console.log('Firebase config received');
+
+                        // Initialize Firebase
+                        if (!firebase.apps.length) {
+                            firebaseApp = firebase.initializeApp(data.config);
+                            messaging = firebase.messaging();
+
+                            console.log('Firebase initialized successfully');
+
+                            // Register service worker
+                            registerServiceWorker();
+
+                            // Request permission if user previously granted it
+                            if (Notification.permission === 'granted') {
+                                getFirebaseToken();
+                            }
+                        }
+                    } else {
+                        console.log('Firebase push notifications not configured:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Firebase config:', error);
+                });
+        }
+
+        // Register service worker
+        function registerServiceWorker() {
+            const swPath = '<?php echo module_dir_url("dietetic", "assets/js/firebase-messaging-sw.js"); ?>';
+
+            navigator.serviceWorker.register(swPath)
+                .then(function(registration) {
+                    console.log('Service Worker registered successfully:', registration);
+
+                    // Pass Firebase config to service worker
+                    if (registration.active) {
+                        registration.active.postMessage({
+                            type: 'INIT_FIREBASE',
+                            config: firebaseApp.options
+                        });
+                    }
+
+                    // Set service worker for messaging
+                    if (messaging) {
+                        messaging.useServiceWorker(registration);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+
+        // Request notification permission and get FCM token
+        function requestNotificationPermission() {
+            return Notification.requestPermission()
+                .then(permission => {
+                    console.log('Notification permission:', permission);
+
+                    if (permission === 'granted') {
+                        return getFirebaseToken();
+                    } else {
+                        console.log('Notification permission denied');
+                        return null;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error requesting permission:', error);
+                    return null;
+                });
+        }
+
+        // Get Firebase Cloud Messaging token
+        function getFirebaseToken() {
+            if (!messaging) {
+                console.log('Firebase messaging not initialized');
+                return Promise.resolve(null);
+            }
+
+            return messaging.getToken({
+                vapidKey: '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>'
+            })
+                .then(token => {
+                    if (token) {
+                        console.log('FCM Token:', token);
+                        fcmToken = token;
+
+                        // Save token to server
+                        saveFCMToken(token);
+
+                        return token;
+                    } else {
+                        console.log('No registration token available');
+                        return null;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting FCM token:', error);
+                    return null;
+                });
+        }
+
+        // Save FCM token to server
+        function saveFCMToken(token) {
+            fetch('<?php echo site_url("dietetic/portal/save_fcm_token"); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: token })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('FCM token saved successfully');
+                    } else {
+                        console.error('Failed to save FCM token:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving FCM token:', error);
+                });
+        }
+
+        // Handle foreground messages
+        function handleForegroundMessages() {
+            if (!messaging) return;
+
+            messaging.onMessage(payload => {
+                console.log('Foreground message received:', payload);
+
+                const notificationTitle = payload.notification?.title || 'Nouvelle notification';
+                const notificationOptions = {
+                    body: payload.notification?.body || '',
+                    icon: payload.notification?.icon || '/uploads/company/favicon.png',
+                    tag: 'dietetic-notification',
+                    requireInteraction: false
+                };
+
+                // Show notification
+                if (Notification.permission === 'granted') {
+                    new Notification(notificationTitle, notificationOptions);
+
+                    // Play sound and vibrate
+                    notifyUser(1);
+
+                    // Reload notifications
+                    loadNotifications(false);
+                }
+            });
+        }
+
+        // Initialize Firebase on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initFirebasePush();
+            handleForegroundMessages();
+        });
+
+        // Expose function globally for use in preferences page
+        window.requestNotificationPermission = requestNotificationPermission;
     </script>
 </body>
 </html>
