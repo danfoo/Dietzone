@@ -434,15 +434,14 @@ class Notifications extends AdminController
             log_activity('[TEST_PUSH DEBUG] Total active tokens in DB: ' . $total_tokens_check);
 
             // Get all patients with FCM tokens
-            // Note: patient names come from tblclients, not tbldietic_patients
+            // Note: In Perfex, tblclients only has 'company' field, not firstname/lastname
             $sql = "SELECT p.id,
-                    CONCAT(COALESCE(c.firstname, ''), ' ', COALESCE(c.lastname, '')) as fullname,
-                    c.company as company_name,
+                    c.company as patient_name,
                     (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
                      WHERE f.patient_id = p.id AND f.is_active = 1) as fcm_tokens
                     FROM " . db_prefix() . "dietic_patients p
                     LEFT JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
-                    ORDER BY c.firstname ASC, c.lastname ASC";
+                    ORDER BY c.company ASC";
 
             log_activity('[TEST_PUSH DEBUG] SQL Query: ' . $sql);
 

@@ -318,10 +318,10 @@
                                 <?php foreach ($patients as $patient): ?>
                                     <option value="<?php echo $patient['id']; ?>">
                                         <?php
-                                        // Display fullname or company name as fallback
-                                        $display_name = !empty(trim($patient['fullname']))
-                                            ? trim($patient['fullname'])
-                                            : ($patient['company_name'] ?? 'Patient #' . $patient['id']);
+                                        // Display patient name (from company field) or fallback to ID
+                                        $display_name = !empty($patient['patient_name'])
+                                            ? $patient['patient_name']
+                                            : 'Patient #' . $patient['id'];
                                         echo htmlspecialchars($display_name);
                                         ?>
                                         <?php if (!empty($patient['fcm_tokens'])): ?>
