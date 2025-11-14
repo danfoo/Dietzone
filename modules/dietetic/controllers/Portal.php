@@ -60,13 +60,20 @@ class Portal extends App_Controller
             'delete_photo',
             'notification_preferences',
             'save_notification_preferences',
+            'test_ajax_endpoint',
             'save_fcm_token',
             'delete_fcm_token',
             'get_firebase_config',
             'get_notifications',
             'delete_notification',
             'mark_notification_read',
-            'mark_all_notifications_read'
+            'mark_all_notifications_read',
+            'debug_prefs',
+            'debug_firebase',
+            'run_firebase_fix',
+            'check_notifications_system',
+            'debug_notifications_raw',
+            'create_patient_notifications_table'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -1814,6 +1821,25 @@ class Portal extends App_Controller
     }
 
     /**
+     * Test AJAX endpoint - simple endpoint to verify AJAX routing is working
+     */
+    public function test_ajax_endpoint()
+    {
+        log_activity('🔵 [TEST AJAX] Endpoint reached successfully!');
+        header('Content-Type: application/json');
+
+        $post_data = $this->input->post();
+        log_activity('🔵 [TEST AJAX] POST data: ' . json_encode($post_data));
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Test endpoint reached successfully!',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'post_data' => $post_data
+        ]);
+    }
+
+    /**
      * Save notification preferences
      */
     public function save_notification_preferences()
@@ -2060,7 +2086,7 @@ class Portal extends App_Controller
             }
 
             // Check if notifications table exists
-            if (!$this->db->table_exists(db_prefix() . 'dietic_notification_log')) {
+            if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
                 echo json_encode([
                     'success' => true,
                     'notifications' => [],
@@ -2073,6 +2099,59 @@ class Portal extends App_Controller
 
             // Load notifications model
             $this->load->model('dietetic/dietetic_notifications_model');
+
+            // TEMPORARY FIX: Check if patient_notifications table exists
+            // If not, use notification_logs as fallback
+            if (!$this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                log_activity('🔔 [NOTIF] Using notification_logs as fallback for patient_id=' . $patient->id);
+
+                try {
+                    // Use logs table as fallback
+                    // Include both patient-specific (patient_id) AND system notifications (patient_id=0)
+                    $this->db->select('id, patient_id, notification_type, message, channel, created_at');
+                    $this->db->from(db_prefix() . 'dietic_notification_logs');
+                    $this->db->where_in('patient_id', [$patient->id, 0]); // Include both patient and system notifications
+                    $this->db->order_by('created_at', 'DESC');
+                    $this->db->limit(50);
+
+                    $notifications = $this->db->get()->result();
+                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id . ' (including system notifications)');
+
+                    // Format for frontend
+                    $formatted_notifications = [];
+                    foreach ($notifications as $notification) {
+                        $type = $notification->notification_type ?? 'info';
+                        $formatted_notifications[] = [
+                            'id' => $notification->id,
+                            'type' => $type,
+                            'title' => $this->get_notification_title($type),
+                            'message' => $notification->message ?? '',
+                            'icon' => $this->get_notification_icon($type),
+                            'url' => null,
+                            'is_read' => false,
+                            'time_ago' => $this->time_ago($notification->created_at),
+                            'created_at' => $notification->created_at
+                        ];
+                    }
+
+                    log_activity('🔔 [NOTIF] Successfully formatted ' . count($formatted_notifications) . ' notifications');
+
+                    echo json_encode([
+                        'success' => true,
+                        'notifications' => $formatted_notifications,
+                        'unread_count' => count($formatted_notifications),
+                        'total' => count($formatted_notifications)
+                    ]);
+                    return;
+                } catch (Exception $e) {
+                    log_activity('❌ [NOTIF ERROR] ' . $e->getMessage());
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Database error: ' . $e->getMessage()
+                    ]);
+                    return;
+                }
+            }
 
             // Get limit from query parameter
             $limit = $this->input->get('limit') ? (int)$this->input->get('limit') : 50;
@@ -2127,60 +2206,83 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
+        try {
+            if (!is_client_logged_in()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Not authenticated'
+                ]);
+                return;
+            }
+
+            // Get patient
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient not found'
+                ]);
+                return;
+            }
+
+            // Get notification ID from POST
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+
+            if (empty($data['notification_id'])) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification ID is required'
+                ]);
+                return;
+            }
+
+            $notification_id = $data['notification_id'];
+
+            // TEMPORARY: Since we're using notification_logs as fallback,
+            // we can't really "delete" system notifications (patient_id=0)
+            // So we'll just return success for the UI to remove it from display
+
+            // Check if patient_notifications table exists
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                // Use the model if table exists
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $result = $this->dietetic_notifications_model->delete_patient_notification(
+                    $notification_id,
+                    $patient->id
+                );
+                $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+            } else {
+                // Fallback: Just return success without actually deleting from logs
+                // (logs should not be deleted, they're for record keeping)
+                $result = true;
+
+                // Count remaining notifications
+                $this->db->from(db_prefix() . 'dietic_notification_logs');
+                $this->db->where_in('patient_id', [$patient->id, 0]);
+                $this->db->where('id !=', $notification_id); // Exclude the "deleted" one
+                $unread_count = $this->db->count_all_results();
+            }
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Notification supprimée',
+                    'unread_count' => $unread_count
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification introuvable'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_activity('❌ [NOTIF DELETE ERROR] ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
-                'message' => 'Not authenticated'
-            ]);
-            return;
-        }
-
-        // Get patient
-        $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
-
-        if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Patient not found'
-            ]);
-            return;
-        }
-
-        // Get notification ID from POST
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
-
-        if (empty($data['notification_id'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification ID is required'
-            ]);
-            return;
-        }
-
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
-
-        // Delete notification
-        $result = $this->dietetic_notifications_model->delete_patient_notification(
-            $data['notification_id'],
-            $patient->id
-        );
-
-        if ($result) {
-            // Get updated unread count
-            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Notification deleted',
-                'unread_count' => $unread_count
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification not found or already deleted'
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
             ]);
         }
     }
@@ -2312,6 +2414,739 @@ class Portal extends App_Controller
         } else {
             return date('d/m/Y', $time);
         }
+    }
+
+    /**
+     * Get notification icon based on type
+     */
+    private function get_notification_icon($type)
+    {
+        $icons = [
+            'weight_reminder' => 'fa-balance-scale',
+            'water_reminder' => 'fa-tint',
+            'recommendation' => 'fa-comments',
+            'consultation' => 'fa-calendar',
+            'milestone' => 'fa-trophy',
+            'program' => 'fa-leaf',
+            'food_entry' => 'fa-cutlery',
+            'test' => 'fa-flask',
+            'info' => 'fa-info-circle'
+        ];
+
+        return $icons[$type] ?? 'fa-bell';
+    }
+
+    /**
+     * Get notification title based on type
+     */
+    private function get_notification_title($type)
+    {
+        $titles = [
+            'weight_reminder' => 'Rappel de Pesée',
+            'water_reminder' => 'Rappel d\'Hydratation',
+            'recommendation' => 'Nouvelle Recommandation',
+            'consultation' => 'Consultation',
+            'milestone' => 'Jalon Atteint',
+            'program' => 'Programme Diététique',
+            'food_entry' => 'Saisie Alimentaire',
+            'test' => 'Test Notification',
+            'info' => 'Information'
+        ];
+
+        return $titles[$type] ?? 'Notification';
+    }
+
+    // ==================== DIAGNOSTIC TOOLS ====================
+
+    /**
+     * Diagnostic page for notification preferences
+     * Access: /dietetic/portal/debug_prefs
+     */
+    public function debug_prefs()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        // Get patient record
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            set_alert('danger', 'Patient non trouvé');
+            redirect(site_url('dietetic/portal'));
+        }
+
+        echo "<h1>Diagnostic Préférences de Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px}pre{background:#f5f5f5;padding:10px;border-radius:5px}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}</style>";
+
+        echo "<h2>Patient</h2>";
+        echo "<p>ID: <strong>{$patient->id}</strong></p>";
+        echo "<p>Nom: <strong>{$patient->firstname} {$patient->lastname}</strong></p>";
+
+        // Load notifications model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        echo "<h2>Préférences actuelles</h2>";
+        $prefs = $this->dietetic_notifications_model->get_preferences($patient->id);
+        if ($prefs) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Paramètre</th><th>Valeur</th></tr>";
+            foreach ($prefs as $key => $value) {
+                if ($key !== 'id' && $key !== 'patient_id') {
+                    $display_value = $value;
+                    if (is_numeric($value)) {
+                        $display_value = $value ? '✓ Activé' : '✗ Désactivé';
+                    }
+                    echo "<tr><td><strong>$key</strong></td><td>$display_value</td></tr>";
+                }
+            }
+            echo "</table>";
+            echo "<p><em>Dernière mise à jour: {$prefs->updated_at}</em></p>";
+        } else {
+            echo "<p class='error'>❌ Aucune préférence trouvée pour ce patient</p>";
+        }
+
+        echo "<h2>Fichier preferences.php</h2>";
+        $prefs_file = FCPATH . 'modules/dietetic/views/portal/notifications/preferences.php';
+        if (file_exists($prefs_file)) {
+            echo "<p class='ok'>✅ Fichier existe</p>";
+            echo "<p>Dernière modification: <strong>" . date("Y-m-d H:i:s", filemtime($prefs_file)) . "</strong></p>";
+
+            $content = file_get_contents($prefs_file);
+            if (strpos($content, 'CSRF Token') !== false) {
+                echo "<p class='ok'>✅ Token CSRF présent</p>";
+            } else {
+                echo "<p class='error'>❌ Token CSRF absent</p>";
+            }
+        } else {
+            echo "<p class='error'>❌ Fichier n'existe pas à: $prefs_file</p>";
+        }
+
+        echo "<h2>Contrôleur Portal.php</h2>";
+        $portal_file = FCPATH . 'modules/dietetic/controllers/Portal.php';
+        if (file_exists($portal_file)) {
+            echo "<p class='ok'>✅ Fichier existe</p>";
+            echo "<p>Dernière modification: <strong>" . date("Y-m-d H:i:s", filemtime($portal_file)) . "</strong></p>";
+
+            $content = file_get_contents($portal_file);
+            if (strpos($content, '[NOTIF PREFS]') !== false) {
+                echo "<p class='ok'>✅ Logs de débogage présents</p>";
+            } else {
+                echo "<p class='error'>❌ Logs de débogage absents</p>";
+            }
+        }
+
+        echo "<h2>Logs d'activité récents</h2>";
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(10);
+        $this->db->like('description', 'NOTIF PREFS');
+        $logs = $this->db->get(db_prefix() . 'activity_log')->result();
+
+        if (!empty($logs)) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Date</th><th>Description</th></tr>";
+            foreach ($logs as $log) {
+                echo "<tr><td>{$log->date}</td><td>" . htmlspecialchars($log->description) . "</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p class='warning'>⚠️ Aucun log trouvé (normal si aucune sauvegarde récente)</p>";
+        }
+
+        echo "<hr><p><a href='" . site_url('dietetic/portal/notification_preferences') . "'>Retour aux préférences</a></p>";
+    }
+
+    /**
+     * Diagnostic page for Firebase migration status
+     * Access: /dietetic/portal/debug_firebase
+     */
+    public function debug_firebase()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>Diagnostic Migration Firebase</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px}pre{background:#f5f5f5;padding:10px;border-radius:5px}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}</style>";
+
+        echo "<h2>Test 1: Table dietic_fcm_tokens</h2>";
+        $fcm_table_exists = $this->db->table_exists(db_prefix() . 'dietic_fcm_tokens');
+        if ($fcm_table_exists) {
+            echo "<p class='ok'>✅ Table existe</p>";
+
+            $count = $this->db->count_all(db_prefix() . 'dietic_fcm_tokens');
+            echo "<p>Nombre de tokens: <strong>$count</strong></p>";
+        } else {
+            echo "<p class='error'>❌ Table n'existe PAS</p>";
+        }
+
+        echo "<h2>Test 2: Colonne channel_push dans préférences</h2>";
+        $prefs_table_exists = $this->db->table_exists(db_prefix() . 'dietic_notification_preferences');
+        if ($prefs_table_exists) {
+            echo "<p class='ok'>✅ Table dietic_notification_preferences existe</p>";
+
+            $fields = $this->db->field_data(db_prefix() . 'dietic_notification_preferences');
+            $has_channel_push = false;
+            foreach ($fields as $field) {
+                if ($field->name === 'channel_push') {
+                    $has_channel_push = true;
+                    echo "<p class='ok'>✅ Colonne 'channel_push' existe</p>";
+                    echo "<p>Type: <strong>{$field->type}</strong></p>";
+                    break;
+                }
+            }
+
+            if (!$has_channel_push) {
+                echo "<p class='error'>❌ Colonne 'channel_push' n'existe PAS</p>";
+            }
+
+            echo "<h3>Toutes les colonnes:</h3><ul>";
+            foreach ($fields as $field) {
+                echo "<li>{$field->name} ({$field->type})</li>";
+            }
+            echo "</ul>";
+        } else {
+            echo "<p class='error'>❌ Table dietic_notification_preferences n'existe PAS</p>";
+        }
+
+        echo "<h2>Test 3: Paramètres Firebase</h2>";
+        $this->db->like('setting_key', 'firebase');
+        $this->db->or_like('setting_key', 'push_enabled');
+        $settings = $this->db->get(db_prefix() . 'dietic_notification_settings')->result();
+
+        if (!empty($settings)) {
+            echo "<table border='1' cellpadding='5'>";
+            echo "<tr><th>Clé</th><th>Valeur</th></tr>";
+            foreach ($settings as $setting) {
+                $value = empty($setting->setting_value) ? '<em>Vide</em>' : '[CONFIGURÉ]';
+                echo "<tr><td>{$setting->setting_key}</td><td>$value</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p class='error'>❌ Aucun paramètre Firebase</p>";
+        }
+
+        echo "<h2>Résumé</h2>";
+        $firebase_installed = $fcm_table_exists && $has_channel_push;
+        if ($firebase_installed) {
+            echo "<p class='ok' style='font-size:18px'>✅ Migration Firebase INSTALLÉE</p>";
+        } else {
+            echo "<p class='error' style='font-size:18px'>❌ Migration Firebase INCOMPLÈTE</p>";
+            echo "<p>Veuillez exécuter la migration depuis: <a href='" . admin_url('dietetic/notifications/migrations') . "'>Admin → Notifications → Migrations</a></p>";
+        }
+
+        echo "<hr><p><a href='" . site_url('dietetic/portal') . "'>Retour au portail</a></p>";
+    }
+
+    /**
+     * Execute Firebase migration fix automatically
+     * URL: /dietetic/portal/run_firebase_fix
+     */
+    public function run_firebase_fix()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔧 Correction Migration Firebase</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}</style>";
+
+        echo "<p>Cette page va automatiquement corriger la migration Firebase en ajoutant les colonnes manquantes.</p>";
+        echo "<hr>";
+
+        $errors = [];
+        $success = [];
+
+        // Test 1: Check and add channel_push column to preferences table
+        echo "<h2>Étape 1: Colonne channel_push dans tbldietic_notification_preferences</h2>";
+
+        $prefs_table = db_prefix() . 'dietic_notification_preferences';
+        $prefs_table_exists = $this->db->table_exists($prefs_table);
+
+        if ($prefs_table_exists) {
+            $fields = $this->db->field_data($prefs_table);
+            $has_channel_push = false;
+
+            foreach ($fields as $field) {
+                if ($field->name === 'channel_push') {
+                    $has_channel_push = true;
+                    break;
+                }
+            }
+
+            if ($has_channel_push) {
+                echo "<p class='ok'>✅ Colonne 'channel_push' existe déjà - Aucune action nécessaire</p>";
+                $success[] = "Colonne channel_push existe";
+            } else {
+                echo "<p class='warning'>⚠️ Colonne 'channel_push' manquante - Ajout en cours...</p>";
+
+                // Add the column
+                $sql = "ALTER TABLE `{$prefs_table}` ADD COLUMN `channel_push` tinyint(1) DEFAULT 1 AFTER `channel_whatsapp`";
+
+                try {
+                    $result = $this->db->query($sql);
+                    if ($result) {
+                        echo "<p class='ok'>✅ Colonne 'channel_push' ajoutée avec succès!</p>";
+                        $success[] = "Colonne channel_push ajoutée";
+                        log_activity('🔧 [FIREBASE FIX] Colonne channel_push ajoutée à ' . $prefs_table);
+                    } else {
+                        echo "<p class='error'>❌ Erreur lors de l'ajout de la colonne</p>";
+                        $errors[] = "Échec ajout channel_push";
+                    }
+                } catch (Exception $e) {
+                    echo "<p class='error'>❌ Erreur: " . $e->getMessage() . "</p>";
+                    $errors[] = "Exception: " . $e->getMessage();
+                }
+            }
+        } else {
+            echo "<p class='error'>❌ Table {$prefs_table} n'existe pas!</p>";
+            $errors[] = "Table préférences inexistante";
+        }
+
+        // Test 2: Check and update channel enum in logs table
+        echo "<hr><h2>Étape 2: Enum 'channel' dans tbldietic_notification_logs</h2>";
+
+        $logs_table = db_prefix() . 'dietic_notification_logs';
+        $logs_table_exists = $this->db->table_exists($logs_table);
+
+        if ($logs_table_exists) {
+            // Get current enum values
+            $result = $this->db->query("SHOW COLUMNS FROM `{$logs_table}` LIKE 'channel'");
+            $row = $result->row_array();
+
+            if ($row) {
+                $current_type = $row['Type'];
+                echo "<p class='info'>ℹ️ Type actuel: <code>{$current_type}</code></p>";
+
+                // Check if 'push' is already in the enum
+                if (strpos($current_type, "'push'") !== false) {
+                    echo "<p class='ok'>✅ Valeur 'push' existe déjà dans l'enum - Aucune action nécessaire</p>";
+                    $success[] = "Enum channel contient push";
+                } else {
+                    echo "<p class='warning'>⚠️ Valeur 'push' manquante - Mise à jour en cours...</p>";
+
+                    // Update the enum
+                    $sql = "ALTER TABLE `{$logs_table}` MODIFY COLUMN `channel` enum('email','sms','whatsapp','push') NOT NULL";
+
+                    try {
+                        $result = $this->db->query($sql);
+                        if ($result) {
+                            echo "<p class='ok'>✅ Enum 'channel' mis à jour avec succès!</p>";
+                            $success[] = "Enum channel mis à jour";
+                            log_activity('🔧 [FIREBASE FIX] Enum channel mis à jour dans ' . $logs_table);
+                        } else {
+                            echo "<p class='error'>❌ Erreur lors de la mise à jour de l'enum</p>";
+                            $errors[] = "Échec mise à jour enum";
+                        }
+                    } catch (Exception $e) {
+                        echo "<p class='error'>❌ Erreur: " . $e->getMessage() . "</p>";
+                        $errors[] = "Exception: " . $e->getMessage();
+                    }
+                }
+            } else {
+                echo "<p class='error'>❌ Impossible de lire la colonne 'channel'</p>";
+                $errors[] = "Lecture colonne channel échouée";
+            }
+        } else {
+            echo "<p class='error'>❌ Table {$logs_table} n'existe pas!</p>";
+            $errors[] = "Table logs inexistante";
+        }
+
+        // Summary
+        echo "<hr><h2>📊 Résumé</h2>";
+
+        if (count($errors) === 0) {
+            echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#155724;margin-top:0'>✅ Migration Firebase Complète!</h3>";
+            echo "<p style='color:#155724;margin-bottom:0'>Toutes les modifications ont été appliquées avec succès.</p>";
+            echo "</div>";
+
+            echo "<h3>Actions effectuées:</h3><ul>";
+            foreach ($success as $item) {
+                echo "<li class='ok'>✅ {$item}</li>";
+            }
+            echo "</ul>";
+
+            echo "<p style='margin-top:30px'><strong>Prochaine étape:</strong> Allez dans l'admin pour vérifier que le statut de la migration est maintenant 'Installé'.</p>";
+            echo "<p><a href='" . admin_url('dietetic/notifications/migrations') . "' class='btn btn-primary' style='display:inline-block;padding:10px 20px;background:#01807B;color:white;text-decoration:none;border-radius:5px'>Voir les Migrations</a></p>";
+        } else {
+            echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#721c24;margin-top:0'>⚠️ Problèmes détectés</h3>";
+            echo "<ul style='color:#721c24;margin-bottom:0'>";
+            foreach ($errors as $error) {
+                echo "<li>{$error}</li>";
+            }
+            echo "</ul>";
+            echo "</div>";
+
+            if (!empty($success)) {
+                echo "<h3>Actions réussies:</h3><ul>";
+                foreach ($success as $item) {
+                    echo "<li class='ok'>✅ {$item}</li>";
+                }
+                echo "</ul>";
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Voir le diagnostic Firebase</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences de notifications</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * Check if notifications system is properly installed
+     * URL: /dietetic/portal/check_notifications_system
+     */
+    public function check_notifications_system()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔔 Diagnostic Système de Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}table{width:100%;border-collapse:collapse;margin:15px 0}table td,table th{padding:8px;border:1px solid #ddd;text-align:left}</style>";
+
+        echo "<p>Vérification de l'installation du système de notifications...</p><hr>";
+
+        $all_good = true;
+
+        // Test 1: Check notification_logs table
+        echo "<h2>Test 1: Table des logs de notifications</h2>";
+        $log_table = db_prefix() . 'dietic_notification_logs';
+        if ($this->db->table_exists($log_table)) {
+            echo "<p class='ok'>✅ Table '{$log_table}' existe</p>";
+
+            $count = $this->db->count_all($log_table);
+            echo "<p class='info'>ℹ️ Nombre de notifications enregistrées: <strong>{$count}</strong></p>";
+
+            // Show table structure
+            $fields = $this->db->field_data($log_table);
+            echo "<details><summary>Voir la structure de la table</summary>";
+            echo "<table><tr><th>Colonne</th><th>Type</th></tr>";
+            foreach ($fields as $field) {
+                echo "<tr><td>{$field->name}</td><td>{$field->type}</td></tr>";
+            }
+            echo "</table></details>";
+        } else {
+            echo "<p class='error'>❌ Table '{$log_table}' n'existe PAS</p>";
+            echo "<p class='warning'>⚠️ Le système de notifications n'est pas installé. Les notifications ne peuvent pas être affichées.</p>";
+            $all_good = false;
+        }
+
+        // Test 2: Check preferences table
+        echo "<hr><h2>Test 2: Table des préférences</h2>";
+        $prefs_table = db_prefix() . 'dietic_notification_preferences';
+        if ($this->db->table_exists($prefs_table)) {
+            echo "<p class='ok'>✅ Table '{$prefs_table}' existe</p>";
+
+            $count = $this->db->count_all($prefs_table);
+            echo "<p class='info'>ℹ️ Nombre de préférences configurées: <strong>{$count}</strong></p>";
+        } else {
+            echo "<p class='error'>❌ Table '{$prefs_table}' n'existe PAS</p>";
+            $all_good = false;
+        }
+
+        // Test 3: Check settings table
+        echo "<hr><h2>Test 3: Table des paramètres</h2>";
+        $settings_table = db_prefix() . 'dietic_notification_settings';
+        if ($this->db->table_exists($settings_table)) {
+            echo "<p class='ok'>✅ Table '{$settings_table}' existe</p>";
+
+            $settings = $this->db->get($settings_table)->result();
+            if (!empty($settings)) {
+                echo "<table><tr><th>Paramètre</th><th>Valeur</th></tr>";
+                foreach ($settings as $setting) {
+                    $value = empty($setting->setting_value) ? '<em>Vide</em>' : '[CONFIGURÉ]';
+                    echo "<tr><td>{$setting->setting_key}</td><td>{$value}</td></tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<p class='warning'>⚠️ Aucun paramètre configuré</p>";
+            }
+        } else {
+            echo "<p class='error'>❌ Table '{$settings_table}' n'existe PAS</p>";
+            $all_good = false;
+        }
+
+        // Test 4: Check FCM tokens table (Firebase)
+        echo "<hr><h2>Test 4: Table des tokens Firebase (Push)</h2>";
+        $fcm_table = db_prefix() . 'dietic_fcm_tokens';
+        if ($this->db->table_exists($fcm_table)) {
+            echo "<p class='ok'>✅ Table '{$fcm_table}' existe</p>";
+
+            $count = $this->db->count_all($fcm_table);
+            echo "<p class='info'>ℹ️ Nombre de tokens enregistrés: <strong>{$count}</strong></p>";
+        } else {
+            echo "<p class='warning'>⚠️ Table '{$fcm_table}' n'existe pas (optionnel - pour notifications push)</p>";
+        }
+
+        // Test 5: Check if notifications model exists
+        echo "<hr><h2>Test 5: Modèle de notifications</h2>";
+        $model_path = FCPATH . 'modules/dietetic/models/Dietetic_notifications_model.php';
+        if (file_exists($model_path)) {
+            echo "<p class='ok'>✅ Modèle de notifications existe</p>";
+            echo "<p class='info'>ℹ️ Chemin: <code>{$model_path}</code></p>";
+        } else {
+            echo "<p class='error'>❌ Modèle de notifications introuvable</p>";
+            $all_good = false;
+        }
+
+        // Summary
+        echo "<hr><h2>📊 Résumé</h2>";
+        if ($all_good) {
+            echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#155724;margin-top:0'>✅ Système de Notifications Installé!</h3>";
+            echo "<p style='color:#155724;margin-bottom:0'>Toutes les tables nécessaires sont présentes. Les notifications devraient s'afficher correctement.</p>";
+            echo "</div>";
+
+            echo "<p style='margin-top:20px'><strong>Pour voir les notifications:</strong></p>";
+            echo "<ol>";
+            echo "<li>Ouvrez la page du portail patient</li>";
+            echo "<li>Cliquez sur l'icône 🔔 en haut à droite</li>";
+            echo "<li>Les notifications s'afficheront dans le panneau</li>";
+            echo "</ol>";
+        } else {
+            echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#721c24;margin-top:0'>⚠️ Système de Notifications Incomplet</h3>";
+            echo "<p style='color:#721c24;margin-bottom:0'>Certaines tables sont manquantes. Le système de notifications doit être installé depuis l'admin.</p>";
+            echo "</div>";
+
+            echo "<p style='margin-top:20px'><strong>Pour installer le système:</strong></p>";
+            echo "<ol>";
+            echo "<li>Connectez-vous en tant qu'admin</li>";
+            echo "<li>Allez dans <strong>Diététique → Notifications → Migrations</strong></li>";
+            echo "<li>Installez la migration 'Système de Notifications'</li>";
+            echo "</ol>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_firebase') . "'>🔍 Diagnostic Firebase</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/notification_preferences') . "'>⚙️ Préférences</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * Debug notifications - show raw data
+     * URL: /dietetic/portal/debug_notifications_raw
+     */
+    public function debug_notifications_raw()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>🔔 Debug Notifications Brutes</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:1200px;margin:0 auto}pre{background:#f5f5f5;padding:15px;border-radius:5px;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}table{width:100%;border-collapse:collapse;margin:15px 0}table td,table th{padding:8px;border:1px solid #ddd;text-align:left;font-size:13px}table th{background:#f7f7f7}</style>";
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+        echo "<hr>";
+
+        // Check table existence
+        $logs_table = db_prefix() . 'dietic_notification_logs';
+        if (!$this->db->table_exists($logs_table)) {
+            echo "<p class='error'>❌ Table {$logs_table} n'existe PAS</p>";
+            echo "<p><a href='" . site_url('dietetic/portal') . "'>Retour</a></p>";
+            return;
+        }
+
+        echo "<p class='ok'>✅ Table {$logs_table} existe</p>";
+
+        // Get ALL notifications for this patient
+        echo "<hr><h2>Notifications dans la base de données</h2>";
+        $this->db->select('*');
+        $this->db->from($logs_table);
+        $this->db->where('patient_id', $patient->id);
+        $this->db->order_by('created_at', 'DESC');
+        $notifications = $this->db->get()->result();
+
+        echo "<p class='info'>ℹ️ Nombre total de notifications pour patient_id={$patient->id}: <strong>" . count($notifications) . "</strong></p>";
+
+        if (count($notifications) > 0) {
+            echo "<table>";
+            echo "<tr><th>ID</th><th>Type</th><th>Message</th><th>Channel</th><th>Status</th><th>Date</th></tr>";
+            foreach ($notifications as $notif) {
+                echo "<tr>";
+                echo "<td>{$notif->id}</td>";
+                echo "<td>{$notif->notification_type}</td>";
+                echo "<td>" . substr($notif->message, 0, 100) . (strlen($notif->message) > 100 ? '...' : '') . "</td>";
+                echo "<td>{$notif->channel}</td>";
+                echo "<td>" . ($notif->status ?? '-') . "</td>";
+                echo "<td>{$notif->created_at}</td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+
+            echo "<hr><h2>JSON brut retourné par l'API</h2>";
+            echo "<p>Voici ce que l'API get_notifications retourne :</p>";
+
+            // Simulate what get_notifications would return
+            $formatted_notifications = [];
+            foreach ($notifications as $notification) {
+                $type = $notification->notification_type ?? 'info';
+                $formatted_notifications[] = [
+                    'id' => $notification->id,
+                    'type' => $type,
+                    'title' => $this->get_notification_title($type),
+                    'message' => $notification->message ?? '',
+                    'icon' => $this->get_notification_icon($type),
+                    'url' => null,
+                    'is_read' => false,
+                    'time_ago' => $this->time_ago($notification->created_at),
+                    'created_at' => $notification->created_at
+                ];
+            }
+
+            $api_response = [
+                'success' => true,
+                'notifications' => $formatted_notifications,
+                'unread_count' => count($formatted_notifications),
+                'total' => count($formatted_notifications)
+            ];
+
+            echo "<pre>" . json_encode($api_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "</pre>";
+        } else {
+            echo "<p class='error'>❌ Aucune notification trouvée pour ce patient</p>";
+
+            echo "<hr><h2>Vérification : Toutes les notifications dans la table</h2>";
+            $this->db->select('patient_id, COUNT(*) as count');
+            $this->db->from($logs_table);
+            $this->db->group_by('patient_id');
+            $all_notifs = $this->db->get()->result();
+
+            if (count($all_notifs) > 0) {
+                echo "<p class='info'>Notifications par patient_id:</p>";
+                echo "<table><tr><th>Patient ID</th><th>Nombre</th></tr>";
+                foreach ($all_notifs as $row) {
+                    echo "<tr><td>{$row->patient_id}</td><td>{$row->count}</td></tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "<p class='error'>La table est complètement vide (aucune notification pour aucun patient)</p>";
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a> | ";
+        echo "<a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a></p>";
+    }
+
+    /**
+     * Create patient_notifications table
+     * URL: /dietetic/portal/create_patient_notifications_table
+     */
+    public function create_patient_notifications_table()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>📊 Création Table Patient Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}</style>";
+
+        echo "<p>Création de la table <code>tbldietic_patient_notifications</code> pour les notifications in-app...</p>";
+        echo "<hr>";
+
+        $table_name = db_prefix() . 'dietic_patient_notifications';
+
+        // Check if table already exists
+        if ($this->db->table_exists($table_name)) {
+            echo "<div style='background:#fff3cd;border:1px solid #ffc107;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#856404;margin-top:0'>⚠️ Table Déjà Existante</h3>";
+            echo "<p style='color:#856404;margin-bottom:0'>La table <strong>{$table_name}</strong> existe déjà. Aucune action nécessaire.</p>";
+            echo "</div>";
+
+            // Show table structure
+            $fields = $this->db->field_data($table_name);
+            echo "<hr><h3>Structure actuelle:</h3>";
+            echo "<table style='width:100%;border-collapse:collapse;margin:15px 0'>";
+            echo "<tr style='background:#f7f7f7'><th style='padding:8px;border:1px solid #ddd'>Colonne</th><th style='padding:8px;border:1px solid #ddd'>Type</th></tr>";
+            foreach ($fields as $field) {
+                echo "<tr><td style='padding:8px;border:1px solid #ddd'>{$field->name}</td><td style='padding:8px;border:1px solid #ddd'>{$field->type}</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            // Create table
+            $sql = "CREATE TABLE `{$table_name}` (
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `patient_id` INT(11) UNSIGNED NOT NULL,
+                `notification_type` VARCHAR(50) NOT NULL DEFAULT 'info',
+                `title` VARCHAR(255) NOT NULL,
+                `message` TEXT NOT NULL,
+                `icon` VARCHAR(50) DEFAULT 'fa-bell',
+                `url` VARCHAR(500) DEFAULT NULL,
+                `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `read_at` DATETIME DEFAULT NULL,
+                `deleted_at` DATETIME DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_patient_id` (`patient_id`),
+                KEY `idx_is_read` (`is_read`),
+                KEY `idx_created_at` (`created_at`),
+                KEY `idx_patient_unread` (`patient_id`, `is_read`, `created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications in-app affichées dans le panneau patient'";
+
+            try {
+                $result = $this->db->query($sql);
+
+                if ($result) {
+                    echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+                    echo "<h3 style='color:#155724;margin-top:0'>✅ Table Créée Avec Succès!</h3>";
+                    echo "<p style='color:#155724'>La table <strong>{$table_name}</strong> a été créée avec succès.</p>";
+                    echo "</div>";
+
+                    log_activity('📊 [MIGRATION] Table ' . $table_name . ' créée avec succès');
+
+                    // Show structure
+                    $fields = $this->db->field_data($table_name);
+                    echo "<hr><h3>Structure de la table:</h3>";
+                    echo "<table style='width:100%;border-collapse:collapse;margin:15px 0'>";
+                    echo "<tr style='background:#f7f7f7'><th style='padding:8px;border:1px solid #ddd'>Colonne</th><th style='padding:8px;border:1px solid #ddd'>Type</th></tr>";
+                    foreach ($fields as $field) {
+                        echo "<tr><td style='padding:8px;border:1px solid #ddd'>{$field->name}</td><td style='padding:8px;border:1px solid #ddd'>{$field->type}</td></tr>";
+                    }
+                    echo "</table>";
+
+                    echo "<hr>";
+                    echo "<div style='background:#e3f2fd;border:1px solid #2196F3;padding:15px;border-radius:8px'>";
+                    echo "<h4 style='color:#1976D2;margin-top:0'>💡 Prochaines Étapes</h4>";
+                    echo "<ul style='color:#1976D2;margin:10px 0'>";
+                    echo "<li>Les notifications s'afficheront maintenant depuis cette nouvelle table</li>";
+                    echo "<li>Le système utilisera automatiquement cette table au lieu du fallback</li>";
+                    echo "<li>Les fonctions marquer comme lu / supprimer fonctionneront correctement</li>";
+                    echo "</ul>";
+                    echo "</div>";
+                } else {
+                    echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+                    echo "<h3 style='color:#721c24;margin-top:0'>❌ Erreur de Création</h3>";
+                    echo "<p style='color:#721c24'>La requête SQL a échoué. Vérifiez les permissions de la base de données.</p>";
+                    echo "</div>";
+                }
+            } catch (Exception $e) {
+                echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+                echo "<h3 style='color:#721c24;margin-top:0'>❌ Exception SQL</h3>";
+                echo "<p style='color:#721c24'>Erreur: " . $e->getMessage() . "</p>";
+                echo "</div>";
+
+                log_activity('❌ [MIGRATION ERROR] ' . $e->getMessage());
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 

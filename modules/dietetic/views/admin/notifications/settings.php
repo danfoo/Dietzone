@@ -290,7 +290,7 @@ input:checked + .toggle-slider:before {
         <div class="settings-container">
             <div class="settings-header">
                 <h1><i class="fa fa-cog"></i> Paramètres des Notifications</h1>
-                <p>Configurez les services SMS, WhatsApp et gérez les préférences de notification</p>
+                <p>Configurez les services SMS, WhatsApp, Push (Firebase) et gérez les préférences de notification</p>
             </div>
 
             <form method="POST" action="<?php echo admin_url('dietetic/notifications/settings'); ?>">
@@ -404,6 +404,88 @@ input:checked + .toggle-slider:before {
                             <li>Tarifs compétitifs pour le Sénégal</li>
                             <li>Documentation complète en français</li>
                         </ul>
+                    </div>
+                </div>
+
+                <!-- Firebase Cloud Messaging (Push Notifications) Settings -->
+                <div class="settings-section">
+                    <h3><i class="fa fa-bell"></i> Configuration Firebase (Notifications Push)</h3>
+
+                    <div class="master-toggle" style="margin-bottom: 20px; background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);">
+                        <div class="master-toggle-content">
+                            <h3 style="margin: 0 0 5px 0; font-size: 16px;">Activer les notifications Push</h3>
+                            <p style="margin: 0; opacity: 0.9; font-size: 13px;">Autoriser l'envoi de notifications push via Firebase Cloud Messaging</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="push_enabled" <?php echo ($settings['push_enabled'] ?? '0') == '1' ? 'checked' : ''; ?>>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>API Key (apiKey)</label>
+                        <input type="text" name="firebase_api_key" value="<?php echo $settings['firebase_api_key'] ?? ''; ?>" placeholder="AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+                        <span class="help-text">Clé API de votre projet Firebase (trouvée dans Project Settings → General)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Domain (authDomain)</label>
+                        <input type="text" name="firebase_auth_domain" value="<?php echo $settings['firebase_auth_domain'] ?? ''; ?>" placeholder="votre-projet.firebaseapp.com">
+                        <span class="help-text">Domaine d'authentification Firebase</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project ID (projectId)</label>
+                        <input type="text" name="firebase_project_id" value="<?php echo $settings['firebase_project_id'] ?? ''; ?>" placeholder="votre-projet-id">
+                        <span class="help-text">Identifiant unique de votre projet Firebase</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Storage Bucket (storageBucket)</label>
+                        <input type="text" name="firebase_storage_bucket" value="<?php echo $settings['firebase_storage_bucket'] ?? ''; ?>" placeholder="votre-projet.appspot.com">
+                        <span class="help-text">Bucket de stockage Firebase (optionnel pour push)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Messaging Sender ID (messagingSenderId)</label>
+                        <input type="text" name="firebase_messaging_sender_id" value="<?php echo $settings['firebase_messaging_sender_id'] ?? ''; ?>" placeholder="123456789012">
+                        <span class="help-text">ID de l'expéditeur pour Cloud Messaging</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>App ID (appId)</label>
+                        <input type="text" name="firebase_app_id" value="<?php echo $settings['firebase_app_id'] ?? ''; ?>" placeholder="1:123456789012:web:abcdef1234567890">
+                        <span class="help-text">Identifiant de l'application Firebase</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>VAPID Key (Web Push Certificate)</label>
+                        <input type="text" name="firebase_vapid_key" value="<?php echo $settings['firebase_vapid_key'] ?? ''; ?>" placeholder="BKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        <span class="help-text">Clé VAPID pour les notifications web push (Cloud Messaging → Web configuration)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Server Key (Legacy)</label>
+                        <input type="password" name="firebase_server_key" value="<?php echo $settings['firebase_server_key'] ?? ''; ?>" placeholder="AAAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        <span class="help-text">Clé serveur Firebase pour l'API Cloud Messaging (Cloud Messaging → Server key)</span>
+                    </div>
+
+                    <div class="provider-info">
+                        <strong>📱 Configuration Firebase Cloud Messaging :</strong><br>
+                        Pour configurer les notifications push avec Firebase :
+                        <ol style="margin: 10px 0 0 20px;">
+                            <li>Allez sur <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li>
+                            <li>Créez un nouveau projet ou sélectionnez un projet existant</li>
+                            <li>Dans <strong>Project Settings</strong> (⚙️) → <strong>General</strong>, trouvez votre configuration web</li>
+                            <li>Dans <strong>Cloud Messaging</strong>, générez une clé VAPID et obtenez la Server Key</li>
+                            <li>Copiez tous les paramètres ci-dessus dans ce formulaire</li>
+                        </ol>
+                        <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; border-left: 4px solid #2196F3;">
+                            <strong>💡 Astuce :</strong> Vous pouvez trouver tous ces paramètres dans votre fichier <code>firebase-config.js</code> ou dans la console Firebase → ⚙️ Project Settings → Your apps → SDK setup and configuration
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <strong>📚 Documentation:</strong> <a href="https://firebase.google.com/docs/cloud-messaging/js/client" target="_blank">Guide Firebase Cloud Messaging pour Web</a>
+                        </div>
                     </div>
                 </div>
 
