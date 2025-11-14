@@ -293,20 +293,6 @@ $this->load->view('portal/includes/portal_header');
 
     <div id="alertBox" class="alert-custom"></div>
 
-    <!-- Test AJAX Buttons (for debugging) -->
-    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <p style="margin: 0 0 10px 0; color: #856404; font-size: 14px;">
-            <strong>🔧 Tests de diagnostic:</strong>
-        </p>
-        <button type="button" id="testAjaxBtn" class="btn btn-warning btn-sm" style="margin-right: 10px;">
-            <i class="fa fa-flask"></i> Test connexion AJAX
-        </button>
-        <button type="button" id="testSaveBtn" class="btn btn-info btn-sm">
-            <i class="fa fa-save"></i> Test sauvegarde préférences
-        </button>
-        <div id="testResult" style="margin-top: 10px; font-weight: bold;"></div>
-    </div>
-
     <form id="preferencesForm">
         <!-- CSRF Token -->
         <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
@@ -475,79 +461,6 @@ $this->load->view('portal/includes/portal_header');
 <script>
     // Script placé APRÈS le footer pour que jQuery soit chargé
     $(document).ready(function() {
-        console.log('✅ Document ready - jQuery version:', jQuery.fn.jquery);
-
-        // Test AJAX connection button
-        $('#testAjaxBtn').on('click', function(e) {
-            e.preventDefault();
-            console.log('🧪 Test AJAX button clicked');
-            alert('Bouton cliqué! Test en cours...');
-
-            var resultSpan = $('#testResult');
-            resultSpan.html('<i class="fa fa-spinner fa-spin"></i> Test en cours...').css('color', '#0066cc');
-
-            var testUrl = '<?php echo site_url('dietetic/portal/test_ajax_endpoint'); ?>';
-            console.log('🔵 URL de test:', testUrl);
-
-            $.ajax({
-                url: testUrl,
-                type: 'POST',
-                data: {
-                    test: 'ajax_connectivity',
-                    timestamp: new Date().toISOString(),
-                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    console.log('✅ Test AJAX Success:', response);
-                    alert('Succès! ' + response.message);
-                    resultSpan.html('<i class="fa fa-check-circle"></i> ' + response.message).css('color', '#28a745');
-                },
-                error: function(xhr, status, error) {
-                    console.error('❌ Test AJAX Error:', {xhr: xhr, status: status, error: error, responseText: xhr.responseText});
-                    alert('Erreur AJAX: ' + status + ' - ' + error);
-                    resultSpan.html('<i class="fa fa-times-circle"></i> Échec: ' + error).css('color', '#dc3545');
-                }
-            });
-        });
-
-        // Test save preferences button
-        $('#testSaveBtn').on('click', function(e) {
-            e.preventDefault();
-            console.log('💾 Test Save button clicked');
-
-            var resultDiv = $('#testResult');
-            resultDiv.html('<i class="fa fa-spinner fa-spin"></i> Test sauvegarde en cours...').css('color', '#0066cc');
-
-            var saveUrl = '<?php echo site_url('dietetic/portal/save_notification_preferences'); ?>';
-            console.log('🔵 URL de sauvegarde:', saveUrl);
-
-            // Test data
-            var testData = {
-                reminder_weight: 1,
-                channel_email: 1,
-                channel_sms: 0,
-                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-            };
-
-            console.log('🔵 Test data:', testData);
-
-            $.ajax({
-                url: saveUrl,
-                type: 'POST',
-                data: testData,
-                dataType: 'json',
-                success: function(response) {
-                    console.log('✅ Save Test Success:', response);
-                    resultDiv.html('<i class="fa fa-check-circle"></i> Sauvegarde réussie: ' + response.message).css('color', '#28a745');
-                },
-                error: function(xhr, status, error) {
-                    console.error('❌ Save Test Error:', {xhr: xhr, status: status, error: error, responseText: xhr.responseText});
-                    resultDiv.html('<i class="fa fa-times-circle"></i> Erreur: ' + status + ' - ' + error).css('color', '#dc3545');
-                }
-            });
-        });
-
         // Toggle weight reminder details
         $('#reminder_weight').change(function() {
             if ($(this).is(':checked')) {
@@ -576,18 +489,12 @@ $this->load->view('portal/includes/portal_header');
         });
 
         // Handle form submission
-        console.log('📝 Attaching form submit handler to #preferencesForm');
-
         $('#preferencesForm').on('submit', function(e) {
             e.preventDefault();
-            console.log('🔵 Form submission triggered!');
 
             const btn = $('.save-button');
             const originalText = btn.html();
             const formData = $(this).serialize();
-
-            console.log('🔵 Form data:', formData);
-            console.log('🔵 AJAX URL:', '<?php echo site_url('dietetic/portal/save_notification_preferences'); ?>');
 
             btn.html('<i class="fa fa-spinner fa-spin"></i> Enregistrement...').prop('disabled', true);
 
@@ -597,9 +504,7 @@ $this->load->view('portal/includes/portal_header');
                 data: formData,
                 dataType: 'json',
                 success: function(response) {
-                    console.log('✅ AJAX Success:', response);
                     showAlert(response.success ? 'success' : 'error', response.message);
-
                     btn.html(originalText).prop('disabled', false);
 
                     if (response.success) {
@@ -608,20 +513,11 @@ $this->load->view('portal/includes/portal_header');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ AJAX Error:', {
-                        status: status,
-                        error: error,
-                        responseText: xhr.responseText,
-                        statusCode: xhr.status
-                    });
                     showAlert('error', 'Une erreur est survenue lors de l\'enregistrement');
                     btn.html(originalText).prop('disabled', false);
                 }
             });
         });
-
-        // Verify handler is attached
-        console.log('✅ Form submit handler attached. Form exists:', $('#preferencesForm').length > 0);
 
         function showAlert(type, message) {
             const alertBox = $('#alertBox');

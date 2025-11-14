@@ -60,7 +60,6 @@ class Portal extends App_Controller
             'delete_photo',
             'notification_preferences',
             'save_notification_preferences',
-            'test_ajax_endpoint',
             'save_fcm_token',
             'delete_fcm_token',
             'get_firebase_config',
@@ -1818,25 +1817,6 @@ class Portal extends App_Controller
         $data['title'] = 'Mes Préférences de Notification';
 
         $this->load->view('portal/notifications/preferences', $data);
-    }
-
-    /**
-     * Test AJAX endpoint - simple endpoint to verify AJAX routing is working
-     */
-    public function test_ajax_endpoint()
-    {
-        log_activity('🔵 [TEST AJAX] Endpoint reached successfully!');
-        header('Content-Type: application/json');
-
-        $post_data = $this->input->post();
-        log_activity('🔵 [TEST AJAX] POST data: ' . json_encode($post_data));
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Test endpoint reached successfully!',
-            'timestamp' => date('Y-m-d H:i:s'),
-            'post_data' => $post_data
-        ]);
     }
 
     /**
