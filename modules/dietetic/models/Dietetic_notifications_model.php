@@ -1513,6 +1513,32 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Log a notification to the logs table
+     *
+     * @param int $patient_id
+     * @param string $channel (email, sms, whatsapp, push)
+     * @param string $notification_type
+     * @param string $message
+     * @param string $status (sent, failed, pending)
+     * @param string|null $error_message
+     * @return bool
+     */
+    public function log_notification($patient_id, $channel, $notification_type, $message, $status = 'sent', $error_message = null)
+    {
+        $data = [
+            'patient_id' => $patient_id,
+            'channel' => $channel,
+            'notification_type' => $notification_type,
+            'message' => $message,
+            'status' => $status,
+            'error_message' => $error_message,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        return $this->db->insert(db_prefix() . $this->table_logs, $data);
+    }
+
+    /**
      * Count notification logs with filters
      */
     public function count_logs($filters = [])
