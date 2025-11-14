@@ -576,9 +576,11 @@ $this->load->view('portal/includes/portal_header');
         });
 
         // Handle form submission
-        $('#preferencesForm').submit(function(e) {
+        console.log('📝 Attaching form submit handler to #preferencesForm');
+
+        $('#preferencesForm').on('submit', function(e) {
             e.preventDefault();
-            console.log('🔵 Form submission triggered');
+            console.log('🔵 Form submission triggered!');
 
             const btn = $('.save-button');
             const originalText = btn.html();
@@ -617,6 +619,9 @@ $this->load->view('portal/includes/portal_header');
                 }
             });
         });
+
+        // Verify handler is attached
+        console.log('✅ Form submit handler attached. Form exists:', $('#preferencesForm').length > 0);
 
         function showAlert(type, message) {
             const alertBox = $('#alertBox');
