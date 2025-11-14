@@ -635,6 +635,7 @@
         let firebaseApp;
         let messaging;
         let fcmToken = null;
+        let swRegistration = null; // Store service worker registration
 
         // Initialize Firebase Push Notifications
         function initFirebasePush() {
@@ -664,13 +665,19 @@
 
                             console.log('Firebase initialized successfully');
 
-                            // Register service worker
-                            registerServiceWorker();
+                            // Register service worker first, then handle messaging
+                            registerServiceWorker()
+                                .then(() => {
+                                    console.log('Service Worker ready for messaging');
 
-                            // Request permission if user previously granted it
-                            if (Notification.permission === 'granted') {
-                                getFirebaseToken();
-                            }
+                                    // Request permission if user previously granted it
+                                    if (Notification.permission === 'granted') {
+                                        getFirebaseToken();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Failed to register service worker:', error);
+                                });
                         }
                     } else {
                         console.log('Firebase push notifications not configured:', data.message);
@@ -685,31 +692,42 @@
         function registerServiceWorker() {
             const swPath = '<?php echo module_dir_url("dietetic", "assets/js/firebase-messaging-sw.js"); ?>';
 
-            navigator.serviceWorker.register(swPath)
+            return navigator.serviceWorker.register(swPath)
                 .then(function(registration) {
                     console.log('Service Worker registered successfully:', registration);
 
-                    // Pass Firebase config to service worker
-                    if (registration.active) {
-                        registration.active.postMessage({
-                            type: 'INIT_FIREBASE',
-                            config: firebaseApp.options
-                        });
-                    }
+                    // Store registration globally
+                    swRegistration = registration;
 
-                    // Set service worker for messaging
-                    if (messaging) {
-                        messaging.useServiceWorker(registration);
-                    }
+                    // Wait for service worker to be active
+                    return navigator.serviceWorker.ready.then(() => {
+                        // Pass Firebase config to service worker
+                        if (registration.active) {
+                            registration.active.postMessage({
+                                type: 'INIT_FIREBASE',
+                                config: firebaseApp.options
+                            });
+                        }
+                        return registration;
+                    });
                 })
                 .catch(function(error) {
                     console.error('Service Worker registration failed:', error);
+                    throw error;
                 });
         }
 
         // Request notification permission and get FCM token
         function requestNotificationPermission() {
-            return Notification.requestPermission()
+            // Ensure service worker is registered first
+            const swPromise = swRegistration
+                ? Promise.resolve(swRegistration)
+                : registerServiceWorker();
+
+            return swPromise
+                .then(() => {
+                    return Notification.requestPermission();
+                })
                 .then(permission => {
                     console.log('Notification permission:', permission);
 
@@ -733,9 +751,17 @@
                 return Promise.resolve(null);
             }
 
-            return messaging.getToken({
-                vapidKey: '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>'
-            })
+            if (!swRegistration) {
+                console.error('Service Worker not registered yet');
+                return Promise.resolve(null);
+            }
+
+            const tokenOptions = {
+                vapidKey: '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>',
+                serviceWorkerRegistration: swRegistration
+            };
+
+            return messaging.getToken(tokenOptions)
                 .then(token => {
                     if (token) {
                         console.log('FCM Token:', token);
