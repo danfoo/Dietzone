@@ -106,9 +106,11 @@
         // Store all notifications globally for filtering
         let allNotifications = [];
         let currentFilter = 'all';
+        let previousUnreadCount = 0;
+        let autoRefreshInterval = null;
 
         // Load notifications on page load
-        function loadNotifications() {
+        function loadNotifications(silent = false) {
             // Check if notification panel exists before loading
             if (!document.getElementById('notificationPanel')) {
                 return;
@@ -123,9 +125,18 @@
                 })
                 .then(data => {
                     if (data.success) {
+                        const newUnreadCount = data.unread_count;
+
+                        // Check if there are new notifications (only if not first load and not silent)
+                        if (!silent && previousUnreadCount > 0 && newUnreadCount > previousUnreadCount) {
+                            const newNotificationsCount = newUnreadCount - previousUnreadCount;
+                            notifyUser(newNotificationsCount);
+                        }
+
+                        previousUnreadCount = newUnreadCount;
                         allNotifications = data.notifications;
                         displayNotifications(filterNotifications(allNotifications));
-                        updateNotificationBadge(data.unread_count);
+                        updateNotificationBadge(newUnreadCount);
                     } else {
                         // Error but valid response - show empty state
                         console.log('Notifications: ' + (data.message || data.info || 'Not available'));
@@ -143,6 +154,29 @@
                 });
         }
 
+        // Get date category for grouping
+        function getDateCategory(dateString) {
+            const now = new Date();
+            const notifDate = new Date(dateString);
+            const diffTime = Math.abs(now - notifDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            // Reset hours for accurate day comparison
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const notifDay = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate());
+            const dayDiff = Math.floor((today - notifDay) / (1000 * 60 * 60 * 24));
+
+            if (dayDiff === 0) {
+                return { key: 'today', label: "Aujourd'hui", order: 1 };
+            } else if (dayDiff === 1) {
+                return { key: 'yesterday', label: 'Hier', order: 2 };
+            } else if (dayDiff <= 7) {
+                return { key: 'this_week', label: 'Cette semaine', order: 3 };
+            } else {
+                return { key: 'older', label: 'Plus ancien', order: 4 };
+            }
+        }
+
         // Display notifications in the panel
         function displayNotifications(notifications) {
             const notificationContent = document.querySelector('.notification-panel-content');
@@ -153,38 +187,64 @@
                 return;
             }
 
-            let html = '';
+            // Group notifications by date
+            const grouped = {};
             let unreadCount = 0;
+
             notifications.forEach(notification => {
-                const unreadClass = notification.is_read ? '' : 'unread';
-                const clickableClass = notification.url ? 'clickable' : '';
-                const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+                const category = getDateCategory(notification.created_at);
+                if (!grouped[category.key]) {
+                    grouped[category.key] = {
+                        label: category.label,
+                        order: category.order,
+                        notifications: []
+                    };
+                }
+                grouped[category.key].notifications.push(notification);
 
                 if (!notification.is_read) {
                     unreadCount++;
                 }
-
-                html += `
-                    <div class="notification-item ${unreadClass} ${clickableClass}"
-                         data-notification-id="${notification.id}"
-                         data-url="${notification.url || ''}"
-                         data-is-read="${notification.is_read ? '1' : '0'}"
-                         style="${cursorStyle}"
-                         onclick="handleNotificationClick(this, event)">
-                        <button class="notification-item-delete" onclick="deleteNotification(this, event)">
-                            <i class="fa fa-times"></i>
-                        </button>
-                        <div class="notification-item-header">
-                            <div class="notification-item-icon">
-                                <i class="fa ${notification.icon}"></i>
-                            </div>
-                            <div class="notification-item-title">${notification.title}</div>
-                            <div class="notification-item-time">${notification.time_ago}</div>
-                        </div>
-                        <div class="notification-item-message">${notification.message}</div>
-                    </div>
-                `;
             });
+
+            // Sort groups by order and build HTML
+            let html = '';
+            Object.keys(grouped)
+                .sort((a, b) => grouped[a].order - grouped[b].order)
+                .forEach(groupKey => {
+                    const group = grouped[groupKey];
+
+                    // Add date separator
+                    html += `<div class="notification-date-separator"><span>${group.label}</span></div>`;
+
+                    // Add notifications in this group
+                    group.notifications.forEach(notification => {
+                        const unreadClass = notification.is_read ? '' : 'unread';
+                        const clickableClass = notification.url ? 'clickable' : '';
+                        const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+
+                        html += `
+                            <div class="notification-item ${unreadClass} ${clickableClass}"
+                                 data-notification-id="${notification.id}"
+                                 data-url="${notification.url || ''}"
+                                 data-is-read="${notification.is_read ? '1' : '0'}"
+                                 style="${cursorStyle}"
+                                 onclick="handleNotificationClick(this, event)">
+                                <button class="notification-item-delete" onclick="deleteNotification(this, event)">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                                <div class="notification-item-header">
+                                    <div class="notification-item-icon">
+                                        <i class="fa ${notification.icon}"></i>
+                                    </div>
+                                    <div class="notification-item-title">${notification.title}</div>
+                                    <div class="notification-item-time">${notification.time_ago}</div>
+                                </div>
+                                <div class="notification-item-message">${notification.message}</div>
+                            </div>
+                        `;
+                    });
+                });
 
             notificationContent.innerHTML = html;
             updateMarkAllReadButton(unreadCount);
@@ -231,8 +291,71 @@
             displayNotifications(filteredNotifications);
         }
 
+        // ============================================
+        // AUTO-REFRESH FUNCTIONALITY
+        // ============================================
+
+        // Start auto-refresh (every 3 minutes)
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+
+            // Refresh every 3 minutes (180000ms)
+            autoRefreshInterval = setInterval(function() {
+                loadNotifications(false); // Not silent, so we can notify about new notifications
+            }, 180000);
+        }
+
+        // Stop auto-refresh
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        // Notify user about new notifications (sound + vibration)
+        function notifyUser(count) {
+            // Play notification sound
+            playNotificationSound();
+
+            // Vibrate if supported (mobile)
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200]); // Vibrate pattern: 200ms, pause 100ms, 200ms
+            }
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            // Create a simple beep sound using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800; // Frequency in Hz
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                console.log('Could not play notification sound:', e);
+            }
+        }
+
         // Load notifications when page loads
-        document.addEventListener('DOMContentLoaded', loadNotifications);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications(true); // Silent on first load
+            startAutoRefresh(); // Start auto-refresh
+        });
 
         // Add event listeners to filter buttons
         document.addEventListener('DOMContentLoaded', function() {

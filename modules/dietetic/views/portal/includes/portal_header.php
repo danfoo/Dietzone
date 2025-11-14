@@ -345,6 +345,41 @@
             transform: scale(0.9);
         }
 
+        .notification-date-separator {
+            padding: 12px 12px 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #01807B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #01807B 0%, transparent 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-date-separator:before {
+            content: '';
+            height: 2px;
+            flex: 1;
+            background: linear-gradient(90deg, #01807B 0%, transparent 100%);
+        }
+
+        .notification-date-separator span {
+            background: linear-gradient(135deg, #01807B 0%, #026660 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .notification-empty {
             text-align: center;
             padding: 40px 20px;
