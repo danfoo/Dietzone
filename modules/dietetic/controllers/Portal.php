@@ -2205,60 +2205,83 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
+        try {
+            if (!is_client_logged_in()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Not authenticated'
+                ]);
+                return;
+            }
+
+            // Get patient
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient not found'
+                ]);
+                return;
+            }
+
+            // Get notification ID from POST
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+
+            if (empty($data['notification_id'])) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification ID is required'
+                ]);
+                return;
+            }
+
+            $notification_id = $data['notification_id'];
+
+            // TEMPORARY: Since we're using notification_logs as fallback,
+            // we can't really "delete" system notifications (patient_id=0)
+            // So we'll just return success for the UI to remove it from display
+
+            // Check if patient_notifications table exists
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                // Use the model if table exists
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $result = $this->dietetic_notifications_model->delete_patient_notification(
+                    $notification_id,
+                    $patient->id
+                );
+                $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+            } else {
+                // Fallback: Just return success without actually deleting from logs
+                // (logs should not be deleted, they're for record keeping)
+                $result = true;
+
+                // Count remaining notifications
+                $this->db->from(db_prefix() . 'dietic_notification_logs');
+                $this->db->where_in('patient_id', [$patient->id, 0]);
+                $this->db->where('id !=', $notification_id); // Exclude the "deleted" one
+                $unread_count = $this->db->count_all_results();
+            }
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Notification supprimée',
+                    'unread_count' => $unread_count
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification introuvable'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_activity('❌ [NOTIF DELETE ERROR] ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
-                'message' => 'Not authenticated'
-            ]);
-            return;
-        }
-
-        // Get patient
-        $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
-
-        if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Patient not found'
-            ]);
-            return;
-        }
-
-        // Get notification ID from POST
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
-
-        if (empty($data['notification_id'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification ID is required'
-            ]);
-            return;
-        }
-
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
-
-        // Delete notification
-        $result = $this->dietetic_notifications_model->delete_patient_notification(
-            $data['notification_id'],
-            $patient->id
-        );
-
-        if ($result) {
-            // Get updated unread count
-            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Notification deleted',
-                'unread_count' => $unread_count
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification not found or already deleted'
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
             ]);
         }
     }
