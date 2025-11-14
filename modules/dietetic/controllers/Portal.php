@@ -2101,39 +2101,52 @@ class Portal extends App_Controller
             // TEMPORARY FIX: Check if patient_notifications table exists
             // If not, use notification_logs as fallback
             if (!$this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
-                // Use logs table as fallback
-                $this->db->select('id, patient_id, notification_type as type, title, message, created_at, 0 as is_read');
-                $this->db->from(db_prefix() . 'dietic_notification_logs');
-                $this->db->where('patient_id', $patient->id);
-                $this->db->where('channel', 'push'); // Only push notifications for UI
-                $this->db->order_by('created_at', 'DESC');
-                $this->db->limit(50);
-                $notifications = $this->db->get()->result();
+                log_activity('🔔 [NOTIF] Using notification_logs as fallback for patient_id=' . $patient->id);
 
-                // Format for frontend
-                $formatted_notifications = [];
-                foreach ($notifications as $notification) {
-                    $formatted_notifications[] = [
-                        'id' => $notification->id,
-                        'type' => $notification->type,
-                        'title' => $notification->title,
-                        'message' => $notification->message,
-                        'icon' => 'fa-bell',
-                        'url' => null,
-                        'is_read' => false,
-                        'time_ago' => $this->time_ago($notification->created_at),
-                        'created_at' => $notification->created_at
-                    ];
+                try {
+                    // Use logs table as fallback - get ALL notifications for now
+                    $this->db->select('id, patient_id, notification_type, title, message, channel, created_at');
+                    $this->db->from(db_prefix() . 'dietic_notification_logs');
+                    $this->db->where('patient_id', $patient->id);
+                    $this->db->order_by('created_at', 'DESC');
+                    $this->db->limit(50);
+
+                    $notifications = $this->db->get()->result();
+                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' total notifications');
+
+                    // Format for frontend
+                    $formatted_notifications = [];
+                    foreach ($notifications as $notification) {
+                        $formatted_notifications[] = [
+                            'id' => $notification->id,
+                            'type' => $notification->notification_type ?? 'info',
+                            'title' => $notification->title ?? 'Notification',
+                            'message' => $notification->message ?? '',
+                            'icon' => $this->get_notification_icon($notification->notification_type ?? 'info'),
+                            'url' => null,
+                            'is_read' => false,
+                            'time_ago' => $this->time_ago($notification->created_at),
+                            'created_at' => $notification->created_at
+                        ];
+                    }
+
+                    log_activity('🔔 [NOTIF] Successfully formatted ' . count($formatted_notifications) . ' notifications');
+
+                    echo json_encode([
+                        'success' => true,
+                        'notifications' => $formatted_notifications,
+                        'unread_count' => count($formatted_notifications),
+                        'total' => count($formatted_notifications)
+                    ]);
+                    return;
+                } catch (Exception $e) {
+                    log_activity('❌ [NOTIF ERROR] ' . $e->getMessage());
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Database error: ' . $e->getMessage()
+                    ]);
+                    return;
                 }
-
-                echo json_encode([
-                    'success' => true,
-                    'notifications' => $formatted_notifications,
-                    'unread_count' => count($formatted_notifications),
-                    'total' => count($formatted_notifications),
-                    'info' => 'Using logs table (patient_notifications table not yet created)'
-                ]);
-                return;
             }
 
             // Get limit from query parameter
@@ -2374,6 +2387,26 @@ class Portal extends App_Controller
         } else {
             return date('d/m/Y', $time);
         }
+    }
+
+    /**
+     * Get notification icon based on type
+     */
+    private function get_notification_icon($type)
+    {
+        $icons = [
+            'weight_reminder' => 'fa-balance-scale',
+            'water_reminder' => 'fa-tint',
+            'recommendation' => 'fa-comments',
+            'consultation' => 'fa-calendar',
+            'milestone' => 'fa-trophy',
+            'program' => 'fa-leaf',
+            'food_entry' => 'fa-cutlery',
+            'test' => 'fa-flask',
+            'info' => 'fa-info-circle'
+        ];
+
+        return $icons[$type] ?? 'fa-bell';
     }
 
     // ==================== DIAGNOSTIC TOOLS ====================
