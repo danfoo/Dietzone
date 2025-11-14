@@ -527,7 +527,10 @@ class Notifications extends AdminController
     {
         header('Content-Type: application/json');
 
+        log_activity('[SEND_TEST_PUSH] Method called');
+
         if (!is_admin()) {
+            log_activity('[SEND_TEST_PUSH] Access denied - not admin');
             echo json_encode([
                 'success' => false,
                 'message' => 'Accès refusé'
@@ -540,8 +543,11 @@ class Notifications extends AdminController
         $body = $this->input->post('body');
         $url = $this->input->post('url');
 
+        log_activity('[SEND_TEST_PUSH] Params: patient_id=' . $patient_id . ', title=' . $title);
+
         // Validate inputs
         if (!$patient_id || !$title || !$body) {
+            log_activity('[SEND_TEST_PUSH] Validation failed - missing required fields');
             echo json_encode([
                 'success' => false,
                 'message' => 'Veuillez remplir tous les champs requis'
@@ -551,6 +557,7 @@ class Notifications extends AdminController
 
         // Load Firebase library
         $this->load->library('dietetic/firebase_cloud_messaging');
+        log_activity('[SEND_TEST_PUSH] Firebase library loaded');
 
         try {
             // Check if Firebase is enabled
@@ -587,7 +594,7 @@ class Notifications extends AdminController
                     'icon' => base_url('uploads/company/favicon.png')
                 ];
 
-                $result = $this->firebase_cloud_messaging->send_notification(
+                $result = $this->firebase_cloud_messaging->send_to_device(
                     $token_row['token'],
                     $title,
                     $body,
