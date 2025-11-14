@@ -72,7 +72,8 @@ class Portal extends App_Controller
             'debug_firebase',
             'run_firebase_fix',
             'check_notifications_system',
-            'debug_notifications_raw'
+            'debug_notifications_raw',
+            'create_patient_notifications_table'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -3039,6 +3040,113 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a> | ";
         echo "<a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a></p>";
+    }
+
+    /**
+     * Create patient_notifications table
+     * URL: /dietetic/portal/create_patient_notifications_table
+     */
+    public function create_patient_notifications_table()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        echo "<h1>📊 Création Table Patient Notifications</h1>";
+        echo "<style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto}pre{background:#f5f5f5;padding:10px;border-radius:5px;overflow-x:auto}.ok{color:green;font-weight:bold}.error{color:red;font-weight:bold}.warning{color:orange;font-weight:bold}.info{color:#0066cc;font-weight:bold}hr{margin:30px 0;border:none;border-top:2px solid #ddd}</style>";
+
+        echo "<p>Création de la table <code>tbldietic_patient_notifications</code> pour les notifications in-app...</p>";
+        echo "<hr>";
+
+        $table_name = db_prefix() . 'dietic_patient_notifications';
+
+        // Check if table already exists
+        if ($this->db->table_exists($table_name)) {
+            echo "<div style='background:#fff3cd;border:1px solid #ffc107;padding:20px;border-radius:8px'>";
+            echo "<h3 style='color:#856404;margin-top:0'>⚠️ Table Déjà Existante</h3>";
+            echo "<p style='color:#856404;margin-bottom:0'>La table <strong>{$table_name}</strong> existe déjà. Aucune action nécessaire.</p>";
+            echo "</div>";
+
+            // Show table structure
+            $fields = $this->db->field_data($table_name);
+            echo "<hr><h3>Structure actuelle:</h3>";
+            echo "<table style='width:100%;border-collapse:collapse;margin:15px 0'>";
+            echo "<tr style='background:#f7f7f7'><th style='padding:8px;border:1px solid #ddd'>Colonne</th><th style='padding:8px;border:1px solid #ddd'>Type</th></tr>";
+            foreach ($fields as $field) {
+                echo "<tr><td style='padding:8px;border:1px solid #ddd'>{$field->name}</td><td style='padding:8px;border:1px solid #ddd'>{$field->type}</td></tr>";
+            }
+            echo "</table>";
+        } else {
+            // Create table
+            $sql = "CREATE TABLE `{$table_name}` (
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `patient_id` INT(11) UNSIGNED NOT NULL,
+                `notification_type` VARCHAR(50) NOT NULL DEFAULT 'info',
+                `title` VARCHAR(255) NOT NULL,
+                `message` TEXT NOT NULL,
+                `icon` VARCHAR(50) DEFAULT 'fa-bell',
+                `url` VARCHAR(500) DEFAULT NULL,
+                `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `read_at` DATETIME DEFAULT NULL,
+                `deleted_at` DATETIME DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_patient_id` (`patient_id`),
+                KEY `idx_is_read` (`is_read`),
+                KEY `idx_created_at` (`created_at`),
+                KEY `idx_patient_unread` (`patient_id`, `is_read`, `created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications in-app affichées dans le panneau patient'";
+
+            try {
+                $result = $this->db->query($sql);
+
+                if ($result) {
+                    echo "<div style='background:#d4edda;border:1px solid #c3e6cb;padding:20px;border-radius:8px'>";
+                    echo "<h3 style='color:#155724;margin-top:0'>✅ Table Créée Avec Succès!</h3>";
+                    echo "<p style='color:#155724'>La table <strong>{$table_name}</strong> a été créée avec succès.</p>";
+                    echo "</div>";
+
+                    log_activity('📊 [MIGRATION] Table ' . $table_name . ' créée avec succès');
+
+                    // Show structure
+                    $fields = $this->db->field_data($table_name);
+                    echo "<hr><h3>Structure de la table:</h3>";
+                    echo "<table style='width:100%;border-collapse:collapse;margin:15px 0'>";
+                    echo "<tr style='background:#f7f7f7'><th style='padding:8px;border:1px solid #ddd'>Colonne</th><th style='padding:8px;border:1px solid #ddd'>Type</th></tr>";
+                    foreach ($fields as $field) {
+                        echo "<tr><td style='padding:8px;border:1px solid #ddd'>{$field->name}</td><td style='padding:8px;border:1px solid #ddd'>{$field->type}</td></tr>";
+                    }
+                    echo "</table>";
+
+                    echo "<hr>";
+                    echo "<div style='background:#e3f2fd;border:1px solid #2196F3;padding:15px;border-radius:8px'>";
+                    echo "<h4 style='color:#1976D2;margin-top:0'>💡 Prochaines Étapes</h4>";
+                    echo "<ul style='color:#1976D2;margin:10px 0'>";
+                    echo "<li>Les notifications s'afficheront maintenant depuis cette nouvelle table</li>";
+                    echo "<li>Le système utilisera automatiquement cette table au lieu du fallback</li>";
+                    echo "<li>Les fonctions marquer comme lu / supprimer fonctionneront correctement</li>";
+                    echo "</ul>";
+                    echo "</div>";
+                } else {
+                    echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+                    echo "<h3 style='color:#721c24;margin-top:0'>❌ Erreur de Création</h3>";
+                    echo "<p style='color:#721c24'>La requête SQL a échoué. Vérifiez les permissions de la base de données.</p>";
+                    echo "</div>";
+                }
+            } catch (Exception $e) {
+                echo "<div style='background:#f8d7da;border:1px solid #f5c6cb;padding:20px;border-radius:8px'>";
+                echo "<h3 style='color:#721c24;margin-top:0'>❌ Exception SQL</h3>";
+                echo "<p style='color:#721c24'>Erreur: " . $e->getMessage() . "</p>";
+                echo "</div>";
+
+                log_activity('❌ [MIGRATION ERROR] ' . $e->getMessage());
+            }
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a> | ";
+        echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 
