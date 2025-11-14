@@ -2084,7 +2084,7 @@ class Portal extends App_Controller
             }
 
             // Check if notifications table exists
-            if (!$this->db->table_exists(db_prefix() . 'dietic_notification_log')) {
+            if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
                 echo json_encode([
                     'success' => true,
                     'notifications' => [],
@@ -2698,9 +2698,9 @@ class Portal extends App_Controller
 
         $all_good = true;
 
-        // Test 1: Check notification_log table
+        // Test 1: Check notification_logs table
         echo "<h2>Test 1: Table des logs de notifications</h2>";
-        $log_table = db_prefix() . 'dietic_notification_log';
+        $log_table = db_prefix() . 'dietic_notification_logs';
         if ($this->db->table_exists($log_table)) {
             echo "<p class='ok'>✅ Table '{$log_table}' existe</p>";
 
@@ -2721,20 +2721,8 @@ class Portal extends App_Controller
             $all_good = false;
         }
 
-        // Test 2: Check notification_logs table (alternative name)
-        echo "<hr><h2>Test 2: Table alternative des logs</h2>";
-        $logs_table = db_prefix() . 'dietic_notification_logs';
-        if ($this->db->table_exists($logs_table)) {
-            echo "<p class='ok'>✅ Table '{$logs_table}' existe</p>";
-
-            $count = $this->db->count_all($logs_table);
-            echo "<p class='info'>ℹ️ Nombre de notifications: <strong>{$count}</strong></p>";
-        } else {
-            echo "<p class='info'>ℹ️ Table '{$logs_table}' n'existe pas (optionnel)</p>";
-        }
-
-        // Test 3: Check preferences table
-        echo "<hr><h2>Test 3: Table des préférences</h2>";
+        // Test 2: Check preferences table
+        echo "<hr><h2>Test 2: Table des préférences</h2>";
         $prefs_table = db_prefix() . 'dietic_notification_preferences';
         if ($this->db->table_exists($prefs_table)) {
             echo "<p class='ok'>✅ Table '{$prefs_table}' existe</p>";
@@ -2746,8 +2734,8 @@ class Portal extends App_Controller
             $all_good = false;
         }
 
-        // Test 4: Check settings table
-        echo "<hr><h2>Test 4: Table des paramètres</h2>";
+        // Test 3: Check settings table
+        echo "<hr><h2>Test 3: Table des paramètres</h2>";
         $settings_table = db_prefix() . 'dietic_notification_settings';
         if ($this->db->table_exists($settings_table)) {
             echo "<p class='ok'>✅ Table '{$settings_table}' existe</p>";
@@ -2768,8 +2756,8 @@ class Portal extends App_Controller
             $all_good = false;
         }
 
-        // Test 5: Check FCM tokens table (Firebase)
-        echo "<hr><h2>Test 5: Table des tokens Firebase (Push)</h2>";
+        // Test 4: Check FCM tokens table (Firebase)
+        echo "<hr><h2>Test 4: Table des tokens Firebase (Push)</h2>";
         $fcm_table = db_prefix() . 'dietic_fcm_tokens';
         if ($this->db->table_exists($fcm_table)) {
             echo "<p class='ok'>✅ Table '{$fcm_table}' existe</p>";
@@ -2780,8 +2768,8 @@ class Portal extends App_Controller
             echo "<p class='warning'>⚠️ Table '{$fcm_table}' n'existe pas (optionnel - pour notifications push)</p>";
         }
 
-        // Test 6: Check if notifications model exists
-        echo "<hr><h2>Test 6: Modèle de notifications</h2>";
+        // Test 5: Check if notifications model exists
+        echo "<hr><h2>Test 5: Modèle de notifications</h2>";
         $model_path = FCPATH . 'modules/dietetic/models/Dietetic_notifications_model.php';
         if (file_exists($model_path)) {
             echo "<p class='ok'>✅ Modèle de notifications existe</p>";
