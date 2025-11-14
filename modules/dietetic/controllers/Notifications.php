@@ -560,8 +560,14 @@ class Notifications extends AdminController
         log_activity('[SEND_TEST_PUSH] Firebase library loaded');
 
         try {
+            log_activity('[SEND_TEST_PUSH] Checking if Firebase is enabled');
+
             // Check if Firebase is enabled
-            if (!$this->firebase_cloud_messaging->is_enabled()) {
+            $is_enabled = $this->firebase_cloud_messaging->is_enabled();
+            log_activity('[SEND_TEST_PUSH] Firebase is_enabled: ' . ($is_enabled ? 'YES' : 'NO'));
+
+            if (!$is_enabled) {
+                log_activity('[SEND_TEST_PUSH] Firebase not enabled - returning error');
                 echo json_encode([
                     'success' => false,
                     'message' => 'Firebase Cloud Messaging n\'est pas configuré ou désactivé'
@@ -569,13 +575,18 @@ class Notifications extends AdminController
                 return;
             }
 
+            log_activity('[SEND_TEST_PUSH] Getting tokens for patient_id: ' . $patient_id);
+
             // Get all active tokens for this patient
             $this->db->where('patient_id', $patient_id);
             $this->db->where('is_active', 1);
             $query = $this->db->get(db_prefix() . 'dietic_fcm_tokens');
             $tokens = $query->result_array();
 
+            log_activity('[SEND_TEST_PUSH] Found ' . count($tokens) . ' token(s)');
+
             if (empty($tokens)) {
+                log_activity('[SEND_TEST_PUSH] No tokens found - returning error');
                 echo json_encode([
                     'success' => false,
                     'message' => 'Ce patient n\'a aucun appareil enregistré pour les notifications push'
@@ -587,12 +598,16 @@ class Notifications extends AdminController
             $error_count = 0;
             $errors = [];
 
+            log_activity('[SEND_TEST_PUSH] Starting to send to ' . count($tokens) . ' device(s)');
+
             // Send to each device
             foreach ($tokens as $token_row) {
                 $options = [
                     'click_action' => $url ?: site_url('dietetic/portal'),
                     'icon' => base_url('uploads/company/favicon.png')
                 ];
+
+                log_activity('[SEND_TEST_PUSH] Sending to token: ' . substr($token_row['token'], 0, 20) . '...');
 
                 $result = $this->firebase_cloud_messaging->send_to_device(
                     $token_row['token'],
@@ -602,18 +617,24 @@ class Notifications extends AdminController
                     $options
                 );
 
+                log_activity('[SEND_TEST_PUSH] Send result: ' . ($result['success'] ? 'SUCCESS' : 'FAILED - ' . ($result['error'] ?? 'Unknown error')));
+
                 if ($result['success']) {
                     $success_count++;
                 } else {
                     $error_count++;
-                    $errors[] = $result['message'];
+                    $errors[] = $result['error'] ?? $result['message'] ?? 'Unknown error';
                 }
             }
+
+            log_activity('[SEND_TEST_PUSH] Total: ' . $success_count . ' success, ' . $error_count . ' failed');
 
             // Log the test notification
             if (!isset($this->dietetic_notifications_model)) {
                 $this->load->model('dietetic/dietetic_notifications_model');
             }
+
+            log_activity('[SEND_TEST_PUSH] Logging notification to database');
 
             $this->dietetic_notifications_model->log_notification(
                 $patient_id,
@@ -623,6 +644,8 @@ class Notifications extends AdminController
                 $success_count > 0 ? 'sent' : 'failed',
                 $success_count > 0 ? null : implode(', ', $errors)
             );
+
+            log_activity('[SEND_TEST_PUSH] Notification logged, returning response');
 
             if ($success_count > 0) {
                 echo json_encode([
