@@ -283,6 +283,7 @@ input:checked + .toggle-slider:before {
                     <li><a href="<?php echo admin_url('dietetic/notifications/templates'); ?>"><i class="fa fa-file-text-o"></i> Modèles</a></li>
                     <li><a href="<?php echo admin_url('dietetic/notifications/logs'); ?>"><i class="fa fa-list"></i> Historique</a></li>
                     <li><a href="<?php echo admin_url('dietetic/notifications/milestones'); ?>"><i class="fa fa-trophy"></i> Jalons</a></li>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/test_push'); ?>"><i class="fa fa-flask"></i> Test Push</a></li>
                 </ul>
             </div>
         </div>
