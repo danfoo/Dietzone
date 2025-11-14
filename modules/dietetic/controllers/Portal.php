@@ -2105,7 +2105,7 @@ class Portal extends App_Controller
 
                 try {
                     // Use logs table as fallback - get ALL notifications for now
-                    $this->db->select('id, patient_id, notification_type, title, message, channel, created_at');
+                    $this->db->select('id, patient_id, notification_type, message, channel, created_at');
                     $this->db->from(db_prefix() . 'dietic_notification_logs');
                     $this->db->where('patient_id', $patient->id);
                     $this->db->order_by('created_at', 'DESC');
@@ -2117,12 +2117,13 @@ class Portal extends App_Controller
                     // Format for frontend
                     $formatted_notifications = [];
                     foreach ($notifications as $notification) {
+                        $type = $notification->notification_type ?? 'info';
                         $formatted_notifications[] = [
                             'id' => $notification->id,
-                            'type' => $notification->notification_type ?? 'info',
-                            'title' => $notification->title ?? 'Notification',
+                            'type' => $type,
+                            'title' => $this->get_notification_title($type),
                             'message' => $notification->message ?? '',
-                            'icon' => $this->get_notification_icon($notification->notification_type ?? 'info'),
+                            'icon' => $this->get_notification_icon($type),
                             'url' => null,
                             'is_read' => false,
                             'time_ago' => $this->time_ago($notification->created_at),
@@ -2407,6 +2408,26 @@ class Portal extends App_Controller
         ];
 
         return $icons[$type] ?? 'fa-bell';
+    }
+
+    /**
+     * Get notification title based on type
+     */
+    private function get_notification_title($type)
+    {
+        $titles = [
+            'weight_reminder' => 'Rappel de Pesée',
+            'water_reminder' => 'Rappel d\'Hydratation',
+            'recommendation' => 'Nouvelle Recommandation',
+            'consultation' => 'Consultation',
+            'milestone' => 'Jalon Atteint',
+            'program' => 'Programme Diététique',
+            'food_entry' => 'Saisie Alimentaire',
+            'test' => 'Test Notification',
+            'info' => 'Information'
+        ];
+
+        return $titles[$type] ?? 'Notification';
     }
 
     // ==================== DIAGNOSTIC TOOLS ====================
