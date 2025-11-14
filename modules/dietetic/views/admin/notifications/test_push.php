@@ -310,6 +310,7 @@
                 <form id="testPushForm">
                     <div class="form-group">
                         <label>Patient Destinataire</label>
+                        <!-- DEBUG: Patients count = <?php echo isset($patients) ? count($patients) : 'NOT SET'; ?> -->
                         <select name="patient_id" id="patient_id" required>
                             <option value="">-- Sélectionnez un patient --</option>
                             <?php if (isset($patients) && !empty($patients)): ?>
@@ -323,6 +324,8 @@
                                         <?php endif; ?>
                                     </option>
                                 <?php endforeach; ?>
+                            <?php else: ?>
+                                <!-- DEBUG: No patients available -->
                             <?php endif; ?>
                         </select>
                         <span class="help-text">Sélectionnez le patient qui recevra la notification</span>
