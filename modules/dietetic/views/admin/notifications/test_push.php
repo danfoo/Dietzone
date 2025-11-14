@@ -273,6 +273,7 @@
                 <h1>
                     <i class="fa fa-flask"></i>
                     Test des Notifications Push
+                    <small style="font-size: 14px; color: #666; margin-left: 10px;">[v2.0 - <?php echo date('Y-m-d H:i:s'); ?>]</small>
                 </h1>
                 <p>Testez l'envoi de notifications push Firebase vers vos patients</p>
             </div>

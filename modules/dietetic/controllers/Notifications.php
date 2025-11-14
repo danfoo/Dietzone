@@ -397,6 +397,9 @@ class Notifications extends AdminController
      */
     public function test_push()
     {
+        // Force OPcache refresh - log immediately
+        log_activity('[TEST_PUSH ENTRY] Method test_push() called at ' . date('Y-m-d H:i:s'));
+
         if (!is_admin()) {
             access_denied('Test Push Notifications');
         }
