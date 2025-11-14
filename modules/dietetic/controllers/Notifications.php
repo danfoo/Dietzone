@@ -553,6 +553,31 @@ class Notifications extends AdminController
                 $message = 'Indexes actifs';
                 break;
 
+            case 'permissions':
+                // Check if staff permissions table exists
+                $installed = $this->db->table_exists(db_prefix() . 'dietic_staff_permissions');
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
+            case 'firebase_v1':
+                // Check if Firebase v1 API settings exist
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                $v1_settings_exist = true;
+                $v1_settings = ['firebase_use_v1_api', 'firebase_service_account_json'];
+
+                foreach ($v1_settings as $setting) {
+                    $value = $this->dietetic_notifications_model->get_setting($setting);
+                    if ($value === null) {
+                        $v1_settings_exist = false;
+                        break;
+                    }
+                }
+
+                $installed = $v1_settings_exist;
+                $message = $installed ? 'Installé' : 'À installer';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -591,7 +616,9 @@ class Notifications extends AdminController
                 'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
-                'optimizations' => 'optimize_notifications_performance.sql'
+                'optimizations' => 'optimize_notifications_performance.sql',
+                'permissions' => 'add_staff_permissions.sql',
+                'firebase_v1' => 'add_firebase_v1_api_support.sql'
             ];
 
             if (!isset($sql_files[$migration])) {

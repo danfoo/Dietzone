@@ -523,6 +523,58 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 5: Firebase v1 API Support -->
+                <div class="migration-card" data-migration="firebase_v1" style="border: 2px solid #4285F4;">
+                    <div class="migration-card-header" style="background: linear-gradient(135deg, #4285F4 0%, #3367D6 100%);">
+                        <h3>
+                            <i class="fa fa-rocket"></i>
+                            🆕 Firebase Cloud Messaging API v1
+                        </h3>
+                        <span class="migration-status pending" id="status-firebase_v1">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            <strong>Migration vers l'API moderne Firebase v1 :</strong> Ajoute le support de l'API Firebase Cloud Messaging v1 avec authentification OAuth 2.0 via Service Account.
+                            Remplace progressivement l'API Legacy qui sera désactivée par Google.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Paramètres ajoutés :</h4>
+                            <ul>
+                                <li>✅ <code>firebase_use_v1_api</code> - Toggle pour activer l'API v1 (recommandé)</li>
+                                <li>✅ <code>firebase_service_account_json</code> - Credentials Service Account pour OAuth 2.0</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-success" style="margin-top: 15px; background: #d5f4e6; border-left: 4px solid #0e6655; padding: 10px;">
+                            <i class="fa fa-check-circle"></i>
+                            <strong>Recommandé :</strong> Cette migration est nécessaire pour profiter de l'API v1 moderne avec sécurité renforcée (OAuth 2.0),
+                            meilleure gestion des erreurs et compatibilité future. L'API Legacy reste disponible pour la transition.
+                        </div>
+                        <div class="alert alert-info" style="margin-top: 10px; background: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Après installation :</strong>
+                            <ol style="margin: 10px 0 0 20px;">
+                                <li>Allez dans <strong>Configuration → Firebase (Notifications Push)</strong></li>
+                                <li>Sélectionnez <strong>"API v1 (Service Account)"</strong></li>
+                                <li>Obtenez votre Service Account JSON depuis Firebase Console</li>
+                                <li>Collez le contenu JSON dans le champ prévu</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_firebase_v1_api_support.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('firebase_v1')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('firebase_v1')" style="background: #4285F4;">
+                                <i class="fa fa-rocket"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -563,6 +615,11 @@ const migrations = {
         name: 'Permissions Granulaires',
         file: 'add_staff_permissions.sql',
         tables: ['dietic_staff_permissions']
+    },
+    firebase_v1: {
+        name: 'Firebase API v1',
+        file: 'add_firebase_v1_api_support.sql',
+        settings: ['firebase_use_v1_api', 'firebase_service_account_json']
     }
 };
 
