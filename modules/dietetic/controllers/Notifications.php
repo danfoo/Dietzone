@@ -413,15 +413,20 @@ class Notifications extends AdminController
 
         $data['title'] = 'Test des Notifications Push';
 
-        // Get all patients with FCM tokens
-        $this->db->select('p.id, p.firstname, p.lastname, COUNT(f.id) as fcm_tokens');
-        $this->db->from(db_prefix() . 'dietic_patients p');
-        $this->db->join(db_prefix() . 'dietic_fcm_tokens f', 'f.patient_id = p.id AND f.is_active = 1', 'left');
-        $this->db->group_by('p.id');
-        $this->db->order_by('p.firstname', 'ASC');
-        $query = $this->db->get();
+        try {
+            // Get all patients with FCM tokens
+            $sql = "SELECT p.id, p.firstname, p.lastname,
+                    (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
+                     WHERE f.patient_id = p.id AND f.is_active = 1) as fcm_tokens
+                    FROM " . db_prefix() . "dietic_patients p
+                    ORDER BY p.firstname ASC";
 
-        $data['patients'] = $query->result_array();
+            $query = $this->db->query($sql);
+            $data['patients'] = $query->result_array();
+        } catch (Exception $e) {
+            log_activity('test_push ERROR: ' . $e->getMessage());
+            $data['patients'] = [];
+        }
 
         $this->load->view('admin/notifications/test_push', $data);
     }
