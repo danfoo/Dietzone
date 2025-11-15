@@ -674,6 +674,9 @@
 
                             console.log('Firebase initialized successfully');
 
+                            // Setup foreground message handler AFTER Firebase is ready
+                            handleForegroundMessages();
+
                             // Register service worker first, then handle messaging
                             registerServiceWorker()
                                 .then(() => {
@@ -822,10 +825,16 @@
 
         // Handle foreground messages
         function handleForegroundMessages() {
-            if (!messaging) return;
+            if (!messaging) {
+                console.error('[FOREGROUND] messaging not initialized');
+                return;
+            }
+
+            console.log('[FOREGROUND] Setting up onMessage handler');
 
             messaging.onMessage(payload => {
-                console.log('Foreground message received:', payload);
+                console.log('[FOREGROUND] Message received:', payload);
+                console.log('[FOREGROUND] Notification permission:', Notification.permission);
 
                 const notificationTitle = payload.notification?.title || 'Nouvelle notification';
                 const notificationOptions = {
@@ -835,23 +844,30 @@
                     requireInteraction: false
                 };
 
+                console.log('[FOREGROUND] Showing notification:', notificationTitle);
+
                 // Show notification
                 if (Notification.permission === 'granted') {
                     new Notification(notificationTitle, notificationOptions);
+                    console.log('[FOREGROUND] Notification displayed');
 
                     // Play sound and vibrate
                     notifyUser(1);
 
                     // Reload notifications
                     loadNotifications(false);
+                } else {
+                    console.error('[FOREGROUND] Notification permission not granted:', Notification.permission);
                 }
             });
+
+            console.log('[FOREGROUND] onMessage handler registered successfully');
         }
 
         // Initialize Firebase on page load
         document.addEventListener('DOMContentLoaded', function() {
             initFirebasePush();
-            handleForegroundMessages();
+            // handleForegroundMessages() is now called AFTER Firebase is initialized (inside initFirebasePush)
         });
 
         // Expose function globally for use in preferences page
