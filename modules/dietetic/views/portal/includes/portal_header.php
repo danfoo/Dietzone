@@ -626,9 +626,18 @@
         }
     </style>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+    <!-- Firebase Scripts - Using cdnjs as fallback for better reliability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-messaging-compat.min.js" crossorigin="anonymous"></script>
+
+    <!-- Fallback to unpkg if cdnjs fails -->
+    <script>
+        if (typeof firebase === 'undefined') {
+            console.warn('Primary Firebase CDN failed, loading from fallback...');
+            document.write('<script src="https://unpkg.com/firebase@9.22.0/firebase-app-compat.js"><\/script>');
+            document.write('<script src="https://unpkg.com/firebase@9.22.0/firebase-messaging-compat.js"><\/script>');
+        }
+    </script>
 </head>
 <body>
     <!-- HEADER MAGNIFIQUE -->
