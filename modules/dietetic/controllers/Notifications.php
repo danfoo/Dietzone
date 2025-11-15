@@ -127,12 +127,22 @@ class Notifications extends AdminController
                 'firebase_app_id' => $this->input->post('firebase_app_id'),
                 'firebase_vapid_key' => $this->input->post('firebase_vapid_key'),
                 'firebase_server_key' => $this->input->post('firebase_server_key'),
+
+                // Firebase API v1 (Modern)
+                'firebase_use_v1_api' => $this->input->post('firebase_use_v1_api') ? '1' : '0',
+                'firebase_service_account_json' => $this->input->post('firebase_service_account_json'),
             ];
 
-            // Log for debugging (hide password)
+            // Log for debugging (hide sensitive data)
             $safe_settings = $settings;
             if (isset($safe_settings['sms_lam_password'])) {
                 $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['firebase_service_account_json'])) {
+                $safe_settings['firebase_service_account_json'] = $settings['firebase_service_account_json'] ? '***JSON_SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['firebase_server_key'])) {
+                $safe_settings['firebase_server_key'] = $settings['firebase_server_key'] ? '***SET***' : '***EMPTY***';
             }
             log_activity('🔍 [DEBUG] Settings to save: ' . json_encode($safe_settings));
 
@@ -142,8 +152,15 @@ class Notifications extends AdminController
 
             foreach ($settings as $key => $value) {
                 try {
-                    // Log each setting before saving
-                    $display_value = ($key === 'sms_lam_password' && $value) ? '***SET***' : $value;
+                    // Log each setting before saving (hide sensitive data)
+                    $display_value = $value;
+                    if ($key === 'sms_lam_password' && $value) {
+                        $display_value = '***SET***';
+                    } elseif ($key === 'firebase_service_account_json' && $value) {
+                        $display_value = '***JSON_SET***';
+                    } elseif ($key === 'firebase_server_key' && $value) {
+                        $display_value = '***SET***';
+                    }
                     log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
 
                     $result = $this->dietetic_notifications_model->update_setting($key, $value);
@@ -376,6 +393,286 @@ class Notifications extends AdminController
     }
 
     /**
+     * Test push notifications page
+     */
+    public function test_push()
+    {
+        // Force OPcache refresh - log immediately
+        log_activity('[TEST_PUSH ENTRY] Method test_push() called at ' . date('Y-m-d H:i:s'));
+
+        if (!is_admin()) {
+            log_activity('[TEST_PUSH] Not admin - access denied');
+            access_denied('Test Push Notifications');
+        }
+
+        log_activity('[TEST_PUSH] Admin check passed');
+
+        // Check if tables exist
+        $table_exists = $this->db->table_exists(db_prefix() . 'dietic_fcm_tokens');
+        log_activity('[TEST_PUSH] Table dietic_fcm_tokens exists: ' . ($table_exists ? 'YES' : 'NO'));
+
+        if (!$table_exists) {
+            log_activity('[TEST_PUSH] Redirecting to run_migration');
+            redirect(admin_url('dietetic/notifications/run_migration'));
+        }
+
+        log_activity('[TEST_PUSH] Loading notifications model');
+
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $data['title'] = 'Test des Notifications Push';
+
+        log_activity('[TEST_PUSH] Starting try block for patient query');
+
+        try {
+            // Debug: Check total tokens first
+            $total_tokens_check = $this->db->where('is_active', 1)
+                                           ->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+            log_activity('[TEST_PUSH DEBUG] Total active tokens in DB: ' . $total_tokens_check);
+
+            // Get all patients with FCM tokens
+            // Note: In Perfex, tblclients only has 'company' field, not firstname/lastname
+            $sql = "SELECT p.id,
+                    c.company as patient_name,
+                    (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
+                     WHERE f.patient_id = p.id AND f.is_active = 1) as fcm_tokens
+                    FROM " . db_prefix() . "dietic_patients p
+                    LEFT JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
+                    ORDER BY c.company ASC";
+
+            log_activity('[TEST_PUSH DEBUG] SQL Query: ' . $sql);
+
+            $query = $this->db->query($sql);
+            $data['patients'] = $query->result_array();
+
+            log_activity('[TEST_PUSH DEBUG] Total patients retrieved: ' . count($data['patients']));
+
+            // Log first few patients with tokens
+            $patients_with_tokens = array_filter($data['patients'], function($p) {
+                return $p['fcm_tokens'] > 0;
+            });
+            log_activity('[TEST_PUSH DEBUG] Patients with tokens: ' . count($patients_with_tokens));
+
+        } catch (Exception $e) {
+            log_activity('[TEST_PUSH ERROR] Exception: ' . $e->getMessage());
+            $data['patients'] = [];
+        }
+
+        $this->load->view('admin/notifications/test_push', $data);
+    }
+
+    /**
+     * Get push notification statistics (AJAX)
+     */
+    public function get_push_stats()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            return;
+        }
+
+        // Load notifications model
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        try {
+            // Count active FCM tokens
+            $this->db->where('is_active', 1);
+            $total_tokens = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Count patients with at least one active token
+            $this->db->select('DISTINCT patient_id');
+            $this->db->where('is_active', 1);
+            $total_patients = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Get API version
+            $use_v1 = $this->dietetic_notifications_model->get_setting('firebase_use_v1_api');
+            $push_enabled = $this->dietetic_notifications_model->get_setting('push_enabled');
+
+            $api_version = 'disabled';
+            if ($push_enabled == '1') {
+                $api_version = $use_v1 == '1' ? 'v1' : 'legacy';
+            }
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'total_tokens' => $total_tokens,
+                    'total_patients' => $total_patients,
+                    'api_version' => $api_version
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Send test push notification (AJAX)
+     */
+    public function send_test_push()
+    {
+        header('Content-Type: application/json');
+
+        log_activity('[SEND_TEST_PUSH] Method called');
+
+        if (!is_admin()) {
+            log_activity('[SEND_TEST_PUSH] Access denied - not admin');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Accès refusé'
+            ]);
+            return;
+        }
+
+        $patient_id = $this->input->post('patient_id');
+        $title = $this->input->post('title');
+        $body = $this->input->post('body');
+        $url = $this->input->post('url');
+
+        log_activity('[SEND_TEST_PUSH] Params: patient_id=' . $patient_id . ', title=' . $title);
+
+        // Validate inputs
+        if (!$patient_id || !$title || !$body) {
+            log_activity('[SEND_TEST_PUSH] Validation failed - missing required fields');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Veuillez remplir tous les champs requis'
+            ]);
+            return;
+        }
+
+        // Load Firebase library
+        $this->load->library('dietetic/firebase_cloud_messaging');
+        log_activity('[SEND_TEST_PUSH] Firebase library loaded');
+
+        try {
+            log_activity('[SEND_TEST_PUSH] Checking if Firebase is enabled');
+
+            // Check if Firebase is enabled
+            $is_enabled = $this->firebase_cloud_messaging->is_enabled();
+            log_activity('[SEND_TEST_PUSH] Firebase is_enabled: ' . ($is_enabled ? 'YES' : 'NO'));
+
+            if (!$is_enabled) {
+                log_activity('[SEND_TEST_PUSH] Firebase not enabled - returning error');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Firebase Cloud Messaging n\'est pas configuré ou désactivé'
+                ]);
+                return;
+            }
+
+            log_activity('[SEND_TEST_PUSH] Getting tokens for patient_id: ' . $patient_id);
+
+            // Get all active tokens for this patient
+            $this->db->where('patient_id', $patient_id);
+            $this->db->where('is_active', 1);
+            $query = $this->db->get(db_prefix() . 'dietic_fcm_tokens');
+            $tokens = $query->result_array();
+
+            log_activity('[SEND_TEST_PUSH] Found ' . count($tokens) . ' token(s)');
+
+            if (empty($tokens)) {
+                log_activity('[SEND_TEST_PUSH] No tokens found - returning error');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Ce patient n\'a aucun appareil enregistré pour les notifications push'
+                ]);
+                return;
+            }
+
+            $success_count = 0;
+            $error_count = 0;
+            $errors = [];
+
+            log_activity('[SEND_TEST_PUSH] Starting to send to ' . count($tokens) . ' device(s)');
+
+            // Send to each device
+            foreach ($tokens as $token_row) {
+                $options = [
+                    'click_action' => $url ?: site_url('dietetic/portal'),
+                    'icon' => base_url('uploads/company/favicon.png')
+                ];
+
+                log_activity('[SEND_TEST_PUSH] Sending to token: ' . substr($token_row['token'], 0, 20) . '...');
+
+                $result = $this->firebase_cloud_messaging->send_to_device(
+                    $token_row['token'],
+                    $title,
+                    $body,
+                    [],
+                    $options
+                );
+
+                log_activity('[SEND_TEST_PUSH] Send result: ' . ($result['success'] ? 'SUCCESS' : 'FAILED - ' . ($result['error'] ?? 'Unknown error')));
+
+                if ($result['success']) {
+                    $success_count++;
+                } else {
+                    $error_count++;
+                    $errors[] = $result['error'] ?? $result['message'] ?? 'Unknown error';
+                }
+            }
+
+            log_activity('[SEND_TEST_PUSH] Total: ' . $success_count . ' success, ' . $error_count . ' failed');
+
+            // Log the test notification
+            if (!isset($this->dietetic_notifications_model)) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+            }
+
+            log_activity('[SEND_TEST_PUSH] Logging notification to database');
+
+            $this->dietetic_notifications_model->log_notification(
+                $patient_id,
+                'push',
+                'Test Notification',
+                $body,
+                $success_count > 0 ? 'sent' : 'failed',
+                $success_count > 0 ? null : implode(', ', $errors)
+            );
+
+            log_activity('[SEND_TEST_PUSH] Notification logged, returning response');
+
+            if ($success_count > 0) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => sprintf(
+                        'Notification envoyée avec succès à %d appareil(s)%s',
+                        $success_count,
+                        $error_count > 0 ? ' (' . $error_count . ' échec(s))' : ''
+                    )
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Échec de l\'envoi de la notification: ' . implode(', ', $errors)
+                ]);
+            }
+
+        } catch (Exception $e) {
+            log_activity('send_test_push ERROR: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Notification templates page
      */
     public function templates()
@@ -553,6 +850,31 @@ class Notifications extends AdminController
                 $message = 'Indexes actifs';
                 break;
 
+            case 'permissions':
+                // Check if staff permissions table exists
+                $installed = $this->db->table_exists(db_prefix() . 'dietic_staff_permissions');
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
+            case 'firebase_v1':
+                // Check if Firebase v1 API settings exist
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                $v1_settings_exist = true;
+                $v1_settings = ['firebase_use_v1_api', 'firebase_service_account_json'];
+
+                foreach ($v1_settings as $setting) {
+                    $value = $this->dietetic_notifications_model->get_setting($setting);
+                    if ($value === null) {
+                        $v1_settings_exist = false;
+                        break;
+                    }
+                }
+
+                $installed = $v1_settings_exist;
+                $message = $installed ? 'Installé' : 'À installer';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -591,7 +913,9 @@ class Notifications extends AdminController
                 'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
-                'optimizations' => 'optimize_notifications_performance.sql'
+                'optimizations' => 'optimize_notifications_performance.sql',
+                'permissions' => 'add_staff_permissions.sql',
+                'firebase_v1' => 'add_firebase_v1_api_support.sql'
             ];
 
             if (!isset($sql_files[$migration])) {

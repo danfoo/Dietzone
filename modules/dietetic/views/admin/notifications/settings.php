@@ -283,6 +283,7 @@ input:checked + .toggle-slider:before {
                     <li><a href="<?php echo admin_url('dietetic/notifications/templates'); ?>"><i class="fa fa-file-text-o"></i> Modèles</a></li>
                     <li><a href="<?php echo admin_url('dietetic/notifications/logs'); ?>"><i class="fa fa-list"></i> Historique</a></li>
                     <li><a href="<?php echo admin_url('dietetic/notifications/milestones'); ?>"><i class="fa fa-trophy"></i> Jalons</a></li>
+                    <li><a href="<?php echo admin_url('dietetic/notifications/test_push'); ?>"><i class="fa fa-flask"></i> Test Push</a></li>
                 </ul>
             </div>
         </div>
@@ -465,9 +466,35 @@ input:checked + .toggle-slider:before {
                     </div>
 
                     <div class="form-group">
+                        <label>Version de l'API Firebase</label>
+                        <select name="firebase_use_v1_api" id="firebase_api_version">
+                            <option value="0" <?php echo ($settings['firebase_use_v1_api'] ?? '0') == '0' ? 'selected' : ''; ?>>API Legacy (Server Key - Ancienne méthode)</option>
+                            <option value="1" <?php echo ($settings['firebase_use_v1_api'] ?? '0') == '1' ? 'selected' : ''; ?>>API v1 (Service Account - Recommandé)</option>
+                        </select>
+                        <span class="help-text">
+                            <strong>Recommandé:</strong> Utilisez l'API v1 avec Service Account pour une sécurité accrue et la compatibilité future.
+                            <br>L'API Legacy sera désactivée par Google dans le futur.
+                        </span>
+                    </div>
+
+                    <div class="form-group" id="legacy_api_fields" style="display: none;">
                         <label>Server Key (Legacy)</label>
                         <input type="password" name="firebase_server_key" value="<?php echo $settings['firebase_server_key'] ?? ''; ?>" placeholder="AAAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-                        <span class="help-text">Clé serveur Firebase pour l'API Cloud Messaging (Cloud Messaging → Server key)</span>
+                        <span class="help-text">Clé serveur Firebase pour l'API Cloud Messaging Legacy (Cloud Messaging → Server key)</span>
+                    </div>
+
+                    <div class="form-group" id="v1_api_fields" style="display: none;">
+                        <label>Service Account JSON (API v1)</label>
+                        <textarea name="firebase_service_account_json" rows="10" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 12px;"><?php echo htmlspecialchars($settings['firebase_service_account_json'] ?? ''); ?></textarea>
+                        <span class="help-text">
+                            Collez ici le contenu complet du fichier JSON du compte de service Firebase.<br>
+                            <strong>Pour obtenir ce fichier:</strong><br>
+                            1. Allez dans <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> → Votre projet<br>
+                            2. Cliquez sur ⚙️ → <strong>Project Settings</strong> → <strong>Service Accounts</strong><br>
+                            3. Cliquez sur <strong>"Generate new private key"</strong><br>
+                            4. Copiez le contenu du fichier JSON téléchargé et collez-le ici<br>
+                            <strong style="color: #c53030;">⚠️ Important:</strong> Ce fichier contient des informations sensibles. Ne le partagez jamais publiquement.
+                        </span>
                     </div>
 
                     <div class="provider-info">
@@ -524,6 +551,31 @@ input:checked + .toggle-slider:before {
 <?php init_tail(); ?>
 
 <script>
+// Toggle Firebase API version fields
+function toggleFirebaseApiFields() {
+    const apiVersion = document.getElementById('firebase_api_version').value;
+    const legacyFields = document.getElementById('legacy_api_fields');
+    const v1Fields = document.getElementById('v1_api_fields');
+
+    if (apiVersion === '1') {
+        // API v1 selected
+        legacyFields.style.display = 'none';
+        v1Fields.style.display = 'block';
+    } else {
+        // Legacy API selected
+        legacyFields.style.display = 'block';
+        v1Fields.style.display = 'none';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFirebaseApiFields();
+
+    // Add event listener for API version change
+    document.getElementById('firebase_api_version').addEventListener('change', toggleFirebaseApiFields);
+});
+
 function sendTestNotification() {
     const channel = document.getElementById('test_channel').value;
     const recipient = document.getElementById('test_recipient').value;

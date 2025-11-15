@@ -400,7 +400,13 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $prefs->channel_email,
                 'sms' => $prefs->channel_sms,
-                'whatsapp' => $prefs->channel_whatsapp
+                'whatsapp' => $prefs->channel_whatsapp,
+                'push' => $prefs->channel_push ?? 1 // Enable push by default
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/dashboard'),
+                'milestone_type' => $milestone_type,
+                'weight_lost' => $data['weight_lost'] ?? null
             ]
         ]);
     }
@@ -1507,6 +1513,32 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Log a notification to the logs table
+     *
+     * @param int $patient_id
+     * @param string $channel (email, sms, whatsapp, push)
+     * @param string $notification_type
+     * @param string $message
+     * @param string $status (sent, failed, pending)
+     * @param string|null $error_message
+     * @return bool
+     */
+    public function log_notification($patient_id, $channel, $notification_type, $message, $status = 'sent', $error_message = null)
+    {
+        $data = [
+            'patient_id' => $patient_id,
+            'channel' => $channel,
+            'notification_type' => $notification_type,
+            'message' => $message,
+            'status' => $status,
+            'error_message' => $error_message,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        return $this->db->insert(db_prefix() . $this->table_logs, $data);
+    }
+
+    /**
      * Count notification logs with filters
      */
     public function count_logs($filters = [])
@@ -1855,5 +1887,173 @@ class Dietetic_notifications_model extends App_Model
         ];
 
         return $icons[$type] ?? $icons['default'];
+    }
+
+    // ==================== PUSH NOTIFICATION HELPERS ====================
+
+    /**
+     * Send appointment reminder push notification
+     */
+    public function send_appointment_reminder_push($patient_id, $appointment_date, $appointment_time, $dietitian_name = '')
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+
+        $prefs = $this->get_preferences($patient_id);
+
+        $title = 'Rappel de rendez-vous';
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "N'oubliez pas votre rendez-vous de suivi nutritionnel ";
+        $message .= "le {$appointment_date} à {$appointment_time}";
+        if ($dietitian_name) {
+            $message .= " avec {$dietitian_name}";
+        }
+        $message .= ".\n\nÀ bientôt ! 📅";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'consultation_reminder',
+            'subject' => $title,
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $prefs->channel_email,
+                'sms' => $prefs->channel_sms,
+                'whatsapp' => $prefs->channel_whatsapp,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/appointments'),
+                'appointment_date' => $appointment_date,
+                'appointment_time' => $appointment_time
+            ]
+        ]);
+    }
+
+    /**
+     * Send weight tracking reminder push notification
+     */
+    public function send_weight_reminder_push($patient_id)
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+
+        $prefs = $this->get_preferences($patient_id);
+
+        $title = 'Rappel de pesée 📊';
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "C'est le moment de vous peser ! ⚖️\n\n";
+        $message .= "N'oubliez pas d'enregistrer votre poids dans votre journal de suivi.\n\n";
+        $message .= "Chaque mesure compte pour suivre vos progrès ! 💪";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'reminder_weight',
+            'subject' => $title,
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $prefs->channel_email,
+                'sms' => $prefs->channel_sms,
+                'whatsapp' => $prefs->channel_whatsapp,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/weights')
+            ]
+        ]);
+    }
+
+    /**
+     * Send new message notification
+     */
+    public function send_new_message_push($patient_id, $sender_name, $message_preview = '')
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+
+        $prefs = $this->get_preferences($patient_id);
+
+        $title = 'Nouveau message 💬';
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "Vous avez reçu un nouveau message de {$sender_name}.\n\n";
+        if ($message_preview) {
+            $preview = strlen($message_preview) > 100 ? substr($message_preview, 0, 97) . '...' : $message_preview;
+            $message .= "Aperçu : \"{$preview}\"\n\n";
+        }
+        $message .= "Consultez-le maintenant ! 📩";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'new_message',
+            'subject' => $title,
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $prefs->channel_email,
+                'sms' => $prefs->channel_sms,
+                'whatsapp' => $prefs->channel_whatsapp,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/messages'),
+                'sender_name' => $sender_name
+            ]
+        ]);
+    }
+
+    /**
+     * Send generic push notification
+     *
+     * @param int $patient_id Patient ID
+     * @param string $title Notification title
+     * @param string $message Notification message
+     * @param string $url Destination URL (optional)
+     * @param array $data Additional data (optional)
+     * @return array Results from notification sending
+     */
+    public function send_generic_push($patient_id, $title, $message, $url = '', $data = [])
+    {
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+
+        $prefs = $this->get_preferences($patient_id);
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'generic',
+            'subject' => $title,
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'channels' => [
+                'email' => $prefs->channel_email ?? 0,
+                'sms' => $prefs->channel_sms ?? 0,
+                'whatsapp' => $prefs->channel_whatsapp ?? 0,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => array_merge([
+                'url' => $url ?: site_url('dietetic/portal/dashboard')
+            ], $data)
+        ]);
     }
 }

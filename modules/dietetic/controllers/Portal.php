@@ -60,7 +60,6 @@ class Portal extends App_Controller
             'delete_photo',
             'notification_preferences',
             'save_notification_preferences',
-            'test_ajax_endpoint',
             'save_fcm_token',
             'delete_fcm_token',
             'get_firebase_config',
@@ -1821,25 +1820,6 @@ class Portal extends App_Controller
     }
 
     /**
-     * Test AJAX endpoint - simple endpoint to verify AJAX routing is working
-     */
-    public function test_ajax_endpoint()
-    {
-        log_activity('🔵 [TEST AJAX] Endpoint reached successfully!');
-        header('Content-Type: application/json');
-
-        $post_data = $this->input->post();
-        log_activity('🔵 [TEST AJAX] POST data: ' . json_encode($post_data));
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Test endpoint reached successfully!',
-            'timestamp' => date('Y-m-d H:i:s'),
-            'post_data' => $post_data
-        ]);
-    }
-
-    /**
      * Save notification preferences
      */
     public function save_notification_preferences()
@@ -1944,67 +1924,110 @@ class Portal extends App_Controller
      */
     public function save_fcm_token()
     {
+        // Prevent any output buffering issues
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
         header('Content-Type: application/json');
+        http_response_code(200);
 
-        if (!is_client_logged_in()) {
+        try {
+            log_activity('[FCM DEBUG] save_fcm_token called');
+
+            if (!is_client_logged_in()) {
+                log_activity('[FCM DEBUG] User not logged in');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Not authenticated'
+                ]);
+                return;
+            }
+
+            // Get patient record
+            $client_id = get_client_user_id();
+            log_activity('[FCM DEBUG] Client ID: ' . $client_id);
+
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                log_activity('[FCM DEBUG] Patient not found for client: ' . $client_id);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient not found'
+                ]);
+                return;
+            }
+
+            log_activity('[FCM DEBUG] Patient found: ' . $patient->id);
+
+            // Get POST data - support both JSON and form-encoded
+            $token = $this->input->post('token');
+            $device_type = $this->input->post('device_type');
+            $device_name = $this->input->post('device_name');
+
+            // If not form POST, try JSON
+            if (empty($token)) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                $token = $data['token'] ?? null;
+                $device_type = $data['device_type'] ?? null;
+                $device_name = $data['device_name'] ?? null;
+                log_activity('[FCM DEBUG] Received data via JSON: ' . ($data ? 'Valid' : 'Invalid'));
+            } else {
+                log_activity('[FCM DEBUG] Received data via POST form');
+            }
+
+            if (empty($token)) {
+                log_activity('[FCM DEBUG] Token missing in request');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Token is required'
+                ]);
+                return;
+            }
+
+            log_activity('[FCM DEBUG] Token received, length: ' . strlen($token));
+
+            // Load Firebase library
+            $this->load->library('dietetic/firebase_cloud_messaging');
+            log_activity('[FCM DEBUG] Firebase library loaded');
+
+            // Prepare device info
+            $device_info = [
+                'device_name' => $device_name ?? 'Unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                'ip_address' => $this->input->ip_address(),
+            ];
+
+            // Register token
+            log_activity('[FCM DEBUG] Calling register_token for patient: ' . $patient->id);
+            $result = $this->firebase_cloud_messaging->register_token(
+                $patient->id,
+                $token,
+                $device_type ?? 'web',
+                $device_info
+            );
+
+            log_activity('[FCM DEBUG] register_token result: ' . ($result ? 'SUCCESS' : 'FAILED'));
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Token registered successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to register token'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_activity('[FCM ERROR] Exception: ' . $e->getMessage());
+            log_activity('[FCM ERROR] Trace: ' . $e->getTraceAsString());
+
             echo json_encode([
                 'success' => false,
-                'message' => 'Not authenticated'
-            ]);
-            return;
-        }
-
-        // Get patient record
-        $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
-
-        if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Patient not found'
-            ]);
-            return;
-        }
-
-        // Get POST data
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
-
-        if (empty($data['token'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Token is required'
-            ]);
-            return;
-        }
-
-        // Load Firebase library
-        $this->load->library('dietetic/firebase_cloud_messaging');
-
-        // Prepare device info
-        $device_info = [
-            'device_name' => $data['device_name'] ?? 'Unknown',
-            'user_agent' => $data['user_agent'] ?? $_SERVER['HTTP_USER_AGENT'] ?? null,
-            'ip_address' => $this->input->ip_address(),
-        ];
-
-        // Register token
-        $result = $this->firebase_cloud_messaging->register_token(
-            $patient->id,
-            $data['token'],
-            $data['device_type'] ?? 'web',
-            $device_info
-        );
-
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Token registered successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to register token'
+                'message' => 'Server error: ' . $e->getMessage()
             ]);
         }
     }

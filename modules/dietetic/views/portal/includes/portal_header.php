@@ -159,6 +159,39 @@
             justify-content: space-between;
         }
 
+        .notification-panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mark-all-read-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mark-all-read-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .mark-all-read-btn:active {
+            transform: scale(0.95);
+        }
+
+        .mark-all-read-btn.hidden {
+            display: none;
+        }
+
         .notification-panel-close {
             background: transparent;
             border: none;
@@ -177,6 +210,42 @@
 
         .notification-panel-close:hover {
             background: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-filters {
+            display: flex;
+            gap: 8px;
+            padding: 12px 12px 8px 12px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #01807B;
+            color: #01807B;
+        }
+
+        .filter-btn.active {
+            background: #01807B;
+            border-color: #01807B;
+            color: white;
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
         }
 
         .notification-panel-content {
@@ -274,6 +343,41 @@
 
         .notification-item-delete:active {
             transform: scale(0.9);
+        }
+
+        .notification-date-separator {
+            padding: 12px 12px 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #01807B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #01807B 0%, transparent 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-date-separator:before {
+            content: '';
+            height: 2px;
+            flex: 1;
+            background: linear-gradient(90deg, #01807B 0%, transparent 100%);
+        }
+
+        .notification-date-separator span {
+            background: linear-gradient(135deg, #01807B 0%, #026660 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .notification-empty {
@@ -521,6 +625,19 @@
             }
         }
     </style>
+
+    <!-- Firebase Scripts - Using cdnjs as fallback for better reliability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-messaging-compat.min.js" crossorigin="anonymous"></script>
+
+    <!-- Fallback to unpkg if cdnjs fails -->
+    <script>
+        if (typeof firebase === 'undefined') {
+            console.warn('Primary Firebase CDN failed, loading from fallback...');
+            document.write('<script src="https://unpkg.com/firebase@9.22.0/firebase-app-compat.js"><\/script>');
+            document.write('<script src="https://unpkg.com/firebase@9.22.0/firebase-messaging-compat.js"><\/script>');
+        }
+    </script>
 </head>
 <body>
     <!-- HEADER MAGNIFIQUE -->
@@ -617,9 +734,20 @@
     <div class="notification-panel" id="notificationPanel">
         <div class="notification-panel-header">
             <span>Notifications</span>
-            <button class="notification-panel-close" id="notificationClose">
-                <i class="fa fa-times"></i>
-            </button>
+            <div class="notification-panel-actions">
+                <button class="mark-all-read-btn hidden" id="markAllReadBtn">
+                    <i class="fa fa-check-double"></i>
+                    <span>Tout lire</span>
+                </button>
+                <button class="notification-panel-close" id="notificationClose">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="notification-filters">
+            <button class="filter-btn active" data-filter="all">Toutes</button>
+            <button class="filter-btn" data-filter="unread">Non lues</button>
+            <button class="filter-btn" data-filter="read">Lues</button>
         </div>
         <div class="notification-panel-content">
             <!-- Les notifications seront chargées dynamiquement via JavaScript -->

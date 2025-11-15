@@ -103,8 +103,14 @@
         const notificationPanel = document.getElementById('notificationPanel');
         const notificationClose = document.getElementById('notificationClose');
 
+        // Store all notifications globally for filtering
+        let allNotifications = [];
+        let currentFilter = 'all';
+        let previousUnreadCount = 0;
+        let autoRefreshInterval = null;
+
         // Load notifications on page load
-        function loadNotifications() {
+        function loadNotifications(silent = false) {
             // Check if notification panel exists before loading
             if (!document.getElementById('notificationPanel')) {
                 return;
@@ -119,11 +125,22 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        displayNotifications(data.notifications);
-                        updateNotificationBadge(data.unread_count);
+                        const newUnreadCount = data.unread_count;
+
+                        // Check if there are new notifications (only if not first load and not silent)
+                        if (!silent && previousUnreadCount > 0 && newUnreadCount > previousUnreadCount) {
+                            const newNotificationsCount = newUnreadCount - previousUnreadCount;
+                            notifyUser(newNotificationsCount);
+                        }
+
+                        previousUnreadCount = newUnreadCount;
+                        allNotifications = data.notifications;
+                        displayNotifications(filterNotifications(allNotifications));
+                        updateNotificationBadge(newUnreadCount);
                     } else {
                         // Error but valid response - show empty state
                         console.log('Notifications: ' + (data.message || data.info || 'Not available'));
+                        allNotifications = [];
                         displayNotifications([]);
                         updateNotificationBadge(0);
                     }
@@ -131,9 +148,33 @@
                 .catch(error => {
                     // Network or parse error - show empty state
                     console.log('Notifications not loaded:', error.message);
+                    allNotifications = [];
                     displayNotifications([]);
                     updateNotificationBadge(0);
                 });
+        }
+
+        // Get date category for grouping
+        function getDateCategory(dateString) {
+            const now = new Date();
+            const notifDate = new Date(dateString);
+            const diffTime = Math.abs(now - notifDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            // Reset hours for accurate day comparison
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const notifDay = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate());
+            const dayDiff = Math.floor((today - notifDay) / (1000 * 60 * 60 * 24));
+
+            if (dayDiff === 0) {
+                return { key: 'today', label: "Aujourd'hui", order: 1 };
+            } else if (dayDiff === 1) {
+                return { key: 'yesterday', label: 'Hier', order: 2 };
+            } else if (dayDiff <= 7) {
+                return { key: 'this_week', label: 'Cette semaine', order: 3 };
+            } else {
+                return { key: 'older', label: 'Plus ancien', order: 4 };
+            }
         }
 
         // Display notifications in the panel
@@ -142,34 +183,189 @@
 
             if (!notifications || notifications.length === 0) {
                 notificationContent.innerHTML = '<div class="notification-empty"><i class="fa fa-bell-slash"></i><p>Aucune notification</p></div>';
+                updateMarkAllReadButton(0);
                 return;
             }
 
-            let html = '';
+            // Group notifications by date
+            const grouped = {};
+            let unreadCount = 0;
+
             notifications.forEach(notification => {
-                const unreadClass = notification.is_read ? '' : 'unread';
-                html += `
-                    <div class="notification-item ${unreadClass}" data-notification-id="${notification.id}">
-                        <button class="notification-item-delete" onclick="deleteNotification(this)">
-                            <i class="fa fa-times"></i>
-                        </button>
-                        <div class="notification-item-header">
-                            <div class="notification-item-icon">
-                                <i class="fa ${notification.icon}"></i>
-                            </div>
-                            <div class="notification-item-title">${notification.title}</div>
-                            <div class="notification-item-time">${notification.time_ago}</div>
-                        </div>
-                        <div class="notification-item-message">${notification.message}</div>
-                    </div>
-                `;
+                const category = getDateCategory(notification.created_at);
+                if (!grouped[category.key]) {
+                    grouped[category.key] = {
+                        label: category.label,
+                        order: category.order,
+                        notifications: []
+                    };
+                }
+                grouped[category.key].notifications.push(notification);
+
+                if (!notification.is_read) {
+                    unreadCount++;
+                }
             });
 
+            // Sort groups by order and build HTML
+            let html = '';
+            Object.keys(grouped)
+                .sort((a, b) => grouped[a].order - grouped[b].order)
+                .forEach(groupKey => {
+                    const group = grouped[groupKey];
+
+                    // Add date separator
+                    html += `<div class="notification-date-separator"><span>${group.label}</span></div>`;
+
+                    // Add notifications in this group
+                    group.notifications.forEach(notification => {
+                        const unreadClass = notification.is_read ? '' : 'unread';
+                        const clickableClass = notification.url ? 'clickable' : '';
+                        const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+
+                        html += `
+                            <div class="notification-item ${unreadClass} ${clickableClass}"
+                                 data-notification-id="${notification.id}"
+                                 data-url="${notification.url || ''}"
+                                 data-is-read="${notification.is_read ? '1' : '0'}"
+                                 style="${cursorStyle}"
+                                 onclick="handleNotificationClick(this, event)">
+                                <button class="notification-item-delete" onclick="deleteNotification(this, event)">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                                <div class="notification-item-header">
+                                    <div class="notification-item-icon">
+                                        <i class="fa ${notification.icon}"></i>
+                                    </div>
+                                    <div class="notification-item-title">${notification.title}</div>
+                                    <div class="notification-item-time">${notification.time_ago}</div>
+                                </div>
+                                <div class="notification-item-message">${notification.message}</div>
+                            </div>
+                        `;
+                    });
+                });
+
             notificationContent.innerHTML = html;
+            updateMarkAllReadButton(unreadCount);
+        }
+
+        // Update "Mark all as read" button visibility
+        function updateMarkAllReadButton(unreadCount) {
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                if (unreadCount > 0) {
+                    markAllReadBtn.classList.remove('hidden');
+                } else {
+                    markAllReadBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        // Filter notifications based on current filter
+        function filterNotifications(notifications) {
+            if (currentFilter === 'all') {
+                return notifications;
+            } else if (currentFilter === 'unread') {
+                return notifications.filter(n => !n.is_read);
+            } else if (currentFilter === 'read') {
+                return notifications.filter(n => n.is_read);
+            }
+            return notifications;
+        }
+
+        // Apply filter and update display
+        function applyFilter(filter) {
+            currentFilter = filter;
+
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Filter and display
+            const filteredNotifications = filterNotifications(allNotifications);
+            displayNotifications(filteredNotifications);
+        }
+
+        // ============================================
+        // AUTO-REFRESH FUNCTIONALITY
+        // ============================================
+
+        // Start auto-refresh (every 3 minutes)
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+
+            // Refresh every 3 minutes (180000ms)
+            autoRefreshInterval = setInterval(function() {
+                loadNotifications(false); // Not silent, so we can notify about new notifications
+            }, 180000);
+        }
+
+        // Stop auto-refresh
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        // Notify user about new notifications (sound + vibration)
+        function notifyUser(count) {
+            // Play notification sound
+            playNotificationSound();
+
+            // Vibrate if supported (mobile)
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200]); // Vibrate pattern: 200ms, pause 100ms, 200ms
+            }
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            // Create a simple beep sound using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800; // Frequency in Hz
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                console.log('Could not play notification sound:', e);
+            }
         }
 
         // Load notifications when page loads
-        document.addEventListener('DOMContentLoaded', loadNotifications);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications(true); // Silent on first load
+            startAutoRefresh(); // Start auto-refresh
+        });
+
+        // Add event listeners to filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    applyFilter(filter);
+                });
+            });
+        });
 
         function openNotifications() {
             notificationPanel.classList.add('active');
@@ -230,9 +426,142 @@
         });
 
         // ============================================
+        // MARK ALL AS READ FUNCTIONALITY
+        // ============================================
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                // Disable button during request
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>Chargement...</span>';
+                this.disabled = true;
+
+                fetch('<?php echo site_url("dietetic/portal/mark_all_notifications_read"); ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update allNotifications array - mark all as read
+                        allNotifications = allNotifications.map(n => {
+                            return {...n, is_read: true};
+                        });
+
+                        // Mark all notification items as read in the UI
+                        document.querySelectorAll('.notification-item.unread').forEach(item => {
+                            item.classList.remove('unread');
+                            item.setAttribute('data-is-read', '1');
+                        });
+
+                        // Update badge
+                        updateNotificationBadge(0);
+
+                        // Hide the button
+                        updateMarkAllReadButton(0);
+
+                        // Show success feedback
+                        this.innerHTML = '<i class="fa fa-check"></i> <span>Fait!</span>';
+                        setTimeout(() => {
+                            this.innerHTML = originalHtml;
+                            this.disabled = false;
+                        }, 1000);
+                    } else {
+                        // Re-enable button on error
+                        this.innerHTML = originalHtml;
+                        this.disabled = false;
+                        console.error('Failed to mark all as read:', data.message);
+                    }
+                })
+                .catch(error => {
+                    // Re-enable button on error
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                    console.error('Error marking all as read:', error);
+                });
+            });
+        }
+
+        // ============================================
+        // NOTIFICATION CLICK HANDLER
+        // ============================================
+        window.handleNotificationClick = function(notificationElement, event) {
+            // Don't trigger if clicking on delete button
+            if (event.target.closest('.notification-item-delete')) {
+                return;
+            }
+
+            const notificationId = notificationElement.getAttribute('data-notification-id');
+            const notificationUrl = notificationElement.getAttribute('data-url');
+            const isRead = notificationElement.getAttribute('data-is-read') === '1';
+
+            // Mark as read if not already read
+            if (!isRead) {
+                markNotificationAsRead(notificationId, notificationElement);
+            }
+
+            // Redirect to URL if exists
+            if (notificationUrl && notificationUrl !== 'null' && notificationUrl !== '') {
+                setTimeout(function() {
+                    window.location.href = notificationUrl;
+                }, 200); // Small delay to show the read state change
+            }
+        };
+
+        // Mark single notification as read
+        function markNotificationAsRead(notificationId, notificationElement) {
+            fetch('<?php echo site_url("dietetic/portal/mark_notification_read"); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notification_id: notificationId,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    notificationElement.classList.remove('unread');
+                    notificationElement.setAttribute('data-is-read', '1');
+
+                    // Update the notification in allNotifications array
+                    const notification = allNotifications.find(n => n.id == notificationId);
+                    if (notification) {
+                        notification.is_read = true;
+                    }
+
+                    // Update badge
+                    if (data.unread_count !== undefined) {
+                        updateNotificationBadge(data.unread_count);
+                    }
+
+                    // Update "Mark all as read" button
+                    const unreadCount = allNotifications.filter(n => !n.is_read).length;
+                    updateMarkAllReadButton(unreadCount);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+        }
+
+        // ============================================
         // DELETE NOTIFICATION FUNCTIONALITY
         // ============================================
-        window.deleteNotification = function(button) {
+        window.deleteNotification = function(button, event) {
+            // Stop propagation to prevent triggering notification click
+            if (event) {
+                event.stopPropagation();
+            }
+
             const notificationItem = button.closest('.notification-item');
             const notificationId = notificationItem.getAttribute('data-notification-id');
 
@@ -244,11 +573,17 @@
             fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({notification_id: notificationId})
+                body: JSON.stringify({
+                    notification_id: notificationId,
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Remove from allNotifications array
+                    allNotifications = allNotifications.filter(n => n.id != notificationId);
+
                     // Supprimer l'élément après l'animation
                     setTimeout(function() {
                         notificationItem.remove();
@@ -265,6 +600,10 @@
                         if (data.unread_count !== undefined) {
                             updateNotificationBadge(data.unread_count);
                         }
+
+                        // Update "Mark all as read" button
+                        const unreadCount = allNotifications.filter(n => !n.is_read).length;
+                        updateMarkAllReadButton(unreadCount);
                     }, 300);
                 } else {
                     // Annuler l'animation si la suppression échoue
@@ -297,6 +636,245 @@
                 }
             }
         }
+
+        // ============================================
+        // FIREBASE PUSH NOTIFICATIONS
+        // ============================================
+
+        let firebaseApp;
+        let messaging;
+        let fcmToken = null;
+        let swRegistration = null; // Store service worker registration
+
+        // Initialize Firebase Push Notifications
+        function initFirebasePush() {
+            // Check if browser supports notifications
+            if (!('Notification' in window)) {
+                console.log('This browser does not support notifications');
+                return;
+            }
+
+            // Check if service workers are supported
+            if (!('serviceWorker' in navigator)) {
+                console.log('Service Workers are not supported');
+                return;
+            }
+
+            // Fetch Firebase config from server
+            fetch('<?php echo site_url("dietetic/portal/get_firebase_config"); ?>')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.config) {
+                        console.log('Firebase config received');
+
+                        // Initialize Firebase
+                        if (!firebase.apps.length) {
+                            firebaseApp = firebase.initializeApp(data.config);
+                            messaging = firebase.messaging();
+
+                            console.log('Firebase initialized successfully');
+
+                            // Setup foreground message handler AFTER Firebase is ready
+                            handleForegroundMessages();
+
+                            // Register service worker first, then handle messaging
+                            registerServiceWorker()
+                                .then(() => {
+                                    console.log('Service Worker ready for messaging');
+
+                                    // Request permission if user previously granted it
+                                    if (Notification.permission === 'granted') {
+                                        getFirebaseToken();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Failed to register service worker:', error);
+                                });
+                        }
+                    } else {
+                        console.log('Firebase push notifications not configured:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Firebase config:', error);
+                });
+        }
+
+        // Register service worker
+        function registerServiceWorker() {
+            // Service Worker at module root for wider scope
+            const swPath = '<?php echo module_dir_url("dietetic", "firebase-messaging-sw.js"); ?>';
+            const scope = '<?php echo base_url("modules/dietetic/"); ?>';
+
+            return navigator.serviceWorker.register(swPath, { scope: scope })
+                .then(function(registration) {
+                    console.log('Service Worker registered successfully with scope:', scope);
+                    console.log('Registration:', registration);
+
+                    // Store registration globally
+                    swRegistration = registration;
+
+                    // Wait for service worker to be active
+                    return navigator.serviceWorker.ready.then(() => {
+                        // Pass Firebase config to service worker
+                        if (registration.active) {
+                            registration.active.postMessage({
+                                type: 'INIT_FIREBASE',
+                                config: firebaseApp.options
+                            });
+                        }
+                        return registration;
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Service Worker registration failed:', error);
+                    throw error;
+                });
+        }
+
+        // Request notification permission and get FCM token
+        function requestNotificationPermission() {
+            // Ensure service worker is registered first
+            const swPromise = swRegistration
+                ? Promise.resolve(swRegistration)
+                : registerServiceWorker();
+
+            return swPromise
+                .then(() => {
+                    return Notification.requestPermission();
+                })
+                .then(permission => {
+                    console.log('Notification permission:', permission);
+
+                    if (permission === 'granted') {
+                        return getFirebaseToken();
+                    } else {
+                        console.log('Notification permission denied');
+                        return null;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error requesting permission:', error);
+                    return null;
+                });
+        }
+
+        // Get Firebase Cloud Messaging token
+        function getFirebaseToken() {
+            if (!messaging) {
+                console.log('Firebase messaging not initialized');
+                return Promise.resolve(null);
+            }
+
+            if (!swRegistration) {
+                console.error('Service Worker not registered yet');
+                return Promise.resolve(null);
+            }
+
+            const tokenOptions = {
+                vapidKey: '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>',
+                serviceWorkerRegistration: swRegistration
+            };
+
+            return messaging.getToken(tokenOptions)
+                .then(token => {
+                    if (token) {
+                        console.log('FCM Token:', token);
+                        fcmToken = token;
+
+                        // Save token to server
+                        saveFCMToken(token);
+
+                        return token;
+                    } else {
+                        console.log('No registration token available');
+                        return null;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting FCM token:', error);
+                    return null;
+                });
+        }
+
+        // Save FCM token to server
+        function saveFCMToken(token) {
+            // Use URLSearchParams for form-encoded POST (better CSRF compatibility)
+            const formData = new URLSearchParams();
+            formData.append('token', token);
+            formData.append('device_type', 'web');
+            formData.append('device_name', navigator.userAgent.substring(0, 100));
+            formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+            fetch('<?php echo site_url("dietetic/portal/save_fcm_token"); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData.toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('FCM token saved successfully');
+                    } else {
+                        console.error('Failed to save FCM token:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving FCM token:', error);
+                });
+        }
+
+        // Handle foreground messages
+        function handleForegroundMessages() {
+            if (!messaging) {
+                console.error('[FOREGROUND] messaging not initialized');
+                return;
+            }
+
+            console.log('[FOREGROUND] Setting up onMessage handler');
+
+            messaging.onMessage(payload => {
+                console.log('[FOREGROUND] Message received:', payload);
+                console.log('[FOREGROUND] Notification permission:', Notification.permission);
+
+                const notificationTitle = payload.notification?.title || 'Nouvelle notification';
+                const notificationOptions = {
+                    body: payload.notification?.body || '',
+                    icon: payload.notification?.icon || '/uploads/company/favicon.png',
+                    tag: 'dietetic-notification',
+                    requireInteraction: false
+                };
+
+                console.log('[FOREGROUND] Showing notification:', notificationTitle);
+
+                // Show notification
+                if (Notification.permission === 'granted') {
+                    new Notification(notificationTitle, notificationOptions);
+                    console.log('[FOREGROUND] Notification displayed');
+
+                    // Play sound and vibrate
+                    notifyUser(1);
+
+                    // Reload notifications
+                    loadNotifications(false);
+                } else {
+                    console.error('[FOREGROUND] Notification permission not granted:', Notification.permission);
+                }
+            });
+
+            console.log('[FOREGROUND] onMessage handler registered successfully');
+        }
+
+        // Initialize Firebase on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initFirebasePush();
+            // handleForegroundMessages() is now called AFTER Firebase is initialized (inside initFirebasePush)
+        });
+
+        // Expose function globally for use in preferences page
+        window.requestNotificationPermission = requestNotificationPermission;
     </script>
 </body>
 </html>
