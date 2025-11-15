@@ -74,7 +74,8 @@ class Portal extends App_Controller
             'debug_notifications_raw',
             'create_patient_notifications_table',
             'add_test_notifications',
-            'debug_notifications_api'
+            'debug_notifications_api',
+            'check_current_user'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -3381,7 +3382,83 @@ class Portal extends App_Controller
 
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/add_test_notifications') . "'>➕ Ajouter des notifications de test</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_current_user') . "'>👤 Vérifier quel utilisateur est connecté</a></p>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * DEBUG: Check current logged in user
+     * Access: /dietetic/portal/check_current_user
+     */
+    public function check_current_user()
+    {
+        echo "<h1>🔍 Diagnostic: Utilisateur Connecté</h1>";
+
+        if (!is_client_logged_in()) {
+            echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+            echo "<h2>🚫 Non connecté</h2>";
+            echo "<p>Vous n'êtes pas connecté au portail patient.</p>";
+            echo "<p><a href='" . site_url('authentication/login') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px;'>→ Se connecter</a></p>";
+            echo "</div>";
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin-bottom: 20px;'>";
+        echo "<h2>✅ Vous êtes connecté</h2>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+
+        if ($patient) {
+            echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+
+            // Count notifications for this patient
+            $this->db->where_in('patient_id', [$patient->id, 0]);
+            $this->db->where('status', 'sent');
+            $notif_count = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
+
+            echo "<p><strong>Notifications disponibles:</strong> {$notif_count}</p>";
+
+            if ($notif_count > 0) {
+                echo "<p style='color: green; font-weight: bold;'>✅ Des notifications existent pour votre compte !</p>";
+                echo "<p>Si vous ne les voyez pas dans le panel, rafraîchissez la page du portail.</p>";
+            } else {
+                echo "<p style='color: orange;'>⚠️ Aucune notification n'existe encore pour votre compte.</p>";
+                echo "<p><a href='" . site_url('dietetic/portal/add_test_notifications') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;'>➕ Créer des notifications de test</a></p>";
+            }
+        } else {
+            echo "<p style='color: red;'><strong>❌ Aucun patient trouvé pour ce client</strong></p>";
+            echo "<p>Votre compte client (ID: {$client_id}) n'est pas lié à un dossier patient diététique.</p>";
+        }
+        echo "</div>";
+
+        // Show patient 1 info if different
+        $patient_1 = $this->db->select('p.id, p.client_id, c.email, c.company')
+                              ->from(db_prefix() . 'dietic_patients p')
+                              ->join(db_prefix() . 'clients c', 'c.userid = p.client_id')
+                              ->where('p.id', 1)
+                              ->get()
+                              ->row();
+
+        if ($patient_1 && (!$patient || $patient->id != 1)) {
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107;'>";
+            echo "<h2>ℹ️ Information: Patient ID 1</h2>";
+            echo "<p>Les notifications de test ont été créées pour le <strong>Patient ID 1</strong></p>";
+            echo "<p><strong>Client ID:</strong> {$patient_1->client_id}</p>";
+            echo "<p><strong>Email:</strong> {$patient_1->email}</p>";
+            echo "<p><strong>Nom:</strong> {$patient_1->company}</p>";
+
+            if ($patient && $patient->id != 1) {
+                echo "<hr>";
+                echo "<p style='color: #856404;'><strong>⚠️ Vous êtes connecté avec le Patient ID {$patient->id}</strong></p>";
+                echo "<p>Pour voir les notifications de test, vous devez vous connecter avec l'email: <strong>{$patient_1->email}</strong></p>";
+            }
+            echo "</div>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;'>🏠 Retour au portail</a></p>";
     }
 }
 
