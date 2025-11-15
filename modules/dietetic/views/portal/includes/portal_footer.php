@@ -702,11 +702,14 @@
 
         // Register service worker
         function registerServiceWorker() {
-            const swPath = '<?php echo module_dir_url("dietetic", "assets/js/firebase-messaging-sw.js"); ?>';
+            // Service Worker at module root for wider scope
+            const swPath = '<?php echo module_dir_url("dietetic", "firebase-messaging-sw.js"); ?>';
+            const scope = '<?php echo base_url("modules/dietetic/"); ?>';
 
-            return navigator.serviceWorker.register(swPath)
+            return navigator.serviceWorker.register(swPath, { scope: scope })
                 .then(function(registration) {
-                    console.log('Service Worker registered successfully:', registration);
+                    console.log('Service Worker registered successfully with scope:', scope);
+                    console.log('Registration:', registration);
 
                     // Store registration globally
                     swRegistration = registration;
