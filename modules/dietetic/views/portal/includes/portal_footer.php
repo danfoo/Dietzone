@@ -124,8 +124,11 @@
                     return response.json();
                 })
                 .then(data => {
+                    console.log('📥 [NOTIF] API Response:', data);
+
                     if (data.success) {
                         const newUnreadCount = data.unread_count;
+                        console.log('✅ [NOTIF] Success! Found ' + data.notifications.length + ' notifications, unread: ' + newUnreadCount);
 
                         // Check if there are new notifications (only if not first load and not silent)
                         if (!silent && previousUnreadCount > 0 && newUnreadCount > previousUnreadCount) {
@@ -135,11 +138,15 @@
 
                         previousUnreadCount = newUnreadCount;
                         allNotifications = data.notifications;
-                        displayNotifications(filterNotifications(allNotifications));
+
+                        const filtered = filterNotifications(allNotifications);
+                        console.log('🔍 [NOTIF] Filtered notifications (filter=' + currentFilter + '):', filtered.length);
+
+                        displayNotifications(filtered);
                         updateNotificationBadge(newUnreadCount);
                     } else {
                         // Error but valid response - show empty state
-                        console.log('Notifications: ' + (data.message || data.info || 'Not available'));
+                        console.log('❌ [NOTIF] API returned error:', data.message || data.info || 'Not available');
                         allNotifications = [];
                         displayNotifications([]);
                         updateNotificationBadge(0);
@@ -179,13 +186,25 @@
 
         // Display notifications in the panel
         function displayNotifications(notifications) {
+            console.log('🎨 [NOTIF] displayNotifications called with', notifications ? notifications.length : 0, 'notifications');
+
             const notificationContent = document.querySelector('.notification-panel-content');
 
+            if (!notificationContent) {
+                console.error('❌ [NOTIF] notification-panel-content element not found!');
+                return;
+            }
+
+            console.log('✅ [NOTIF] Found notification-panel-content element');
+
             if (!notifications || notifications.length === 0) {
+                console.log('⚠️ [NOTIF] No notifications to display, showing empty state');
                 notificationContent.innerHTML = '<div class="notification-empty"><i class="fa fa-bell-slash"></i><p>Aucune notification</p></div>';
                 updateMarkAllReadButton(0);
                 return;
             }
+
+            console.log('📝 [NOTIF] Building HTML for', notifications.length, 'notifications');
 
             // Group notifications by date
             const grouped = {};
