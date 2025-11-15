@@ -73,7 +73,8 @@ class Portal extends App_Controller
             'check_notifications_system',
             'debug_notifications_raw',
             'create_patient_notifications_table',
-            'add_test_notifications'
+            'add_test_notifications',
+            'debug_notifications_api'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2132,14 +2133,19 @@ class Portal extends App_Controller
                 try {
                     // Use logs table as fallback
                     // Include both patient-specific (patient_id) AND system notifications (patient_id=0)
-                    $this->db->select('id, patient_id, notification_type, message, channel, created_at');
+                    $this->db->select('id, patient_id, notification_type, message, channel, status, created_at');
                     $this->db->from(db_prefix() . 'dietic_notification_logs');
                     $this->db->where_in('patient_id', [$patient->id, 0]); // Include both patient and system notifications
+                    $this->db->where('status', 'sent'); // Only sent notifications
                     $this->db->order_by('created_at', 'DESC');
                     $this->db->limit(50);
 
-                    $notifications = $this->db->get()->result();
-                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id . ' (including system notifications)');
+                    $query = $this->db->get();
+                    $notifications = $query->result();
+
+                    $sql_executed = $this->db->last_query();
+                    log_activity('🔔 [NOTIF] SQL: ' . $sql_executed);
+                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id);
 
                     // Format for frontend
                     $formatted_notifications = [];
@@ -3254,7 +3260,128 @@ class Portal extends App_Controller
         echo "<h1>✅ Notifications de test ajoutées</h1>";
         echo "<p>$inserted notifications ont été ajoutées pour le patient ID: {$patient->id}</p>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>→ Retour au portail</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug: Voir ce que retourne l'API</a></p>";
         echo "<p>Rafraîchissez la page du portail et ouvrez le panel de notifications pour les voir.</p>";
+    }
+
+    /**
+     * DEBUG METHOD: Show what the API returns
+     * Access: /dietetic/portal/debug_notifications_api
+     */
+    public function debug_notifications_api()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_error('Patient not found');
+            return;
+        }
+
+        echo "<h1>🔍 Debug: API get_notifications</h1>";
+        echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+        echo "<hr>";
+
+        // Check if table exists
+        $table_name = db_prefix() . 'dietic_notification_logs';
+        $table_exists = $this->db->table_exists($table_name);
+        echo "<p><strong>Table {$table_name} exists:</strong> " . ($table_exists ? '✅ Yes' : '❌ No') . "</p>";
+
+        if (!$table_exists) {
+            echo "<p style='color: red;'>La table n'existe pas. Installez le système de notifications.</p>";
+            return;
+        }
+
+        // Count total notifications in table
+        $total_in_table = $this->db->count_all($table_name);
+        echo "<p><strong>Total notifications in table:</strong> $total_in_table</p>";
+
+        // Count for this patient
+        $this->db->where_in('patient_id', [$patient->id, 0]);
+        $count_for_patient = $this->db->count_all_results($table_name);
+        echo "<p><strong>Notifications for patient {$patient->id} (including system):</strong> $count_for_patient</p>";
+
+        // Execute the actual query used by get_notifications
+        $this->db->select('id, patient_id, notification_type, message, channel, status, created_at');
+        $this->db->from($table_name);
+        $this->db->where_in('patient_id', [$patient->id, 0]);
+        $this->db->where('status', 'sent');
+        $this->db->order_by('created_at', 'DESC');
+        $this->db->limit(50);
+
+        $query = $this->db->get();
+        $notifications = $query->result();
+
+        echo "<p><strong>SQL Query:</strong></p>";
+        echo "<pre style='background: #f5f5f5; padding: 10px; border: 1px solid #ccc;'>" . $this->db->last_query() . "</pre>";
+
+        echo "<p><strong>Results:</strong> " . count($notifications) . " notifications found</p>";
+
+        if (count($notifications) > 0) {
+            echo "<h2>📋 Notifications Raw Data:</h2>";
+            echo "<table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>";
+            echo "<tr style='background: #01807B; color: white;'>";
+            echo "<th>ID</th><th>Patient ID</th><th>Type</th><th>Message</th><th>Channel</th><th>Status</th><th>Created At</th>";
+            echo "</tr>";
+
+            foreach ($notifications as $notif) {
+                echo "<tr>";
+                echo "<td>{$notif->id}</td>";
+                echo "<td>{$notif->patient_id}</td>";
+                echo "<td>{$notif->notification_type}</td>";
+                echo "<td>" . substr($notif->message, 0, 50) . "...</td>";
+                echo "<td>{$notif->channel}</td>";
+                echo "<td>{$notif->status}</td>";
+                echo "<td>{$notif->created_at}</td>";
+                echo "</tr>";
+            }
+
+            echo "</table>";
+
+            echo "<h2>📦 Formatted JSON (what API returns):</h2>";
+
+            // Format as the API does
+            $formatted_notifications = [];
+            foreach ($notifications as $notification) {
+                $type = $notification->notification_type ?? 'info';
+                $formatted_notifications[] = [
+                    'id' => $notification->id,
+                    'type' => $type,
+                    'title' => $this->get_notification_title($type),
+                    'message' => $notification->message ?? '',
+                    'icon' => $this->get_notification_icon($type),
+                    'url' => null,
+                    'is_read' => false,
+                    'time_ago' => $this->time_ago($notification->created_at),
+                    'created_at' => $notification->created_at
+                ];
+            }
+
+            $api_response = [
+                'success' => true,
+                'notifications' => $formatted_notifications,
+                'unread_count' => count($formatted_notifications),
+                'total' => count($formatted_notifications)
+            ];
+
+            echo "<pre style='background: #f5f5f5; padding: 10px; border: 1px solid #ccc; max-height: 400px; overflow: auto;'>";
+            echo json_encode($api_response, JSON_PRETTY_PRINT);
+            echo "</pre>";
+        } else {
+            echo "<p style='color: red;'><strong>Aucune notification trouvée !</strong></p>";
+            echo "<p>Vérifiez que des notifications existent pour le patient ID: {$patient->id}</p>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/add_test_notifications') . "'>➕ Ajouter des notifications de test</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 
