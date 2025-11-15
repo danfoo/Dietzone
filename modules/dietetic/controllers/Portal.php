@@ -72,7 +72,8 @@ class Portal extends App_Controller
             'run_firebase_fix',
             'check_notifications_system',
             'debug_notifications_raw',
-            'create_patient_notifications_table'
+            'create_patient_notifications_table',
+            'add_test_notifications'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -3170,6 +3171,90 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a> | ";
         echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * TEST METHOD: Add demo notifications
+     * Access: /dietetic/portal/add_test_notifications
+     */
+    public function add_test_notifications()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_error('Patient not found');
+            return;
+        }
+
+        // Check if notification logs table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            show_error('Notifications table does not exist. Please install the notifications system first.');
+            return;
+        }
+
+        // Add test notifications
+        $test_notifications = [
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'recommendation_added',
+                'message' => 'Votre diététicien a ajouté une recommandation sur vos repas d\'hier.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-2 hours'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'consultation_reminder',
+                'message' => 'Rappel: Vous avez une consultation demain à 10h00.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 day'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'weight_reminder',
+                'message' => 'N\'oubliez pas de soumettre votre pesée hebdomadaire.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-3 days'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'milestone_achieved',
+                'message' => 'Félicitations ! Vous avez atteint votre objectif de 5kg perdus !',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-5 days'))
+            ],
+            [
+                'patient_id' => 0, // System notification
+                'notification_type' => 'system',
+                'message' => 'Nouvelle fonctionnalité disponible dans votre portail !',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 week'))
+            ]
+        ];
+
+        $inserted = 0;
+        foreach ($test_notifications as $notification) {
+            $result = $this->db->insert(db_prefix() . 'dietic_notification_logs', $notification);
+            if ($result) {
+                $inserted++;
+            }
+        }
+
+        echo "<h1>✅ Notifications de test ajoutées</h1>";
+        echo "<p>$inserted notifications ont été ajoutées pour le patient ID: {$patient->id}</p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>→ Retour au portail</a></p>";
+        echo "<p>Rafraîchissez la page du portail et ouvrez le panel de notifications pour les voir.</p>";
     }
 }
 
