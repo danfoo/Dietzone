@@ -93,7 +93,14 @@ class Portal extends App_Controller
             'check_current_user',
             'fix_notifications_table',
             'install_patient_notifications',
-            'install_recipe_library'
+            'install_recipe_library',
+            // Recipe methods
+            'recipes',
+            'recipe_view',
+            'recipes_favorites',
+            'recipe_rate',
+            'add_to_favorites',
+            'remove_from_favorites'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -3775,6 +3782,252 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug API</a></p>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    // =====================================
+    // RECIPE LIBRARY METHODS
+    // =====================================
+
+    /**
+     * Liste des recettes disponibles pour le patient
+     */
+    public function recipes()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            show_error('Profil patient non trouvé');
+            return;
+        }
+
+        $data = [];
+        $data['title'] = 'Bibliothèque de Recettes';
+        $data['patient'] = $patient;
+
+        // Filtres
+        $filters = [];
+        if ($this->input->get('category')) {
+            $filters['category'] = $this->input->get('category');
+        }
+        if ($this->input->get('search')) {
+            $filters['search'] = $this->input->get('search');
+        }
+
+        // Get assigned recipes
+        $data['assigned_recipes'] = $this->dietetic_recipes_model->get_patient_recipes($patient->id);
+
+        // Get all approved recipes (for discovery)
+        $data['all_recipes'] = $this->dietetic_recipes_model->get_approved($filters);
+
+        // Get favorites
+        $data['favorites'] = $this->dietetic_recipes_model->get_favorites($patient->id);
+
+        // Get all tags for filtering
+        $data['all_tags'] = $this->dietetic_recipes_model->get_all_tags();
+
+        $this->load->view('portal/recipes/list', $data);
+    }
+
+    /**
+     * Voir les détails d'une recette
+     */
+    public function recipe_view($recipe_id)
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            show_error('Profil patient non trouvé');
+            return;
+        }
+
+        // Get recipe (only approved recipes for patients)
+        $recipe = $this->dietetic_recipes_model->get($recipe_id, true);
+
+        if (!$recipe) {
+            show_404();
+            return;
+        }
+
+        $data = [];
+        $data['title'] = $recipe->name;
+        $data['patient'] = $patient;
+        $data['recipe'] = $recipe;
+        $data['is_favorite'] = $this->dietetic_recipes_model->is_favorite($recipe_id, $patient->id);
+        $data['ratings'] = $this->dietetic_recipes_model->get_ratings($recipe_id);
+
+        // Get patient's rating for this recipe
+        $data['my_rating'] = null;
+        foreach ($data['ratings'] as $rating) {
+            if ($rating->patient_id == $patient->id) {
+                $data['my_rating'] = $rating;
+                break;
+            }
+        }
+
+        $this->load->view('portal/recipes/view', $data);
+    }
+
+    /**
+     * Mes recettes favorites
+     */
+    public function recipes_favorites()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            show_error('Profil patient non trouvé');
+            return;
+        }
+
+        $data = [];
+        $data['title'] = 'Mes Recettes Favorites';
+        $data['patient'] = $patient;
+        $data['favorites'] = $this->dietetic_recipes_model->get_favorites($patient->id);
+
+        $this->load->view('portal/recipes/favorites', $data);
+    }
+
+    /**
+     * Noter une recette (AJAX)
+     */
+    public function recipe_rate()
+    {
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        $recipe_id = $this->input->post('recipe_id');
+        $rating = $this->input->post('rating');
+        $comment = $this->input->post('comment');
+
+        if (!$recipe_id || !$rating) {
+            echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+            return;
+        }
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Profil patient non trouvé']);
+            return;
+        }
+
+        // Validate rating (1-5)
+        $rating = max(1, min(5, (int)$rating));
+
+        $result = $this->dietetic_recipes_model->rate($recipe_id, $patient->id, $rating, $comment);
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Note enregistrée avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement']);
+        }
+    }
+
+    /**
+     * Ajouter une recette aux favoris (AJAX)
+     */
+    public function add_to_favorites()
+    {
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        $recipe_id = $this->input->post('recipe_id');
+
+        if (!$recipe_id) {
+            echo json_encode(['success' => false, 'message' => 'ID de recette manquant']);
+            return;
+        }
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Profil patient non trouvé']);
+            return;
+        }
+
+        $result = $this->dietetic_recipes_model->add_to_favorites($recipe_id, $patient->id);
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Ajouté aux favoris']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout']);
+        }
+    }
+
+    /**
+     * Retirer une recette des favoris (AJAX)
+     */
+    public function remove_from_favorites()
+    {
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        $recipe_id = $this->input->post('recipe_id');
+
+        if (!$recipe_id) {
+            echo json_encode(['success' => false, 'message' => 'ID de recette manquant']);
+            return;
+        }
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client(get_client_user_id());
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Profil patient non trouvé']);
+            return;
+        }
+
+        $result = $this->dietetic_recipes_model->remove_from_favorites($recipe_id, $patient->id);
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Retiré des favoris']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors du retrait']);
+        }
     }
 
     /**
