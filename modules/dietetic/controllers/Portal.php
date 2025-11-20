@@ -3290,6 +3290,42 @@ class Portal extends App_Controller
         echo "<p><strong>Client ID:</strong> {$client_id}</p>";
         echo "<hr>";
 
+        // DIAGNOSTIC: Check if patient_notifications table is blocking the fallback
+        $table_patient_notif = db_prefix() . 'dietic_patient_notifications';
+        if ($this->db->table_exists($table_patient_notif)) {
+            $count_patient_notif = $this->db->count_all($table_patient_notif);
+
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px;'>";
+            echo "<h2>⚠️ PROBLÈME DÉTECTÉ</h2>";
+            echo "<p><strong>La table <code>{$table_patient_notif}</code> existe</strong> mais contient seulement <strong>{$count_patient_notif}</strong> notification(s).</p>";
+            echo "<p>Cette table bloque l'utilisation du fallback vers <code>dietic_notification_logs</code>.</p>";
+            echo "<p><strong>Solution :</strong> Supprimer cette table pour forcer le fallback.</p>";
+
+            // Handle the drop action
+            if ($this->input->get('action') === 'drop_table' && $this->input->get('confirm') === 'yes') {
+                try {
+                    $this->db->query("DROP TABLE IF EXISTS {$table_patient_notif}");
+                    echo "<div style='background: #d4edda; padding: 15px; margin: 10px 0; border-radius: 5px; border: 2px solid #28a745;'>";
+                    echo "<h3 style='color: #155724; margin: 0;'>✅ Table supprimée avec succès !</h3>";
+                    echo "<p style='margin: 10px 0 0 0;'>Le système utilise maintenant le fallback. Rafraîchissez votre portail.</p>";
+                    echo "</div>";
+                    echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>🔔 Voir mes notifications sur le portail</a></p>";
+                } catch (Exception $e) {
+                    echo "<div style='background: #f8d7da; padding: 15px; margin: 10px 0; border-radius: 5px;'>";
+                    echo "<p style='color: #721c24; margin: 0;'>❌ Erreur: " . $e->getMessage() . "</p>";
+                    echo "</div>";
+                }
+            } else {
+                echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "?action=drop_table&confirm=yes' style='display: inline-block; padding: 12px 24px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;' onclick='return confirm(\"Êtes-vous sûr de vouloir supprimer la table " . $table_patient_notif . " ?\");'>🗑️ SUPPRIMER LA TABLE ET ACTIVER LE FALLBACK</a></p>";
+            }
+
+            echo "</div>";
+        } else {
+            echo "<div style='background: #d4edda; padding: 15px; border-radius: 8px; border: 1px solid #28a745; margin-bottom: 20px;'>";
+            echo "<p style='color: #155724; margin: 0;'>✅ <strong>Bonne nouvelle !</strong> La table <code>{$table_patient_notif}</code> n'existe pas. Le fallback est actif.</p>";
+            echo "</div>";
+        }
+
         // Check if table exists
         $table_name = db_prefix() . 'dietic_notification_logs';
         $table_exists = $this->db->table_exists($table_name);
