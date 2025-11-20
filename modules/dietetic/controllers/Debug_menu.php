@@ -69,11 +69,32 @@ class Debug_menu extends AdminController
         echo "<div class='section'>";
         echo "<h2>ÉTAPE 3: Contenu du menu</h2>";
 
-        $menu = $CI->app_menu->get_menu();
+        try {
+            echo "<p class='info'>Récupération du menu...</p>";
 
-        echo "<p><strong>Nombre total de menus:</strong> " . count($menu) . "</p>";
+            if (!isset($CI->app_menu)) {
+                echo "<p class='error'>❌ app_menu n'existe pas!</p>";
+            } else {
+                echo "<p class='success'>✅ app_menu existe</p>";
+            }
 
-        if (isset($menu['dietetic'])) {
+            $menu = $CI->app_menu->get_menu();
+
+            echo "<p class='success'>✅ get_menu() exécuté sans erreur</p>";
+
+            if (!is_array($menu)) {
+                echo "<p class='error'>❌ Menu n'est pas un array! Type: " . gettype($menu) . "</p>";
+                echo "<pre>" . print_r($menu, true) . "</pre>";
+            } else {
+                echo "<p><strong>Nombre total de menus:</strong> " . count($menu) . "</p>";
+            }
+
+        } catch (Exception $e) {
+            echo "<p class='error'>❌ ERREUR lors de get_menu(): " . $e->getMessage() . "</p>";
+            echo "<pre>" . $e->getTraceAsString() . "</pre>";
+        }
+
+        if (isset($menu) && is_array($menu) && isset($menu['dietetic'])) {
             echo "<p class='success'>✅ Menu 'dietetic' TROUVÉ!</p>";
             echo "<pre>" . print_r($menu['dietetic'], true) . "</pre>";
 
@@ -91,10 +112,18 @@ class Debug_menu extends AdminController
                     echo "</div>";
                 }
             }
-        } else {
+        } elseif (isset($menu) && is_array($menu)) {
             echo "<p class='error'>❌ Menu 'dietetic' NON trouvé</p>";
-            echo "<p class='info'>Menus disponibles:</p>";
+            echo "<p class='info'>Menus disponibles (" . count($menu) . "):</p>";
             echo "<pre>" . print_r(array_keys($menu), true) . "</pre>";
+
+            echo "<p class='info'>Détails complets du premier menu (pour debug):</p>";
+            if (count($menu) > 0) {
+                $first_menu = reset($menu);
+                echo "<pre>" . print_r($first_menu, true) . "</pre>";
+            }
+        } else {
+            echo "<p class='error'>❌ Variable menu invalide ou vide</p>";
         }
         echo "</div>";
 
