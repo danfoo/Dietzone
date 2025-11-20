@@ -3458,7 +3458,84 @@ class Portal extends App_Controller
         }
 
         echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/fix_notifications_table') . "' style='display: inline-block; padding: 10px 20px; background: #ffc107; color: #000; text-decoration: none; border-radius: 5px;'>🔧 Corriger les notifications</a></p>";
         echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * FIX: Drop patient_notifications table to force fallback to logs
+     * Access: /dietetic/portal/fix_notifications_table
+     */
+    public function fix_notifications_table()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        echo "<h1>🔧 Correction du Système de Notifications</h1>";
+
+        $table_patient_notif = db_prefix() . 'dietic_patient_notifications';
+        $table_logs = db_prefix() . 'dietic_notification_logs';
+
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists($table_patient_notif)) {
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px;'>";
+            echo "<h2>⚠️ Problème Identifié</h2>";
+            echo "<p>La table <code>{$table_patient_notif}</code> existe mais est probablement vide.</p>";
+            echo "<p>Cela empêche l'utilisation du fallback vers <code>{$table_logs}</code> qui contient vos notifications.</p>";
+            echo "</div>";
+
+            // Count in patient_notifications
+            $count_patient_notif = $this->db->count_all($table_patient_notif);
+            echo "<p><strong>Notifications dans {$table_patient_notif}:</strong> {$count_patient_notif}</p>";
+
+            // Count in logs
+            $this->db->where('status', 'sent');
+            $count_logs = $this->db->count_all_results($table_logs);
+            echo "<p><strong>Notifications dans {$table_logs}:</strong> {$count_logs}</p>";
+
+            echo "<div style='background: #e7f3ff; padding: 20px; border-radius: 8px; border: 2px solid #0066cc; margin: 20px 0;'>";
+            echo "<h2>💡 Solution</h2>";
+            echo "<p>Nous allons <strong>supprimer temporairement</strong> la table {$table_patient_notif} pour forcer l'utilisation du fallback.</p>";
+            echo "<p>Vos notifications seront alors chargées depuis {$table_logs}.</p>";
+            echo "</div>";
+
+            // Drop the table
+            echo "<p>Suppression de la table {$table_patient_notif}...</p>";
+
+            try {
+                $this->db->query("DROP TABLE IF EXISTS {$table_patient_notif}");
+
+                echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin: 20px 0;'>";
+                echo "<h2>✅ Succès !</h2>";
+                echo "<p>La table {$table_patient_notif} a été supprimée.</p>";
+                echo "<p>Le système utilisera maintenant {$table_logs} comme fallback.</p>";
+                echo "<p style='font-weight: bold; color: #155724;'>🎉 Vos notifications devraient maintenant s'afficher !</p>";
+                echo "</div>";
+
+                echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 15px 30px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold;'>🔔 Voir mes notifications</a></p>";
+
+            } catch (Exception $e) {
+                echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+                echo "<h2>❌ Erreur</h2>";
+                echo "<p>Impossible de supprimer la table: " . $e->getMessage() . "</p>";
+                echo "</div>";
+            }
+
+        } else {
+            echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745;'>";
+            echo "<h2>✅ Table Correcte</h2>";
+            echo "<p>La table {$table_patient_notif} n'existe pas.</p>";
+            echo "<p>Le système utilise déjà {$table_logs} comme fallback.</p>";
+            echo "<p>Si les notifications ne s'affichent toujours pas, vérifiez la console navigateur pour les erreurs JavaScript.</p>";
+            echo "</div>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_current_user') . "'>👤 Vérifier l'utilisateur connecté</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug API</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 
