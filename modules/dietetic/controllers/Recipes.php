@@ -88,7 +88,7 @@ class Recipes extends AdminController
                     if (!empty($food_id)) {
                         $food = $this->dietetic_foods_model->get($food_id);
                         $data['ingredients'][] = [
-                            'name' => $food ? $food->name : '',
+                            'name' => $food ? $food->food_name : '',
                             'food_id' => $food_id,
                             'quantity' => $post_data['ingredient_quantity'][$i] ?? null,
                             'unit' => $post_data['ingredient_unit'][$i] ?? 'g'
@@ -190,7 +190,7 @@ class Recipes extends AdminController
                     if (!empty($food_id)) {
                         $food = $this->dietetic_foods_model->get($food_id);
                         $update_data['ingredients'][] = [
-                            'name' => $food ? $food->name : '',
+                            'name' => $food ? $food->food_name : '',
                             'food_id' => $food_id,
                             'quantity' => $post_data['ingredient_quantity'][$i] ?? null,
                             'unit' => $post_data['ingredient_unit'][$i] ?? 'g'

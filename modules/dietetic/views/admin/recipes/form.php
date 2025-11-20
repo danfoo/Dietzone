@@ -174,16 +174,18 @@
                                                     <div class="col-md-5">
                                                         <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
                                                             <option value="">-- Sélectionner un aliment --</option>
-                                                            <?php foreach ($foods as $food) : ?>
-                                                                <option value="<?php echo $food->id; ?>"
-                                                                        data-calories="<?php echo $food->calories; ?>"
-                                                                        data-protein="<?php echo $food->protein; ?>"
-                                                                        data-carbs="<?php echo $food->carbs; ?>"
-                                                                        data-fat="<?php echo $food->fat; ?>"
-                                                                        <?php echo $food->name == $ingredient->ingredient_name ? 'selected' : ''; ?>>
-                                                                    <?php echo htmlspecialchars($food->name); ?>
-                                                                </option>
-                                                            <?php endforeach; ?>
+                                                            <?php if (isset($foods) && !empty($foods)) : ?>
+                                                                <?php foreach ($foods as $food) : ?>
+                                                                    <option value="<?php echo $food->id; ?>"
+                                                                            data-calories="<?php echo $food->calories; ?>"
+                                                                            data-protein="<?php echo $food->protein; ?>"
+                                                                            data-carbs="<?php echo $food->carbs; ?>"
+                                                                            data-fat="<?php echo $food->fats; ?>"
+                                                                            <?php echo $food->food_name == $ingredient->ingredient_name ? 'selected' : ''; ?>>
+                                                                        <?php echo htmlspecialchars($food->food_name); ?>
+                                                                    </option>
+                                                                <?php endforeach; ?>
+                                                            <?php endif; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-3">
@@ -208,15 +210,17 @@
                                                 <div class="col-md-5">
                                                     <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
                                                         <option value="">-- Sélectionner un aliment --</option>
-                                                        <?php foreach ($foods as $food) : ?>
-                                                            <option value="<?php echo $food->id; ?>"
-                                                                    data-calories="<?php echo $food->calories; ?>"
-                                                                    data-protein="<?php echo $food->protein; ?>"
-                                                                    data-carbs="<?php echo $food->carbs; ?>"
-                                                                    data-fat="<?php echo $food->fat; ?>">
-                                                                <?php echo htmlspecialchars($food->name); ?>
-                                                            </option>
-                                                        <?php endforeach; ?>
+                                                        <?php if (isset($foods) && !empty($foods)) : ?>
+                                                            <?php foreach ($foods as $food) : ?>
+                                                                <option value="<?php echo $food->id; ?>"
+                                                                        data-calories="<?php echo $food->calories; ?>"
+                                                                        data-protein="<?php echo $food->protein; ?>"
+                                                                        data-carbs="<?php echo $food->carbs; ?>"
+                                                                        data-fat="<?php echo $food->fats; ?>">
+                                                                    <?php echo htmlspecialchars($food->food_name); ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-3">
@@ -416,7 +420,13 @@
 </div>
 
 <script>
+// Store all foods data in JavaScript for dynamic ingredient rows
+var foodsData = <?php echo json_encode(isset($foods) ? $foods : []); ?>;
+
 $(document).ready(function() {
+    // Initialize selectpicker
+    $('.selectpicker').selectpicker('refresh');
+
     // Calculate nutrition automatically
     function calculateNutrition() {
         let totalCalories = 0;
@@ -449,6 +459,37 @@ $(document).ready(function() {
         $('#calc-fat').val(totalFat.toFixed(1));
     }
 
+    // Generate options HTML from foodsData
+    function generateFoodOptions() {
+        let optionsHtml = '<option value="">-- Sélectionner un aliment --</option>';
+
+        if (foodsData && foodsData.length > 0) {
+            foodsData.forEach(function(food) {
+                optionsHtml += '<option value="' + food.id + '"' +
+                    ' data-calories="' + (food.calories || 0) + '"' +
+                    ' data-protein="' + (food.protein || 0) + '"' +
+                    ' data-carbs="' + (food.carbs || 0) + '"' +
+                    ' data-fat="' + (food.fats || 0) + '">' +
+                    escapeHtml(food.food_name) +
+                    '</option>';
+            });
+        }
+
+        return optionsHtml;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     // Add ingredient
     $('#add-ingredient').click(function() {
         const html = `
@@ -456,16 +497,7 @@ $(document).ready(function() {
                 <div class="row">
                     <div class="col-md-5">
                         <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
-                            <option value="">-- Sélectionner un aliment --</option>
-                            <?php foreach ($foods as $food) : ?>
-                                <option value="<?php echo $food->id; ?>"
-                                        data-calories="<?php echo $food->calories; ?>"
-                                        data-protein="<?php echo $food->protein; ?>"
-                                        data-carbs="<?php echo $food->carbs; ?>"
-                                        data-fat="<?php echo $food->fat; ?>">
-                                    <?php echo htmlspecialchars($food->name); ?>
-                                </option>
-                            <?php endforeach; ?>
+                            ${generateFoodOptions()}
                         </select>
                     </div>
                     <div class="col-md-3">
