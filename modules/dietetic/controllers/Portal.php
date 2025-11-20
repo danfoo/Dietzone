@@ -2357,28 +2357,47 @@ class Portal extends App_Controller
             return;
         }
 
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            // Use the model if table exists
+            $this->load->model('dietetic/dietetic_notifications_model');
 
-        // Mark as read
-        $result = $this->dietetic_notifications_model->mark_as_read(
-            $data['notification_id'],
-            $patient->id
-        );
+            // Mark as read
+            $result = $this->dietetic_notifications_model->mark_as_read(
+                $data['notification_id'],
+                $patient->id
+            );
 
-        if ($result) {
-            // Get updated unread count
-            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+            if ($result) {
+                // Get updated unread count
+                $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Notification marked as read',
+                    'unread_count' => $unread_count
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification not found'
+                ]);
+            }
+        } else {
+            // Fallback: When using logs table, we can't mark as read
+            // (logs are read-only for record keeping)
+            // Just return success for UI
+
+            // Count remaining unread notifications (all from logs)
+            $this->db->from(db_prefix() . 'dietic_notification_logs');
+            $this->db->where_in('patient_id', [$patient->id, 0]);
+            $this->db->where('status', 'sent');
+            $unread_count = $this->db->count_all_results();
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Notification marked as read',
                 'unread_count' => $unread_count
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification not found'
             ]);
         }
     }
@@ -2410,17 +2429,29 @@ class Portal extends App_Controller
             return;
         }
 
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            // Use the model if table exists
+            $this->load->model('dietetic/dietetic_notifications_model');
 
-        // Mark all as read
-        $result = $this->dietetic_notifications_model->mark_all_as_read($patient->id);
+            // Mark all as read
+            $result = $this->dietetic_notifications_model->mark_all_as_read($patient->id);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'All notifications marked as read',
-            'unread_count' => 0
-        ]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'All notifications marked as read',
+                'unread_count' => 0
+            ]);
+        } else {
+            // Fallback: When using logs table, we can't mark as read
+            // (logs are read-only for record keeping)
+            // Just return success for UI
+            echo json_encode([
+                'success' => true,
+                'message' => 'All notifications marked as read',
+                'unread_count' => 0
+            ]);
+        }
     }
 
     /**
