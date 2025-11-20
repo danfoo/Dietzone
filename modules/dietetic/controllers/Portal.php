@@ -2391,7 +2391,7 @@ class Portal extends App_Controller
 
             // Mark as read
             $result = $this->dietetic_notifications_model->mark_as_read(
-                $data['notification_id'],
+                $notification_id,
                 $patient->id
             );
 
