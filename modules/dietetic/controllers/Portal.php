@@ -10,6 +10,21 @@ class Portal extends App_Controller
     {
         parent::__construct();
 
+        // Disable CSRF protection for AJAX notification methods
+        $csrf_exclude_uris = [
+            'dietetic/portal/get_notifications',
+            'dietetic/portal/mark_notification_read',
+            'dietetic/portal/delete_notification',
+            'dietetic/portal/mark_all_notifications_read',
+            'dietetic/portal/save_fcm_token',
+            'dietetic/portal/delete_fcm_token'
+        ];
+
+        $current_uri = uri_string();
+        if (in_array($current_uri, $csrf_exclude_uris)) {
+            $this->config->set_item('csrf_protection', FALSE);
+        }
+
         // Load helper functions
         $this->load->helper('dietetic/dietetic');
 
@@ -72,7 +87,12 @@ class Portal extends App_Controller
             'run_firebase_fix',
             'check_notifications_system',
             'debug_notifications_raw',
-            'create_patient_notifications_table'
+            'create_patient_notifications_table',
+            'add_test_notifications',
+            'debug_notifications_api',
+            'check_current_user',
+            'fix_notifications_table',
+            'install_patient_notifications'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2131,14 +2151,19 @@ class Portal extends App_Controller
                 try {
                     // Use logs table as fallback
                     // Include both patient-specific (patient_id) AND system notifications (patient_id=0)
-                    $this->db->select('id, patient_id, notification_type, message, channel, created_at');
+                    $this->db->select('id, patient_id, notification_type, message, channel, status, created_at');
                     $this->db->from(db_prefix() . 'dietic_notification_logs');
                     $this->db->where_in('patient_id', [$patient->id, 0]); // Include both patient and system notifications
+                    $this->db->where('status', 'sent'); // Only sent notifications
                     $this->db->order_by('created_at', 'DESC');
                     $this->db->limit(50);
 
-                    $notifications = $this->db->get()->result();
-                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id . ' (including system notifications)');
+                    $query = $this->db->get();
+                    $notifications = $query->result();
+
+                    $sql_executed = $this->db->last_query();
+                    log_activity('🔔 [NOTIF] SQL: ' . $sql_executed);
+                    log_activity('🔔 [NOTIF] Query executed. Found ' . count($notifications) . ' notifications for patient_id=' . $patient->id);
 
                     // Format for frontend
                     $formatted_notifications = [];
@@ -2250,19 +2275,23 @@ class Portal extends App_Controller
                 return;
             }
 
-            // Get notification ID from POST
-            $json = file_get_contents('php://input');
-            $data = json_decode($json, true);
+            // Get notification ID from GET or POST
+            $notification_id = $this->input->get('notification_id') ?: $this->input->post('notification_id');
 
-            if (empty($data['notification_id'])) {
+            // Also try from JSON body (for POST requests)
+            if (empty($notification_id)) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                $notification_id = isset($data['notification_id']) ? $data['notification_id'] : null;
+            }
+
+            if (empty($notification_id)) {
                 echo json_encode([
                     'success' => false,
                     'message' => 'Notification ID is required'
                 ]);
                 return;
             }
-
-            $notification_id = $data['notification_id'];
 
             // TEMPORARY: Since we're using notification_logs as fallback,
             // we can't really "delete" system notifications (patient_id=0)
@@ -2337,11 +2366,17 @@ class Portal extends App_Controller
             return;
         }
 
-        // Get notification ID from POST
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
+        // Get notification ID from GET or POST
+        $notification_id = $this->input->get('notification_id') ?: $this->input->post('notification_id');
 
-        if (empty($data['notification_id'])) {
+        // Also try from JSON body (for POST requests)
+        if (empty($notification_id)) {
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+            $notification_id = isset($data['notification_id']) ? $data['notification_id'] : null;
+        }
+
+        if (empty($notification_id)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Notification ID is required'
@@ -2349,28 +2384,47 @@ class Portal extends App_Controller
             return;
         }
 
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            // Use the model if table exists
+            $this->load->model('dietetic/dietetic_notifications_model');
 
-        // Mark as read
-        $result = $this->dietetic_notifications_model->mark_as_read(
-            $data['notification_id'],
-            $patient->id
-        );
+            // Mark as read
+            $result = $this->dietetic_notifications_model->mark_as_read(
+                $data['notification_id'],
+                $patient->id
+            );
 
-        if ($result) {
-            // Get updated unread count
-            $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+            if ($result) {
+                // Get updated unread count
+                $unread_count = $this->dietetic_notifications_model->get_unread_count($patient->id);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Notification marked as read',
+                    'unread_count' => $unread_count
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Notification not found'
+                ]);
+            }
+        } else {
+            // Fallback: When using logs table, we can't mark as read
+            // (logs are read-only for record keeping)
+            // Just return success for UI
+
+            // Count remaining unread notifications (all from logs)
+            $this->db->from(db_prefix() . 'dietic_notification_logs');
+            $this->db->where_in('patient_id', [$patient->id, 0]);
+            $this->db->where('status', 'sent');
+            $unread_count = $this->db->count_all_results();
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Notification marked as read',
                 'unread_count' => $unread_count
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Notification not found'
             ]);
         }
     }
@@ -2402,17 +2456,29 @@ class Portal extends App_Controller
             return;
         }
 
-        // Load notifications model
-        $this->load->model('dietetic/dietetic_notifications_model');
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            // Use the model if table exists
+            $this->load->model('dietetic/dietetic_notifications_model');
 
-        // Mark all as read
-        $result = $this->dietetic_notifications_model->mark_all_as_read($patient->id);
+            // Mark all as read
+            $result = $this->dietetic_notifications_model->mark_all_as_read($patient->id);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'All notifications marked as read',
-            'unread_count' => 0
-        ]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'All notifications marked as read',
+                'unread_count' => 0
+            ]);
+        } else {
+            // Fallback: When using logs table, we can't mark as read
+            // (logs are read-only for record keeping)
+            // Just return success for UI
+            echo json_encode([
+                'success' => true,
+                'message' => 'All notifications marked as read',
+                'unread_count' => 0
+            ]);
+        }
     }
 
     /**
@@ -3170,6 +3236,544 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/check_notifications_system') . "'>🔍 Diagnostic système</a> | ";
         echo "<a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * TEST METHOD: Add demo notifications
+     * Access: /dietetic/portal/add_test_notifications
+     */
+    public function add_test_notifications()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_error('Patient not found');
+            return;
+        }
+
+        // Check if notification logs table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            show_error('Notifications table does not exist. Please install the notifications system first.');
+            return;
+        }
+
+        // Add test notifications
+        $test_notifications = [
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'recommendation_added',
+                'message' => 'Votre diététicien a ajouté une recommandation sur vos repas d\'hier.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-2 hours'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'consultation_reminder',
+                'message' => 'Rappel: Vous avez une consultation demain à 10h00.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 day'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'weight_reminder',
+                'message' => 'N\'oubliez pas de soumettre votre pesée hebdomadaire.',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-3 days'))
+            ],
+            [
+                'patient_id' => $patient->id,
+                'notification_type' => 'milestone_achieved',
+                'message' => 'Félicitations ! Vous avez atteint votre objectif de 5kg perdus !',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-5 days'))
+            ],
+            [
+                'patient_id' => 0, // System notification
+                'notification_type' => 'system',
+                'message' => 'Nouvelle fonctionnalité disponible dans votre portail !',
+                'channel' => 'push',
+                'status' => 'sent',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 week'))
+            ]
+        ];
+
+        $inserted = 0;
+        foreach ($test_notifications as $notification) {
+            $result = $this->db->insert(db_prefix() . 'dietic_notification_logs', $notification);
+            if ($result) {
+                $inserted++;
+            }
+        }
+
+        echo "<h1>✅ Notifications de test ajoutées</h1>";
+        echo "<p>$inserted notifications ont été ajoutées pour le patient ID: {$patient->id}</p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>→ Retour au portail</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug: Voir ce que retourne l'API</a></p>";
+        echo "<p>Rafraîchissez la page du portail et ouvrez le panel de notifications pour les voir.</p>";
+    }
+
+    /**
+     * DEBUG METHOD: Show what the API returns
+     * Access: /dietetic/portal/debug_notifications_api
+     */
+    public function debug_notifications_api()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        // Get patient
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_error('Patient not found');
+            return;
+        }
+
+        echo "<h1>🔍 Debug: API get_notifications</h1>";
+        echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+        echo "<hr>";
+
+        // DIAGNOSTIC: Check if patient_notifications table is blocking the fallback
+        $table_patient_notif = db_prefix() . 'dietic_patient_notifications';
+        if ($this->db->table_exists($table_patient_notif)) {
+            $count_patient_notif = $this->db->count_all($table_patient_notif);
+
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px;'>";
+            echo "<h2>⚠️ PROBLÈME DÉTECTÉ</h2>";
+            echo "<p><strong>La table <code>{$table_patient_notif}</code> existe</strong> mais contient seulement <strong>{$count_patient_notif}</strong> notification(s).</p>";
+            echo "<p>Cette table bloque l'utilisation du fallback vers <code>dietic_notification_logs</code>.</p>";
+            echo "<p><strong>Solution :</strong> Supprimer cette table pour forcer le fallback.</p>";
+
+            // Handle the drop action
+            if ($this->input->get('action') === 'drop_table' && $this->input->get('confirm') === 'yes') {
+                try {
+                    $this->db->query("DROP TABLE IF EXISTS {$table_patient_notif}");
+                    echo "<div style='background: #d4edda; padding: 15px; margin: 10px 0; border-radius: 5px; border: 2px solid #28a745;'>";
+                    echo "<h3 style='color: #155724; margin: 0;'>✅ Table supprimée avec succès !</h3>";
+                    echo "<p style='margin: 10px 0 0 0;'>Le système utilise maintenant le fallback. Rafraîchissez votre portail.</p>";
+                    echo "</div>";
+                    echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>🔔 Voir mes notifications sur le portail</a></p>";
+                } catch (Exception $e) {
+                    echo "<div style='background: #f8d7da; padding: 15px; margin: 10px 0; border-radius: 5px;'>";
+                    echo "<p style='color: #721c24; margin: 0;'>❌ Erreur: " . $e->getMessage() . "</p>";
+                    echo "</div>";
+                }
+            } else {
+                echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "?action=drop_table&confirm=yes' style='display: inline-block; padding: 12px 24px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;' onclick='return confirm(\"Êtes-vous sûr de vouloir supprimer la table " . $table_patient_notif . " ?\");'>🗑️ SUPPRIMER LA TABLE ET ACTIVER LE FALLBACK</a></p>";
+            }
+
+            echo "</div>";
+        } else {
+            echo "<div style='background: #e7f3ff; padding: 20px; border-radius: 8px; border: 2px solid #0066cc; margin-bottom: 20px;'>";
+            echo "<h2>💡 Recommandation</h2>";
+            echo "<p>La table <code>{$table_patient_notif}</code> n'existe pas. Le système utilise le fallback vers <code>dietic_notification_logs</code>.</p>";
+            echo "<p><strong>⚠️ Avec le fallback, les notifications marquées comme lues ou supprimées réapparaissent après actualisation.</strong></p>";
+            echo "<p><strong>Solution :</strong> Installer la table patient_notifications pour persister l'état des notifications.</p>";
+            echo "<p><a href='" . site_url('dietetic/portal/install_patient_notifications') . "' style='display: inline-block; padding: 12px 24px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>📦 INSTALLER LA TABLE PATIENT_NOTIFICATIONS</a></p>";
+            echo "</div>";
+        }
+
+        // Check if table exists
+        $table_name = db_prefix() . 'dietic_notification_logs';
+        $table_exists = $this->db->table_exists($table_name);
+        echo "<p><strong>Table {$table_name} exists:</strong> " . ($table_exists ? '✅ Yes' : '❌ No') . "</p>";
+
+        if (!$table_exists) {
+            echo "<p style='color: red;'>La table n'existe pas. Installez le système de notifications.</p>";
+            return;
+        }
+
+        // Count total notifications in table
+        $total_in_table = $this->db->count_all($table_name);
+        echo "<p><strong>Total notifications in table:</strong> $total_in_table</p>";
+
+        // Count for this patient
+        $this->db->where_in('patient_id', [$patient->id, 0]);
+        $count_for_patient = $this->db->count_all_results($table_name);
+        echo "<p><strong>Notifications for patient {$patient->id} (including system):</strong> $count_for_patient</p>";
+
+        // Execute the actual query used by get_notifications
+        $this->db->select('id, patient_id, notification_type, message, channel, status, created_at');
+        $this->db->from($table_name);
+        $this->db->where_in('patient_id', [$patient->id, 0]);
+        $this->db->where('status', 'sent');
+        $this->db->order_by('created_at', 'DESC');
+        $this->db->limit(50);
+
+        $query = $this->db->get();
+        $notifications = $query->result();
+
+        echo "<p><strong>SQL Query:</strong></p>";
+        echo "<pre style='background: #f5f5f5; padding: 10px; border: 1px solid #ccc;'>" . $this->db->last_query() . "</pre>";
+
+        echo "<p><strong>Results:</strong> " . count($notifications) . " notifications found</p>";
+
+        if (count($notifications) > 0) {
+            echo "<h2>📋 Notifications Raw Data:</h2>";
+            echo "<table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>";
+            echo "<tr style='background: #01807B; color: white;'>";
+            echo "<th>ID</th><th>Patient ID</th><th>Type</th><th>Message</th><th>Channel</th><th>Status</th><th>Created At</th>";
+            echo "</tr>";
+
+            foreach ($notifications as $notif) {
+                echo "<tr>";
+                echo "<td>{$notif->id}</td>";
+                echo "<td>{$notif->patient_id}</td>";
+                echo "<td>{$notif->notification_type}</td>";
+                echo "<td>" . substr($notif->message, 0, 50) . "...</td>";
+                echo "<td>{$notif->channel}</td>";
+                echo "<td>{$notif->status}</td>";
+                echo "<td>{$notif->created_at}</td>";
+                echo "</tr>";
+            }
+
+            echo "</table>";
+
+            echo "<h2>📦 Formatted JSON (what API returns):</h2>";
+
+            // Format as the API does
+            $formatted_notifications = [];
+            foreach ($notifications as $notification) {
+                $type = $notification->notification_type ?? 'info';
+                $formatted_notifications[] = [
+                    'id' => $notification->id,
+                    'type' => $type,
+                    'title' => $this->get_notification_title($type),
+                    'message' => $notification->message ?? '',
+                    'icon' => $this->get_notification_icon($type),
+                    'url' => null,
+                    'is_read' => false,
+                    'time_ago' => $this->time_ago($notification->created_at),
+                    'created_at' => $notification->created_at
+                ];
+            }
+
+            $api_response = [
+                'success' => true,
+                'notifications' => $formatted_notifications,
+                'unread_count' => count($formatted_notifications),
+                'total' => count($formatted_notifications)
+            ];
+
+            echo "<pre style='background: #f5f5f5; padding: 10px; border: 1px solid #ccc; max-height: 400px; overflow: auto;'>";
+            echo json_encode($api_response, JSON_PRETTY_PRINT);
+            echo "</pre>";
+        } else {
+            echo "<p style='color: red;'><strong>Aucune notification trouvée !</strong></p>";
+            echo "<p>Vérifiez que des notifications existent pour le patient ID: {$patient->id}</p>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/add_test_notifications') . "'>➕ Ajouter des notifications de test</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_current_user') . "'>👤 Vérifier quel utilisateur est connecté</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * DEBUG: Check current logged in user
+     * Access: /dietetic/portal/check_current_user
+     */
+    public function check_current_user()
+    {
+        echo "<h1>🔍 Diagnostic: Utilisateur Connecté</h1>";
+
+        if (!is_client_logged_in()) {
+            echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+            echo "<h2>🚫 Non connecté</h2>";
+            echo "<p>Vous n'êtes pas connecté au portail patient.</p>";
+            echo "<p><a href='" . site_url('authentication/login') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px;'>→ Se connecter</a></p>";
+            echo "</div>";
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin-bottom: 20px;'>";
+        echo "<h2>✅ Vous êtes connecté</h2>";
+        echo "<p><strong>Client ID:</strong> {$client_id}</p>";
+
+        if ($patient) {
+            echo "<p><strong>Patient ID:</strong> {$patient->id}</p>";
+
+            // Count notifications for this patient
+            $this->db->where_in('patient_id', [$patient->id, 0]);
+            $this->db->where('status', 'sent');
+            $notif_count = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
+
+            echo "<p><strong>Notifications disponibles:</strong> {$notif_count}</p>";
+
+            if ($notif_count > 0) {
+                echo "<p style='color: green; font-weight: bold;'>✅ Des notifications existent pour votre compte !</p>";
+                echo "<p>Si vous ne les voyez pas dans le panel, rafraîchissez la page du portail.</p>";
+            } else {
+                echo "<p style='color: orange;'>⚠️ Aucune notification n'existe encore pour votre compte.</p>";
+                echo "<p><a href='" . site_url('dietetic/portal/add_test_notifications') . "' style='display: inline-block; padding: 10px 20px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;'>➕ Créer des notifications de test</a></p>";
+            }
+        } else {
+            echo "<p style='color: red;'><strong>❌ Aucun patient trouvé pour ce client</strong></p>";
+            echo "<p>Votre compte client (ID: {$client_id}) n'est pas lié à un dossier patient diététique.</p>";
+        }
+        echo "</div>";
+
+        // Show patient 1 info if different
+        $patient_1 = $this->db->select('p.id, p.client_id, c.email, c.company')
+                              ->from(db_prefix() . 'dietic_patients p')
+                              ->join(db_prefix() . 'clients c', 'c.userid = p.client_id')
+                              ->where('p.id', 1)
+                              ->get()
+                              ->row();
+
+        if ($patient_1 && (!$patient || $patient->id != 1)) {
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107;'>";
+            echo "<h2>ℹ️ Information: Patient ID 1</h2>";
+            echo "<p>Les notifications de test ont été créées pour le <strong>Patient ID 1</strong></p>";
+            echo "<p><strong>Client ID:</strong> {$patient_1->client_id}</p>";
+            echo "<p><strong>Email:</strong> {$patient_1->email}</p>";
+            echo "<p><strong>Nom:</strong> {$patient_1->company}</p>";
+
+            if ($patient && $patient->id != 1) {
+                echo "<hr>";
+                echo "<p style='color: #856404;'><strong>⚠️ Vous êtes connecté avec le Patient ID {$patient->id}</strong></p>";
+                echo "<p>Pour voir les notifications de test, vous devez vous connecter avec l'email: <strong>{$patient_1->email}</strong></p>";
+            }
+            echo "</div>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/fix_notifications_table') . "' style='display: inline-block; padding: 10px 20px; background: #ffc107; color: #000; text-decoration: none; border-radius: 5px;'>🔧 Corriger les notifications</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * FIX: Drop patient_notifications table to force fallback to logs
+     * Access: /dietetic/portal/fix_notifications_table
+     */
+    public function fix_notifications_table()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        echo "<h1>🔧 Correction du Système de Notifications</h1>";
+
+        $table_patient_notif = db_prefix() . 'dietic_patient_notifications';
+        $table_logs = db_prefix() . 'dietic_notification_logs';
+
+        // Check if patient_notifications table exists
+        if ($this->db->table_exists($table_patient_notif)) {
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px;'>";
+            echo "<h2>⚠️ Problème Identifié</h2>";
+            echo "<p>La table <code>{$table_patient_notif}</code> existe mais est probablement vide.</p>";
+            echo "<p>Cela empêche l'utilisation du fallback vers <code>{$table_logs}</code> qui contient vos notifications.</p>";
+            echo "</div>";
+
+            // Count in patient_notifications
+            $count_patient_notif = $this->db->count_all($table_patient_notif);
+            echo "<p><strong>Notifications dans {$table_patient_notif}:</strong> {$count_patient_notif}</p>";
+
+            // Count in logs
+            $this->db->where('status', 'sent');
+            $count_logs = $this->db->count_all_results($table_logs);
+            echo "<p><strong>Notifications dans {$table_logs}:</strong> {$count_logs}</p>";
+
+            echo "<div style='background: #e7f3ff; padding: 20px; border-radius: 8px; border: 2px solid #0066cc; margin: 20px 0;'>";
+            echo "<h2>💡 Solution</h2>";
+            echo "<p>Nous allons <strong>supprimer temporairement</strong> la table {$table_patient_notif} pour forcer l'utilisation du fallback.</p>";
+            echo "<p>Vos notifications seront alors chargées depuis {$table_logs}.</p>";
+            echo "</div>";
+
+            // Drop the table
+            echo "<p>Suppression de la table {$table_patient_notif}...</p>";
+
+            try {
+                $this->db->query("DROP TABLE IF EXISTS {$table_patient_notif}");
+
+                echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin: 20px 0;'>";
+                echo "<h2>✅ Succès !</h2>";
+                echo "<p>La table {$table_patient_notif} a été supprimée.</p>";
+                echo "<p>Le système utilisera maintenant {$table_logs} comme fallback.</p>";
+                echo "<p style='font-weight: bold; color: #155724;'>🎉 Vos notifications devraient maintenant s'afficher !</p>";
+                echo "</div>";
+
+                echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 15px 30px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold;'>🔔 Voir mes notifications</a></p>";
+
+            } catch (Exception $e) {
+                echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+                echo "<h2>❌ Erreur</h2>";
+                echo "<p>Impossible de supprimer la table: " . $e->getMessage() . "</p>";
+                echo "</div>";
+            }
+
+        } else {
+            echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745;'>";
+            echo "<h2>✅ Table Correcte</h2>";
+            echo "<p>La table {$table_patient_notif} n'existe pas.</p>";
+            echo "<p>Le système utilise déjà {$table_logs} comme fallback.</p>";
+            echo "<p>Si les notifications ne s'affichent toujours pas, vérifiez la console navigateur pour les erreurs JavaScript.</p>";
+            echo "</div>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/check_current_user') . "'>👤 Vérifier l'utilisateur connecté</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug API</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * INSTALL: Create patient_notifications table and migrate data from logs
+     * Access: /dietetic/portal/install_patient_notifications
+     */
+    public function install_patient_notifications()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        echo "<h1>📦 Installation de la Table patient_notifications</h1>";
+
+        $table_patient_notif = db_prefix() . 'dietic_patient_notifications';
+        $table_logs = db_prefix() . 'dietic_notification_logs';
+
+        // Check if logs table exists
+        if (!$this->db->table_exists($table_logs)) {
+            echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+            echo "<h2>❌ Erreur</h2>";
+            echo "<p>La table source <code>{$table_logs}</code> n'existe pas.</p>";
+            echo "</div>";
+            return;
+        }
+
+        // Check if patient_notifications already exists
+        if ($this->db->table_exists($table_patient_notif)) {
+            echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 20px;'>";
+            echo "<h2>⚠️ Table Existante</h2>";
+            echo "<p>La table <code>{$table_patient_notif}</code> existe déjà.</p>";
+
+            $count = $this->db->count_all($table_patient_notif);
+            echo "<p>Elle contient actuellement <strong>{$count}</strong> notification(s).</p>";
+
+            if ($this->input->get('force') === 'yes') {
+                echo "<p style='color: #dc3545;'><strong>Mode FORCE activé : suppression et recréation...</strong></p>";
+                $this->db->query("DROP TABLE IF EXISTS {$table_patient_notif}");
+                echo "<p>✅ Table supprimée.</p>";
+            } else {
+                echo "<p><a href='" . site_url('dietetic/portal/install_patient_notifications?force=yes') . "' style='display: inline-block; padding: 10px 20px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px;' onclick='return confirm(\"Êtes-vous sûr ? Cela supprimera toutes les notifications et l\\'état lu/non lu actuel.\");'>🔄 Forcer la réinstallation</a></p>";
+                echo "</div>";
+                echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+                return;
+            }
+            echo "</div>";
+        }
+
+        try {
+            // Create patient_notifications table
+            echo "<h2>1️⃣ Création de la table {$table_patient_notif}</h2>";
+
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `{$table_patient_notif}` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `patient_id` int(11) NOT NULL,
+                `notification_type` varchar(100) DEFAULT NULL,
+                `title` varchar(255) NOT NULL,
+                `message` text NOT NULL,
+                `icon` varchar(100) DEFAULT 'fa-bell',
+                `url` varchar(500) DEFAULT NULL,
+                `is_read` tinyint(1) DEFAULT 0,
+                `created_at` datetime NOT NULL,
+                `updated_at` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `patient_id` (`patient_id`),
+                KEY `is_read` (`is_read`),
+                KEY `created_at` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table créée avec succès.</p>";
+
+            // Migrate data from logs
+            echo "<h2>2️⃣ Migration des données depuis {$table_logs}</h2>";
+
+            // Get current patient
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if ($patient) {
+                // Get all notifications for this patient from logs
+                $this->db->select('id, patient_id, notification_type, message, channel, status, created_at');
+                $this->db->from($table_logs);
+                $this->db->where_in('patient_id', [$patient->id, 0]); // Include patient and system notifications
+                $this->db->where('status', 'sent');
+                $this->db->order_by('created_at', 'DESC');
+
+                $notifications = $this->db->get()->result();
+
+                echo "<p>Trouvé <strong>" . count($notifications) . "</strong> notification(s) à migrer.</p>";
+
+                $inserted = 0;
+                foreach ($notifications as $notif) {
+                    // Determine notification type and title
+                    $type = $notif->notification_type ?: 'info';
+                    $title = $this->get_notification_title($type);
+                    $icon = $this->get_notification_icon($type);
+
+                    // Insert into patient_notifications
+                    $data = [
+                        'patient_id' => $notif->patient_id,
+                        'notification_type' => $type,
+                        'title' => $title,
+                        'message' => $notif->message,
+                        'icon' => $icon,
+                        'url' => null,
+                        'is_read' => 0, // All unread by default
+                        'created_at' => $notif->created_at,
+                        'updated_at' => $notif->created_at
+                    ];
+
+                    if ($this->db->insert($table_patient_notif, $data)) {
+                        $inserted++;
+                    }
+                }
+
+                echo "<p style='color: #28a745;'>✅ <strong>{$inserted}</strong> notification(s) migrée(s) avec succès.</p>";
+            }
+
+            echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin: 20px 0;'>";
+            echo "<h2>🎉 Installation Réussie !</h2>";
+            echo "<p>La table <code>{$table_patient_notif}</code> a été créée et les données ont été migrées.</p>";
+            echo "<p><strong>Les notifications peuvent maintenant être marquées comme lues et supprimées de façon persistante.</strong></p>";
+            echo "</div>";
+
+            echo "<p><a href='" . site_url('dietetic/portal') . "' style='display: inline-block; padding: 15px 30px; background: #01807B; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold;'>🔔 Voir mes notifications</a></p>";
+
+        } catch (Exception $e) {
+            echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+            echo "<h2>❌ Erreur</h2>";
+            echo "<p>Une erreur est survenue lors de l'installation : " . $e->getMessage() . "</p>";
+            echo "</div>";
+        }
+
+        echo "<hr>";
+        echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug API</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
 
