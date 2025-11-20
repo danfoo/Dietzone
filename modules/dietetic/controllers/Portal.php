@@ -2273,19 +2273,23 @@ class Portal extends App_Controller
                 return;
             }
 
-            // Get notification ID from POST
-            $json = file_get_contents('php://input');
-            $data = json_decode($json, true);
+            // Get notification ID from GET or POST
+            $notification_id = $this->input->get('notification_id') ?: $this->input->post('notification_id');
 
-            if (empty($data['notification_id'])) {
+            // Also try from JSON body (for POST requests)
+            if (empty($notification_id)) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                $notification_id = isset($data['notification_id']) ? $data['notification_id'] : null;
+            }
+
+            if (empty($notification_id)) {
                 echo json_encode([
                     'success' => false,
                     'message' => 'Notification ID is required'
                 ]);
                 return;
             }
-
-            $notification_id = $data['notification_id'];
 
             // TEMPORARY: Since we're using notification_logs as fallback,
             // we can't really "delete" system notifications (patient_id=0)
@@ -2360,11 +2364,17 @@ class Portal extends App_Controller
             return;
         }
 
-        // Get notification ID from POST
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
+        // Get notification ID from GET or POST
+        $notification_id = $this->input->get('notification_id') ?: $this->input->post('notification_id');
 
-        if (empty($data['notification_id'])) {
+        // Also try from JSON body (for POST requests)
+        if (empty($notification_id)) {
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+            $notification_id = isset($data['notification_id']) ? $data['notification_id'] : null;
+        }
+
+        if (empty($notification_id)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Notification ID is required'

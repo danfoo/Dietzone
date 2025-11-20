@@ -456,14 +456,11 @@
                 this.disabled = true;
 
                 fetch('<?php echo site_url("dietetic/portal/mark_all_notifications_read"); ?>', {
-                    method: 'POST',
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({})
+                    credentials: 'same-origin'
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -535,17 +532,12 @@
 
         // Mark single notification as read
         function markNotificationAsRead(notificationId, notificationElement) {
-            fetch('<?php echo site_url("dietetic/portal/mark_notification_read"); ?>', {
-                method: 'POST',
+            fetch('<?php echo site_url("dietetic/portal/mark_notification_read"); ?>?notification_id=' + notificationId, {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    notification_id: notificationId
-                })
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -592,17 +584,12 @@
             notificationItem.style.opacity = '0';
 
             // Call API to delete notification
-            fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>', {
-                method: 'POST',
+            fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>?notification_id=' + notificationId, {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    notification_id: notificationId
-                })
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
