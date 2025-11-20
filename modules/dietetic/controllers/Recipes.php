@@ -81,14 +81,17 @@ class Recipes extends AdminController
                 'tags' => []
             ];
 
-            // Traiter les ingrédients
-            if (!empty($post_data['ingredient_name'])) {
-                foreach ($post_data['ingredient_name'] as $i => $name) {
-                    if (!empty($name)) {
+            // Traiter les ingrédients depuis la bibliothèque alimentaire
+            if (!empty($post_data['food_id'])) {
+                $this->load->model('dietetic/dietetic_foods_model');
+                foreach ($post_data['food_id'] as $i => $food_id) {
+                    if (!empty($food_id)) {
+                        $food = $this->dietetic_foods_model->get($food_id);
                         $data['ingredients'][] = [
-                            'name' => $name,
+                            'name' => $food ? $food->name : '',
+                            'food_id' => $food_id,
                             'quantity' => $post_data['ingredient_quantity'][$i] ?? null,
-                            'unit' => $post_data['ingredient_unit'][$i] ?? null
+                            'unit' => $post_data['ingredient_unit'][$i] ?? 'g'
                         ];
                     }
                 }
@@ -141,6 +144,10 @@ class Recipes extends AdminController
         $data['title'] = 'Nouvelle Recette';
         $data['all_tags'] = $this->dietetic_recipes_model->get_all_tags();
 
+        // Load foods from database
+        $this->load->model('dietetic/dietetic_foods_model');
+        $data['foods'] = $this->dietetic_foods_model->get_active();
+
         $this->load->view('admin/recipes/form', $data);
     }
 
@@ -176,14 +183,17 @@ class Recipes extends AdminController
                 'tags' => []
             ];
 
-            // Traiter les ingrédients
-            if (!empty($post_data['ingredient_name'])) {
-                foreach ($post_data['ingredient_name'] as $i => $name) {
-                    if (!empty($name)) {
+            // Traiter les ingrédients depuis la bibliothèque alimentaire
+            if (!empty($post_data['food_id'])) {
+                $this->load->model('dietetic/dietetic_foods_model');
+                foreach ($post_data['food_id'] as $i => $food_id) {
+                    if (!empty($food_id)) {
+                        $food = $this->dietetic_foods_model->get($food_id);
                         $update_data['ingredients'][] = [
-                            'name' => $name,
+                            'name' => $food ? $food->name : '',
+                            'food_id' => $food_id,
                             'quantity' => $post_data['ingredient_quantity'][$i] ?? null,
-                            'unit' => $post_data['ingredient_unit'][$i] ?? null
+                            'unit' => $post_data['ingredient_unit'][$i] ?? 'g'
                         ];
                     }
                 }
@@ -233,6 +243,10 @@ class Recipes extends AdminController
 
         $data['title'] = 'Modifier Recette';
         $data['all_tags'] = $this->dietetic_recipes_model->get_all_tags();
+
+        // Load foods from database
+        $this->load->model('dietetic/dietetic_foods_model');
+        $data['foods'] = $this->dietetic_foods_model->get_active();
 
         $this->load->view('admin/recipes/form', $data);
     }

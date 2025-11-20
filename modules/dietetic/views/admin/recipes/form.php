@@ -15,12 +15,6 @@
     border-radius: 4px;
 }
 
-.ingredient-row .row, .instruction-row .row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .btn-add-item {
     margin-top: 10px;
 }
@@ -71,6 +65,11 @@
 .suggested-tag:hover {
     background: #e74c3c;
     color: white;
+}
+
+.nutrition-readonly {
+    background-color: #e9ecef;
+    cursor: not-allowed;
 }
 </style>
 
@@ -135,6 +134,18 @@
                                                 <option value="snack" <?php echo (isset($recipe) && $recipe->category == 'snack') ? 'selected' : ''; ?>>
                                                     Collation
                                                 </option>
+                                                <option value="smoothie" <?php echo (isset($recipe) && $recipe->category == 'smoothie') ? 'selected' : ''; ?>>
+                                                    Smoothie
+                                                </option>
+                                                <option value="juice" <?php echo (isset($recipe) && $recipe->category == 'juice') ? 'selected' : ''; ?>>
+                                                    Jus naturel
+                                                </option>
+                                                <option value="beverage" <?php echo (isset($recipe) && $recipe->category == 'beverage') ? 'selected' : ''; ?>>
+                                                    Boisson
+                                                </option>
+                                                <option value="dessert" <?php echo (isset($recipe) && $recipe->category == 'dessert') ? 'selected' : ''; ?>>
+                                                    Dessert
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
@@ -152,7 +163,7 @@
                         <!-- Ingrédients -->
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <i class="fa fa-list"></i> Ingrédients
+                                <i class="fa fa-list"></i> Ingrédients de la bibliothèque alimentaire
                             </div>
                             <div class="panel-body">
                                 <div id="ingredients-container">
@@ -161,19 +172,27 @@
                                             <div class="ingredient-row">
                                                 <div class="row">
                                                     <div class="col-md-5">
-                                                        <input type="text" class="form-control" name="ingredient_name[]"
-                                                               placeholder="Nom de l'ingrédient"
-                                                               value="<?php echo htmlspecialchars($ingredient->ingredient_name); ?>" required>
+                                                        <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
+                                                            <option value="">-- Sélectionner un aliment --</option>
+                                                            <?php foreach ($foods as $food) : ?>
+                                                                <option value="<?php echo $food->id; ?>"
+                                                                        data-calories="<?php echo $food->calories; ?>"
+                                                                        data-protein="<?php echo $food->protein; ?>"
+                                                                        data-carbs="<?php echo $food->carbs; ?>"
+                                                                        data-fat="<?php echo $food->fat; ?>"
+                                                                        <?php echo $food->name == $ingredient->ingredient_name ? 'selected' : ''; ?>>
+                                                                    <?php echo htmlspecialchars($food->name); ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <input type="number" step="0.01" class="form-control" name="ingredient_quantity[]"
-                                                               placeholder="Quantité"
-                                                               value="<?php echo $ingredient->quantity; ?>">
+                                                        <input type="number" step="0.01" class="form-control ingredient-quantity" name="ingredient_quantity[]"
+                                                               placeholder="Quantité (g)" value="<?php echo $ingredient->quantity; ?>" required>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <input type="text" class="form-control" name="ingredient_unit[]"
-                                                               placeholder="Unité (g, ml, c. à soupe)"
-                                                               value="<?php echo htmlspecialchars($ingredient->unit); ?>">
+                                                               placeholder="Unité" value="<?php echo htmlspecialchars($ingredient->unit); ?>" readonly>
                                                     </div>
                                                     <div class="col-md-1">
                                                         <button type="button" class="btn btn-danger btn-sm remove-ingredient">
@@ -187,16 +206,25 @@
                                         <div class="ingredient-row">
                                             <div class="row">
                                                 <div class="col-md-5">
-                                                    <input type="text" class="form-control" name="ingredient_name[]"
-                                                           placeholder="Nom de l'ingrédient" required>
+                                                    <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
+                                                        <option value="">-- Sélectionner un aliment --</option>
+                                                        <?php foreach ($foods as $food) : ?>
+                                                            <option value="<?php echo $food->id; ?>"
+                                                                    data-calories="<?php echo $food->calories; ?>"
+                                                                    data-protein="<?php echo $food->protein; ?>"
+                                                                    data-carbs="<?php echo $food->carbs; ?>"
+                                                                    data-fat="<?php echo $food->fat; ?>">
+                                                                <?php echo htmlspecialchars($food->name); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <input type="number" step="0.01" class="form-control" name="ingredient_quantity[]"
-                                                           placeholder="Quantité">
+                                                    <input type="number" step="0.01" class="form-control ingredient-quantity" name="ingredient_quantity[]"
+                                                           placeholder="Quantité (g)" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <input type="text" class="form-control" name="ingredient_unit[]"
-                                                           placeholder="Unité (g, ml, c. à soupe)">
+                                                    <input type="text" class="form-control" name="ingredient_unit[]" placeholder="g" value="g" readonly>
                                                 </div>
                                                 <div class="col-md-1">
                                                     <button type="button" class="btn btn-danger btn-sm remove-ingredient">
@@ -225,7 +253,7 @@
                                             <div class="instruction-row">
                                                 <div class="row">
                                                     <div class="col-md-1">
-                                                        <strong>Étape <?php echo $index + 1; ?></strong>
+                                                        <strong class="step-number">Étape <?php echo $index + 1; ?></strong>
                                                     </div>
                                                     <div class="col-md-10">
                                                         <textarea class="form-control" name="instruction[]" rows="2" required><?php echo htmlspecialchars($instruction->instruction); ?></textarea>
@@ -242,7 +270,7 @@
                                         <div class="instruction-row">
                                             <div class="row">
                                                 <div class="col-md-1">
-                                                    <strong>Étape 1</strong>
+                                                    <strong class="step-number">Étape 1</strong>
                                                 </div>
                                                 <div class="col-md-10">
                                                     <textarea class="form-control" name="instruction[]" rows="2" required></textarea>
@@ -262,62 +290,38 @@
                             </div>
                         </div>
 
-                        <!-- Informations Nutritionnelles -->
+                        <!-- Informations Nutritionnelles (calculées automatiquement) -->
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <i class="fa fa-heartbeat"></i> Informations Nutritionnelles (par portion)
+                                <i class="fa fa-heartbeat"></i> Informations Nutritionnelles (calculées automatiquement)
                             </div>
                             <div class="panel-body">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i> Les valeurs nutritionnelles sont calculées automatiquement en fonction des ingrédients sélectionnés.
+                                </div>
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Calories (kcal)</label>
-                                            <input type="number" step="0.1" class="form-control" name="calories"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->calories : ''; ?>">
+                                            <input type="number" step="0.1" class="form-control nutrition-readonly" name="calories" id="calc-calories" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Protéines (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="protein"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->protein : ''; ?>">
+                                            <input type="number" step="0.1" class="form-control nutrition-readonly" name="protein" id="calc-protein" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Glucides (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="carbs"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->carbs : ''; ?>">
+                                            <input type="number" step="0.1" class="form-control nutrition-readonly" name="carbs" id="calc-carbs" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Lipides (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="fat"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->fat : ''; ?>">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Fibres (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="fiber"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->fiber : ''; ?>">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Sodium (mg)</label>
-                                            <input type="number" step="0.1" class="form-control" name="sodium"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->sodium : ''; ?>">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Sucre (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="sugar"
-                                                   value="<?php echo isset($recipe->nutrition) ? $recipe->nutrition->sugar : ''; ?>">
+                                            <input type="number" step="0.1" class="form-control nutrition-readonly" name="fat" id="calc-fat" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -337,7 +341,7 @@
                                             <?php foreach ($recipe->tags as $tag) : ?>
                                                 <div class="tag-item">
                                                     <span><?php echo htmlspecialchars($tag); ?></span>
-                                                    <span class="remove-tag" data-tag="<?php echo htmlspecialchars($tag); ?>">×</span>
+                                                    <span class="remove-tag">×</span>
                                                     <input type="hidden" name="tags[]" value="<?php echo htmlspecialchars($tag); ?>">
                                                 </div>
                                             <?php endforeach; ?>
@@ -347,14 +351,14 @@
 
                                     <div class="suggested-tags">
                                         <strong style="width: 100%; margin-bottom: 10px;">Suggestions :</strong>
-                                        <span class="suggested-tag" data-tag="Végétarien">Végétarien</span>
-                                        <span class="suggested-tag" data-tag="Sans gluten">Sans gluten</span>
-                                        <span class="suggested-tag" data-tag="Sans lactose">Sans lactose</span>
-                                        <span class="suggested-tag" data-tag="Faible en calories">Faible en calories</span>
-                                        <span class="suggested-tag" data-tag="Riche en protéines">Riche en protéines</span>
-                                        <span class="suggested-tag" data-tag="Sans sucre">Sans sucre</span>
-                                        <span class="suggested-tag" data-tag="Rapide">Rapide</span>
-                                        <span class="suggested-tag" data-tag="Facile">Facile</span>
+                                        <span class="suggested-tag">Végétarien</span>
+                                        <span class="suggested-tag">Sans gluten</span>
+                                        <span class="suggested-tag">Sans lactose</span>
+                                        <span class="suggested-tag">Faible en calories</span>
+                                        <span class="suggested-tag">Riche en protéines</span>
+                                        <span class="suggested-tag">Sans sucre</span>
+                                        <span class="suggested-tag">Rapide</span>
+                                        <span class="suggested-tag">Facile</span>
                                     </div>
                                 </div>
                             </div>
@@ -413,22 +417,63 @@
 
 <script>
 $(document).ready(function() {
+    // Calculate nutrition automatically
+    function calculateNutrition() {
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalCarbs = 0;
+        let totalFat = 0;
+
+        $('.ingredient-row').each(function() {
+            const select = $(this).find('.food-select');
+            const quantity = parseFloat($(this).find('.ingredient-quantity').val()) || 0;
+
+            if (select.val()) {
+                const option = select.find('option:selected');
+                const calories = parseFloat(option.data('calories')) || 0;
+                const protein = parseFloat(option.data('protein')) || 0;
+                const carbs = parseFloat(option.data('carbs')) || 0;
+                const fat = parseFloat(option.data('fat')) || 0;
+
+                // Calculate based on quantity (per 100g)
+                totalCalories += (calories * quantity) / 100;
+                totalProtein += (protein * quantity) / 100;
+                totalCarbs += (carbs * quantity) / 100;
+                totalFat += (fat * quantity) / 100;
+            }
+        });
+
+        $('#calc-calories').val(totalCalories.toFixed(1));
+        $('#calc-protein').val(totalProtein.toFixed(1));
+        $('#calc-carbs').val(totalCarbs.toFixed(1));
+        $('#calc-fat').val(totalFat.toFixed(1));
+    }
+
     // Add ingredient
     $('#add-ingredient').click(function() {
         const html = `
             <div class="ingredient-row">
                 <div class="row">
                     <div class="col-md-5">
-                        <input type="text" class="form-control" name="ingredient_name[]"
-                               placeholder="Nom de l'ingrédient" required>
+                        <select class="form-control selectpicker food-select" name="food_id[]" data-live-search="true" required>
+                            <option value="">-- Sélectionner un aliment --</option>
+                            <?php foreach ($foods as $food) : ?>
+                                <option value="<?php echo $food->id; ?>"
+                                        data-calories="<?php echo $food->calories; ?>"
+                                        data-protein="<?php echo $food->protein; ?>"
+                                        data-carbs="<?php echo $food->carbs; ?>"
+                                        data-fat="<?php echo $food->fat; ?>">
+                                    <?php echo htmlspecialchars($food->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <input type="number" step="0.01" class="form-control" name="ingredient_quantity[]"
-                               placeholder="Quantité">
+                        <input type="number" step="0.01" class="form-control ingredient-quantity" name="ingredient_quantity[]"
+                               placeholder="Quantité (g)" required>
                     </div>
                     <div class="col-md-3">
-                        <input type="text" class="form-control" name="ingredient_unit[]"
-                               placeholder="Unité (g, ml, c. à soupe)">
+                        <input type="text" class="form-control" name="ingredient_unit[]" value="g" readonly>
                     </div>
                     <div class="col-md-1">
                         <button type="button" class="btn btn-danger btn-sm remove-ingredient">
@@ -439,16 +484,28 @@ $(document).ready(function() {
             </div>
         `;
         $('#ingredients-container').append(html);
+        $('.selectpicker').selectpicker('refresh');
     });
 
     // Remove ingredient
     $(document).on('click', '.remove-ingredient', function() {
         if ($('.ingredient-row').length > 1) {
             $(this).closest('.ingredient-row').remove();
+            calculateNutrition();
         } else {
             alert('Vous devez avoir au moins un ingrédient');
         }
     });
+
+    // Update nutrition when ingredient or quantity changes
+    $(document).on('change', '.food-select, .ingredient-quantity', function() {
+        calculateNutrition();
+    });
+
+    // Calculate on page load if editing
+    <?php if (isset($recipe)) : ?>
+    setTimeout(calculateNutrition, 500);
+    <?php endif; ?>
 
     // Add instruction
     $('#add-instruction').click(function() {
@@ -457,7 +514,7 @@ $(document).ready(function() {
             <div class="instruction-row">
                 <div class="row">
                     <div class="col-md-1">
-                        <strong>Étape ${stepNumber}</strong>
+                        <strong class="step-number">Étape ${stepNumber}</strong>
                     </div>
                     <div class="col-md-10">
                         <textarea class="form-control" name="instruction[]" rows="2" required></textarea>
@@ -471,7 +528,6 @@ $(document).ready(function() {
             </div>
         `;
         $('#instructions-container').append(html);
-        updateInstructionNumbers();
     });
 
     // Remove instruction
@@ -487,7 +543,7 @@ $(document).ready(function() {
     // Update instruction numbers
     function updateInstructionNumbers() {
         $('.instruction-row').each(function(index) {
-            $(this).find('strong').text('Étape ' + (index + 1));
+            $(this).find('.step-number').text('Étape ' + (index + 1));
         });
     }
 
@@ -502,7 +558,7 @@ $(document).ready(function() {
         const html = `
             <div class="tag-item">
                 <span>${tagName}</span>
-                <span class="remove-tag" data-tag="${tagName}">×</span>
+                <span class="remove-tag">×</span>
                 <input type="hidden" name="tags[]" value="${tagName}">
             </div>
         `;
@@ -522,8 +578,8 @@ $(document).ready(function() {
     });
 
     // Add suggested tag
-    $('.suggested-tag').click(function() {
-        const tagName = $(this).data('tag');
+    $(document).on('click', '.suggested-tag', function() {
+        const tagName = $(this).text();
         addTag(tagName);
     });
 

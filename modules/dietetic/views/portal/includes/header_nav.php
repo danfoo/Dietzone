@@ -34,6 +34,11 @@
                 <i class="fa fa-clipboard-list"></i> Enquêtes
             </a>
             <?php } ?>
+            <?php if ($this->db->table_exists(db_prefix() . 'dietic_recipes')) { ?>
+            <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="<?php echo isset($active_page) && $active_page == 'recipes' ? 'active' : ''; ?>">
+                <i class="fa fa-book"></i> Recettes
+            </a>
+            <?php } ?>
             <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="<?php echo isset($active_page) && $active_page == 'measurements' ? 'active' : ''; ?>">
                 <i class="fa fa-heartbeat"></i> Mesures
             </a>
@@ -79,6 +84,12 @@
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'food_surveys' ? 'active' : ''; ?>">
             <i class="fa fa-clipboard-list"></i>
             <span>Enquêtes Alimentaires</span>
+        </a>
+        <?php } ?>
+        <?php if ($this->db->table_exists(db_prefix() . 'dietic_recipes')) { ?>
+        <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'recipes' ? 'active' : ''; ?>">
+            <i class="fa fa-book"></i>
+            <span>Recettes</span>
         </a>
         <?php } ?>
         <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'measurements' ? 'active' : ''; ?>">

@@ -171,6 +171,17 @@ function dietetic_module_init_menu_items()
             'position' => 7,
         ]);
 
+        // Recipes Library - Show if table exists
+        if ($CI->db->table_exists(db_prefix() . 'dietic_recipes')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-recipes',
+                'name'     => 'Bibliothèque de Recettes',
+                'icon'     => 'fa fa-book',
+                'href'     => admin_url('dietetic/recipes'),
+                'position' => 7.5,
+            ]);
+        }
+
         // Staff Permissions - Admin only
         if (is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
