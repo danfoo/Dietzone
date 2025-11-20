@@ -518,7 +518,12 @@ class Dietetic_recipes_model extends App_Model
     public function get_main_photo($recipe_id)
     {
         $this->db->where('recipe_id', $recipe_id);
-        $this->db->where('is_main', 1);
+        // Vérifier si la colonne is_main existe
+        if ($this->db->field_exists('is_main', db_prefix() . $this->table_photos)) {
+            $this->db->where('is_main', 1);
+        }
+        $this->db->order_by('id', 'ASC'); // Prendre la première photo
+        $this->db->limit(1);
         return $this->db->get(db_prefix() . $this->table_photos)->row();
     }
 
