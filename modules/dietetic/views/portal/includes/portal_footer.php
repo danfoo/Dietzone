@@ -458,11 +458,12 @@
                 fetch('<?php echo site_url("dietetic/portal/mark_all_notifications_read"); ?>', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-                    })
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -537,11 +538,13 @@
             fetch('<?php echo site_url("dietetic/portal/mark_notification_read"); ?>', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    notification_id: notificationId,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    notification_id: notificationId
                 })
             })
             .then(response => response.json())
@@ -591,10 +594,14 @@
             // Call API to delete notification
             fetch('<?php echo site_url("dietetic/portal/delete_notification"); ?>', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    notification_id: notificationId,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    notification_id: notificationId
                 })
             })
             .then(response => response.json())
