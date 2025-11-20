@@ -12,15 +12,17 @@ class Recipes extends AdminController
     {
         parent::__construct();
 
-        // Load models
-        $this->load->model('dietetic/dietetic_recipes_model');
-        $this->load->model('dietetic/dietetic_patients_model');
+        // Load helper first (needed for permission check)
         $this->load->helper('dietetic/dietetic');
 
         // Check permissions
-        if (!dietetic_has_permission('view')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('view')) {
             access_denied('dietetic');
         }
+
+        // Load models after permission check
+        $this->load->model('dietetic/dietetic_recipes_model');
+        $this->load->model('dietetic/dietetic_patients_model');
     }
 
     /**
@@ -62,7 +64,7 @@ class Recipes extends AdminController
      */
     public function create()
     {
-        if (!dietetic_has_permission('create')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('create')) {
             access_denied('dietetic');
         }
 
@@ -158,7 +160,7 @@ class Recipes extends AdminController
      */
     public function edit($id)
     {
-        if (!dietetic_has_permission('edit')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('edit')) {
             access_denied('dietetic');
         }
 
@@ -258,7 +260,7 @@ class Recipes extends AdminController
      */
     public function delete($id)
     {
-        if (!dietetic_has_permission('delete')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('delete')) {
             ajax_access_denied();
         }
 
@@ -324,7 +326,7 @@ class Recipes extends AdminController
      */
     public function assign()
     {
-        if (!dietetic_has_permission('edit')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('edit')) {
             ajax_access_denied();
         }
 
@@ -351,7 +353,7 @@ class Recipes extends AdminController
      */
     public function unassign()
     {
-        if (!dietetic_has_permission('edit')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('edit')) {
             ajax_access_denied();
         }
 
@@ -377,7 +379,7 @@ class Recipes extends AdminController
      */
     public function delete_photo($photo_id)
     {
-        if (!dietetic_has_permission('edit')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('edit')) {
             ajax_access_denied();
         }
 
@@ -452,7 +454,7 @@ class Recipes extends AdminController
      */
     public function get_patients()
     {
-        if (!dietetic_has_permission('view')) {
+        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('view')) {
             ajax_access_denied();
         }
 
