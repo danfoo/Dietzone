@@ -3809,9 +3809,16 @@ class Portal extends App_Controller
             return;
         }
 
+        // Get client data for header
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+
         $data = [];
         $data['title'] = 'Bibliothèque de Recettes';
         $data['patient'] = $patient;
+        $data['client'] = $client;
+        $data['page_title'] = 'Bibliothèque de Recettes';
+        $data['active_page'] = 'recipes';
 
         // Filtres
         $filters = [];
