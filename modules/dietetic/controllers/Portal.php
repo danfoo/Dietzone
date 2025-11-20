@@ -92,7 +92,8 @@ class Portal extends App_Controller
             'debug_notifications_api',
             'check_current_user',
             'fix_notifications_table',
-            'install_patient_notifications'
+            'install_patient_notifications',
+            'install_recipe_library'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -3773,6 +3774,232 @@ class Portal extends App_Controller
 
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal/debug_notifications_api') . "'>🔍 Debug API</a></p>";
+        echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
+    }
+
+    /**
+     * INSTALL: Create recipe library tables
+     * Access: /dietetic/portal/install_recipe_library
+     */
+    public function install_recipe_library()
+    {
+        if (!is_client_logged_in()) {
+            show_error('Please login first');
+            return;
+        }
+
+        echo "<h1>📚 Installation de la Bibliothèque de Recettes</h1>";
+        echo "<p>Cette installation va créer toutes les tables nécessaires pour gérer la bibliothèque de recettes.</p>";
+
+        $tables_created = 0;
+        $errors = [];
+
+        try {
+            // 1. Table des recettes principales
+            echo "<h2>1️⃣ Création de la table des recettes</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipes` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `dietitian_id` int(11) NOT NULL COMMENT 'ID du diététicien créateur',
+                `name` varchar(255) NOT NULL,
+                `description` text,
+                `preparation_time` int(11) DEFAULT NULL COMMENT 'Temps en minutes',
+                `category` varchar(50) DEFAULT NULL COMMENT 'breakfast, lunch, dinner, snack',
+                `status` varchar(20) DEFAULT 'pending' COMMENT 'pending, approved, rejected',
+                `approved_by_admin_id` int(11) DEFAULT NULL,
+                `approved_at` datetime DEFAULT NULL,
+                `rejection_reason` text,
+                `created_at` datetime NOT NULL,
+                `updated_at` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `dietitian_id` (`dietitian_id`),
+                KEY `status` (`status`),
+                KEY `category` (`category`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipes créée</p>";
+            $tables_created++;
+
+            // 2. Table des ingrédients
+            echo "<h2>2️⃣ Création de la table des ingrédients</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_ingredients` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `ingredient_name` varchar(255) NOT NULL,
+                `quantity` decimal(10,2) DEFAULT NULL,
+                `unit` varchar(50) DEFAULT NULL COMMENT 'g, kg, ml, l, cuillère, etc.',
+                `order` int(11) DEFAULT 0,
+                PRIMARY KEY (`id`),
+                KEY `recipe_id` (`recipe_id`),
+                CONSTRAINT `fk_recipe_ingredients` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_ingredients créée</p>";
+            $tables_created++;
+
+            // 3. Table des instructions
+            echo "<h2>3️⃣ Création de la table des instructions</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_instructions` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `step_number` int(11) NOT NULL,
+                `instruction` text NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `recipe_id` (`recipe_id`),
+                CONSTRAINT `fk_recipe_instructions` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_instructions créée</p>";
+            $tables_created++;
+
+            // 4. Table des valeurs nutritionnelles
+            echo "<h2>4️⃣ Création de la table des valeurs nutritionnelles</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_nutrition` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `calories` decimal(10,2) DEFAULT NULL COMMENT 'kcal',
+                `proteins` decimal(10,2) DEFAULT NULL COMMENT 'g',
+                `carbs` decimal(10,2) DEFAULT NULL COMMENT 'g',
+                `fats` decimal(10,2) DEFAULT NULL COMMENT 'g',
+                `fiber` decimal(10,2) DEFAULT NULL COMMENT 'g',
+                `sodium` decimal(10,2) DEFAULT NULL COMMENT 'mg',
+                `sugar` decimal(10,2) DEFAULT NULL COMMENT 'g',
+                PRIMARY KEY (`id`),
+                KEY `recipe_id` (`recipe_id`),
+                CONSTRAINT `fk_recipe_nutrition` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_nutrition créée</p>";
+            $tables_created++;
+
+            // 5. Table des photos
+            echo "<h2>5️⃣ Création de la table des photos</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_photos` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `file_path` varchar(500) NOT NULL,
+                `is_primary` tinyint(1) DEFAULT 0,
+                `uploaded_at` datetime NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `recipe_id` (`recipe_id`),
+                CONSTRAINT `fk_recipe_photos` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_photos créée</p>";
+            $tables_created++;
+
+            // 6. Table des tags
+            echo "<h2>6️⃣ Création de la table des tags</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_tags` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `tag_name` varchar(100) NOT NULL COMMENT 'végétarien, sans gluten, etc.',
+                PRIMARY KEY (`id`),
+                KEY `recipe_id` (`recipe_id`),
+                KEY `tag_name` (`tag_name`),
+                CONSTRAINT `fk_recipe_tags` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_tags créée</p>";
+            $tables_created++;
+
+            // 7. Table des assignations aux patients
+            echo "<h2>7️⃣ Création de la table des assignations</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_assignments` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `patient_id` int(11) NOT NULL,
+                `assigned_by_dietitian_id` int(11) NOT NULL,
+                `assigned_at` datetime NOT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unique_assignment` (`recipe_id`, `patient_id`),
+                KEY `recipe_id` (`recipe_id`),
+                KEY `patient_id` (`patient_id`),
+                CONSTRAINT `fk_recipe_assignments` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_assignments créée</p>";
+            $tables_created++;
+
+            // 8. Table des notes et commentaires
+            echo "<h2>8️⃣ Création de la table des notes et commentaires</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_ratings` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `patient_id` int(11) NOT NULL,
+                `rating` tinyint(1) NOT NULL COMMENT '1-5 étoiles',
+                `comment` text,
+                `created_at` datetime NOT NULL,
+                `updated_at` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unique_rating` (`recipe_id`, `patient_id`),
+                KEY `recipe_id` (`recipe_id`),
+                KEY `patient_id` (`patient_id`),
+                CONSTRAINT `fk_recipe_ratings` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_ratings créée</p>";
+            $tables_created++;
+
+            // 9. Table des favoris
+            echo "<h2>9️⃣ Création de la table des favoris</h2>";
+            $sql = "
+            CREATE TABLE IF NOT EXISTS `" . db_prefix() . "dietic_recipe_favorites` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `recipe_id` int(11) NOT NULL,
+                `patient_id` int(11) NOT NULL,
+                `created_at` datetime NOT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `unique_favorite` (`recipe_id`, `patient_id`),
+                KEY `recipe_id` (`recipe_id`),
+                KEY `patient_id` (`patient_id`),
+                CONSTRAINT `fk_recipe_favorites` FOREIGN KEY (`recipe_id`) REFERENCES `" . db_prefix() . "dietic_recipes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ";
+            $this->db->query($sql);
+            echo "<p style='color: #28a745;'>✅ Table dietic_recipe_favorites créée</p>";
+            $tables_created++;
+
+            echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; border: 2px solid #28a745; margin: 20px 0;'>";
+            echo "<h2>🎉 Installation Réussie !</h2>";
+            echo "<p><strong>{$tables_created}</strong> tables ont été créées avec succès.</p>";
+            echo "<ul style='text-align: left;'>";
+            echo "<li>✅ Recettes</li>";
+            echo "<li>✅ Ingrédients</li>";
+            echo "<li>✅ Instructions</li>";
+            echo "<li>✅ Valeurs nutritionnelles</li>";
+            echo "<li>✅ Photos</li>";
+            echo "<li>✅ Tags</li>";
+            echo "<li>✅ Assignations aux patients</li>";
+            echo "<li>✅ Notes et commentaires</li>";
+            echo "<li>✅ Favoris</li>";
+            echo "</ul>";
+            echo "<p>La bibliothèque de recettes est maintenant prête à être utilisée !</p>";
+            echo "</div>";
+
+        } catch (Exception $e) {
+            echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; border: 2px solid #dc3545;'>";
+            echo "<h2>❌ Erreur</h2>";
+            echo "<p>Une erreur est survenue lors de l'installation : " . $e->getMessage() . "</p>";
+            echo "</div>";
+        }
+
+        echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
 }
