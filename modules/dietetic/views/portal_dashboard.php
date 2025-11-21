@@ -2018,9 +2018,9 @@ if (!$current_weight || !$target_weight) {
 
     <div class="footer-spacer"></div>
 
-    <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-link">
+    <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="footer-link">
         <i class="fa fa-cutlery footer-link-icon"></i>
-        <span class="footer-link-label">Repas</span>
+        <span class="footer-link-label">Recettes</span>
     </a>
 </footer>
 
