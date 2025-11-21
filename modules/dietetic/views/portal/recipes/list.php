@@ -133,8 +133,31 @@ body {
 /* Category Filters - Pills */
 .category-filters {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+    margin-bottom: -10px;
+}
+
+.category-filters::-webkit-scrollbar {
+    height: 6px;
+}
+
+.category-filters::-webkit-scrollbar-track {
+    background: #F3F4F6;
+    border-radius: 10px;
+}
+
+.category-filters::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 10px;
+}
+
+.category-filters::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
 }
 
 .category-filter {
@@ -150,6 +173,8 @@ body {
     align-items: center;
     gap: 8px;
     letter-spacing: -0.2px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .category-filter i {
@@ -208,14 +233,14 @@ body {
     padding: 20px;
 }
 
-/* Recipe Grid - Mobile First */
+/* Recipe List - Mobile First */
 .recipes-grid {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
-/* Recipe Card - Style moderne iOS */
+/* Recipe Card - Layout horizontal (image à gauche) */
 .recipe-card {
     background: var(--card-bg);
     border-radius: var(--border-radius-lg);
@@ -223,46 +248,92 @@ body {
     box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    cursor: pointer;
 }
 
 .recipe-card:active {
-    transform: scale(0.97);
+    transform: scale(0.99);
 }
 
-/* Recipe Photo - Grande et arrondie */
+/* Recipe Photo - À gauche, carrée */
 .recipe-photo {
-    width: 100%;
-    height: 220px;
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .recipe-photo-placeholder {
-    width: 100%;
-    height: 220px;
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
     background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 56px;
+    font-size: 36px;
     color: #D1D5DB;
+    flex-shrink: 0;
 }
 
-/* Recipe Content - Spacing généreux */
+/* Recipe Content - À droite de l'image */
 .recipe-content {
-    padding: 20px;
+    padding: 12px 16px;
     flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
 }
 
+/* Recipe Header - Temps et catégorie en haut */
+.recipe-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.recipe-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.recipe-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.recipe-meta-item i {
+    color: var(--primary-color);
+    font-size: 12px;
+}
+
+.recipe-category-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+}
+
+/* Recipe Title - Cliquable */
 .recipe-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     line-height: 1.3;
-    letter-spacing: -0.4px;
+    letter-spacing: -0.3px;
 }
 
 .recipe-title a {
@@ -270,101 +341,66 @@ body {
     text-decoration: none;
 }
 
+.recipe-title a:hover {
+    color: var(--primary-color);
+}
+
 .recipe-title a:active {
     color: var(--primary-color);
 }
 
-/* Recipe Meta - Avec icônes */
-.recipe-meta {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-}
-
-.recipe-meta-item {
+/* Recipe Rating - En dessous du titre */
+.recipe-rating {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.recipe-meta-item i {
-    color: var(--primary-color);
-    font-size: 13px;
-}
-
-/* Recipe Description */
-.recipe-description {
-    color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* Recipe Tags */
-.recipe-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.recipe-tag {
-    background: #F3F4F6;
-    color: var(--text-primary);
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: -0.1px;
-}
-
-/* Recipe Actions - Boutons arrondis style iOS */
-.recipe-actions {
-    display: flex;
-    gap: 10px;
     margin-top: auto;
 }
 
-.recipe-actions .btn {
-    flex: 1;
-    border-radius: 50px;
-    padding: 13px;
+.recipe-rating i {
+    color: #FFC107;
+    font-size: 14px;
+}
+
+.recipe-rating-value {
     font-size: 14px;
     font-weight: 700;
-    transition: all 0.2s;
-    border: none;
-    letter-spacing: -0.2px;
+    color: var(--text-primary);
 }
 
-.recipe-actions .btn-primary {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(91, 94, 244, 0.3);
+.recipe-rating-count {
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
-.recipe-actions .btn-primary:hover {
-    background: var(--primary-dark);
-    box-shadow: 0 6px 16px rgba(91, 94, 244, 0.4);
+/* Masquer les éléments non utilisés dans le layout liste */
+.recipe-description,
+.recipe-tags,
+.recipe-actions {
+    display: none;
 }
 
-.recipe-actions .btn-primary:active {
-    transform: scale(0.95);
-}
-
-/* Favorite Button */
+/* Favorite Button - Flottant en haut à droite */
 .btn-favorite {
-    background: #F3F4F6;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.95);
     color: var(--text-secondary);
     border: none;
     transition: all 0.2s;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-card {
+    position: relative;
 }
 
 .btn-favorite:hover,
@@ -394,6 +430,10 @@ body {
     display: none;
 }
 
+.btn-favorite span {
+    display: none;
+}
+
 /* Alerts */
 .alert {
     border-radius: var(--border-radius-md);
@@ -401,6 +441,52 @@ body {
     padding: 18px;
     font-size: 15px;
     font-weight: 600;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination a,
+.pagination span {
+    padding: 10px 16px;
+    border-radius: 50px;
+    background: #F3F4F6;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+.pagination a:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pagination .active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pagination .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* === TABLET (576px+) === */
@@ -428,22 +514,18 @@ body {
     }
 
     .recipes-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: 18px;
     }
 
     .recipe-photo,
     .recipe-photo-placeholder {
-        height: 240px;
+        width: 140px;
+        min-width: 140px;
+        height: 140px;
     }
 
     .recipe-title {
-        font-size: 19px;
-    }
-
-    .recipe-description {
-        font-size: 15px;
+        font-size: 17px;
     }
 
     .category-filter {
@@ -481,83 +563,48 @@ body {
     }
 
     .recipes-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
+        gap: 20px;
     }
 
     .recipe-card:hover {
-        transform: translateY(-6px);
-        box-shadow: var(--shadow-lg);
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
     }
 
     .recipe-photo,
     .recipe-photo-placeholder {
-        height: 260px;
+        width: 160px;
+        min-width: 160px;
+        height: 160px;
     }
 
     .recipe-photo-placeholder {
-        font-size: 72px;
+        font-size: 48px;
     }
 
     .recipe-content {
-        padding: 24px;
+        padding: 16px 20px;
     }
 
     .recipe-title {
-        font-size: 20px;
-        margin-bottom: 14px;
+        font-size: 18px;
     }
 
     .recipe-title a:hover {
         color: var(--primary-color);
     }
 
-    .recipe-meta {
-        gap: 18px;
-        margin-bottom: 16px;
-    }
-
     .recipe-meta-item {
-        font-size: 14px;
-    }
-
-    .recipe-description {
-        -webkit-line-clamp: 3;
-        font-size: 15px;
-    }
-
-    .recipe-tag {
         font-size: 13px;
     }
 
-    .recipe-actions .btn {
+    .recipe-rating-value {
         font-size: 15px;
-        padding: 14px;
     }
 
     .category-filter:hover {
         transform: translateY(-3px);
         box-shadow: 0 6px 16px rgba(91, 94, 244, 0.3);
-    }
-}
-
-/* === LARGE DESKTOP (1200px+) === */
-@media (min-width: 1200px) {
-    .recipes-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 28px;
-    }
-
-    .recipe-photo,
-    .recipe-photo-placeholder {
-        height: 280px;
-    }
-}
-
-/* === EXTRA LARGE (1400px+) === */
-@media (min-width: 1400px) {
-    .recipes-grid {
-        grid-template-columns: repeat(4, 1fr);
     }
 }
 </style>
@@ -666,7 +713,8 @@ body {
                                 }
                             }
                             ?>
-                            <div class="recipe-card">
+                            <div class="recipe-card" onclick="window.location.href='<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>'">
+                                <!-- Image à gauche -->
                                 <?php if ($recipe->main_photo) : ?>
                                     <img src="<?php echo base_url($recipe->main_photo->photo_url); ?>"
                                          alt="<?php echo htmlspecialchars($recipe->name); ?>"
@@ -677,60 +725,86 @@ body {
                                     </div>
                                 <?php endif; ?>
 
+                                <!-- Contenu à droite -->
                                 <div class="recipe-content">
+                                    <!-- Header: Temps + Catégorie -->
+                                    <div class="recipe-header">
+                                        <div class="recipe-meta">
+                                            <?php if ($recipe->preparation_time) : ?>
+                                                <div class="recipe-meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo $recipe->preparation_time; ?> min
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($recipe->category) : ?>
+                                            <span class="recipe-category-badge">
+                                                <?php
+                                                $category_labels = [
+                                                    'breakfast' => 'Petit-déjeuner',
+                                                    'lunch' => 'Déjeuner',
+                                                    'dinner' => 'Dîner',
+                                                    'snack' => 'Collation',
+                                                    'smoothie' => 'Smoothie',
+                                                    'juice' => 'Jus naturel',
+                                                    'beverage' => 'Boisson',
+                                                    'dessert' => 'Dessert'
+                                                ];
+                                                echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                                ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Titre cliquable -->
                                     <h3 class="recipe-title">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>">
+                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>" onclick="event.stopPropagation();">
                                             <?php echo htmlspecialchars($recipe->name); ?>
                                         </a>
                                     </h3>
 
-                                    <div class="recipe-meta">
-                                        <?php if ($recipe->preparation_time) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-clock-o"></i>
-                                                <?php echo $recipe->preparation_time; ?> min
-                                            </div>
-                                        <?php endif; ?>
-                                        <?php if ($recipe->average_rating > 0) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-star" style="color: #f39c12;"></i>
-                                                <?php echo number_format($recipe->average_rating, 1); ?> (<?php echo $recipe->ratings_count; ?>)
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <?php if ($recipe->description) : ?>
-                                        <p class="recipe-description">
-                                            <?php echo nl2br(htmlspecialchars(substr($recipe->description, 0, 120))); ?>
-                                            <?php if (strlen($recipe->description) > 120) echo '...'; ?>
-                                        </p>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($recipe->tags)) : ?>
-                                        <div class="recipe-tags">
-                                            <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                                <span class="recipe-tag"><?php echo htmlspecialchars($tag); ?></span>
-                                            <?php endforeach; ?>
+                                    <!-- Rating sous le titre -->
+                                    <?php if ($recipe->average_rating > 0) : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star"></i>
+                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                        </div>
+                                    <?php else : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star-o"></i>
+                                            <span class="recipe-rating-count">Pas encore d'avis</span>
                                         </div>
                                     <?php endif; ?>
-
-                                    <div class="recipe-actions">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fa fa-eye"></i> Voir
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                                onclick="toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                            <i class="fa fa-heart"></i>
-                                            <i class="fa fa-heart-o"></i>
-                                            Favori
-                                        </button>
-                                    </div>
                                 </div>
+
+                                <!-- Bouton favori flottant -->
+                                <button type="button"
+                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                    <i class="fa fa-heart"></i>
+                                    <i class="fa fa-heart-o"></i>
+                                    <span>Favori</span>
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination (exemple) -->
+                    <?php if (count($all_recipes) > 0) : ?>
+                        <div class="pagination-wrapper">
+                            <div class="pagination">
+                                <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                                <span class="active">1</span>
+                                <a href="#">2</a>
+                                <a href="#">3</a>
+                                <a href="#">4</a>
+                                <span>...</span>
+                                <a href="#">10</a>
+                                <a href="#"><i class="fa fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
 
@@ -753,7 +827,8 @@ body {
                                 }
                             }
                             ?>
-                            <div class="recipe-card">
+                            <div class="recipe-card" onclick="window.location.href='<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>'">
+                                <!-- Image à gauche -->
                                 <?php if ($recipe->main_photo) : ?>
                                     <img src="<?php echo base_url($recipe->main_photo->photo_url); ?>"
                                          alt="<?php echo htmlspecialchars($recipe->name); ?>"
@@ -764,58 +839,86 @@ body {
                                     </div>
                                 <?php endif; ?>
 
+                                <!-- Contenu à droite -->
                                 <div class="recipe-content">
+                                    <!-- Header: Temps + Catégorie -->
+                                    <div class="recipe-header">
+                                        <div class="recipe-meta">
+                                            <?php if ($recipe->preparation_time) : ?>
+                                                <div class="recipe-meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo $recipe->preparation_time; ?> min
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($recipe->category) : ?>
+                                            <span class="recipe-category-badge">
+                                                <?php
+                                                $category_labels = [
+                                                    'breakfast' => 'Petit-déjeuner',
+                                                    'lunch' => 'Déjeuner',
+                                                    'dinner' => 'Dîner',
+                                                    'snack' => 'Collation',
+                                                    'smoothie' => 'Smoothie',
+                                                    'juice' => 'Jus naturel',
+                                                    'beverage' => 'Boisson',
+                                                    'dessert' => 'Dessert'
+                                                ];
+                                                echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                                ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Titre cliquable -->
                                     <h3 class="recipe-title">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>">
+                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>" onclick="event.stopPropagation();">
                                             <?php echo htmlspecialchars($recipe->name); ?>
                                         </a>
                                     </h3>
 
-                                    <div class="recipe-meta">
-                                        <div class="recipe-meta-item">
-                                            <i class="fa fa-user"></i>
-                                            Assigné par <?php echo htmlspecialchars($recipe->dietitian_name); ?>
+                                    <!-- Rating sous le titre -->
+                                    <?php if ($recipe->average_rating > 0) : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star"></i>
+                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
                                         </div>
-                                        <?php if ($recipe->preparation_time) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-clock-o"></i>
-                                                <?php echo $recipe->preparation_time; ?> min
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <?php if ($recipe->notes) : ?>
-                                        <div class="alert alert-info" style="margin-top: 10px;">
-                                            <strong>Note de votre diététicien :</strong><br>
-                                            <?php echo nl2br(htmlspecialchars($recipe->notes)); ?>
+                                    <?php else : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star-o"></i>
+                                            <span class="recipe-rating-count">Pas encore d'avis</span>
                                         </div>
                                     <?php endif; ?>
-
-                                    <?php if (!empty($recipe->tags)) : ?>
-                                        <div class="recipe-tags">
-                                            <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                                <span class="recipe-tag"><?php echo htmlspecialchars($tag); ?></span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <div class="recipe-actions">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fa fa-eye"></i> Voir
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                                onclick="toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                            <i class="fa fa-heart"></i>
-                                            <i class="fa fa-heart-o"></i>
-                                            Favori
-                                        </button>
-                                    </div>
                                 </div>
+
+                                <!-- Bouton favori flottant -->
+                                <button type="button"
+                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                    <i class="fa fa-heart"></i>
+                                    <i class="fa fa-heart-o"></i>
+                                    <span>Favori</span>
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination (exemple) -->
+                    <?php if (count($assigned_recipes) > 0) : ?>
+                        <div class="pagination-wrapper">
+                            <div class="pagination">
+                                <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                                <span class="active">1</span>
+                                <a href="#">2</a>
+                                <a href="#">3</a>
+                                <a href="#">4</a>
+                                <span>...</span>
+                                <a href="#">10</a>
+                                <a href="#"><i class="fa fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
