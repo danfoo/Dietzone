@@ -73,6 +73,17 @@ register_language_files(DIETETIC_MODULE_NAME, [DIETETIC_MODULE_NAME]);
 hooks()->add_action('admin_init', 'dietetic_module_init_menu_items');
 
 /**
+ * Add JavaScript to force recipes menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_recipes_menu_js');
+
+function dietetic_force_recipes_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Recettes
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_recipes_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Define module menu items
  */
 function dietetic_module_init_menu_items()
