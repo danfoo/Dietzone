@@ -771,7 +771,7 @@ class Dietetic_recipes_model extends App_Model
         $this->db->select_avg('rating');
         $this->db->where('recipe_id', $recipe_id);
         $result = $this->db->get(db_prefix() . $this->table_ratings)->row();
-        return $result ? round($result->rating, 1) : 0;
+        return ($result && $result->rating !== null) ? round($result->rating, 1) : 0;
     }
 
     /**

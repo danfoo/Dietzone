@@ -552,8 +552,10 @@
 
 <script>
 $(document).ready(function() {
-    // Load patients when modal opens
-    $('#assignModal').on('show.bs.modal', function() {
+    console.log('[Recipe View] Initialisation...');
+
+    // Load patients immediately on page load (Bootstrap Modal not loaded, so events don't work)
+    function loadPatients() {
         console.log('[Recipe View] Chargement des patients pour assignation...');
 
         $.ajax({
@@ -572,13 +574,23 @@ $(document).ready(function() {
                     return;
                 }
 
-                patients.forEach(function(patient) {
-                    select.append('<option value="' + patient.id + '">' + patient.name + '</option>');
-                    console.log('[Recipe View] Patient ajouté:', patient.name);
-                });
+                if (patients.length === 0) {
+                    console.warn('[Recipe View] Aucun patient disponible');
+                    select.append('<option value="">Aucun patient disponible</option>');
+                } else {
+                    patients.forEach(function(patient) {
+                        select.append('<option value="' + patient.id + '">' + patient.name + '</option>');
+                        console.log('[Recipe View] Patient ajouté:', patient.name);
+                    });
+                }
 
-                select.selectpicker('refresh');
-                console.log('[Recipe View] Selectpicker rafraîchi');
+                // Refresh selectpicker if it exists
+                if (typeof select.selectpicker === 'function') {
+                    select.selectpicker('refresh');
+                    console.log('[Recipe View] Selectpicker rafraîchi');
+                } else {
+                    console.warn('[Recipe View] Selectpicker not available');
+                }
             },
             error: function(xhr, status, error) {
                 console.error('[Recipe View] Erreur AJAX:', status, error);
@@ -586,6 +598,23 @@ $(document).ready(function() {
                 alert('Erreur lors du chargement des patients. Vérifiez la console.');
             }
         });
+    }
+
+    // Load patients immediately
+    loadPatients();
+
+    // Also try to load when modal opens (in case Bootstrap becomes available later)
+    $('#assignModal').on('show.bs.modal', function() {
+        console.log('[Recipe View] Modal ouvert, rechargement des patients...');
+        loadPatients();
+    });
+
+    // Fallback: if Bootstrap modal event doesn't work, attach to the button click
+    $('button[data-target="#assignModal"]').on('click', function() {
+        console.log('[Recipe View] Bouton cliqué, chargement des patients...');
+        setTimeout(function() {
+            loadPatients();
+        }, 300); // Small delay to let modal open
     });
 
     // Assign recipe to patient
@@ -606,8 +635,14 @@ $(document).ready(function() {
             const data = JSON.parse(response);
             if (data.success) {
                 alert_float('success', data.message);
-                $('#assignModal').modal('hide');
-                $('#patient_id').val('').selectpicker('refresh');
+                // Try to close modal
+                if (typeof $('#assignModal').modal === 'function') {
+                    $('#assignModal').modal('hide');
+                }
+                $('#patient_id').val('');
+                if (typeof $('#patient_id').selectpicker === 'function') {
+                    $('#patient_id').selectpicker('refresh');
+                }
                 $('#assignment_notes').val('');
             } else {
                 alert_float('danger', data.message);
