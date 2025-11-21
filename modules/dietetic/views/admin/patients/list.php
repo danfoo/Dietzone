@@ -828,20 +828,25 @@
 $(window).on('load', function() {
     // Initialize DataTables
     if ($.fn.DataTable) {
-        $('#patients-table').DataTable({
+        var dataTableOptions = {
             "order": [[6, "desc"]], // Sort by created_at desc
             "pageLength": 10,
             "lengthChange": false,
             "searching": true,
             "info": true,
             "paging": true,
-            "language": {
-                "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
-            },
             "columnDefs": [
                 { "orderable": false, "targets": 7 } // Disable sorting on actions column
             ]
-        });
+        };
+
+        <?php if (function_exists('perfex_get_datatables_language_file')) : ?>
+        dataTableOptions.language = {
+            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
+        };
+        <?php endif; ?>
+
+        $('#patients-table').DataTable(dataTableOptions);
     } else {
         console.error('DataTables not loaded');
     }
