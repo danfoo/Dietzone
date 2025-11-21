@@ -482,12 +482,33 @@
                         <div class="col-md-12">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    <i class="fa fa-users"></i> Assigner aux Patients
+                                    <i class="fa fa-users"></i> Assigner la Recette à un Patient
                                 </div>
                                 <div class="panel-body">
-                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#assignModal">
-                                        <i class="fa fa-plus"></i> Assigner à un patient
-                                    </button>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="patient_id">Sélectionner un patient <span class="text-danger">*</span></label>
+                                                <select class="form-control selectpicker" id="patient_id" name="patient_id" data-live-search="true" required>
+                                                    <option value="">-- Chargement des patients... --</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="assignment_notes">Notes pour le patient (optionnel)</label>
+                                                <textarea class="form-control" id="assignment_notes" name="notes" rows="3" placeholder="Instructions ou recommandations particulières..."></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="button" class="btn btn-primary" id="btn-assign">
+                                                <i class="fa fa-check"></i> Assigner cette recette
+                                            </button>
+                                            <span id="assign-status" style="margin-left: 15px;"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -522,130 +543,127 @@
     </div>
 </div>
 
-<!-- Assign Modal -->
-<div class="modal fade" id="assignModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                <h4 class="modal-title"><i class="fa fa-users"></i> Assigner la Recette à un Patient</h4>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="patient_id">Patient <span class="text-danger">*</span></label>
-                    <select class="form-control selectpicker" id="patient_id" name="patient_id" data-live-search="true" required>
-                        <option value="">-- Sélectionner un patient --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="assignment_notes">Notes pour le patient</label>
-                    <textarea class="form-control" id="assignment_notes" name="notes" rows="3"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="btn-assign">Assigner</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 $(document).ready(function() {
-    console.log('[Recipe View] Initialisation...');
+    console.log('[Recipe View] Initialisation du formulaire d\'assignation...');
 
-    // Load patients immediately on page load (Bootstrap Modal not loaded, so events don't work)
-    function loadPatients() {
-        console.log('[Recipe View] Chargement des patients pour assignation...');
+    // Load patients immediately on page load
+    console.log('[Recipe View] Chargement des patients...');
 
-        $.ajax({
-            url: '<?php echo admin_url('dietetic/recipes/get_patients'); ?>',
-            type: 'GET',
-            dataType: 'json',
-            success: function(patients) {
-                console.log('[Recipe View] Patients chargés:', patients.length);
-                const select = $('#patient_id');
-                select.empty();
-                select.append('<option value="">-- Sélectionner un patient --</option>');
+    $.ajax({
+        url: '<?php echo admin_url('dietetic/recipes/get_patients'); ?>',
+        type: 'GET',
+        dataType: 'json',
+        success: function(patients) {
+            console.log('[Recipe View] ✅ Patients chargés:', patients.length);
+            const select = $('#patient_id');
+            select.empty();
+            select.append('<option value="">-- Sélectionner un patient --</option>');
 
-                if (patients.error) {
-                    console.error('[Recipe View] Erreur:', patients.error);
-                    alert('Erreur lors du chargement des patients: ' + patients.error);
-                    return;
-                }
-
-                if (patients.length === 0) {
-                    console.warn('[Recipe View] Aucun patient disponible');
-                    select.append('<option value="">Aucun patient disponible</option>');
-                } else {
-                    patients.forEach(function(patient) {
-                        select.append('<option value="' + patient.id + '">' + patient.name + '</option>');
-                        console.log('[Recipe View] Patient ajouté:', patient.name);
-                    });
-                }
-
-                // Refresh selectpicker if it exists
-                if (typeof select.selectpicker === 'function') {
-                    select.selectpicker('refresh');
-                    console.log('[Recipe View] Selectpicker rafraîchi');
-                } else {
-                    console.warn('[Recipe View] Selectpicker not available');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('[Recipe View] Erreur AJAX:', status, error);
-                console.error('[Recipe View] Response:', xhr.responseText);
-                alert('Erreur lors du chargement des patients. Vérifiez la console.');
+            if (patients.error) {
+                console.error('[Recipe View] ❌ Erreur:', patients.error);
+                select.append('<option value="">Erreur: ' + patients.error + '</option>');
+                return;
             }
-        });
-    }
 
-    // Load patients immediately
-    loadPatients();
+            if (patients.length === 0) {
+                console.warn('[Recipe View] ⚠️ Aucun patient disponible');
+                select.append('<option value="">Aucun patient disponible</option>');
+            } else {
+                patients.forEach(function(patient) {
+                    select.append('<option value="' + patient.id + '">' + patient.name + ' (' + patient.email + ')</option>');
+                    console.log('[Recipe View] ✅ Patient ajouté: ' + patient.name);
+                });
+            }
 
-    // Also try to load when modal opens (in case Bootstrap becomes available later)
-    $('#assignModal').on('show.bs.modal', function() {
-        console.log('[Recipe View] Modal ouvert, rechargement des patients...');
-        loadPatients();
-    });
-
-    // Fallback: if Bootstrap modal event doesn't work, attach to the button click
-    $('button[data-target="#assignModal"]').on('click', function() {
-        console.log('[Recipe View] Bouton cliqué, chargement des patients...');
-        setTimeout(function() {
-            loadPatients();
-        }, 300); // Small delay to let modal open
+            // Refresh selectpicker
+            if (typeof select.selectpicker === 'function') {
+                select.selectpicker('refresh');
+                console.log('[Recipe View] ✅ Selectpicker rafraîchi - ' + patients.length + ' patient(s) disponible(s)');
+            } else {
+                console.log('[Recipe View] ℹ️ Selectpicker non disponible, utilisation du select standard');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('[Recipe View] ❌ Erreur AJAX:', status, error);
+            console.error('[Recipe View] Response:', xhr.responseText);
+            const select = $('#patient_id');
+            select.empty();
+            select.append('<option value="">Erreur lors du chargement</option>');
+            if (typeof select.selectpicker === 'function') {
+                select.selectpicker('refresh');
+            }
+        }
     });
 
     // Assign recipe to patient
     $('#btn-assign').click(function() {
         const patientId = $('#patient_id').val();
         const notes = $('#assignment_notes').val();
+        const statusSpan = $('#assign-status');
+        const btn = $(this);
+
+        console.log('[Recipe View] Tentative d\'assignation - Patient ID:', patientId);
 
         if (!patientId) {
             alert('Veuillez sélectionner un patient');
             return;
         }
 
-        $.post('<?php echo admin_url('dietetic/recipes/assign'); ?>', {
-            recipe_id: <?php echo $recipe->id; ?>,
-            patient_id: patientId,
-            notes: notes
-        }, function(response) {
-            const data = JSON.parse(response);
-            if (data.success) {
-                alert_float('success', data.message);
-                // Try to close modal
-                if (typeof $('#assignModal').modal === 'function') {
-                    $('#assignModal').modal('hide');
+        // Disable button and show loading
+        btn.prop('disabled', true);
+        statusSpan.html('<i class="fa fa-spinner fa-spin"></i> Assignation en cours...');
+
+        $.ajax({
+            url: '<?php echo admin_url('dietetic/recipes/assign'); ?>',
+            type: 'POST',
+            data: {
+                recipe_id: <?php echo $recipe->id; ?>,
+                patient_id: patientId,
+                notes: notes
+            },
+            dataType: 'json',
+            success: function(data) {
+                console.log('[Recipe View] ✅ Assignation réussie:', data);
+
+                if (data.success) {
+                    statusSpan.html('<span style="color:green;"><i class="fa fa-check"></i> ' + data.message + '</span>');
+
+                    // Clear form
+                    $('#patient_id').val('');
+                    if (typeof $('#patient_id').selectpicker === 'function') {
+                        $('#patient_id').selectpicker('refresh');
+                    }
+                    $('#assignment_notes').val('');
+
+                    // Show success notification
+                    if (typeof alert_float === 'function') {
+                        alert_float('success', data.message);
+                    }
+
+                    // Clear status after 3 seconds
+                    setTimeout(function() {
+                        statusSpan.html('');
+                    }, 3000);
+                } else {
+                    statusSpan.html('<span style="color:red;"><i class="fa fa-times"></i> ' + data.message + '</span>');
+                    if (typeof alert_float === 'function') {
+                        alert_float('danger', data.message);
+                    }
                 }
-                $('#patient_id').val('');
-                if (typeof $('#patient_id').selectpicker === 'function') {
-                    $('#patient_id').selectpicker('refresh');
+
+                btn.prop('disabled', false);
+            },
+            error: function(xhr, status, error) {
+                console.error('[Recipe View] ❌ Erreur assignation:', status, error);
+                console.error('[Recipe View] Response:', xhr.responseText);
+
+                statusSpan.html('<span style="color:red;"><i class="fa fa-times"></i> Erreur lors de l\'assignation</span>');
+                if (typeof alert_float === 'function') {
+                    alert_float('danger', 'Erreur lors de l\'assignation');
                 }
-                $('#assignment_notes').val('');
-            } else {
-                alert_float('danger', data.message);
+
+                btn.prop('disabled', false);
             }
         });
     });
