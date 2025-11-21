@@ -33,8 +33,8 @@ body {
 
 /* Base Container */
 .container {
-    padding: 16px;
-    max-width: 1400px;
+    padding: 15px;
+    max-width: 100%;
 }
 
 /* Filter Section */
@@ -47,7 +47,7 @@ body {
 }
 
 .filter-section h4 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     margin-bottom: 16px;
     color: var(--text-primary);
@@ -59,7 +59,7 @@ body {
 
 .filter-section h4 i {
     color: var(--primary-color);
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .filter-section hr {
@@ -76,11 +76,11 @@ body {
 
 .filter-section .search-wrapper .search-icon {
     position: absolute;
-    right: 20px;
+    right: 18px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary);
-    font-size: 18px;
+    font-size: 16px;
     pointer-events: none;
     z-index: 2;
 }
@@ -93,8 +93,8 @@ body {
     border-radius: 50px;
     border: none;
     background: #F3F4F6;
-    padding: 14px 50px 14px 20px;
-    font-size: 15px;
+    padding: 12px 45px 12px 18px;
+    font-size: 14px;
     color: var(--text-primary);
     font-weight: 500;
     width: 100%;
@@ -117,9 +117,9 @@ body {
 .filter-section .btn-danger {
     width: 100%;
     border-radius: 50px;
-    padding: 14px;
+    padding: 12px;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
     background: var(--secondary-color);
     border: none;
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
@@ -162,24 +162,24 @@ body {
 }
 
 .category-filter {
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: 50px;
     background: #F3F4F6;
     color: var(--text-primary);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     letter-spacing: -0.2px;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .category-filter i {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .category-filter:hover,
@@ -214,9 +214,9 @@ body {
 
 .recipes-tabs .nav-tabs li a {
     color: var(--text-secondary);
-    padding: 18px 16px;
+    padding: 14px 12px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s;
     text-align: center;
     border: none;
@@ -308,28 +308,28 @@ body {
     align-items: center;
     gap: 4px;
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .recipe-meta-item i {
     color: var(--primary-color);
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .recipe-category-badge {
     background: var(--primary-color);
     color: white;
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 50px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: -0.1px;
 }
 
 /* Recipe Title - Cliquable */
 .recipe-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     color: var(--text-primary);
     margin-bottom: 8px;
@@ -354,23 +354,23 @@ body {
 .recipe-rating {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     margin-top: auto;
 }
 
 .recipe-rating i {
     color: #FFC107;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .recipe-rating-value {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .recipe-rating-count {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
 }
 
@@ -690,12 +690,12 @@ body {
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#all" data-toggle="tab">
-                    <i class="fa fa-book"></i> Toutes les Recettes (<?php echo count($all_recipes); ?>)
+                    <i class="fa fa-book"></i> Les recettes
                 </a>
             </li>
             <li>
                 <a href="#assigned" data-toggle="tab">
-                    <i class="fa fa-star"></i> Mes Recettes Assignées (<?php echo count($assigned_recipes); ?>)
+                    <i class="fa fa-star"></i> Recommandées
                 </a>
             </li>
         </ul>
