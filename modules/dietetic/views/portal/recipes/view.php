@@ -32,7 +32,7 @@ body {
 .recipe-hero {
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 250px;
     margin: 0 0 20px 0;
     overflow: hidden;
     border-radius: var(--border-radius-lg);
@@ -284,11 +284,8 @@ body {
 }
 
 .instructions-list li {
-    padding: 16px 16px 16px 60px;
-    border-left: 3px solid var(--primary-color);
-    margin-bottom: 12px;
-    background: #F8F9FA;
-    border-radius: var(--border-radius-sm);
+    padding: 12px 12px 12px 50px;
+    margin-bottom: 8px;
     position: relative;
     counter-increment: step-counter;
     font-size: 14px;
@@ -299,8 +296,8 @@ body {
 .instructions-list li:before {
     content: counter(step-counter);
     position: absolute;
-    left: 16px;
-    top: 16px;
+    left: 0;
+    top: 12px;
     background: var(--primary-color);
     color: white;
     width: 32px;
@@ -432,7 +429,7 @@ body {
 /* === TABLET (576px+) === */
 @media (min-width: 576px) {
     .recipe-hero {
-        height: 300px;
+        height: 250px;
         margin: 0 0 24px 0;
     }
 
@@ -465,7 +462,7 @@ body {
 /* === DESKTOP (992px+) === */
 @media (min-width: 992px) {
     .recipe-hero {
-        height: 300px;
+        height: 250px;
         margin: 0 0 28px 0;
     }
 
@@ -862,13 +859,15 @@ function toggleFavorite(recipeId, btnElement) {
     });
 }
 
-// Rating functionality inspired by my_dietitians system
+// Rating functionality - Interactive stars system
 $(document).ready(function() {
     let selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
     const starGroup = document.getElementById('stars-rating');
     const stars = starGroup.querySelectorAll('i');
     const submitBtn = document.getElementById('submit-rating');
     const ratingForm = document.getElementById('ratingForm');
+
+    console.log('Rating system initialized. Current rating:', selectedRating);
 
     // Initialize current rating
     if (selectedRating > 0) {
@@ -878,7 +877,7 @@ $(document).ready(function() {
     }
 
     // Star interactions
-    stars.forEach(function(star) {
+    stars.forEach(function(star, idx) {
         // Hover effect
         star.addEventListener('mouseenter', function() {
             const rating = parseInt(this.getAttribute('data-rating'));
@@ -888,6 +887,7 @@ $(document).ready(function() {
         // Click/touch to select
         star.addEventListener('click', function() {
             const rating = parseInt(this.getAttribute('data-rating'));
+            console.log('Star clicked, rating:', rating);
             selectedRating = rating;
             markSelected(rating);
             submitBtn.disabled = false;
@@ -930,6 +930,7 @@ $(document).ready(function() {
     // Form submission with AJAX
     ratingForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        console.log('Form submitted, selectedRating:', selectedRating);
 
         if (selectedRating === 0) {
             if (window.alert_float) {
@@ -943,6 +944,12 @@ $(document).ready(function() {
         const comment = document.getElementById('rating-comment').value;
         const originalBtnText = submitBtn.innerHTML;
 
+        console.log('Sending rating:', {
+            recipe_id: <?php echo $recipe->id; ?>,
+            rating: selectedRating,
+            comment: comment
+        });
+
         // Disable button during submission
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
@@ -950,51 +957,43 @@ $(document).ready(function() {
         $.ajax({
             url: '<?php echo site_url('dietetic/portal/recipe_rate'); ?>',
             type: 'POST',
+            dataType: 'json',
             data: {
                 recipe_id: <?php echo $recipe->id; ?>,
                 rating: selectedRating,
                 comment: comment,
                 '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             },
-            success: function(response) {
-                try {
-                    const data = typeof response === 'string' ? JSON.parse(response) : response;
-                    if (data.success) {
-                        if (window.alert_float) {
-                            alert_float('success', 'Merci pour votre avis !');
-                        } else {
-                            alert('Merci pour votre avis !');
-                        }
-                        // Reload after 2 seconds
-                        setTimeout(function() {
-                            location.reload();
-                        }, 2000);
-                    } else {
-                        if (window.alert_float) {
-                            alert_float('danger', data.message);
-                        } else {
-                            alert(data.message);
-                        }
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalBtnText;
-                    }
-                } catch(e) {
-                    console.error('Erreur parsing:', e, response);
+            success: function(data) {
+                console.log('Response received:', data);
+                if (data.success) {
                     if (window.alert_float) {
-                        alert_float('danger', 'Une erreur est survenue');
+                        alert_float('success', data.message || 'Merci pour votre avis !');
                     } else {
-                        alert('Une erreur est survenue');
+                        alert(data.message || 'Merci pour votre avis !');
+                    }
+                    // Reload after 1.5 seconds
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.error('Rating failed:', data.message);
+                    if (window.alert_float) {
+                        alert_float('danger', data.message || 'Erreur lors de l\'enregistrement');
+                    } else {
+                        alert(data.message || 'Erreur lors de l\'enregistrement');
                     }
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Erreur AJAX:', status, error);
+                console.error('AJAX error:', {xhr: xhr, status: status, error: error});
+                console.error('Response text:', xhr.responseText);
                 if (window.alert_float) {
-                    alert_float('danger', 'Erreur de connexion');
+                    alert_float('danger', 'Erreur de connexion. Veuillez réessayer.');
                 } else {
-                    alert('Erreur de connexion');
+                    alert('Erreur de connexion. Veuillez réessayer.');
                 }
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
