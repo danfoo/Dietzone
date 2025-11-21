@@ -917,18 +917,19 @@ class Dietetic_recipes_model extends App_Model
      */
     public function get_favorites($patient_id)
     {
-        $this->db->select('r.*, rf.added_at');
+        $this->db->select('r.*');
         $this->db->from(db_prefix() . $this->table_favorites . ' rf');
         $this->db->join(db_prefix() . $this->table . ' r', 'r.id = rf.recipe_id', 'inner');
         $this->db->where('rf.patient_id', $patient_id);
         $this->db->where('r.status', 'approved');
-        $this->db->order_by('rf.added_at', 'DESC');
+        $this->db->order_by('r.created_at', 'DESC');
 
         $recipes = $this->db->get()->result();
 
         foreach ($recipes as &$recipe) {
             $recipe->main_photo = $this->get_main_photo($recipe->id);
             $recipe->average_rating = $this->get_average_rating($recipe->id);
+            $recipe->ratings_count = $this->get_ratings_count($recipe->id);
             $recipe->tags = $this->get_tags($recipe->id);
         }
 
