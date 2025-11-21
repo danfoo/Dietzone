@@ -419,13 +419,18 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
+
 <script>
 // Store all foods data in JavaScript for dynamic ingredient rows
 var foodsData = <?php echo json_encode(isset($foods) ? $foods : []); ?>;
 
 $(document).ready(function() {
+    console.log('[Recipe Form] JavaScript chargé - foodsData:', foodsData.length, 'aliments');
+
     // Initialize selectpicker
     $('.selectpicker').selectpicker('refresh');
+    console.log('[Recipe Form] Selectpicker initialisé');
 
     // Calculate nutrition automatically
     function calculateNutrition() {
@@ -457,6 +462,13 @@ $(document).ready(function() {
         $('#calc-protein').val(totalProtein.toFixed(1));
         $('#calc-carbs').val(totalCarbs.toFixed(1));
         $('#calc-fat').val(totalFat.toFixed(1));
+
+        console.log('[Recipe Form] Nutrition calculée:', {
+            calories: totalCalories.toFixed(1),
+            protein: totalProtein.toFixed(1),
+            carbs: totalCarbs.toFixed(1),
+            fat: totalFat.toFixed(1)
+        });
     }
 
     // Generate options HTML from foodsData
@@ -492,6 +504,7 @@ $(document).ready(function() {
 
     // Add ingredient
     $('#add-ingredient').click(function() {
+        console.log('[Recipe Form] Ajouter un ingrédient cliqué');
         const html = `
             <div class="ingredient-row">
                 <div class="row">
@@ -517,6 +530,7 @@ $(document).ready(function() {
         `;
         $('#ingredients-container').append(html);
         $('.selectpicker').selectpicker('refresh');
+        console.log('[Recipe Form] Nouvel ingrédient ajouté');
     });
 
     // Remove ingredient
@@ -524,6 +538,7 @@ $(document).ready(function() {
         if ($('.ingredient-row').length > 1) {
             $(this).closest('.ingredient-row').remove();
             calculateNutrition();
+            console.log('[Recipe Form] Ingrédient supprimé');
         } else {
             alert('Vous devez avoir au moins un ingrédient');
         }
@@ -531,6 +546,12 @@ $(document).ready(function() {
 
     // Update nutrition when ingredient or quantity changes
     $(document).on('change', '.food-select, .ingredient-quantity', function() {
+        console.log('[Recipe Form] Ingrédient ou quantité modifié');
+        calculateNutrition();
+    });
+
+    // Also trigger on input for real-time updates
+    $(document).on('input', '.ingredient-quantity', function() {
         calculateNutrition();
     });
 
@@ -541,6 +562,7 @@ $(document).ready(function() {
 
     // Add instruction
     $('#add-instruction').click(function() {
+        console.log('[Recipe Form] Ajouter une étape cliqué');
         const stepNumber = $('.instruction-row').length + 1;
         const html = `
             <div class="instruction-row">
@@ -560,6 +582,7 @@ $(document).ready(function() {
             </div>
         `;
         $('#instructions-container').append(html);
+        console.log('[Recipe Form] Nouvelle étape ajoutée');
     });
 
     // Remove instruction
@@ -567,6 +590,7 @@ $(document).ready(function() {
         if ($('.instruction-row').length > 1) {
             $(this).closest('.instruction-row').remove();
             updateInstructionNumbers();
+            console.log('[Recipe Form] Étape supprimée');
         } else {
             alert('Vous devez avoir au moins une étape');
         }
@@ -584,6 +608,7 @@ $(document).ready(function() {
         // Check if tag already exists
         const exists = $('input[name="tags[]"][value="' + tagName + '"]').length > 0;
         if (exists) {
+            console.log('[Recipe Form] Tag déjà existant:', tagName);
             return;
         }
 
@@ -595,6 +620,7 @@ $(document).ready(function() {
             </div>
         `;
         $('#tag-input').append(html);
+        console.log('[Recipe Form] Tag ajouté:', tagName);
     }
 
     // Add tag from input
@@ -618,6 +644,7 @@ $(document).ready(function() {
     // Remove tag
     $(document).on('click', '.remove-tag', function() {
         $(this).closest('.tag-item').remove();
+        console.log('[Recipe Form] Tag supprimé');
     });
 
     // Delete photo
@@ -639,7 +666,7 @@ $(document).ready(function() {
             }
         });
     });
+
+    console.log('[Recipe Form] Tous les événements attachés avec succès');
 });
 </script>
-
-<?php init_tail(); ?>
