@@ -472,7 +472,8 @@ $(document).ready(function() {
         const action = isFavorite ? 'remove_from_favorites' : 'add_to_favorites';
 
         $.post('<?php echo site_url('dietetic/portal/'); ?>' + action, {
-            recipe_id: recipeId
+            recipe_id: recipeId,
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
         }, function(response) {
             const data = JSON.parse(response);
             if (data.success) {

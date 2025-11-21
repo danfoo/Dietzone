@@ -81,7 +81,8 @@ class Test_favorites extends App_Controller
                     url: "' . $add_url . '",
                     method: "POST",
                     data: {
-                        recipe_id: ' . $recipe->id . '
+                        recipe_id: ' . $recipe->id . ',
+                        "' . $this->security->get_csrf_token_name() . '": "' . $this->security->get_csrf_hash() . '"
                     },
                     success: function(response) {
                         console.log("Response:", response);
@@ -126,7 +127,8 @@ class Test_favorites extends App_Controller
                     url: "' . $remove_url . '",
                     method: "POST",
                     data: {
-                        recipe_id: ' . $recipe->id . '
+                        recipe_id: ' . $recipe->id . ',
+                        "' . $this->security->get_csrf_token_name() . '": "' . $this->security->get_csrf_hash() . '"
                     },
                     success: function(response) {
                         console.log("Response:", response);
