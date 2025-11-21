@@ -467,7 +467,19 @@ class Dietetic_recipes_model extends App_Model
     public function get_nutrition($recipe_id)
     {
         $this->db->where('recipe_id', $recipe_id);
-        return $this->db->get(db_prefix() . $this->table_nutrition)->row();
+        $nutrition = $this->db->get(db_prefix() . $this->table_nutrition)->row();
+
+        // Map database column names (proteins, fats) to standard names (protein, fat)
+        if ($nutrition) {
+            if (isset($nutrition->proteins)) {
+                $nutrition->protein = $nutrition->proteins;
+            }
+            if (isset($nutrition->fats)) {
+                $nutrition->fat = $nutrition->fats;
+            }
+        }
+
+        return $nutrition;
     }
 
     /**
@@ -478,9 +490,9 @@ class Dietetic_recipes_model extends App_Model
         $data = [
             'recipe_id' => $recipe_id,
             'calories' => isset($nutrition['calories']) ? $nutrition['calories'] : null,
-            'protein' => isset($nutrition['protein']) ? $nutrition['protein'] : null,
+            'proteins' => isset($nutrition['protein']) ? $nutrition['protein'] : null, // Note: column is 'proteins' with 's'
             'carbs' => isset($nutrition['carbs']) ? $nutrition['carbs'] : null,
-            'fat' => isset($nutrition['fat']) ? $nutrition['fat'] : null,
+            'fats' => isset($nutrition['fat']) ? $nutrition['fat'] : null, // Note: column is 'fats' with 's'
             'fiber' => isset($nutrition['fiber']) ? $nutrition['fiber'] : null,
             'sodium' => isset($nutrition['sodium']) ? $nutrition['sodium'] : null,
             'sugar' => isset($nutrition['sugar']) ? $nutrition['sugar'] : null
