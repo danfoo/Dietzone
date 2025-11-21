@@ -788,7 +788,7 @@ body {
                     <i class="fa fa-star-o" data-rating="5" onclick="selectRating(5)"></i>
                 </div>
                 <input type="hidden" id="rating-value" name="rating" value="0">
-                <textarea class="form-control" id="rating-comment" name="comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"><?php echo $my_rating && $my_rating->comment ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
+                <textarea class="form-control" id="rating-comment" name="comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"></textarea>
                 <button type="button" class="btn btn-primary" id="submit-rating" onclick="submitRating()" style="margin-top: 10px; width: 100%;" disabled>
                     <i class="fa fa-check"></i> Enregistrer ma note
                 </button>
