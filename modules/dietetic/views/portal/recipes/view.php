@@ -32,8 +32,7 @@ body {
 .recipe-hero {
     position: relative;
     width: 100%;
-    height: 50vh;
-    min-height: 300px;
+    height: 300px;
     margin: 0 0 20px 0;
     overflow: hidden;
     border-radius: var(--border-radius-lg);
@@ -354,20 +353,32 @@ body {
 }
 
 .stars-rating {
-    font-size: 28px;
-    color: #ddd;
+    font-size: 32px;
     text-align: center;
     margin: 12px 0;
-    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
 }
 
 .stars-rating i {
-    transition: color 0.2s;
+    cursor: pointer;
+    color: #ddd;
+    transition: all 0.2s ease;
 }
 
-.stars-rating i.active,
-.stars-rating i:hover {
+.stars-rating i:hover,
+.stars-rating i.active {
     color: #FFC107;
+    transform: scale(1.1);
+}
+
+.stars-rating i.fa-star {
+    color: #FFC107;
+}
+
+.stars-rating i.fa-star-o {
+    color: #ddd;
 }
 
 .rating-item {
@@ -408,8 +419,7 @@ body {
 /* === TABLET (576px+) === */
 @media (min-width: 576px) {
     .recipe-hero {
-        height: 60vh;
-        min-height: 400px;
+        height: 300px;
         margin: 0 0 24px 0;
     }
 
@@ -442,8 +452,7 @@ body {
 /* === DESKTOP (992px+) === */
 @media (min-width: 992px) {
     .recipe-hero {
-        height: 70vh;
-        min-height: 500px;
+        height: 300px;
         margin: 0 0 28px 0;
     }
 
@@ -761,13 +770,13 @@ body {
         <div class="rating-section">
             <h4>Votre note</h4>
             <div class="stars-rating" id="stars-rating">
-                <i class="fa fa-star" data-rating="1"></i>
-                <i class="fa fa-star" data-rating="2"></i>
-                <i class="fa fa-star" data-rating="3"></i>
-                <i class="fa fa-star" data-rating="4"></i>
-                <i class="fa fa-star" data-rating="5"></i>
+                <i class="fa fa-star-o" data-rating="1"></i>
+                <i class="fa fa-star-o" data-rating="2"></i>
+                <i class="fa fa-star-o" data-rating="3"></i>
+                <i class="fa fa-star-o" data-rating="4"></i>
+                <i class="fa fa-star-o" data-rating="5"></i>
             </div>
-            <textarea class="form-control" id="rating-comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"></textarea>
+            <textarea class="form-control" id="rating-comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"><?php echo $my_rating && $my_rating->comment ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
             <button type="button" class="btn btn-primary" id="submit-rating" style="margin-top: 10px;">
                 <i class="fa fa-check"></i> Enregistrer ma note
             </button>
@@ -841,26 +850,45 @@ function toggleFavorite(recipeId, btnElement) {
 $(document).ready(function() {
     let selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
 
-    // Initialize stars if already rated
-    if (selectedRating > 0) {
-        updateStars(selectedRating);
+    // Initialize stars - Tous commencent vides
+    function initStars() {
+        $('#stars-rating i').removeClass('fa-star active').addClass('fa-star-o');
     }
 
-    // Star rating
-    $('#stars-rating i').click(function() {
-        selectedRating = $(this).data('rating');
-        updateStars(selectedRating);
-    });
-
+    // Update stars display
     function updateStars(rating) {
-        $('#stars-rating i').each(function() {
-            if ($(this).data('rating') <= rating) {
+        $('#stars-rating i').each(function(index) {
+            const starRating = index + 1;
+            if (starRating <= rating) {
                 $(this).removeClass('fa-star-o').addClass('fa-star active');
             } else {
                 $(this).removeClass('fa-star active').addClass('fa-star-o');
             }
         });
     }
+
+    // Initialize stars
+    initStars();
+    if (selectedRating > 0) {
+        updateStars(selectedRating);
+    }
+
+    // Star hover effect
+    $('#stars-rating i').hover(
+        function() {
+            const rating = $(this).data('rating');
+            updateStars(rating);
+        },
+        function() {
+            updateStars(selectedRating);
+        }
+    );
+
+    // Star click
+    $('#stars-rating i').click(function() {
+        selectedRating = $(this).data('rating');
+        updateStars(selectedRating);
+    });
 
     // Submit rating
     $('#submit-rating').click(function() {
@@ -900,6 +928,7 @@ $(document).ready(function() {
                     }
                 }
             } catch(e) {
+                console.error('Erreur parsing:', e, response);
                 if (window.alert_float) {
                     alert_float('danger', 'Une erreur est survenue');
                 } else {
@@ -907,6 +936,7 @@ $(document).ready(function() {
                 }
             }
         }).fail(function(xhr, status, error) {
+            console.error('Erreur AJAX:', status, error);
             if (window.alert_float) {
                 alert_float('danger', 'Erreur de connexion');
             } else {
