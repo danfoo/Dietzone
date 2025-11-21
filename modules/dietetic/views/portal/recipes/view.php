@@ -34,8 +34,9 @@ body {
     width: 100%;
     height: 50vh;
     min-height: 300px;
-    margin: -20px -15px 20px -15px; /* Compense le padding du container pour full width */
+    margin: 0 0 20px 0;
     overflow: hidden;
+    border-radius: var(--border-radius-lg);
 }
 
 .recipe-hero-image {
@@ -118,12 +119,10 @@ body {
 
 /* === NAVIGATION BUTTONS === */
 .recipe-actions {
-    padding: 16px 15px;
+    padding: 0;
     display: flex;
     gap: 12px;
-    background: white;
-    border-bottom: 1px solid #F1F3F5;
-    margin: -20px -15px 20px -15px;
+    margin: 0 0 20px 0;
 }
 
 .btn-back {
@@ -177,7 +176,7 @@ body {
 
 /* === CONTAINER === */
 .recipe-container {
-    padding: 0 15px;
+    padding: 0;
     max-width: 100%;
 }
 
@@ -338,7 +337,7 @@ body {
     letter-spacing: -0.1px;
 }
 
-/* === RATING SECTION - NON FONCTIONNELLE === */
+/* === RATING SECTION === */
 .rating-section {
     background: #FFF3CD;
     border: 2px solid #FFC107;
@@ -354,39 +353,21 @@ body {
     color: var(--text-primary);
 }
 
-.rating-disabled-notice {
-    background: #F8D7DA;
-    border: 1px solid #F5C2C7;
-    padding: 12px;
-    border-radius: var(--border-radius-sm);
-    color: #842029;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 16px;
-}
-
-.rating-disabled-notice i {
-    margin-right: 6px;
-}
-
 .stars-rating {
     font-size: 28px;
     color: #ddd;
     text-align: center;
     margin: 12px 0;
-    pointer-events: none;
-    opacity: 0.5;
+    cursor: pointer;
 }
 
-.rating-comment-disabled {
-    opacity: 0.5;
-    pointer-events: none;
+.stars-rating i {
+    transition: color 0.2s;
 }
 
-.btn-submit-disabled {
-    opacity: 0.5;
-    pointer-events: none;
+.stars-rating i.active,
+.stars-rating i:hover {
+    color: #FFC107;
 }
 
 .rating-item {
@@ -429,7 +410,7 @@ body {
     .recipe-hero {
         height: 60vh;
         min-height: 400px;
-        margin: -20px -20px 24px -20px;
+        margin: 0 0 24px 0;
     }
 
     .recipe-hero-title {
@@ -441,12 +422,11 @@ body {
     }
 
     .recipe-actions {
-        padding: 20px;
-        margin: -20px -20px 24px -20px;
+        margin: 0 0 24px 0;
     }
 
     .recipe-container {
-        padding: 0 20px;
+        padding: 0;
     }
 
     .section-card {
@@ -464,7 +444,7 @@ body {
     .recipe-hero {
         height: 70vh;
         min-height: 500px;
-        margin: -32px -32px 28px -32px;
+        margin: 0 0 28px 0;
     }
 
     .recipe-hero-overlay {
@@ -476,12 +456,11 @@ body {
     }
 
     .recipe-actions {
-        padding: 24px 32px;
-        margin: -32px -32px 28px -32px;
+        margin: 0 0 28px 0;
     }
 
     .recipe-container {
-        padding: 0 32px;
+        padding: 0;
     }
 
     .section-card {
@@ -503,6 +482,76 @@ body {
 
     .instructions-list li {
         font-size: 15px;
+    }
+}
+
+/* === AUTEUR DE LA RECETTE === */
+.recipe-author {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.recipe-author-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+}
+
+.recipe-author-photo-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    font-weight: 800;
+    border: 3px solid var(--primary-color);
+}
+
+.recipe-author-info {
+    flex: 1;
+}
+
+.recipe-author-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.recipe-author-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+@media (min-width: 576px) {
+    .recipe-author {
+        padding: 24px;
+    }
+
+    .recipe-author-photo,
+    .recipe-author-photo-placeholder {
+        width: 70px;
+        height: 70px;
+    }
+
+    .recipe-author-name {
+        font-size: 18px;
     }
 }
 </style>
@@ -667,15 +716,38 @@ body {
         </div>
     <?php endif; ?>
 
+    <!-- Auteur de la recette -->
+    <div class="recipe-author">
+        <?php
+        // Récupérer la photo du diététicien
+        $profile_image_url = staff_profile_image_url($recipe->dietitian_staff_id, 'small');
+        $initials = '';
+        if ($recipe->dietitian_name) {
+            $names = explode(' ', $recipe->dietitian_name);
+            $initials = strtoupper(substr($names[0], 0, 1));
+            if (count($names) > 1) {
+                $initials .= strtoupper(substr($names[count($names) - 1], 0, 1));
+            }
+        }
+        ?>
+        <?php if ($profile_image_url && file_exists(FCPATH . $profile_image_url)) : ?>
+            <img src="<?php echo base_url($profile_image_url); ?>"
+                 alt="<?php echo htmlspecialchars($recipe->dietitian_name); ?>"
+                 class="recipe-author-photo">
+        <?php else : ?>
+            <div class="recipe-author-photo-placeholder">
+                <?php echo $initials; ?>
+            </div>
+        <?php endif; ?>
+        <div class="recipe-author-info">
+            <div class="recipe-author-label">Créé par</div>
+            <div class="recipe-author-name"><?php echo htmlspecialchars($recipe->dietitian_name); ?></div>
+        </div>
+    </div>
+
     <!-- Notation et Commentaires -->
     <div class="section-card">
         <h3><i class="fa fa-star"></i> Notes et Avis</h3>
-
-        <!-- Notice: Fonctionnalité non disponible -->
-        <div class="rating-disabled-notice">
-            <i class="fa fa-exclamation-triangle"></i>
-            La notation et les commentaires ne sont pas disponibles pour le moment.
-        </div>
 
         <?php if ($my_rating) : ?>
             <div class="alert alert-success">
@@ -689,16 +761,14 @@ body {
         <div class="rating-section">
             <h4>Votre note</h4>
             <div class="stars-rating" id="stars-rating">
-                <i class="fa fa-star"></i>
-                <i class="fa fa-star"></i>
-                <i class="fa fa-star"></i>
-                <i class="fa fa-star"></i>
-                <i class="fa fa-star"></i>
+                <i class="fa fa-star" data-rating="1"></i>
+                <i class="fa fa-star" data-rating="2"></i>
+                <i class="fa fa-star" data-rating="3"></i>
+                <i class="fa fa-star" data-rating="4"></i>
+                <i class="fa fa-star" data-rating="5"></i>
             </div>
-            <div class="rating-comment-disabled">
-                <textarea class="form-control" placeholder="Votre commentaire (fonctionnalité bientôt disponible)" rows="3" disabled></textarea>
-            </div>
-            <button type="button" class="btn btn-primary btn-submit-disabled" style="margin-top: 10px;" disabled>
+            <textarea class="form-control" id="rating-comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"></textarea>
+            <button type="button" class="btn btn-primary" id="submit-rating" style="margin-top: 10px;">
                 <i class="fa fa-check"></i> Enregistrer ma note
             </button>
         </div>
@@ -768,13 +838,82 @@ function toggleFavorite(recipeId, btnElement) {
     });
 }
 
-// Note: Les fonctionnalités de notation sont désactivées pour le moment
-// Le code ci-dessous est conservé mais non fonctionnel
 $(document).ready(function() {
-    // Désactivé pour le moment
-    // let selectedRating = 0;
-    // $('#stars-rating i').click(function() { ... });
-    // $('#submit-rating').click(function() { ... });
+    let selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
+
+    // Initialize stars if already rated
+    if (selectedRating > 0) {
+        updateStars(selectedRating);
+    }
+
+    // Star rating
+    $('#stars-rating i').click(function() {
+        selectedRating = $(this).data('rating');
+        updateStars(selectedRating);
+    });
+
+    function updateStars(rating) {
+        $('#stars-rating i').each(function() {
+            if ($(this).data('rating') <= rating) {
+                $(this).removeClass('fa-star-o').addClass('fa-star active');
+            } else {
+                $(this).removeClass('fa-star active').addClass('fa-star-o');
+            }
+        });
+    }
+
+    // Submit rating
+    $('#submit-rating').click(function() {
+        if (selectedRating === 0) {
+            if (window.alert_float) {
+                alert_float('warning', 'Veuillez sélectionner une note');
+            } else {
+                alert('Veuillez sélectionner une note');
+            }
+            return;
+        }
+
+        const comment = $('#rating-comment').val();
+
+        $.post('<?php echo site_url('dietetic/portal/recipe_rate'); ?>', {
+            recipe_id: <?php echo $recipe->id; ?>,
+            rating: selectedRating,
+            comment: comment,
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+        }, function(response) {
+            try {
+                const data = JSON.parse(response);
+                if (data.success) {
+                    if (window.alert_float) {
+                        alert_float('success', 'Merci pour votre avis !');
+                    } else {
+                        alert('Merci pour votre avis !');
+                    }
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    if (window.alert_float) {
+                        alert_float('danger', data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                }
+            } catch(e) {
+                if (window.alert_float) {
+                    alert_float('danger', 'Une erreur est survenue');
+                } else {
+                    alert('Une erreur est survenue');
+                }
+            }
+        }).fail(function(xhr, status, error) {
+            if (window.alert_float) {
+                alert_float('danger', 'Erreur de connexion');
+            } else {
+                alert('Erreur de connexion');
+            }
+        });
+    });
 });
 </script>
 
