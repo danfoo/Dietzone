@@ -3875,6 +3875,19 @@ class Portal extends App_Controller
             return;
         }
 
+        // Check if recipe is assigned to patient
+        $is_assigned = $this->dietetic_recipes_model->is_assigned_to_patient($recipe_id, $patient->id);
+
+        if (!$is_assigned) {
+            // Show restriction message for non-assigned recipes
+            $data = [];
+            $data['title'] = 'Recette non disponible';
+            $data['recipe'] = $recipe;
+            $data['patient'] = $patient;
+            $this->load->view('portal/recipes/restricted', $data);
+            return;
+        }
+
         $data = [];
         $data['title'] = $recipe->name;
         $data['patient'] = $patient;

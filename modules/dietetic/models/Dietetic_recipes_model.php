@@ -783,6 +783,21 @@ class Dietetic_recipes_model extends App_Model
         return $recipes;
     }
 
+    /**
+     * Check if recipe is assigned to patient
+     *
+     * @param int $recipe_id
+     * @param int $patient_id
+     * @return bool
+     */
+    public function is_assigned_to_patient($recipe_id, $patient_id)
+    {
+        $this->db->where('recipe_id', $recipe_id);
+        $this->db->where('patient_id', $patient_id);
+        $count = $this->db->count_all_results(db_prefix() . $this->table_assignments);
+        return $count > 0;
+    }
+
     // =====================================
     // RATINGS
     // =====================================
