@@ -97,7 +97,24 @@ class Test_favorites extends App_Controller
                         }
                     },
                     error: function(xhr, status, error) {
-                        $("#result").html("<p class=\"error\">❌ Erreur AJAX: " + error + "</p><p>Status: " + status + "</p><pre>" + xhr.responseText + "</pre>");
+                        let errorHtml = "<p class=\"error\">❌ Erreur AJAX</p>";
+                        errorHtml += "<p><strong>Status:</strong> " + status + "</p>";
+                        errorHtml += "<p><strong>Error:</strong> " + error + "</p>";
+                        errorHtml += "<p><strong>HTTP Status Code:</strong> " + xhr.status + "</p>";
+                        errorHtml += "<p><strong>Ready State:</strong> " + xhr.readyState + "</p>";
+
+                        if (xhr.responseText) {
+                            errorHtml += "<p><strong>Response Text:</strong></p>";
+                            errorHtml += "<pre>" + xhr.responseText + "</pre>";
+                        } else {
+                            errorHtml += "<p><strong>Response Text:</strong> (vide)</p>";
+                        }
+
+                        errorHtml += "<p><strong>All Headers:</strong></p>";
+                        errorHtml += "<pre>" + xhr.getAllResponseHeaders() + "</pre>";
+
+                        $("#result").html(errorHtml);
+                        console.log("XHR Error Details:", xhr);
                     }
                 });
             });
@@ -125,7 +142,24 @@ class Test_favorites extends App_Controller
                         }
                     },
                     error: function(xhr, status, error) {
-                        $("#result").html("<p class=\"error\">❌ Erreur AJAX: " + error + "</p><p>Status: " + status + "</p><pre>" + xhr.responseText + "</pre>");
+                        let errorHtml = "<p class=\"error\">❌ Erreur AJAX</p>";
+                        errorHtml += "<p><strong>Status:</strong> " + status + "</p>";
+                        errorHtml += "<p><strong>Error:</strong> " + error + "</p>";
+                        errorHtml += "<p><strong>HTTP Status Code:</strong> " + xhr.status + "</p>";
+                        errorHtml += "<p><strong>Ready State:</strong> " + xhr.readyState + "</p>";
+
+                        if (xhr.responseText) {
+                            errorHtml += "<p><strong>Response Text:</strong></p>";
+                            errorHtml += "<pre>" + xhr.responseText + "</pre>";
+                        } else {
+                            errorHtml += "<p><strong>Response Text:</strong> (vide)</p>";
+                        }
+
+                        errorHtml += "<p><strong>All Headers:</strong></p>";
+                        errorHtml += "<pre>" + xhr.getAllResponseHeaders() + "</pre>";
+
+                        $("#result").html(errorHtml);
+                        console.log("XHR Error Details:", xhr);
                     }
                 });
             });
