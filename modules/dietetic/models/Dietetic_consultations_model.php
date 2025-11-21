@@ -159,6 +159,29 @@ class Dietetic_consultations_model extends App_Model
             // Create reminder for this consultation
             if ($data['status'] == 'scheduled') {
                 $this->create_consultation_reminder($consultation_id);
+
+                // Notify patient of new consultation
+                if (isset($data['patient_id']) && isset($data['consultation_date'])) {
+                    $this->load->model('dietetic/dietetic_notifications_model');
+
+                    // Get dietitian name
+                    $dietitian_id = isset($data['dietitian_id']) ? $data['dietitian_id'] : get_staff_user_id();
+                    $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                    $this->db->where('staffid', $dietitian_id);
+                    $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                    $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+
+                    $consultation_time = isset($data['consultation_time']) ? $data['consultation_time'] : null;
+                    $consultation_type = isset($data['consultation_type']) ? $data['consultation_type'] : 'Consultation';
+
+                    $this->dietetic_notifications_model->notify_consultation_scheduled(
+                        $data['patient_id'],
+                        $data['consultation_date'],
+                        $consultation_time,
+                        $dietitian_name,
+                        $consultation_type
+                    );
+                }
             }
 
             log_activity('New Consultation Created [ID: ' . $consultation_id . ']');
@@ -194,6 +217,27 @@ class Dietetic_consultations_model extends App_Model
         $this->db->where('id', $id);
 
         if ($this->db->update(db_prefix() . $this->table, $data)) {
+            // Check if consultation was cancelled
+            if (isset($data['status']) && $data['status'] == 'cancelled' && $consultation->status != 'cancelled') {
+                // Notify patient of cancellation
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                // Get dietitian name
+                $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                $this->db->where('staffid', $consultation->dietitian_id);
+                $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+
+                $reason = isset($data['cancellation_reason']) ? $data['cancellation_reason'] : '';
+
+                $this->dietetic_notifications_model->notify_consultation_cancelled(
+                    $consultation->patient_id,
+                    $consultation->consultation_date,
+                    $dietitian_name,
+                    $reason
+                );
+            }
+
             // Update reminder if date or status changed
             if (isset($data['consultation_date']) || isset($data['status'])) {
                 $this->update_consultation_reminder($id);
