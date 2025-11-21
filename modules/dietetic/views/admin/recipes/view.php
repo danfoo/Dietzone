@@ -544,11 +544,13 @@
 </div>
 
 <script>
-$(document).ready(function() {
+// Execute immediately - don't wait for document.ready (it may have already fired)
+(function() {
     console.log('[Recipe View] Initialisation du formulaire d\'assignation...');
 
-    // Load patients immediately on page load
-    console.log('[Recipe View] Chargement des patients...');
+    // Small delay to ensure DOM is ready
+    setTimeout(function() {
+        console.log('[Recipe View] Chargement des patients...');
 
     $.ajax({
         url: '<?php echo admin_url('dietetic/recipes/get_patients'); ?>',
@@ -666,8 +668,8 @@ $(document).ready(function() {
                 btn.prop('disabled', false);
             }
         });
-    });
-});
+    }, 500); // 500ms delay to ensure everything is loaded
+})(); // Execute immediately
 </script>
 
 <?php init_tail(); ?>
