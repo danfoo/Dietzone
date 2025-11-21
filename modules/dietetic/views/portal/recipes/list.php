@@ -8,11 +8,11 @@ $this->load->view('portal/includes/portal_header');
 /* === DESIGN INSPIRÉ DE L'IMAGE DE RÉFÉRENCE === */
 /* Style moderne, coloré, friendly avec aesthetic iOS */
 
-/* Variables de couleurs */
+/* Variables de couleurs - Charte graphique officielle */
 :root {
-    --primary-color: #5B5EF4;
-    --primary-dark: #4547D8;
-    --secondary-color: #FF6B6B;
+    --primary-color: #01807B;
+    --primary-dark: #026660;
+    --secondary-color: #dc3545;
     --background: #F8F9FC;
     --card-bg: #FFFFFF;
     --text-primary: #1E1E1E;
@@ -106,7 +106,7 @@ body {
 
 .filter-section .form-control:focus {
     background: #FFFFFF;
-    box-shadow: 0 0 0 4px rgba(91, 94, 244, 0.1);
+    box-shadow: 0 0 0 4px rgba(1, 128, 123, 0.1);
     outline: none;
 }
 
@@ -122,13 +122,13 @@ body {
     font-size: 15px;
     background: var(--secondary-color);
     border: none;
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
     letter-spacing: -0.2px;
 }
 
 .filter-section .btn-danger:hover {
     background: #FF5252;
-    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
 }
 
 /* Category Filters - Pills */
@@ -188,7 +188,7 @@ body {
     color: white;
     text-decoration: none;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(91, 94, 244, 0.3);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
 }
 
 /* Tabs */
@@ -408,7 +408,7 @@ body {
 .btn-favorite.active {
     background: var(--secondary-color);
     color: white;
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 .btn-favorite:active {
@@ -611,7 +611,7 @@ body {
 
     .category-filter:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(91, 94, 244, 0.3);
+        box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
     }
 }
 </style>
