@@ -68,7 +68,23 @@ body {
     border-top: 2px solid #F1F3F5;
 }
 
-/* Search Input - Pill shaped */
+/* Search Input - Pill shaped avec icône intégrée */
+.filter-section .search-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.filter-section .search-wrapper .search-icon {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 2;
+}
+
 .filter-section .input-group {
     margin-bottom: 16px;
 }
@@ -77,10 +93,11 @@ body {
     border-radius: 50px;
     border: none;
     background: #F3F4F6;
-    padding: 14px 20px;
+    padding: 14px 50px 14px 20px;
     font-size: 15px;
     color: var(--text-primary);
     font-weight: 500;
+    width: 100%;
 }
 
 .filter-section .form-control::placeholder {
@@ -93,24 +110,8 @@ body {
     outline: none;
 }
 
-.filter-section .input-group-btn .btn {
-    border-radius: 50px;
-    padding: 14px 28px;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: -0.2px;
-}
-
-.filter-section .btn-primary {
-    background: var(--primary-color);
-    border: none;
-    box-shadow: 0 4px 12px rgba(91, 94, 244, 0.3);
-}
-
-.filter-section .btn-primary:hover,
-.filter-section .btn-primary:focus {
-    background: var(--primary-dark);
-    box-shadow: 0 6px 16px rgba(91, 94, 244, 0.4);
+.filter-section .input-group-btn {
+    display: none;
 }
 
 .filter-section .btn-danger {
@@ -500,6 +501,12 @@ body {
         margin-bottom: 24px;
     }
 
+    .filter-section .btn-danger {
+        width: auto;
+        min-width: 200px;
+        float: right;
+    }
+
     .recipes-tabs {
         margin-bottom: 24px;
     }
@@ -614,26 +621,26 @@ body {
     <div class="filter-section">
         <form method="get" action="<?php echo site_url('dietetic/portal/recipes'); ?>">
             <div class="row">
-                <div class="col-md-8">
-                    <div class="input-group">
+                <div class="col-md-12">
+                    <div class="search-wrapper">
                         <input type="text" class="form-control" name="search"
                                placeholder="Rechercher une recette..."
-                               value="<?php echo $this->input->get('search'); ?>">
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fa fa-search"></i> Rechercher
-                            </button>
-                        </span>
+                               value="<?php echo $this->input->get('search'); ?>"
+                               onkeypress="if(event.keyCode==13) this.form.submit();">
+                        <i class="fa fa-search search-icon"></i>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <a href="<?php echo site_url('dietetic/portal/recipes_favorites'); ?>"
-                       class="btn btn-danger btn-block">
-                        <i class="fa fa-heart"></i> Mes Favoris (<?php echo count($favorites); ?>)
-                    </a>
                 </div>
             </div>
         </form>
+
+        <div class="row" style="margin-top: 16px;">
+            <div class="col-md-12">
+                <a href="<?php echo site_url('dietetic/portal/recipes_favorites'); ?>"
+                   class="btn btn-danger btn-block">
+                    <i class="fa fa-heart"></i> Mes Favoris (<?php echo count($favorites); ?>)
+                </a>
+            </div>
+        </div>
 
         <hr>
 
@@ -790,8 +797,8 @@ body {
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Pagination (exemple) -->
-                    <?php if (count($all_recipes) > 0) : ?>
+                    <!-- Pagination (seulement si > 12 recettes) -->
+                    <?php if (count($all_recipes) > 12) : ?>
                         <div class="pagination-wrapper">
                             <div class="pagination">
                                 <span class="disabled"><i class="fa fa-chevron-left"></i></span>
@@ -800,7 +807,7 @@ body {
                                 <a href="#">3</a>
                                 <a href="#">4</a>
                                 <span>...</span>
-                                <a href="#">10</a>
+                                <a href="#"><?php echo ceil(count($all_recipes) / 12); ?></a>
                                 <a href="#"><i class="fa fa-chevron-right"></i></a>
                             </div>
                         </div>
@@ -904,8 +911,8 @@ body {
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Pagination (exemple) -->
-                    <?php if (count($assigned_recipes) > 0) : ?>
+                    <!-- Pagination (seulement si > 12 recettes) -->
+                    <?php if (count($assigned_recipes) > 12) : ?>
                         <div class="pagination-wrapper">
                             <div class="pagination">
                                 <span class="disabled"><i class="fa fa-chevron-left"></i></span>
@@ -914,7 +921,7 @@ body {
                                 <a href="#">3</a>
                                 <a href="#">4</a>
                                 <span>...</span>
-                                <a href="#">10</a>
+                                <a href="#"><?php echo ceil(count($assigned_recipes) / 12); ?></a>
                                 <a href="#"><i class="fa fa-chevron-right"></i></a>
                             </div>
                         </div>
