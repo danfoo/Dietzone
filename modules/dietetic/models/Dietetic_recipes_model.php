@@ -722,7 +722,23 @@ class Dietetic_recipes_model extends App_Model
         if ($assignment_id) {
             log_activity('Recipe Assigned [Recipe ID: ' . $recipe_id . ', Patient ID: ' . $patient_id . ']');
 
-            // TODO: Notifier le patient
+            // Notify patient
+            $recipe = $this->get($recipe_id);
+            if ($recipe) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                // Get dietitian name
+                $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                $this->db->where('staffid', $dietitian_id);
+                $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+
+                $this->dietetic_notifications_model->notify_recipe_assigned(
+                    $patient_id,
+                    $recipe->name,
+                    $dietitian_name
+                );
+            }
         }
 
         return $assignment_id;

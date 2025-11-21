@@ -966,6 +966,50 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    // ==================== RECIPE NOTIFICATIONS ====================
+
+    /**
+     * Notify patient when a recipe is assigned to them
+     */
+    public function notify_recipe_assigned($patient_id, $recipe_name, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_recommendation) {
+            return false;
+        }
+
+        // Get patient info
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        $message = "Bonjour {$client->company},\n\n";
+        $message .= "🍽️ Votre diététicien {$dietitian_name} vous a recommandé une nouvelle recette :\n\n";
+        $message .= "👨‍🍳 {$recipe_name}\n\n";
+        $message .= "Découvrez cette recette savoureuse et adaptée à votre programme alimentaire !\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/recipes') . "\n\n";
+        $message .= "Bon appétit ! 😋";
+
+        return $this->send_notification_with_frontend([
+            'patient_id' => $patient_id,
+            'type' => 'recipe_assigned',
+            'subject' => '🍽️ Nouvelle Recette Recommandée',
+            'message' => $message,
+            'email' => $client->email,
+            'phone' => $client->phonenumber,
+            'url' => site_url('dietetic/portal/recipes'),
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp
+            ]
+        ]);
+    }
+
     // ==================== CONSULTATION NOTIFICATIONS ====================
 
     /**
@@ -1876,6 +1920,7 @@ class Dietetic_notifications_model extends App_Model
             'program_assigned' => 'fa-clipboard',
             'program_updated' => 'fa-refresh',
             'program_ending' => 'fa-clock-o',
+            'recipe_assigned' => 'fa-cutlery',
             'consultation_scheduled' => 'fa-calendar-plus-o',
             'consultation_reminder_day' => 'fa-calendar',
             'consultation_reminder_hour' => 'fa-clock-o',
