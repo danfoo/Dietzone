@@ -707,10 +707,14 @@ class Dietetic_recipes_model extends App_Model
         $data = [
             'recipe_id' => $recipe_id,
             'patient_id' => $patient_id,
-            'dietitian_id' => $dietitian_id,
-            'notes' => $notes,
+            'assigned_by_dietitian_id' => $dietitian_id,
             'assigned_at' => date('Y-m-d H:i:s')
         ];
+
+        // Add notes if column exists
+        if ($this->db->field_exists('notes', db_prefix() . $this->table_assignments)) {
+            $data['notes'] = $notes;
+        }
 
         $this->db->insert(db_prefix() . $this->table_assignments, $data);
         $assignment_id = $this->db->insert_id();
