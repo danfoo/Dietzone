@@ -462,29 +462,59 @@ $this->load->view('portal/includes/portal_header');
 </div>
 
 <script>
+console.log('Script favoris chargé');
+
 $(document).ready(function() {
+    console.log('Document ready - jQuery chargé');
+    console.log('Nombre de boutons favoris trouvés:', $('.btn-favorite').length);
+
     // Toggle favorite
-    $('.btn-favorite').click(function() {
+    $('.btn-favorite').click(function(e) {
+        e.preventDefault();
+        console.log('Clic sur bouton favori détecté');
+
         const btn = $(this);
         const recipeId = btn.data('recipe-id');
         const isFavorite = btn.hasClass('active');
 
-        const action = isFavorite ? 'remove_from_favorites' : 'add_to_favorites';
+        console.log('Recipe ID:', recipeId);
+        console.log('Is favorite:', isFavorite);
 
-        $.post('<?php echo site_url('dietetic/portal/'); ?>' + action, {
+        const action = isFavorite ? 'remove_from_favorites' : 'add_to_favorites';
+        const url = '<?php echo site_url('dietetic/portal/'); ?>' + action;
+
+        console.log('URL:', url);
+
+        $.post(url, {
             recipe_id: recipeId,
             '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
         }, function(response) {
-            const data = JSON.parse(response);
-            if (data.success) {
-                btn.toggleClass('active');
-                // Show toast notification
-                if (window.alert_float) {
-                    alert_float('success', data.message);
+            console.log('Réponse reçue:', response);
+            try {
+                const data = JSON.parse(response);
+                console.log('Data parsée:', data);
+
+                if (data.success) {
+                    btn.toggleClass('active');
+                    // Show toast notification
+                    if (window.alert_float) {
+                        alert_float('success', data.message);
+                    } else {
+                        alert('Succès: ' + data.message);
+                    }
+                } else {
+                    alert('Erreur: ' + data.message);
                 }
-            } else {
-                alert(data.message);
+            } catch(e) {
+                console.error('Erreur parsing JSON:', e);
+                console.error('Response brute:', response);
+                alert('Erreur parsing: ' + e.message);
             }
+        }).fail(function(xhr, status, error) {
+            console.error('Erreur AJAX:', status, error);
+            console.error('Status code:', xhr.status);
+            console.error('Response:', xhr.responseText);
+            alert('Erreur AJAX: ' + status + ' - ' + error);
         });
     });
 });
