@@ -779,16 +779,17 @@ body {
 
         <div class="rating-section">
             <h4>Votre note</h4>
-            <form id="ratingForm">
+            <form id="ratingForm" method="post" action="">
                 <div class="interactive-stars" id="stars-rating">
-                    <i class="fa fa-star-o" data-rating="1"></i>
-                    <i class="fa fa-star-o" data-rating="2"></i>
-                    <i class="fa fa-star-o" data-rating="3"></i>
-                    <i class="fa fa-star-o" data-rating="4"></i>
-                    <i class="fa fa-star-o" data-rating="5"></i>
+                    <i class="fa fa-star-o" data-rating="1" onclick="selectRating(1)"></i>
+                    <i class="fa fa-star-o" data-rating="2" onclick="selectRating(2)"></i>
+                    <i class="fa fa-star-o" data-rating="3" onclick="selectRating(3)"></i>
+                    <i class="fa fa-star-o" data-rating="4" onclick="selectRating(4)"></i>
+                    <i class="fa fa-star-o" data-rating="5" onclick="selectRating(5)"></i>
                 </div>
+                <input type="hidden" id="rating-value" name="rating" value="0">
                 <textarea class="form-control" id="rating-comment" name="comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"><?php echo $my_rating && $my_rating->comment ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
-                <button type="submit" class="btn btn-primary" id="submit-rating" style="margin-top: 10px; width: 100%;" disabled>
+                <button type="button" class="btn btn-primary" id="submit-rating" onclick="submitRating()" style="margin-top: 10px; width: 100%;" disabled>
                     <i class="fa fa-check"></i> Enregistrer ma note
                 </button>
             </form>
@@ -859,158 +860,100 @@ function toggleFavorite(recipeId, btnElement) {
     });
 }
 
-// Rating functionality - Interactive stars system
-$(document).ready(function() {
-    var selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
+// ===== SYSTÈME DE NOTATION SIMPLE - JAVASCRIPT PUR =====
+console.log('🌟 Chargement système de notation...');
 
-    console.log('=== RATING SYSTEM DEBUG ===');
-    console.log('jQuery loaded:', typeof jQuery !== 'undefined');
-    console.log('Initial rating:', selectedRating);
-    console.log('Star group element:', $('#stars-rating').length);
-    console.log('Stars count:', $('#stars-rating i').length);
-    console.log('Submit button:', $('#submit-rating').length);
-    console.log('Form:', $('#ratingForm').length);
+// Variable globale pour stocker la note
+var currentRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
 
-    // Helper functions
-    function highlightStars(rating) {
-        console.log('highlightStars called with:', rating);
-        $('#stars-rating i').each(function(index) {
-            if (index < rating) {
-                $(this).removeClass('fa-star-o').addClass('fa-star');
-            } else {
-                $(this).removeClass('fa-star').addClass('fa-star-o');
-            }
-        });
-    }
+// Fonction pour sélectionner une note (appelée par onclick)
+function selectRating(rating) {
+    console.log('⭐ Note sélectionnée:', rating);
+    currentRating = rating;
 
-    function markSelected(rating) {
-        console.log('markSelected called with:', rating);
-        $('#stars-rating i').each(function(index) {
-            if (index < rating) {
-                $(this).addClass('selected');
-            } else {
-                $(this).removeClass('selected');
-            }
-        });
-        highlightStars(rating);
-    }
+    // Mettre à jour le champ caché
+    document.getElementById('rating-value').value = rating;
 
-    // Initialize current rating
-    if (selectedRating > 0) {
-        console.log('Initializing with existing rating:', selectedRating);
-        highlightStars(selectedRating);
-        markSelected(selectedRating);
-        $('#submit-rating').prop('disabled', false);
-    }
-
-    // Star hover effect
-    $('#stars-rating i').on('mouseenter', function() {
-        var rating = parseInt($(this).attr('data-rating'));
-        console.log('Mouse enter star:', rating);
-        highlightStars(rating);
-    });
-
-    // Star click/touch to select
-    $('#stars-rating i').on('click', function() {
-        var rating = parseInt($(this).attr('data-rating'));
-        console.log('★ STAR CLICKED! Rating:', rating);
-        selectedRating = rating;
-        markSelected(rating);
-        $('#submit-rating').prop('disabled', false);
-        console.log('Button enabled, selectedRating:', selectedRating);
-
-        // Haptic feedback on mobile
-        if ('vibrate' in navigator) {
-            navigator.vibrate(10);
+    // Mettre à jour l'affichage des étoiles
+    var stars = document.querySelectorAll('#stars-rating i');
+    for (var i = 0; i < stars.length; i++) {
+        if (i < rating) {
+            stars[i].className = 'fa fa-star selected';
+        } else {
+            stars[i].className = 'fa fa-star-o';
         }
-    });
+    }
 
-    // Reset hover effect
-    $('#stars-rating').on('mouseleave', function() {
-        console.log('Mouse leave, reset to:', selectedRating);
-        highlightStars(selectedRating);
-    });
+    // Activer le bouton
+    document.getElementById('submit-rating').disabled = false;
 
-    // Form submission
-    $('#ratingForm').on('submit', function(e) {
-        e.preventDefault();
-        console.log('=== FORM SUBMITTED ===');
-        console.log('Selected rating:', selectedRating);
+    console.log('✅ Bouton activé, note actuelle:', currentRating);
+}
 
-        if (selectedRating === 0) {
-            console.log('No rating selected, showing alert');
-            if (window.alert_float) {
-                alert_float('warning', 'Veuillez sélectionner une note');
-            } else {
-                alert('Veuillez sélectionner une note');
-            }
-            return false;
+// Fonction pour soumettre la note (appelée par onclick)
+function submitRating() {
+    console.log('📤 Soumission de la note...');
+    console.log('Note:', currentRating);
+
+    if (currentRating === 0) {
+        alert('Veuillez sélectionner une note');
+        return;
+    }
+
+    var comment = document.getElementById('rating-comment').value;
+    var btn = document.getElementById('submit-rating');
+    var originalText = btn.innerHTML;
+
+    console.log('Commentaire:', comment);
+
+    // Désactiver le bouton
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+
+    // Préparer les données
+    var data = new FormData();
+    data.append('recipe_id', <?php echo $recipe->id; ?>);
+    data.append('rating', currentRating);
+    data.append('comment', comment);
+    data.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    // Envoyer la requête
+    fetch('<?php echo site_url('dietetic/portal/recipe_rate'); ?>', {
+        method: 'POST',
+        body: data
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('✅ Réponse reçue:', data);
+
+        if (data.success) {
+            alert('Merci pour votre avis !');
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'enregistrer'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
-
-        var comment = $('#rating-comment').val();
-        var $submitBtn = $('#submit-rating');
-        var originalBtnText = $submitBtn.html();
-
-        console.log('Comment:', comment);
-        console.log('Sending AJAX request...');
-
-        // Disable button during submission
-        $submitBtn.prop('disabled', true);
-        $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
-
-        $.ajax({
-            url: '<?php echo site_url('dietetic/portal/recipe_rate'); ?>',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                recipe_id: <?php echo $recipe->id; ?>,
-                rating: selectedRating,
-                comment: comment,
-                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-            },
-            success: function(data) {
-                console.log('AJAX Success! Response:', data);
-                if (data.success) {
-                    if (window.alert_float) {
-                        alert_float('success', data.message || 'Merci pour votre avis !');
-                    } else {
-                        alert(data.message || 'Merci pour votre avis !');
-                    }
-                    // Reload after 1.5 seconds
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    console.error('Rating failed:', data.message);
-                    if (window.alert_float) {
-                        alert_float('danger', data.message || 'Erreur lors de l\'enregistrement');
-                    } else {
-                        alert(data.message || 'Erreur lors de l\'enregistrement');
-                    }
-                    $submitBtn.prop('disabled', false);
-                    $submitBtn.html(originalBtnText);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error!');
-                console.error('Status:', status);
-                console.error('Error:', error);
-                console.error('Response:', xhr.responseText);
-                if (window.alert_float) {
-                    alert_float('danger', 'Erreur de connexion. Veuillez réessayer.');
-                } else {
-                    alert('Erreur de connexion. Veuillez réessayer.');
-                }
-                $submitBtn.prop('disabled', false);
-                $submitBtn.html(originalBtnText);
-            }
-        });
-
-        return false;
+    })
+    .catch(function(error) {
+        console.error('❌ Erreur:', error);
+        alert('Erreur de connexion. Veuillez réessayer.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
+}
 
-    console.log('=== RATING SYSTEM READY ===');
-});
+// Initialiser si déjà noté
+if (currentRating > 0) {
+    console.log('📝 Note existante détectée:', currentRating);
+    selectRating(currentRating);
+}
+
+console.log('✅ Système de notation prêt!');
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
