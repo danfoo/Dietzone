@@ -438,23 +438,60 @@ $(document).ready(function() {
         let totalProtein = 0;
         let totalCarbs = 0;
         let totalFat = 0;
+        let ingredientCount = 0;
 
-        $('.ingredient-row').each(function() {
+        $('.ingredient-row').each(function(index) {
             const select = $(this).find('.food-select');
-            const quantity = parseFloat($(this).find('.ingredient-quantity').val()) || 0;
+            const quantityInput = $(this).find('.ingredient-quantity');
+            const quantity = parseFloat(quantityInput.val()) || 0;
 
-            if (select.val()) {
-                const option = select.find('option:selected');
-                const calories = parseFloat(option.data('calories')) || 0;
-                const protein = parseFloat(option.data('protein')) || 0;
-                const carbs = parseFloat(option.data('carbs')) || 0;
-                const fat = parseFloat(option.data('fat')) || 0;
+            // Important: Use selectpicker('val') instead of val() for Bootstrap Selectpicker
+            const selectedValue = select.selectpicker('val');
 
-                // Calculate based on quantity (per 100g)
-                totalCalories += (calories * quantity) / 100;
-                totalProtein += (protein * quantity) / 100;
-                totalCarbs += (carbs * quantity) / 100;
-                totalFat += (fat * quantity) / 100;
+            console.log('[Recipe Form] Ingrédient ' + (index + 1) + ':', {
+                selectedValue: selectedValue,
+                quantity: quantity
+            });
+
+            if (selectedValue && selectedValue !== '') {
+                const option = select.find('option[value="' + selectedValue + '"]');
+
+                if (option.length > 0) {
+                    const calories = parseFloat(option.data('calories')) || 0;
+                    const protein = parseFloat(option.data('protein')) || 0;
+                    const carbs = parseFloat(option.data('carbs')) || 0;
+                    const fat = parseFloat(option.data('fat')) || 0;
+
+                    console.log('[Recipe Form] Données aliment:', {
+                        id: selectedValue,
+                        name: option.text().trim().substring(0, 30),
+                        calories: calories,
+                        protein: protein,
+                        carbs: carbs,
+                        fat: fat,
+                        quantity: quantity
+                    });
+
+                    // Calculate based on quantity (per 100g)
+                    const calcCalories = (calories * quantity) / 100;
+                    const calcProtein = (protein * quantity) / 100;
+                    const calcCarbs = (carbs * quantity) / 100;
+                    const calcFat = (fat * quantity) / 100;
+
+                    totalCalories += calcCalories;
+                    totalProtein += calcProtein;
+                    totalCarbs += calcCarbs;
+                    totalFat += calcFat;
+
+                    ingredientCount++;
+
+                    console.log('[Recipe Form] Calcul pour cet ingrédient:', {
+                        calories: calcCalories.toFixed(1),
+                        protein: calcProtein.toFixed(1),
+                        carbs: calcCarbs.toFixed(1),
+                        fat: calcFat.toFixed(1)
+                    });
+                }
             }
         });
 
@@ -463,7 +500,7 @@ $(document).ready(function() {
         $('#calc-carbs').val(totalCarbs.toFixed(1));
         $('#calc-fat').val(totalFat.toFixed(1));
 
-        console.log('[Recipe Form] Nutrition calculée:', {
+        console.log('[Recipe Form] 📊 TOTAL (' + ingredientCount + ' ingrédients):', {
             calories: totalCalories.toFixed(1),
             protein: totalProtein.toFixed(1),
             carbs: totalCarbs.toFixed(1),
@@ -544,14 +581,21 @@ $(document).ready(function() {
         }
     });
 
-    // Update nutrition when ingredient or quantity changes
-    $(document).on('change', '.food-select, .ingredient-quantity', function() {
-        console.log('[Recipe Form] Ingrédient ou quantité modifié');
+    // Update nutrition when ingredient changes (Bootstrap Selectpicker specific event)
+    $(document).on('changed.bs.select', '.food-select', function() {
+        const selectedValue = $(this).selectpicker('val');
+        const selectedText = $(this).find('option:selected').text().trim().substring(0, 40);
+        console.log('[Recipe Form] 🍎 Aliment sélectionné:', {
+            value: selectedValue,
+            name: selectedText
+        });
         calculateNutrition();
     });
 
-    // Also trigger on input for real-time updates
-    $(document).on('input', '.ingredient-quantity', function() {
+    // Update nutrition when quantity changes
+    $(document).on('change input', '.ingredient-quantity', function() {
+        const quantity = $(this).val();
+        console.log('[Recipe Form] ⚖️ Quantité modifiée:', quantity + 'g');
         calculateNutrition();
     });
 
