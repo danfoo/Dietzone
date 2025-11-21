@@ -761,7 +761,7 @@ class Dietetic_recipes_model extends App_Model
      */
     public function get_patient_recipes($patient_id)
     {
-        $this->db->select('r.*, ra.assigned_at, ' .
+        $this->db->select('r.*, ra.assigned_at, ra.notes, ' .
             'CONCAT(s.firstname, " ", s.lastname) as dietitian_name');
         $this->db->from(db_prefix() . $this->table_assignments . ' ra');
         $this->db->join(db_prefix() . $this->table . ' r', 'r.id = ra.recipe_id', 'inner');
