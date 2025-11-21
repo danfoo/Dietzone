@@ -352,33 +352,46 @@ body {
     color: var(--text-primary);
 }
 
-.stars-rating {
-    font-size: 32px;
-    text-align: center;
-    margin: 12px 0;
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.interactive-stars {
     display: flex;
     justify-content: center;
     gap: 8px;
+    margin: 12px 0;
 }
 
-.stars-rating i {
+.interactive-stars i {
+    font-size: 36px;
+    color: #dee2e6;
     cursor: pointer;
-    color: #ddd;
     transition: all 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.stars-rating i:hover,
-.stars-rating i.active {
+.interactive-stars i:hover,
+.interactive-stars i.hover {
     color: #FFC107;
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
-.stars-rating i.fa-star {
+.interactive-stars i.selected {
     color: #FFC107;
 }
 
-.stars-rating i.fa-star-o {
-    color: #ddd;
+.interactive-stars i.fa-star {
+    color: #FFC107;
+}
+
+.interactive-stars i.fa-star-o {
+    color: #dee2e6;
 }
 
 .rating-item {
@@ -769,17 +782,19 @@ body {
 
         <div class="rating-section">
             <h4>Votre note</h4>
-            <div class="stars-rating" id="stars-rating">
-                <i class="fa fa-star-o" data-rating="1"></i>
-                <i class="fa fa-star-o" data-rating="2"></i>
-                <i class="fa fa-star-o" data-rating="3"></i>
-                <i class="fa fa-star-o" data-rating="4"></i>
-                <i class="fa fa-star-o" data-rating="5"></i>
-            </div>
-            <textarea class="form-control" id="rating-comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"><?php echo $my_rating && $my_rating->comment ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
-            <button type="button" class="btn btn-primary" id="submit-rating" style="margin-top: 10px;">
-                <i class="fa fa-check"></i> Enregistrer ma note
-            </button>
+            <form id="ratingForm">
+                <div class="interactive-stars" id="stars-rating">
+                    <i class="fa fa-star-o" data-rating="1"></i>
+                    <i class="fa fa-star-o" data-rating="2"></i>
+                    <i class="fa fa-star-o" data-rating="3"></i>
+                    <i class="fa fa-star-o" data-rating="4"></i>
+                    <i class="fa fa-star-o" data-rating="5"></i>
+                </div>
+                <textarea class="form-control" id="rating-comment" name="comment" placeholder="Votre commentaire (optionnel)" style="margin-top: 15px;" rows="3"><?php echo $my_rating && $my_rating->comment ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
+                <button type="submit" class="btn btn-primary" id="submit-rating" style="margin-top: 10px; width: 100%;" disabled>
+                    <i class="fa fa-check"></i> Enregistrer ma note
+                </button>
+            </form>
         </div>
 
         <!-- Affichage des avis existants -->
@@ -847,51 +862,75 @@ function toggleFavorite(recipeId, btnElement) {
     });
 }
 
+// Rating functionality inspired by my_dietitians system
 $(document).ready(function() {
     let selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
+    const starGroup = document.getElementById('stars-rating');
+    const stars = starGroup.querySelectorAll('i');
+    const submitBtn = document.getElementById('submit-rating');
+    const ratingForm = document.getElementById('ratingForm');
 
-    // Initialize stars - Tous commencent vides
-    function initStars() {
-        $('#stars-rating i').removeClass('fa-star active').addClass('fa-star-o');
+    // Initialize current rating
+    if (selectedRating > 0) {
+        highlightStars(selectedRating);
+        markSelected(selectedRating);
+        submitBtn.disabled = false;
     }
 
-    // Update stars display
-    function updateStars(rating) {
-        $('#stars-rating i').each(function(index) {
-            const starRating = index + 1;
-            if (starRating <= rating) {
-                $(this).removeClass('fa-star-o').addClass('fa-star active');
+    // Star interactions
+    stars.forEach(function(star) {
+        // Hover effect
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            highlightStars(rating);
+        });
+
+        // Click/touch to select
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            selectedRating = rating;
+            markSelected(rating);
+            submitBtn.disabled = false;
+
+            // Haptic feedback on mobile
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10);
+            }
+        });
+    });
+
+    // Reset hover effect
+    starGroup.addEventListener('mouseleave', function() {
+        highlightStars(selectedRating);
+    });
+
+    function highlightStars(rating) {
+        stars.forEach(function(star, index) {
+            if (index < rating) {
+                star.classList.remove('fa-star-o');
+                star.classList.add('fa-star');
             } else {
-                $(this).removeClass('fa-star active').addClass('fa-star-o');
+                star.classList.remove('fa-star');
+                star.classList.add('fa-star-o');
             }
         });
     }
 
-    // Initialize stars
-    initStars();
-    if (selectedRating > 0) {
-        updateStars(selectedRating);
+    function markSelected(rating) {
+        stars.forEach(function(star, index) {
+            if (index < rating) {
+                star.classList.add('selected');
+            } else {
+                star.classList.remove('selected');
+            }
+        });
+        highlightStars(rating);
     }
 
-    // Star hover effect
-    $('#stars-rating i').hover(
-        function() {
-            const rating = $(this).data('rating');
-            updateStars(rating);
-        },
-        function() {
-            updateStars(selectedRating);
-        }
-    );
+    // Form submission with AJAX
+    ratingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    // Star click
-    $('#stars-rating i').click(function() {
-        selectedRating = $(this).data('rating');
-        updateStars(selectedRating);
-    });
-
-    // Submit rating
-    $('#submit-rating').click(function() {
         if (selectedRating === 0) {
             if (window.alert_float) {
                 alert_float('warning', 'Veuillez sélectionner une note');
@@ -901,46 +940,64 @@ $(document).ready(function() {
             return;
         }
 
-        const comment = $('#rating-comment').val();
+        const comment = document.getElementById('rating-comment').value;
+        const originalBtnText = submitBtn.innerHTML;
 
-        $.post('<?php echo site_url('dietetic/portal/recipe_rate'); ?>', {
-            recipe_id: <?php echo $recipe->id; ?>,
-            rating: selectedRating,
-            comment: comment,
-            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
-        }, function(response) {
-            try {
-                const data = JSON.parse(response);
-                if (data.success) {
-                    if (window.alert_float) {
-                        alert_float('success', 'Merci pour votre avis !');
+        // Disable button during submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+
+        $.ajax({
+            url: '<?php echo site_url('dietetic/portal/recipe_rate'); ?>',
+            type: 'POST',
+            data: {
+                recipe_id: <?php echo $recipe->id; ?>,
+                rating: selectedRating,
+                comment: comment,
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+            },
+            success: function(response) {
+                try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (data.success) {
+                        if (window.alert_float) {
+                            alert_float('success', 'Merci pour votre avis !');
+                        } else {
+                            alert('Merci pour votre avis !');
+                        }
+                        // Reload after 2 seconds
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
                     } else {
-                        alert('Merci pour votre avis !');
+                        if (window.alert_float) {
+                            alert_float('danger', data.message);
+                        } else {
+                            alert(data.message);
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
                     }
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                } else {
+                } catch(e) {
+                    console.error('Erreur parsing:', e, response);
                     if (window.alert_float) {
-                        alert_float('danger', data.message);
+                        alert_float('danger', 'Une erreur est survenue');
                     } else {
-                        alert(data.message);
+                        alert('Une erreur est survenue');
                     }
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
                 }
-            } catch(e) {
-                console.error('Erreur parsing:', e, response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur AJAX:', status, error);
                 if (window.alert_float) {
-                    alert_float('danger', 'Une erreur est survenue');
+                    alert_float('danger', 'Erreur de connexion');
                 } else {
-                    alert('Une erreur est survenue');
+                    alert('Erreur de connexion');
                 }
-            }
-        }).fail(function(xhr, status, error) {
-            console.error('Erreur AJAX:', status, error);
-            if (window.alert_float) {
-                alert_float('danger', 'Erreur de connexion');
-            } else {
-                alert('Erreur de connexion');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
         });
     });
