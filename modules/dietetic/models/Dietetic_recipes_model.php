@@ -519,9 +519,10 @@ class Dietetic_recipes_model extends App_Model
     public function get_photos($recipe_id)
     {
         $this->db->where('recipe_id', $recipe_id);
-        // Vérifier si la colonne is_main existe avant de l'utiliser
-        if ($this->db->field_exists('is_main', db_prefix() . $this->table_photos)) {
-            $this->db->order_by('is_main', 'DESC');
+
+        // La table utilise is_primary au lieu de is_main
+        if ($this->db->field_exists('is_primary', db_prefix() . $this->table_photos)) {
+            $this->db->order_by('is_primary', 'DESC');
         }
         // Vérifier si la colonne display_order existe avant de l'utiliser
         if ($this->db->field_exists('display_order', db_prefix() . $this->table_photos)) {
@@ -530,7 +531,20 @@ class Dietetic_recipes_model extends App_Model
             // Sinon, trier par ID
             $this->db->order_by('id', 'ASC');
         }
-        return $this->db->get(db_prefix() . $this->table_photos)->result();
+
+        $photos = $this->db->get(db_prefix() . $this->table_photos)->result();
+
+        // Mapper les noms de colonnes de la BDD vers les noms standard
+        foreach ($photos as $photo) {
+            if (isset($photo->file_path)) {
+                $photo->photo_url = $photo->file_path;
+            }
+            if (isset($photo->is_primary)) {
+                $photo->is_main = $photo->is_primary;
+            }
+        }
+
+        return $photos;
     }
 
     /**
@@ -539,13 +553,27 @@ class Dietetic_recipes_model extends App_Model
     public function get_main_photo($recipe_id)
     {
         $this->db->where('recipe_id', $recipe_id);
-        // Vérifier si la colonne is_main existe
-        if ($this->db->field_exists('is_main', db_prefix() . $this->table_photos)) {
-            $this->db->where('is_main', 1);
+
+        // La table utilise is_primary au lieu de is_main
+        if ($this->db->field_exists('is_primary', db_prefix() . $this->table_photos)) {
+            $this->db->where('is_primary', 1);
         }
+
         $this->db->order_by('id', 'ASC'); // Prendre la première photo
         $this->db->limit(1);
-        return $this->db->get(db_prefix() . $this->table_photos)->row();
+        $photo = $this->db->get(db_prefix() . $this->table_photos)->row();
+
+        // Mapper les noms de colonnes de la BDD vers les noms standard
+        if ($photo) {
+            if (isset($photo->file_path)) {
+                $photo->photo_url = $photo->file_path;
+            }
+            if (isset($photo->is_primary)) {
+                $photo->is_main = $photo->is_primary;
+            }
+        }
+
+        return $photo;
     }
 
     /**
@@ -558,20 +586,21 @@ class Dietetic_recipes_model extends App_Model
      */
     public function add_photo($recipe_id, $photo_url, $is_main = false)
     {
+        // La table utilise file_path au lieu de photo_url
         $data = [
             'recipe_id' => $recipe_id,
-            'photo_url' => $photo_url,
+            'file_path' => $photo_url,  // Note: column is 'file_path' not 'photo_url'
             'uploaded_at' => date('Y-m-d H:i:s')
         ];
 
-        // Vérifier si la colonne is_main existe
-        if ($this->db->field_exists('is_main', db_prefix() . $this->table_photos)) {
+        // La table utilise is_primary au lieu de is_main
+        if ($this->db->field_exists('is_primary', db_prefix() . $this->table_photos)) {
             // Si c'est la photo principale, désactiver les autres
             if ($is_main) {
                 $this->db->where('recipe_id', $recipe_id);
-                $this->db->update(db_prefix() . $this->table_photos, ['is_main' => 0]);
+                $this->db->update(db_prefix() . $this->table_photos, ['is_primary' => 0]);
             }
-            $data['is_main'] = $is_main ? 1 : 0;
+            $data['is_primary'] = $is_main ? 1 : 0;
         }
 
         $this->db->insert(db_prefix() . $this->table_photos, $data);
