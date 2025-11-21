@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Portal extends ClientsController
+class Portal extends App_Controller
 {
     private $ratings_model_loaded = false;
 
