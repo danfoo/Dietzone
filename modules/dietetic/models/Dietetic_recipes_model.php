@@ -775,6 +775,7 @@ class Dietetic_recipes_model extends App_Model
         foreach ($recipes as &$recipe) {
             $recipe->main_photo = $this->get_main_photo($recipe->id);
             $recipe->average_rating = $this->get_average_rating($recipe->id);
+            $recipe->ratings_count = $this->get_ratings_count($recipe->id);
             $recipe->tags = $this->get_tags($recipe->id);
         }
 
