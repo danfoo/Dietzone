@@ -490,7 +490,19 @@
                                             <div class="form-group">
                                                 <label for="patient_id">Sélectionner un patient <span class="text-danger">*</span></label>
                                                 <select class="form-control selectpicker" id="patient_id" name="patient_id" data-live-search="true" required>
-                                                    <option value="">-- Chargement des patients... --</option>
+                                                    <option value="">-- Sélectionner un patient --</option>
+                                                    <?php if (!empty($patients)) : ?>
+                                                        <?php foreach ($patients as $patient) : ?>
+                                                            <option value="<?php echo $patient->id; ?>">
+                                                                <?php echo htmlspecialchars($patient->client_name); ?>
+                                                                <?php if (!empty($patient->email)) : ?>
+                                                                    (<?php echo htmlspecialchars($patient->email); ?>)
+                                                                <?php endif; ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    <?php else : ?>
+                                                        <option value="">Aucun patient disponible</option>
+                                                    <?php endif; ?>
                                                 </select>
                                             </div>
                                         </div>
@@ -544,62 +556,12 @@
 </div>
 
 <script>
-// Execute immediately - don't wait for document.ready (it may have already fired)
-(function() {
-    console.log('[Recipe View] Initialisation du formulaire d\'assignation...');
-
-    // Small delay to ensure DOM is ready
-    setTimeout(function() {
-        console.log('[Recipe View] Chargement des patients...');
-
-    $.ajax({
-        url: '<?php echo admin_url('dietetic/recipes/get_patients'); ?>',
-        type: 'GET',
-        dataType: 'json',
-        success: function(patients) {
-            console.log('[Recipe View] ✅ Patients chargés:', patients.length);
-            const select = $('#patient_id');
-            select.empty();
-            select.append('<option value="">-- Sélectionner un patient --</option>');
-
-            if (patients.error) {
-                console.error('[Recipe View] ❌ Erreur:', patients.error);
-                select.append('<option value="">Erreur: ' + patients.error + '</option>');
-                return;
-            }
-
-            if (patients.length === 0) {
-                console.warn('[Recipe View] ⚠️ Aucun patient disponible');
-                select.append('<option value="">Aucun patient disponible</option>');
-            } else {
-                patients.forEach(function(patient) {
-                    select.append('<option value="' + patient.id + '">' + patient.name + ' (' + patient.email + ')</option>');
-                    console.log('[Recipe View] ✅ Patient ajouté: ' + patient.name);
-                });
-            }
-
-            // Refresh selectpicker
-            if (typeof select.selectpicker === 'function') {
-                select.selectpicker('refresh');
-                console.log('[Recipe View] ✅ Selectpicker rafraîchi - ' + patients.length + ' patient(s) disponible(s)');
-            } else {
-                console.log('[Recipe View] ℹ️ Selectpicker non disponible, utilisation du select standard');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('[Recipe View] ❌ Erreur AJAX:', status, error);
-            console.error('[Recipe View] Response:', xhr.responseText);
-            const select = $('#patient_id');
-            select.empty();
-            select.append('<option value="">Erreur lors du chargement</option>');
-            if (typeof select.selectpicker === 'function') {
-                select.selectpicker('refresh');
-            }
-        }
-    });
+// Patients are loaded server-side in PHP, just handle assignment
+$(function() {
+    console.log('[Recipe View] Formulaire d\'assignation prêt');
 
     // Assign recipe to patient
-    $('#btn-assign').click(function() {
+    $('#btn-assign').on('click', function() {
         const patientId = $('#patient_id').val();
         const notes = $('#assignment_notes').val();
         const statusSpan = $('#assign-status');
@@ -668,8 +630,8 @@
                 btn.prop('disabled', false);
             }
         });
-    }, 500); // 500ms delay to ensure everything is loaded
-})(); // Execute immediately
+    });
+});
 </script>
 
 <?php init_tail(); ?>

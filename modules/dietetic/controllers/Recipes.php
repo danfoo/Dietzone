@@ -56,6 +56,10 @@ class Recipes extends AdminController
         $data['title'] = $data['recipe']->name;
         $data['ratings'] = $this->dietetic_recipes_model->get_ratings($id);
 
+        // Load patients for assignment dropdown
+        $this->load->model('dietetic/dietetic_patients_model');
+        $data['patients'] = $this->dietetic_patients_model->get_all();
+
         $this->load->view('admin/recipes/view', $data);
     }
 
