@@ -455,7 +455,9 @@ class Recipes extends AdminController
     public function get_patients()
     {
         if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('view')) {
-            ajax_access_denied();
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Access denied']);
+            return;
         }
 
         $patients = $this->dietetic_patients_model->get_all();
@@ -469,6 +471,7 @@ class Recipes extends AdminController
             ];
         }
 
+        header('Content-Type: application/json');
         echo json_encode($result);
     }
 }

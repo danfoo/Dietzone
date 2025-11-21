@@ -554,17 +554,37 @@
 $(document).ready(function() {
     // Load patients when modal opens
     $('#assignModal').on('show.bs.modal', function() {
-        $.get('<?php echo admin_url('dietetic/recipes/get_patients'); ?>', function(response) {
-            const patients = JSON.parse(response);
-            const select = $('#patient_id');
-            select.empty();
-            select.append('<option value="">-- Sélectionner un patient --</option>');
+        console.log('[Recipe View] Chargement des patients pour assignation...');
 
-            patients.forEach(function(patient) {
-                select.append('<option value="' + patient.id + '">' + patient.name + '</option>');
-            });
+        $.ajax({
+            url: '<?php echo admin_url('dietetic/recipes/get_patients'); ?>',
+            type: 'GET',
+            dataType: 'json',
+            success: function(patients) {
+                console.log('[Recipe View] Patients chargés:', patients.length);
+                const select = $('#patient_id');
+                select.empty();
+                select.append('<option value="">-- Sélectionner un patient --</option>');
 
-            select.selectpicker('refresh');
+                if (patients.error) {
+                    console.error('[Recipe View] Erreur:', patients.error);
+                    alert('Erreur lors du chargement des patients: ' + patients.error);
+                    return;
+                }
+
+                patients.forEach(function(patient) {
+                    select.append('<option value="' + patient.id + '">' + patient.name + '</option>');
+                    console.log('[Recipe View] Patient ajouté:', patient.name);
+                });
+
+                select.selectpicker('refresh');
+                console.log('[Recipe View] Selectpicker rafraîchi');
+            },
+            error: function(xhr, status, error) {
+                console.error('[Recipe View] Erreur AJAX:', status, error);
+                console.error('[Recipe View] Response:', xhr.responseText);
+                alert('Erreur lors du chargement des patients. Vérifiez la console.');
+            }
         });
     });
 
