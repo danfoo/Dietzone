@@ -511,7 +511,13 @@ class Dietetic_recipes_model extends App_Model
         if ($this->db->field_exists('is_main', db_prefix() . $this->table_photos)) {
             $this->db->order_by('is_main', 'DESC');
         }
-        $this->db->order_by('display_order', 'ASC');
+        // Vérifier si la colonne display_order existe avant de l'utiliser
+        if ($this->db->field_exists('display_order', db_prefix() . $this->table_photos)) {
+            $this->db->order_by('display_order', 'ASC');
+        } else {
+            // Sinon, trier par ID
+            $this->db->order_by('id', 'ASC');
+        }
         return $this->db->get(db_prefix() . $this->table_photos)->result();
     }
 
