@@ -33,6 +33,7 @@ class Recipes extends ClientsController
             $data['title'] = 'Mes Recettes';
             $data['error'] = 'Aucun profil patient trouvé pour votre compte.';
             $data['recipes'] = [];
+            $data['favorites'] = [];
             $this->load->view('portal/recipes/list', $data);
             return;
         }
@@ -41,6 +42,9 @@ class Recipes extends ClientsController
         $data['recipes'] = $this->dietetic_recipes_model->get_patient_recipes($patient->id);
         $data['patient'] = $patient;
         $data['title'] = 'Mes Recettes';
+
+        // Get favorites
+        $data['favorites'] = $this->dietetic_recipes_model->get_favorites($patient->id);
 
         $this->load->view('portal/recipes/list', $data);
     }
