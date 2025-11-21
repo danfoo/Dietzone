@@ -17,7 +17,9 @@ class Portal extends App_Controller
             'dietetic/portal/delete_notification',
             'dietetic/portal/mark_all_notifications_read',
             'dietetic/portal/save_fcm_token',
-            'dietetic/portal/delete_fcm_token'
+            'dietetic/portal/delete_fcm_token',
+            'dietetic/portal/add_to_favorites',
+            'dietetic/portal/remove_from_favorites'
         ];
 
         $current_uri = uri_string();
