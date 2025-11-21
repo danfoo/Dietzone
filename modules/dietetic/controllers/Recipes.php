@@ -60,6 +60,9 @@ class Recipes extends AdminController
         $this->load->model('dietetic/dietetic_patients_model');
         $data['patients'] = $this->dietetic_patients_model->get_all();
 
+        // Load assigned patients (to display who has this recipe)
+        $data['assigned_patients'] = $this->dietetic_recipes_model->get_assigned_patients($id);
+
         $this->load->view('admin/recipes/view', $data);
     }
 

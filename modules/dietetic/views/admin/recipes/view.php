@@ -477,6 +477,52 @@
                         </div>
                     <?php endif; ?>
 
+                    <!-- Patients assignés -->
+                    <?php if (!empty($assigned_patients)) : ?>
+                        <div class="col-md-12">
+                            <div class="panel panel-info">
+                                <div class="panel-heading">
+                                    <i class="fa fa-check-circle"></i> Patients ayant cette recette
+                                    <span class="badge"><?php echo count($assigned_patients); ?></span>
+                                </div>
+                                <div class="panel-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Patient</th>
+                                                    <th>Email</th>
+                                                    <th>Assigné par</th>
+                                                    <th>Date d'assignation</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($assigned_patients as $assignment) : ?>
+                                                    <tr>
+                                                        <td>
+                                                            <strong><?php echo htmlspecialchars($assignment->client_name); ?></strong>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($assignment->email ?? 'N/A'); ?></td>
+                                                        <td><?php echo htmlspecialchars($assignment->assigned_by_name ?? 'N/A'); ?></td>
+                                                        <td><?php echo date('d/m/Y à H:i', strtotime($assignment->assigned_at)); ?></td>
+                                                        <td>
+                                                            <?php if (dietetic_has_permission('edit')) : ?>
+                                                                <button type="button" class="btn btn-danger btn-sm" onclick="unassignRecipe(<?php echo $recipe->id; ?>, <?php echo $assignment->id; ?>)">
+                                                                    <i class="fa fa-times"></i> Retirer
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Assign to Patient -->
                     <?php if (dietetic_has_permission('edit') && $recipe->status == 'approved') : ?>
                         <div class="col-md-12">
@@ -591,26 +637,15 @@ function assignRecipeToPatient() {
             console.log('[Recipe View] ✅ Assignation réussie:', data);
 
             if (data.success) {
-                statusSpan.innerHTML = '<span style="color:green;"><i class="fa fa-check"></i> ' + data.message + '</span>';
-
-                // Clear form
-                document.getElementById('patient_id').value = '';
-                document.getElementById('assignment_notes').value = '';
-
-                // Refresh selectpicker if available
-                if (typeof $.fn.selectpicker !== 'undefined') {
-                    $('#patient_id').selectpicker('refresh');
-                }
-
                 // Show success notification
                 if (typeof alert_float === 'function') {
                     alert_float('success', data.message);
                 }
 
-                // Clear status after 3 seconds
+                // Reload page to show updated assignment list
                 setTimeout(function() {
-                    statusSpan.innerHTML = '';
-                }, 3000);
+                    location.reload();
+                }, 1000);
             } else {
                 statusSpan.innerHTML = '<span style="color:red;"><i class="fa fa-times"></i> ' + data.message + '</span>';
                 if (typeof alert_float === 'function') {
@@ -634,7 +669,47 @@ function assignRecipeToPatient() {
     });
 }
 
-console.log('[Recipe View] Fonction assignRecipeToPatient() définie et prête');
+// Function to remove assignment
+function unassignRecipe(recipeId, patientId) {
+    if (!confirm('Êtes-vous sûr de vouloir retirer cette recette de ce patient ?')) {
+        return;
+    }
+
+    console.log('[Recipe View] Retrait assignation - Recipe:', recipeId, 'Patient:', patientId);
+
+    $.ajax({
+        url: '<?php echo admin_url('dietetic/recipes/unassign'); ?>',
+        type: 'POST',
+        data: {
+            recipe_id: recipeId,
+            patient_id: patientId
+        },
+        dataType: 'json',
+        success: function(data) {
+            if (data.success) {
+                if (typeof alert_float === 'function') {
+                    alert_float('success', data.message);
+                }
+                // Reload page to update list
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            } else {
+                if (typeof alert_float === 'function') {
+                    alert_float('danger', data.message);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('[Recipe View] Erreur retrait:', error);
+            if (typeof alert_float === 'function') {
+                alert_float('danger', 'Erreur lors du retrait de l\'assignation');
+            }
+        }
+    });
+}
+
+console.log('[Recipe View] Fonctions assignRecipeToPatient() et unassignRecipe() définies et prêtes');
 </script>
 
 <?php init_tail(); ?>

@@ -739,6 +739,23 @@ class Dietetic_recipes_model extends App_Model
     }
 
     /**
+     * Get patients assigned to a recipe
+     */
+    public function get_assigned_patients($recipe_id)
+    {
+        $this->db->select('p.*, c.company as client_name, c.email, ra.assigned_at, ' .
+            'CONCAT(s.firstname, " ", s.lastname) as assigned_by_name');
+        $this->db->from(db_prefix() . $this->table_assignments . ' ra');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = ra.patient_id', 'inner');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->join(db_prefix() . 'staff s', 's.staffid = ra.assigned_by_dietitian_id', 'left');
+        $this->db->where('ra.recipe_id', $recipe_id);
+        $this->db->order_by('ra.assigned_at', 'DESC');
+
+        return $this->db->get()->result();
+    }
+
+    /**
      * Get recipes assigned to patient
      */
     public function get_patient_recipes($patient_id)
