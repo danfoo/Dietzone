@@ -861,98 +861,102 @@ function toggleFavorite(recipeId, btnElement) {
 
 // Rating functionality - Interactive stars system
 $(document).ready(function() {
-    let selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
-    const starGroup = document.getElementById('stars-rating');
-    const stars = starGroup.querySelectorAll('i');
-    const submitBtn = document.getElementById('submit-rating');
-    const ratingForm = document.getElementById('ratingForm');
+    var selectedRating = <?php echo $my_rating ? $my_rating->rating : 0; ?>;
 
-    console.log('Rating system initialized. Current rating:', selectedRating);
+    console.log('=== RATING SYSTEM DEBUG ===');
+    console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+    console.log('Initial rating:', selectedRating);
+    console.log('Star group element:', $('#stars-rating').length);
+    console.log('Stars count:', $('#stars-rating i').length);
+    console.log('Submit button:', $('#submit-rating').length);
+    console.log('Form:', $('#ratingForm').length);
 
-    // Initialize current rating
-    if (selectedRating > 0) {
-        highlightStars(selectedRating);
-        markSelected(selectedRating);
-        submitBtn.disabled = false;
-    }
-
-    // Star interactions
-    stars.forEach(function(star, idx) {
-        // Hover effect
-        star.addEventListener('mouseenter', function() {
-            const rating = parseInt(this.getAttribute('data-rating'));
-            highlightStars(rating);
-        });
-
-        // Click/touch to select
-        star.addEventListener('click', function() {
-            const rating = parseInt(this.getAttribute('data-rating'));
-            console.log('Star clicked, rating:', rating);
-            selectedRating = rating;
-            markSelected(rating);
-            submitBtn.disabled = false;
-
-            // Haptic feedback on mobile
-            if ('vibrate' in navigator) {
-                navigator.vibrate(10);
-            }
-        });
-    });
-
-    // Reset hover effect
-    starGroup.addEventListener('mouseleave', function() {
-        highlightStars(selectedRating);
-    });
-
+    // Helper functions
     function highlightStars(rating) {
-        stars.forEach(function(star, index) {
+        console.log('highlightStars called with:', rating);
+        $('#stars-rating i').each(function(index) {
             if (index < rating) {
-                star.classList.remove('fa-star-o');
-                star.classList.add('fa-star');
+                $(this).removeClass('fa-star-o').addClass('fa-star');
             } else {
-                star.classList.remove('fa-star');
-                star.classList.add('fa-star-o');
+                $(this).removeClass('fa-star').addClass('fa-star-o');
             }
         });
     }
 
     function markSelected(rating) {
-        stars.forEach(function(star, index) {
+        console.log('markSelected called with:', rating);
+        $('#stars-rating i').each(function(index) {
             if (index < rating) {
-                star.classList.add('selected');
+                $(this).addClass('selected');
             } else {
-                star.classList.remove('selected');
+                $(this).removeClass('selected');
             }
         });
         highlightStars(rating);
     }
 
-    // Form submission with AJAX
-    ratingForm.addEventListener('submit', function(e) {
+    // Initialize current rating
+    if (selectedRating > 0) {
+        console.log('Initializing with existing rating:', selectedRating);
+        highlightStars(selectedRating);
+        markSelected(selectedRating);
+        $('#submit-rating').prop('disabled', false);
+    }
+
+    // Star hover effect
+    $('#stars-rating i').on('mouseenter', function() {
+        var rating = parseInt($(this).attr('data-rating'));
+        console.log('Mouse enter star:', rating);
+        highlightStars(rating);
+    });
+
+    // Star click/touch to select
+    $('#stars-rating i').on('click', function() {
+        var rating = parseInt($(this).attr('data-rating'));
+        console.log('★ STAR CLICKED! Rating:', rating);
+        selectedRating = rating;
+        markSelected(rating);
+        $('#submit-rating').prop('disabled', false);
+        console.log('Button enabled, selectedRating:', selectedRating);
+
+        // Haptic feedback on mobile
+        if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+        }
+    });
+
+    // Reset hover effect
+    $('#stars-rating').on('mouseleave', function() {
+        console.log('Mouse leave, reset to:', selectedRating);
+        highlightStars(selectedRating);
+    });
+
+    // Form submission
+    $('#ratingForm').on('submit', function(e) {
         e.preventDefault();
-        console.log('Form submitted, selectedRating:', selectedRating);
+        console.log('=== FORM SUBMITTED ===');
+        console.log('Selected rating:', selectedRating);
 
         if (selectedRating === 0) {
+            console.log('No rating selected, showing alert');
             if (window.alert_float) {
                 alert_float('warning', 'Veuillez sélectionner une note');
             } else {
                 alert('Veuillez sélectionner une note');
             }
-            return;
+            return false;
         }
 
-        const comment = document.getElementById('rating-comment').value;
-        const originalBtnText = submitBtn.innerHTML;
+        var comment = $('#rating-comment').val();
+        var $submitBtn = $('#submit-rating');
+        var originalBtnText = $submitBtn.html();
 
-        console.log('Sending rating:', {
-            recipe_id: <?php echo $recipe->id; ?>,
-            rating: selectedRating,
-            comment: comment
-        });
+        console.log('Comment:', comment);
+        console.log('Sending AJAX request...');
 
         // Disable button during submission
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi en cours...';
+        $submitBtn.prop('disabled', true);
+        $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
 
         $.ajax({
             url: '<?php echo site_url('dietetic/portal/recipe_rate'); ?>',
@@ -965,7 +969,7 @@ $(document).ready(function() {
                 '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             },
             success: function(data) {
-                console.log('Response received:', data);
+                console.log('AJAX Success! Response:', data);
                 if (data.success) {
                     if (window.alert_float) {
                         alert_float('success', data.message || 'Merci pour votre avis !');
@@ -983,23 +987,29 @@ $(document).ready(function() {
                     } else {
                         alert(data.message || 'Erreur lors de l\'enregistrement');
                     }
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
+                    $submitBtn.prop('disabled', false);
+                    $submitBtn.html(originalBtnText);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('AJAX error:', {xhr: xhr, status: status, error: error});
-                console.error('Response text:', xhr.responseText);
+                console.error('AJAX Error!');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
                 if (window.alert_float) {
                     alert_float('danger', 'Erreur de connexion. Veuillez réessayer.');
                 } else {
                     alert('Erreur de connexion. Veuillez réessayer.');
                 }
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
+                $submitBtn.prop('disabled', false);
+                $submitBtn.html(originalBtnText);
             }
         });
+
+        return false;
     });
+
+    console.log('=== RATING SYSTEM READY ===');
 });
 </script>
 
