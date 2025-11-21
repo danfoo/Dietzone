@@ -267,6 +267,22 @@ $this->load->view('portal/includes/portal_header');
                class="category-filter <?php echo $this->input->get('category') == 'snack' ? 'active' : ''; ?>">
                 <i class="fa fa-apple"></i> Collation
             </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=smoothie'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'smoothie' ? 'active' : ''; ?>">
+                <i class="fa fa-glass"></i> Smoothie
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=juice'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'juice' ? 'active' : ''; ?>">
+                <i class="fa fa-tint"></i> Jus naturel
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=beverage'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'beverage' ? 'active' : ''; ?>">
+                <i class="fa fa-coffee"></i> Boisson
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=dessert'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'dessert' ? 'active' : ''; ?>">
+                <i class="fa fa-birthday-cake"></i> Dessert
+            </a>
         </div>
     </div>
 
