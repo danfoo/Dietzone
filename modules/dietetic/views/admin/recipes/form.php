@@ -386,7 +386,7 @@
                                             <div class="col-md-3">
                                                 <div class="thumbnail">
                                                     <img src="<?php echo base_url($photo->photo_url); ?>" alt="Photo">
-                                                    <?php if ($photo->is_main) : ?>
+                                                    <?php if (isset($photo->is_main) && $photo->is_main) : ?>
                                                         <span class="label label-success">Photo principale</span>
                                                     <?php endif; ?>
                                                     <button type="button" class="btn btn-danger btn-xs btn-block delete-photo"

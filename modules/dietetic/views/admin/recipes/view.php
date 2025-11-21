@@ -305,10 +305,10 @@
                                 <div class="panel-body">
                                     <div class="recipe-gallery">
                                         <?php foreach ($recipe->photos as $index => $photo) : ?>
-                                            <div class="<?php echo $photo->is_main ? 'recipe-main-photo' : ''; ?>">
+                                            <div class="<?php echo (isset($photo->is_main) && $photo->is_main) ? 'recipe-main-photo' : ''; ?>">
                                                 <img src="<?php echo base_url($photo->photo_url); ?>"
                                                      alt="<?php echo htmlspecialchars($recipe->name); ?>">
-                                                <?php if ($photo->is_main) : ?>
+                                                <?php if (isset($photo->is_main) && $photo->is_main) : ?>
                                                     <span class="label label-success" style="position: absolute; top: 10px; left: 10px;">
                                                         Photo principale
                                                     </span>
