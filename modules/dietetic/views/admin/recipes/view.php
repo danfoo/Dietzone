@@ -515,7 +515,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <button type="button" class="btn btn-primary" id="btn-assign">
+                                            <button type="button" class="btn btn-primary" id="btn-assign" onclick="assignRecipeToPatient()">
                                                 <i class="fa fa-check"></i> Assigner cette recette
                                             </button>
                                             <span id="assign-status" style="margin-left: 15px;"></span>
@@ -556,82 +556,85 @@
 </div>
 
 <script>
-// Patients are loaded server-side in PHP, just handle assignment
-$(function() {
-    console.log('[Recipe View] Formulaire d\'assignation prêt');
+// Global function attached directly to onclick - works even if jQuery events don't fire
+function assignRecipeToPatient() {
+    console.log('[Recipe View] Fonction assignRecipeToPatient() appelée');
 
-    // Assign recipe to patient
-    $('#btn-assign').on('click', function() {
-        const patientId = $('#patient_id').val();
-        const notes = $('#assignment_notes').val();
-        const statusSpan = $('#assign-status');
-        const btn = $(this);
+    var patientId = document.getElementById('patient_id').value;
+    var notes = document.getElementById('assignment_notes').value;
+    var statusSpan = document.getElementById('assign-status');
+    var btn = document.getElementById('btn-assign');
 
-        console.log('[Recipe View] Tentative d\'assignation - Patient ID:', patientId);
+    console.log('[Recipe View] Patient ID:', patientId);
+    console.log('[Recipe View] Notes:', notes);
 
-        if (!patientId) {
-            alert('Veuillez sélectionner un patient');
-            return;
-        }
+    if (!patientId) {
+        alert('Veuillez sélectionner un patient');
+        return;
+    }
 
-        // Disable button and show loading
-        btn.prop('disabled', true);
-        statusSpan.html('<i class="fa fa-spinner fa-spin"></i> Assignation en cours...');
+    // Disable button and show loading
+    btn.disabled = true;
+    statusSpan.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Assignation en cours...';
 
-        $.ajax({
-            url: '<?php echo admin_url('dietetic/recipes/assign'); ?>',
-            type: 'POST',
-            data: {
-                recipe_id: <?php echo $recipe->id; ?>,
-                patient_id: patientId,
-                notes: notes
-            },
-            dataType: 'json',
-            success: function(data) {
-                console.log('[Recipe View] ✅ Assignation réussie:', data);
+    // Use jQuery for AJAX since it's loaded
+    $.ajax({
+        url: '<?php echo admin_url('dietetic/recipes/assign'); ?>',
+        type: 'POST',
+        data: {
+            recipe_id: <?php echo $recipe->id; ?>,
+            patient_id: patientId,
+            notes: notes
+        },
+        dataType: 'json',
+        success: function(data) {
+            console.log('[Recipe View] ✅ Assignation réussie:', data);
 
-                if (data.success) {
-                    statusSpan.html('<span style="color:green;"><i class="fa fa-check"></i> ' + data.message + '</span>');
+            if (data.success) {
+                statusSpan.innerHTML = '<span style="color:green;"><i class="fa fa-check"></i> ' + data.message + '</span>';
 
-                    // Clear form
-                    $('#patient_id').val('');
-                    if (typeof $('#patient_id').selectpicker === 'function') {
-                        $('#patient_id').selectpicker('refresh');
-                    }
-                    $('#assignment_notes').val('');
+                // Clear form
+                document.getElementById('patient_id').value = '';
+                document.getElementById('assignment_notes').value = '';
 
-                    // Show success notification
-                    if (typeof alert_float === 'function') {
-                        alert_float('success', data.message);
-                    }
-
-                    // Clear status after 3 seconds
-                    setTimeout(function() {
-                        statusSpan.html('');
-                    }, 3000);
-                } else {
-                    statusSpan.html('<span style="color:red;"><i class="fa fa-times"></i> ' + data.message + '</span>');
-                    if (typeof alert_float === 'function') {
-                        alert_float('danger', data.message);
-                    }
+                // Refresh selectpicker if available
+                if (typeof $.fn.selectpicker !== 'undefined') {
+                    $('#patient_id').selectpicker('refresh');
                 }
 
-                btn.prop('disabled', false);
-            },
-            error: function(xhr, status, error) {
-                console.error('[Recipe View] ❌ Erreur assignation:', status, error);
-                console.error('[Recipe View] Response:', xhr.responseText);
-
-                statusSpan.html('<span style="color:red;"><i class="fa fa-times"></i> Erreur lors de l\'assignation</span>');
+                // Show success notification
                 if (typeof alert_float === 'function') {
-                    alert_float('danger', 'Erreur lors de l\'assignation');
+                    alert_float('success', data.message);
                 }
 
-                btn.prop('disabled', false);
+                // Clear status after 3 seconds
+                setTimeout(function() {
+                    statusSpan.innerHTML = '';
+                }, 3000);
+            } else {
+                statusSpan.innerHTML = '<span style="color:red;"><i class="fa fa-times"></i> ' + data.message + '</span>';
+                if (typeof alert_float === 'function') {
+                    alert_float('danger', data.message);
+                }
             }
-        });
+
+            btn.disabled = false;
+        },
+        error: function(xhr, status, error) {
+            console.error('[Recipe View] ❌ Erreur assignation:', status, error);
+            console.error('[Recipe View] Response:', xhr.responseText);
+
+            statusSpan.innerHTML = '<span style="color:red;"><i class="fa fa-times"></i> Erreur lors de l\'assignation</span>';
+            if (typeof alert_float === 'function') {
+                alert_float('danger', 'Erreur lors de l\'assignation');
+            }
+
+            btn.disabled = false;
+        }
     });
-});
+}
+
+console.log('[Recipe View] Fonction assignRecipeToPatient() définie et prête');
 </script>
 
 <?php init_tail(); ?>
