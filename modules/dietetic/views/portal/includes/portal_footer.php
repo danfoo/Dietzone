@@ -9,7 +9,7 @@
 
         <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">
             <i class="fa fa-cutlery footer-icon"></i>
-            <span class="footer-label">Repas</span>
+            <span class="footer-label"><?php echo (!isset($active_page) || $active_page == 'dashboard') ? 'Recettes' : 'Repas'; ?></span>
         </a>
 
         <?php

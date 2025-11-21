@@ -3966,14 +3966,6 @@ class Portal extends App_Controller
     }
 
     /**
-     * Page de test pour le système de notation
-     */
-    public function test_rating()
-    {
-        $this->load->view('portal/test_rating');
-    }
-
-    /**
      * Ajouter une recette aux favoris (AJAX)
      */
     public function add_to_favorites()

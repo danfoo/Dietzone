@@ -33,7 +33,7 @@ body {
 
 /* Base Container */
 .container {
-    padding: 15px;
+    padding: 8px;
     max-width: 100%;
 }
 
@@ -417,6 +417,7 @@ body {
 
 .btn-favorite i.fa-heart {
     display: none;
+    font-size: 14px;
 }
 
 .btn-favorite.active i.fa-heart {
@@ -425,6 +426,7 @@ body {
 
 .btn-favorite i.fa-heart-o {
     display: inline;
+    font-size: 14px;
 }
 
 .btn-favorite.active i.fa-heart-o {

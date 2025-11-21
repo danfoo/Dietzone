@@ -541,7 +541,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 56px;
+            height: 50px;
             background: white;
             border-top: 1px solid #e9ecef;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
