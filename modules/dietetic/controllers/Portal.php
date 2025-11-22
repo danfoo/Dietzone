@@ -4400,12 +4400,22 @@ class Portal extends App_Controller
         // Check if client is logged in
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
+            return;
         }
 
         $client_id = get_client_user_id();
 
+        // Load required models
+        $this->load->model('clients_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
         // Get patient
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            log_activity('Error loading patient profile: ' . $e->getMessage());
+            $patient = null;
+        }
 
         if (!$patient) {
             $this->load->view('portal_no_access');
@@ -4415,22 +4425,36 @@ class Portal extends App_Controller
         $data = [];
         $data['patient'] = $patient;
         $data['title'] = 'Mon Profil';
+        $data['active_page'] = 'profile';
 
         // Get client info
-        $this->load->model('clients_model');
         $client = $this->clients_model->get($patient->client_id);
+        if (!$client) {
+            log_activity('Client not found for patient ID: ' . $patient->id);
+            $this->load->view('portal_no_access');
+            return;
+        }
         $data['client'] = $client;
 
         // Get latest measurement for current weight
-        $latest_measurement = $this->dietetic_patients_model->get_latest_measurement($patient->id, true);
-        $data['latest_measurement'] = $latest_measurement;
+        try {
+            $latest_measurement = $this->dietetic_patients_model->get_latest_measurement($patient->id, true);
+            $data['latest_measurement'] = $latest_measurement;
+        } catch (Exception $e) {
+            log_activity('Error loading latest measurement: ' . $e->getMessage());
+            $data['latest_measurement'] = null;
+        }
 
         // Calculate age from birth_date
-        if ($patient->birth_date) {
-            $birth_date = new DateTime($patient->birth_date);
-            $today = new DateTime();
-            $age = $today->diff($birth_date)->y;
-            $data['age'] = $age;
+        if (!empty($patient->birth_date)) {
+            try {
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $today->diff($birth_date)->y;
+                $data['age'] = $age;
+            } catch (Exception $e) {
+                $data['age'] = null;
+            }
         } else {
             $data['age'] = null;
         }

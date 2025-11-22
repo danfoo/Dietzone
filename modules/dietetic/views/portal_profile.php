@@ -694,8 +694,8 @@ $page_title = 'Mon Profil';
 
         <div class="profile-avatar-container">
             <div class="profile-avatar" id="profileAvatar">
-                <?php if (!empty($patient->avatar_url)): ?>
-                    <img src="<?php echo $patient->avatar_url; ?>" alt="Avatar">
+                <?php if (isset($patient->avatar_url) && !empty($patient->avatar_url) && file_exists($patient->avatar_url)): ?>
+                    <img src="<?php echo base_url($patient->avatar_url); ?>" alt="Avatar">
                 <?php else: ?>
                     <i class="fa fa-user"></i>
                 <?php endif; ?>
