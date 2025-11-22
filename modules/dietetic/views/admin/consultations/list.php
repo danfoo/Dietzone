@@ -429,8 +429,11 @@ $(document).ready(function() {
     logDiagnostic('Tableau visible: ' + $('#consultations-table').is(':visible'), 'info');
     logDiagnostic('Wrapper visible: ' + $('.consultations-table-wrapper').is(':visible'), 'info');
 
+    // DÉSACTIVATION TEMPORAIRE DE DATATABLES POUR TEST
+    var ENABLE_DATATABLES = false;
+
     // Initialize DataTables with custom styling and French language
-    if ($.fn.DataTable) {
+    if ($.fn.DataTable && ENABLE_DATATABLES) {
         try {
             logDiagnostic('Initialisation de DataTables...', 'info');
 
@@ -520,10 +523,41 @@ $(document).ready(function() {
             $('.consultations-table-wrapper').show();
         }
     } else {
-        logDiagnostic('DataTables non disponible - affichage direct du tableau', 'error');
-        // Si DataTables n'est pas disponible, afficher le tableau quand même
+        logDiagnostic('DataTables DÉSACTIVÉ - affichage direct du tableau', 'info');
+
+        // Afficher le tableau sans DataTables
         $('#consultations-table').show();
         $('.consultations-table-wrapper').show();
+
+        // Forcer tous les éléments parents à être visibles
+        $('#consultations-table').parents().show();
+
+        logDiagnostic('Tableau affiché en mode statique (sans DataTables)', 'success');
+
+        // Monitoring pour s'assurer qu'il reste visible
+        var staticMonitorCount = 0;
+        var staticMonitorInterval = setInterval(function() {
+            staticMonitorCount++;
+            var isVisible = $('#consultations-table').is(':visible');
+
+            if (!isVisible) {
+                logDiagnostic('⚠️ ALERTE! Tableau statique invisible à T+' + staticMonitorCount + 's', 'error');
+                $('#consultations-table').show();
+                $('.consultations-table-wrapper').show();
+                $('#consultations-table').parents().show();
+                logDiagnostic('Réaffichage forcé!', 'success');
+            } else if (staticMonitorCount === 1) {
+                logDiagnostic('✓ Tableau statique visible après 1s', 'success');
+            }
+
+            if (staticMonitorCount >= 10) {
+                clearInterval(staticMonitorInterval);
+                logDiagnostic('Monitoring statique terminé - Tableau reste visible!', 'success');
+                setTimeout(function() {
+                    $('#diagnostic-panel').fadeOut();
+                }, 2000);
+            }
+        }, 1000);
     }
 
     // Script simple pour le menu Diététique
