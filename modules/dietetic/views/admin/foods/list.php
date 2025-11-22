@@ -3,6 +3,84 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <?php init_head(); ?>
 
+<style>
+/* Modern Foods Design */
+:root {
+    --food-orange: #f39c12;
+    --food-orange-dark: #e67e22;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.stat-card .stat-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    opacity: 0.3;
+}
+
+.stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 5px 0;
+}
+
+.stat-card .stat-label {
+    font-size: 13px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.stat-card.total {
+    border-left: 4px solid #f39c12;
+}
+
+.stat-card.total .stat-icon,
+.stat-card.total .stat-value {
+    color: #f39c12;
+}
+
+.stat-card.active {
+    border-left: 4px solid #27ae60;
+}
+
+.stat-card.active .stat-icon,
+.stat-card.active .stat-value {
+    color: #27ae60;
+}
+
+.stat-card.categories {
+    border-left: 4px solid #3498db;
+}
+
+.stat-card.categories .stat-icon,
+.stat-card.categories .stat-value {
+    color: #3498db;
+}
+
+.stat-card.calories {
+    border-left: 4px solid #e67e22;
+}
+
+.stat-card.calories .stat-icon,
+.stat-card.calories .stat-value {
+    color: #e67e22;
+}
+</style>
+
 <div id="wrapper">
     <div class="content">
         <!-- Page Header -->
@@ -61,71 +139,39 @@
 
         <div class="stats-row row" style="margin-bottom: 20px;">
             <div class="col-md-3">
-                <div class="stat-card total" style="background: white; border-left: 4px solid #f39c12; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #f39c12; margin-bottom: 5px;">
-                                <?php echo $total_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Total Aliments
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #f39c12; opacity: 0.3;">
-                            <i class="fa fa-database"></i>
-                        </div>
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="fa fa-database"></i>
                     </div>
+                    <div class="stat-value"><?php echo $total_count; ?></div>
+                    <div class="stat-label">Total Aliments</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card active" style="background: white; border-left: 4px solid #27ae60; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #27ae60; margin-bottom: 5px;">
-                                <?php echo $active_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Aliments Actifs
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #27ae60; opacity: 0.3;">
-                            <i class="fa fa-check-circle"></i>
-                        </div>
+                <div class="stat-card active">
+                    <div class="stat-icon">
+                        <i class="fa fa-check-circle"></i>
                     </div>
+                    <div class="stat-value"><?php echo $active_count; ?></div>
+                    <div class="stat-label">Aliments Actifs</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card categories" style="background: white; border-left: 4px solid #3498db; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #3498db; margin-bottom: 5px;">
-                                <?php echo $category_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Catégories
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #3498db; opacity: 0.3;">
-                            <i class="fa fa-tags"></i>
-                        </div>
+                <div class="stat-card categories">
+                    <div class="stat-icon">
+                        <i class="fa fa-tags"></i>
                     </div>
+                    <div class="stat-value"><?php echo $category_count; ?></div>
+                    <div class="stat-label">Catégories</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card calories" style="background: white; border-left: 4px solid #e67e22; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #e67e22; margin-bottom: 5px;">
-                                <?php echo $avg_calories; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Calories Moy.
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #e67e22; opacity: 0.3;">
-                            <i class="fa fa-fire"></i>
-                        </div>
+                <div class="stat-card calories">
+                    <div class="stat-icon">
+                        <i class="fa fa-fire"></i>
                     </div>
+                    <div class="stat-value"><?php echo $avg_calories; ?></div>
+                    <div class="stat-label">Calories Moy.</div>
                 </div>
             </div>
         </div>
@@ -335,16 +381,6 @@
     .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    /* Stat card hover */
-    .stat-card {
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
 
     /* Search box focus */
