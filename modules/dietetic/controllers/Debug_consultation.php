@@ -135,7 +135,7 @@ class Debug_consultation extends AdminController
         echo "<div class='section'>";
         echo "<h2>👥 Étape 2: Vérification Patients</h2>";
 
-        $patients = $this->dietetic_patients_model->get();
+        $patients = $this->dietetic_patients_model->get_all();
 
         if (empty($patients)) {
             echo "<p class='error'>✗ Aucun patient trouvé dans la base de données</p>";
