@@ -42,8 +42,52 @@ class Check_logs extends AdminController
             }
 
             echo "Client: {$client->company}\n";
-            echo "Email: {$client->email}\n";
-            echo "Téléphone: {$client->phonenumber}\n\n";
+            echo "Email (client): " . (isset($client->email) ? $client->email : '(non défini)') . "\n";
+            echo "Téléphone (client): " . (isset($client->phonenumber) ? $client->phonenumber : '(non défini)') . "\n\n";
+
+            // Get primary contact for this client
+            echo "=== Recherche du contact principal ===\n\n";
+            $this->db->where('userid', $patient->client_id);
+            $this->db->where('is_primary', 1);
+            $contact = $this->db->get(db_prefix() . 'contacts')->row();
+
+            if ($contact) {
+                echo "✅ Contact principal trouvé:\n";
+                echo "Nom: {$contact->firstname} {$contact->lastname}\n";
+                echo "Email: {$contact->email}\n";
+                echo "Téléphone: {$contact->phonenumber}\n\n";
+            } else {
+                echo "❌ Pas de contact principal\n";
+                // Try to get any contact
+                $this->db->where('userid', $patient->client_id);
+                $this->db->order_by('id', 'ASC');
+                $this->db->limit(1);
+                $contact = $this->db->get(db_prefix() . 'contacts')->row();
+
+                if ($contact) {
+                    echo "→ Contact trouvé (non principal):\n";
+                    echo "Nom: {$contact->firstname} {$contact->lastname}\n";
+                    echo "Email: {$contact->email}\n";
+                    echo "Téléphone: {$contact->phonenumber}\n\n";
+                } else {
+                    echo "→ Aucun contact trouvé pour ce client!\n\n";
+                }
+            }
+
+            // Use contact email/phone if available
+            $email_to_use = '';
+            $phone_to_use = '';
+
+            if ($contact) {
+                $email_to_use = $contact->email;
+                $phone_to_use = $contact->phonenumber;
+            } elseif (isset($client->email)) {
+                $email_to_use = $client->email;
+                $phone_to_use = $client->phonenumber ?? '';
+            }
+
+            echo "→ Email à utiliser: " . ($email_to_use ?: '(VIDE)') . "\n";
+            echo "→ Téléphone à utiliser: " . ($phone_to_use ?: '(VIDE)') . "\n\n";
 
             // Get preferences
             echo "=== Vérification des préférences ===\n\n";
