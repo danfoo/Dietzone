@@ -76,6 +76,31 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Get primary contact for a client
+     * Returns the primary contact with email and phone information
+     *
+     * @param int $client_id
+     * @return object|null
+     */
+    public function get_client_primary_contact($client_id)
+    {
+        // Try to get primary contact first
+        $this->db->where('userid', $client_id);
+        $this->db->where('is_primary', 1);
+        $contact = $this->db->get(db_prefix() . 'contacts')->row();
+
+        // If no primary contact, get the first contact available
+        if (!$contact) {
+            $this->db->where('userid', $client_id);
+            $this->db->order_by('id', 'ASC');
+            $this->db->limit(1);
+            $contact = $this->db->get(db_prefix() . 'contacts')->row();
+        }
+
+        return $contact;
+    }
+
+    /**
      * Update patient notification preferences
      */
     public function update_preferences($patient_id, $data)
@@ -1126,10 +1151,16 @@ class Dietetic_notifications_model extends App_Model
         $client = $this->clients_model->get($patient->client_id);
         if (!$client) return false;
 
+        // Get primary contact for email and phone (instead of using client directly)
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : '';
 
-        $message = "Bonjour {$client->company},\n\n";
+        $message = "Bonjour {$contact_name},\n\n";
         $message .= "📅 Une nouvelle consultation a été planifiée :\n\n";
         $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
         $message .= "📆 Date : {$formatted_date}\n";
@@ -1144,8 +1175,8 @@ class Dietetic_notifications_model extends App_Model
             'type' => 'consultation_scheduled',
             'subject' => '📅 Nouvelle Consultation Planifiée',
             'message' => $message,
-            'email' => $client->email,
-            'phone' => $client->phonenumber,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
@@ -1173,9 +1204,15 @@ class Dietetic_notifications_model extends App_Model
         $client = $this->clients_model->get($patient->client_id);
         if (!$client) return false;
 
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'à confirmer';
 
-        $message = "Bonjour {$client->company},\n\n";
+        $message = "Bonjour {$contact_name},\n\n";
         $message .= "⏰ Rappel : Votre consultation est demain !\n\n";
         $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
         $message .= "🕐 Heure : {$formatted_time}\n\n";
@@ -1186,8 +1223,8 @@ class Dietetic_notifications_model extends App_Model
             'type' => 'consultation_reminder_day',
             'subject' => '⏰ Rappel : Consultation Demain',
             'message' => $message,
-            'email' => $client->email,
-            'phone' => $client->phonenumber,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
@@ -1215,9 +1252,15 @@ class Dietetic_notifications_model extends App_Model
         $client = $this->clients_model->get($patient->client_id);
         if (!$client) return false;
 
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'bientôt';
 
-        $message = "Bonjour {$client->company},\n\n";
+        $message = "Bonjour {$contact_name},\n\n";
         $message .= "⏰ Votre consultation commence dans 1 heure !\n\n";
         $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
         $message .= "🕐 Heure : {$formatted_time}\n\n";
@@ -1228,8 +1271,8 @@ class Dietetic_notifications_model extends App_Model
             'type' => 'consultation_reminder_hour',
             'subject' => '⏰ Consultation dans 1 heure',
             'message' => $message,
-            'email' => $client->email,
-            'phone' => $client->phonenumber,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
@@ -1257,9 +1300,15 @@ class Dietetic_notifications_model extends App_Model
         $client = $this->clients_model->get($patient->client_id);
         if (!$client) return false;
 
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
 
-        $message = "Bonjour {$client->company},\n\n";
+        $message = "Bonjour {$contact_name},\n\n";
         $message .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
         if ($reason) {
             $message .= "Raison : {$reason}\n\n";
@@ -1271,8 +1320,8 @@ class Dietetic_notifications_model extends App_Model
             'type' => 'consultation_cancelled',
             'subject' => '❌ Consultation Annulée',
             'message' => $message,
-            'email' => $client->email,
-            'phone' => $client->phonenumber,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
