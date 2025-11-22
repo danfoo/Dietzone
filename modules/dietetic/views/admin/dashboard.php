@@ -1,4 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<!-- FIX JQUERY: Charger jQuery AVANT init_head() pour éviter les erreurs CSRF -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <?php init_head(); ?>
 
 <div id="wrapper">
