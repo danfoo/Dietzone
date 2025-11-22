@@ -438,36 +438,67 @@ function dietetic_permissions()
 
 /**
  * Redirect non-admin users to dietetic dashboard instead of main dashboard
+ * Also redirects patients to dietetic portal from client home page
  */
 function dietetic_redirect_to_dashboard()
 {
-    // Only check if user is logged in and accessing admin area
-    if (!is_staff_logged_in()) {
-        return;
-    }
-
     $CI = &get_instance();
-
-    // Get current URI
     $current_uri = $_SERVER['REQUEST_URI'] ?? '';
 
-    // Only redirect if user is accessing the main dashboard (/admin or /admin/dashboard)
-    if (!preg_match('#/admin/?$|/admin/dashboard/?$#', $current_uri)) {
-        return;
+    // ====================================
+    // STAFF REDIRECTION (Admin area)
+    // ====================================
+    if (is_staff_logged_in()) {
+        // Only redirect if user is accessing the main dashboard (/admin or /admin/dashboard)
+        if (!preg_match('#/admin/?$|/admin/dashboard/?$#', $current_uri)) {
+            return;
+        }
+
+        // Don't redirect admins - they need access to the full Perfex dashboard
+        if (is_admin()) {
+            return;
+        }
+
+        // Check if user has access to dietetic module
+        if (!has_permission('dietetic', '', 'view')) {
+            return;
+        }
+
+        // Redirect to dietetic dashboard
+        redirect(admin_url('dietetic/dashboard'));
     }
 
-    // Don't redirect admins - they need access to the full Perfex dashboard
-    if (is_admin()) {
-        return;
-    }
+    // ====================================
+    // PATIENT REDIRECTION (Client portal)
+    // ====================================
+    if (is_client_logged_in()) {
+        // Only redirect from client home page
+        // Match: /, /clients, /clients/home, etc.
+        if (!preg_match('#^/?$|^/clients/?$|^/clients/home/?$#', $current_uri)) {
+            return;
+        }
 
-    // Check if user has access to dietetic module
-    if (!has_permission('dietetic', '', 'view')) {
-        return;
-    }
+        // Get client ID
+        $client_id = get_client_user_id();
+        if (!$client_id) {
+            return;
+        }
 
-    // Redirect to dietetic dashboard
-    redirect(admin_url('dietetic/dashboard'));
+        // Check if client has a dietetic patient profile
+        $CI->load->model('dietetic/dietetic_patients_model');
+
+        try {
+            $patient = $CI->dietetic_patients_model->get_by_client($client_id);
+
+            // If patient profile exists, redirect to dietetic portal
+            if ($patient) {
+                redirect(site_url('dietetic/portal'));
+            }
+        } catch (Exception $e) {
+            // Patient profile doesn't exist, don't redirect
+            return;
+        }
+    }
 }
 
 /**
