@@ -1,174 +1,13 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<!-- FIX JQUERY: Charger jQuery AVANT init_head() pour éviter les erreurs CSRF -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <?php init_head(); ?>
-
-<style>
-/* Modern Patient View Styles */
-:root {
-    --primary-purple: #667eea;
-    --primary-purple-dark: #764ba2;
-    --weight-blue: #3498db;
-    --current-green: #2ecc71;
-    --target-orange: #f39c12;
-    --bmi-red: #e74c3c;
-}
-
-/* Enhanced Panel Hover Effects */
-.panel_s {
-    transition: all 0.3s ease;
-    border-radius: 10px;
-}
-
-.panel_s:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-}
-
-.panel-body {
-    border-radius: 10px;
-}
-
-/* Stat Card Enhancements */
-.stat-card-enhanced {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card-enhanced::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-.stat-card-enhanced:hover::after {
-    transform: scale(3);
-}
-
-.stat-card-enhanced:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-/* Table Enhancements */
-.table-hover tbody tr {
-    transition: all 0.2s ease;
-}
-
-.table-hover tbody tr:hover {
-    background-color: #f8f9fa !important;
-    transform: translateX(3px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-/* Button Enhancements */
-.btn {
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-/* Info Box Enhancements */
-.info-box {
-    transition: all 0.3s ease;
-    border-radius: 8px !important;
-}
-
-.info-box:hover {
-    transform: translateX(3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* Alert Enhancements */
-.alert {
-    border-radius: 8px !important;
-    animation: slideInDown 0.5s ease;
-}
-
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Chart Container */
-#weightChart {
-    border-radius: 8px;
-}
-
-/* Patient Header Enhancement */
-.patient-header-enhanced {
-    position: relative;
-    overflow: hidden;
-    border-radius: 10px !important;
-}
-
-.patient-header-enhanced::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-}
-
-/* Panel Headers */
-.panel_s h4 {
-    position: relative;
-    padding-left: 10px;
-}
-
-.panel_s h4::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 20px;
-    background: currentColor;
-    border-radius: 2px;
-}
-
-/* Smooth Scrolling */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Loading State for Chart */
-.chart-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    color: #95a5a6;
-}
-</style>
 
 <div id="wrapper">
     <div class="content">
         <!-- Patient Header -->
         <div class="row">
             <div class="col-md-12">
-                <div class="panel_s patient-header-enhanced">
-                    <div class="panel-body" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;">
+                <div class="panel_s">
+                    <div class="panel-body" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
                         <div class="row">
                             <div class="col-md-9">
                                 <h2 style="color: white; margin-top: 10px;">
@@ -199,7 +38,7 @@ html {
                 <!-- Stats Cards Row -->
                 <div class="row">
                     <div class="col-md-3 col-sm-6">
-                        <div class="panel_s stat-card-enhanced" style="border-left: 4px solid #3498db; border-radius: 10px;">
+                        <div class="panel_s" style="border-left: 4px solid #3498db;">
                             <div class="panel-body text-center">
                                 <div style="font-size: 36px; color: #3498db; margin-bottom: 10px;">
                                     <i class="fa fa-balance-scale"></i>
@@ -211,7 +50,7 @@ html {
                     </div>
 
                     <div class="col-md-3 col-sm-6">
-                        <div class="panel_s stat-card-enhanced" style="border-left: 4px solid #2ecc71; border-radius: 10px;">
+                        <div class="panel_s" style="border-left: 4px solid #2ecc71;">
                             <div class="panel-body text-center">
                                 <div style="font-size: 36px; color: #2ecc71; margin-bottom: 10px;">
                                     <i class="fa fa-line-chart"></i>
@@ -225,7 +64,7 @@ html {
                     </div>
 
                     <div class="col-md-3 col-sm-6">
-                        <div class="panel_s stat-card-enhanced" style="border-left: 4px solid #f39c12; border-radius: 10px;">
+                        <div class="panel_s" style="border-left: 4px solid #f39c12;">
                             <div class="panel-body text-center">
                                 <div style="font-size: 36px; color: #f39c12; margin-bottom: 10px;">
                                     <i class="fa fa-bullseye"></i>
@@ -237,7 +76,7 @@ html {
                     </div>
 
                     <div class="col-md-3 col-sm-6">
-                        <div class="panel_s stat-card-enhanced" style="border-left: 4px solid #e74c3c; border-radius: 10px;">
+                        <div class="panel_s" style="border-left: 4px solid #e74c3c;">
                             <div class="panel-body text-center">
                                 <div style="font-size: 36px; color: #e74c3c; margin-bottom: 10px;">
                                     <i class="fa fa-heartbeat"></i>
@@ -791,18 +630,6 @@ html {
         if ($.fn.selectpicker) {
             $('.selectpicker').selectpicker();
         }
-
-        // Fix menu toggle
-        setTimeout(function() {
-            $('#side-menu a[href*="dietetic"]').first().parent().find('> a').on('click', function(e) {
-                var $submenu = $(this).next('ul');
-                if ($submenu.length > 0) {
-                    e.preventDefault();
-                    $submenu.toggleClass('in');
-                    $(this).parent().toggleClass('active');
-                }
-            });
-        }, 500);
     });
 
     // Open assign dietitian modal
