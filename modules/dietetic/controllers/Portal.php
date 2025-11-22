@@ -103,7 +103,10 @@ class Portal extends App_Controller
             'recipes_favorites',
             'recipe_rate',
             'add_to_favorites',
-            'remove_from_favorites'
+            'remove_from_favorites',
+            // Legal pages
+            'privacy',
+            'terms'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
