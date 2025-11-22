@@ -1,6 +1,4 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<!-- FIX JQUERY: Charger jQuery AVANT init_head() pour éviter les erreurs CSRF -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <?php init_head(); ?>
 
 <div id="wrapper">
@@ -9,7 +7,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
-                    <div class="panel-body" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border-radius: 8px; padding: 30px;">
+                    <div class="panel-body" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border-radius: 8px; padding: 25px;">
                         <div class="row">
                             <div class="col-md-8">
                                 <h2 style="color: white; margin-top: 0;">
@@ -20,110 +18,16 @@
                                     <i class="fa fa-database"></i> Gérez votre catalogue d'aliments et leurs informations nutritionnelles
                                 </p>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px; display: inline-block;">
-                                    <div style="font-size: 36px; font-weight: bold; color: white;">
+                            <div class="col-md-4 text-right" style="padding-top: 15px;">
+                                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; display: inline-block;">
+                                    <div style="font-size: 28px; font-weight: bold; color: white;">
                                         <?php echo $total_count; ?>
                                     </div>
-                                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">
-                                        Aliments
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.9); text-transform: uppercase;">
+                                        <?php echo _l('dietetic_foods'); ?>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Statistics Cards -->
-        <?php
-        $active_count = 0;
-        $categories = [];
-        $total_calories = 0;
-        foreach ($foods as $food) {
-            if (isset($food->is_active) && $food->is_active == 1) {
-                $active_count++;
-            }
-            if (isset($food->category)) {
-                if (!isset($categories[$food->category])) {
-                    $categories[$food->category] = 0;
-                }
-                $categories[$food->category]++;
-            }
-            if (isset($food->calories)) {
-                $total_calories += $food->calories;
-            }
-        }
-        $avg_calories = $total_count > 0 ? round($total_calories / $total_count) : 0;
-        $category_count = count($categories);
-        ?>
-
-        <div class="stats-row row" style="margin-bottom: 20px;">
-            <div class="col-md-3">
-                <div class="stat-card total" style="background: white; border-left: 4px solid #f39c12; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #f39c12; margin-bottom: 5px;">
-                                <?php echo $total_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Total Aliments
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #f39c12; opacity: 0.3;">
-                            <i class="fa fa-database"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card active" style="background: white; border-left: 4px solid #27ae60; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #27ae60; margin-bottom: 5px;">
-                                <?php echo $active_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Aliments Actifs
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #27ae60; opacity: 0.3;">
-                            <i class="fa fa-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card categories" style="background: white; border-left: 4px solid #3498db; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #3498db; margin-bottom: 5px;">
-                                <?php echo $category_count; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Catégories
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #3498db; opacity: 0.3;">
-                            <i class="fa fa-tags"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card calories" style="background: white; border-left: 4px solid #e67e22; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold; color: #e67e22; margin-bottom: 5px;">
-                                <?php echo $avg_calories; ?>
-                            </div>
-                            <div style="color: #7f8c8d; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Calories Moy.
-                            </div>
-                        </div>
-                        <div style="font-size: 48px; color: #e67e22; opacity: 0.3;">
-                            <i class="fa fa-fire"></i>
                         </div>
                     </div>
                 </div>
@@ -141,55 +45,41 @@
                                     <?php if (dietetic_has_permission('create')) { ?>
                                         <div class="btn-group" role="group">
                                             <a href="<?php echo admin_url('dietetic/foods/create'); ?>" class="btn btn-success" style="padding: 10px 20px;">
-                                                <i class="fa fa-plus-circle"></i> Nouvel Aliment
+                                                <i class="fa fa-plus-circle"></i> <?php echo _l('dietetic_new_food'); ?>
                                             </a>
                                         </div>
                                         <div class="btn-group" role="group">
                                             <a href="<?php echo admin_url('dietetic/foods/import'); ?>" class="btn btn-primary" style="padding: 10px 20px;">
-                                                <i class="fa fa-upload"></i> Importer CSV
+                                                <i class="fa fa-upload"></i> <?php echo _l('dietetic_import_csv'); ?>
                                             </a>
                                         </div>
                                     <?php } ?>
                                     <div class="btn-group" role="group">
                                         <a href="<?php echo admin_url('dietetic/foods/export'); ?>" class="btn btn-info" style="padding: 10px 20px;">
-                                            <i class="fa fa-download"></i> Exporter CSV
+                                            <i class="fa fa-download"></i> <?php echo _l('dietetic_export_csv'); ?>
                                         </a>
                                     </div>
                                     <?php if (is_admin()) { ?>
                                         <div class="btn-group" role="group">
                                             <a href="<?php echo admin_url('dietetic/foods/cleanup_duplicates'); ?>" class="btn btn-warning" style="padding: 10px 20px;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les doublons ? Cette action est irréversible.');">
-                                                <i class="fa fa-clone"></i> Nettoyer Doublons
+                                                <i class="fa fa-clone"></i> Nettoyer les doublons
                                             </a>
                                         </div>
                                     <?php } ?>
                                     <?php if (dietetic_has_permission('delete')) { ?>
                                         <div class="btn-group" role="group">
                                             <button type="button" class="btn btn-danger" id="bulk-delete-btn" style="display:none; padding: 10px 20px;">
-                                                <i class="fa fa-trash-o"></i> Supprimer Sélection
+                                                <i class="fa fa-trash-o"></i> Supprimer la sélection
                                             </button>
                                         </div>
                                     <?php } ?>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel_s">
-                    <div class="panel-body" style="padding: 20px; background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div style="position: relative;">
-                                    <input type="text" id="food-search" class="form-control" placeholder="🔍 Rechercher un aliment par nom, catégorie, ou valeur nutritionnelle..." style="padding: 15px 50px 15px 20px; font-size: 16px; border: 2px solid #f39c12; border-radius: 25px; box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2);">
-                                    <i class="fa fa-search" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: #f39c12; font-size: 18px;"></i>
-                                </div>
-                                <div id="search-results-count" style="margin-top: 10px; color: #7f8c8d; font-size: 14px;">
-                                    <i class="fa fa-info-circle"></i> <span id="visible-count"><?php echo count($foods); ?></span> aliment(s) affiché(s)
+                            <div class="col-md-3 text-right">
+                                <div style="padding-top: 8px;">
+                                    <span class="label label-default" style="font-size: 13px; padding: 8px 15px;">
+                                        <i class="fa fa-filter"></i> Utilisez la recherche pour filtrer
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -210,30 +100,30 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-hover" id="foods-table" style="margin-bottom: 0;">
+                            <table class="table table-hover dietetic-table" id="foods-table" style="margin-bottom: 0;">
                                 <thead>
                                     <tr style="background: #f8f9fa;">
                                         <th width="30">
                                             <?php if (dietetic_has_permission('delete')) { ?>
-                                                <input type="checkbox" id="select-all" style="width: 18px; height: 18px; cursor: pointer;">
+                                                <input type="checkbox" id="select-all">
                                             <?php } ?>
                                         </th>
-                                        <th><i class="fa fa-apple" style="color: #e74c3c;"></i> Aliment</th>
-                                        <th><i class="fa fa-tag" style="color: #3498db;"></i> Catégorie</th>
-                                        <th><i class="fa fa-balance-scale" style="color: #9b59b6;"></i> Portion</th>
-                                        <th><i class="fa fa-fire" style="color: #e67e22;"></i> Calories</th>
-                                        <th><i class="fa fa-leaf" style="color: #27ae60;"></i> Protéines</th>
-                                        <th><i class="fa fa-pie-chart" style="color: #f39c12;"></i> Glucides</th>
-                                        <th><i class="fa fa-tint" style="color: #e74c3c;"></i> Lipides</th>
-                                        <th class="text-center"><i class="fa fa-cog"></i> Actions</th>
+                                        <th><i class="fa fa-apple" style="color: #e74c3c;"></i> <?php echo _l('dietetic_food'); ?></th>
+                                        <th><i class="fa fa-tag" style="color: #3498db;"></i> <?php echo _l('category'); ?></th>
+                                        <th><i class="fa fa-balance-scale" style="color: #9b59b6;"></i> <?php echo _l('dietetic_serving_size'); ?></th>
+                                        <th><i class="fa fa-fire" style="color: #e67e22;"></i> <?php echo _l('dietetic_calories'); ?></th>
+                                        <th><i class="fa fa-leaf" style="color: #27ae60;"></i> <?php echo _l('dietetic_protein'); ?></th>
+                                        <th><i class="fa fa-pie-chart" style="color: #f39c12;"></i> <?php echo _l('dietetic_carbs'); ?></th>
+                                        <th><i class="fa fa-tint" style="color: #e74c3c;"></i> <?php echo _l('dietetic_fats'); ?></th>
+                                        <th class="text-center"><i class="fa fa-cog"></i> <?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
-                                <tbody id="foods-tbody">
+                                <tbody>
                                     <?php foreach ($foods as $food) { ?>
-                                        <tr class="food-row">
+                                        <tr>
                                             <td>
                                                 <?php if (dietetic_has_permission('delete')) { ?>
-                                                    <input type="checkbox" class="food-checkbox" value="<?php echo $food->id; ?>" style="width: 18px; height: 18px; cursor: pointer;">
+                                                    <input type="checkbox" class="food-checkbox" value="<?php echo $food->id; ?>">
                                                 <?php } ?>
                                             </td>
                                             <td>
@@ -275,12 +165,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        <div id="no-results" style="display: none; padding: 40px; text-align: center;">
-                            <i class="fa fa-search" style="font-size: 64px; color: #bdc3c7; margin-bottom: 20px;"></i>
-                            <h4 style="color: #7f8c8d;">Aucun aliment trouvé</h4>
-                            <p style="color: #95a5a6;">Essayez de modifier votre recherche</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -290,16 +174,16 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
-                    <div class="panel-body" style="background: #ecf0f1; border-left: 4px solid #3498db; padding: 20px;">
+                    <div class="panel-body" style="background: #ecf0f1; border-left: 4px solid #3498db;">
                         <div class="row">
                             <div class="col-md-8">
                                 <h5 style="margin-top: 0; color: #2c3e50;">
                                     <i class="fa fa-info-circle" style="color: #3498db;"></i> Conseils d'utilisation
                                 </h5>
                                 <ul style="margin-bottom: 0; color: #7f8c8d;">
-                                    <li>Utilisez la <strong>recherche</strong> pour trouver rapidement un aliment par nom, catégorie ou valeur nutritionnelle</li>
+                                    <li>Utilisez la <strong>recherche</strong> en haut à droite pour trouver rapidement un aliment</li>
                                     <li>Cochez les cases pour <strong>sélectionner plusieurs aliments</strong> et les supprimer en masse</li>
-                                    <li>Cliquez sur <strong>"Nettoyer Doublons"</strong> pour supprimer les entrées en double automatiquement</li>
+                                    <li>Cliquez sur <strong>"Nettoyer les doublons"</strong> pour supprimer les entrées en double automatiquement</li>
                                     <li>Exportez la base de données en <strong>CSV</strong> pour une sauvegarde ou un traitement externe</li>
                                 </ul>
                             </div>
@@ -324,6 +208,7 @@
 
     #foods-table tbody tr:hover {
         background-color: #fff8e1 !important;
+        transform: scale(1.01);
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
@@ -337,71 +222,59 @@
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
 
-    /* Stat card hover */
-    .stat-card {
-        transition: all 0.3s ease;
+    /* Checkbox styling */
+    #foods-table input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
     }
 
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    /* Badge and label enhancements */
+    .label, .badge {
+        transition: all 0.2s ease;
     }
 
-    /* Search box focus */
-    #food-search:focus {
+    .label:hover, .badge:hover {
+        transform: scale(1.05);
+    }
+
+    /* DataTables search box enhancement */
+    .dataTables_filter input {
+        border: 2px solid #f39c12 !important;
+        border-radius: 20px;
+        padding: 8px 15px !important;
+        font-size: 14px;
+    }
+
+    .dataTables_filter input:focus {
         border-color: #e67e22 !important;
-        box-shadow: 0 0 12px rgba(243, 156, 18, 0.4) !important;
-        outline: none;
+        box-shadow: 0 0 8px rgba(243, 156, 18, 0.3);
     }
 </style>
 
 <script>
-$(document).ready(function() {
-    var ENABLE_DATATABLES = false; // DataTables désactivé pour éviter les conflits
-
-    // Search functionality
-    var $searchInput = $('#food-search');
-    var $rows = $('#foods-tbody .food-row');
-    var $noResults = $('#no-results');
-    var $table = $('#foods-table');
-
-    $searchInput.on('keyup', function() {
-        var searchTerm = $(this).val().toLowerCase().trim();
-
-        if (searchTerm === '') {
-            $rows.show();
-            $noResults.hide();
-            $table.show();
-        } else {
-            var visibleCount = 0;
-            $rows.each(function() {
-                var $row = $(this);
-                var rowText = $row.text().toLowerCase();
-
-                if (rowText.indexOf(searchTerm) > -1) {
-                    $row.show();
-                    visibleCount++;
-                } else {
-                    $row.hide();
+$(window).on('load', function() {
+    // Ensure DataTables is loaded
+    if ($.fn.DataTable) {
+        var table = $('#foods-table').DataTable({
+            "order": [[1, "asc"]], // Sort by food_name asc (column 1 now, because we added checkbox column)
+            "pageLength": 10,
+            "lengthChange": false,
+            "searching": true,
+            "info": true,
+            "paging": true,
+            "columnDefs": [
+                {
+                    "orderable": false,
+                    "targets": 0 // Disable sorting on checkbox column
                 }
-            });
-
-            if (visibleCount === 0) {
-                $noResults.show();
-                $table.hide();
-            } else {
-                $noResults.hide();
-                $table.show();
+            ],
+            "language": {
+                "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
             }
-        }
-
-        updateResultsCount();
-        updateBulkDeleteButton();
-    });
-
-    function updateResultsCount() {
-        var visibleCount = $rows.filter(':visible').length;
-        $('#visible-count').text(visibleCount);
+        });
+    } else {
+        console.error('DataTables not loaded');
     }
 
     // Select all checkboxes
@@ -420,7 +293,8 @@ $(document).ready(function() {
         var checkedCount = $('.food-checkbox:checked').length;
         if (checkedCount > 0) {
             $('#bulk-delete-btn').show();
-            $('#bulk-delete-btn').html('<i class="fa fa-trash-o"></i> Supprimer Sélection (' + checkedCount + ')');
+            var text = $('#bulk-delete-btn').html().split('(')[0];
+            $('#bulk-delete-btn').html(text + ' (' + checkedCount + ')');
         } else {
             $('#bulk-delete-btn').hide();
         }
@@ -460,18 +334,6 @@ $(document).ready(function() {
             });
         }
     });
-
-    // Fix menu toggle
-    setTimeout(function() {
-        $('#side-menu a[href*="dietetic"]').first().parent().find('> a').on('click', function(e) {
-            var $submenu = $(this).next('ul');
-            if ($submenu.length > 0) {
-                e.preventDefault();
-                $submenu.toggleClass('in');
-                $(this).parent().toggleClass('active');
-            }
-        });
-    }, 500);
 });
 </script>
 
