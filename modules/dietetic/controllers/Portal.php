@@ -4397,13 +4397,19 @@ class Portal extends App_Controller
      */
     public function profile()
     {
+        // DEBUG: Enable error display
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
         // Check if client is logged in
         if (!is_client_logged_in()) {
+            log_activity('Profile access denied - not logged in');
             redirect(site_url('authentication/login'));
             return;
         }
 
         $client_id = get_client_user_id();
+        log_activity('Profile accessed by client ID: ' . $client_id);
 
         // Load required models
         $this->load->model('clients_model');
@@ -4412,15 +4418,26 @@ class Portal extends App_Controller
         // Get patient
         try {
             $patient = $this->dietetic_patients_model->get_by_client($client_id);
+            log_activity('Patient lookup result: ' . ($patient ? 'Found ID ' . $patient->id : 'NOT FOUND'));
         } catch (Exception $e) {
             log_activity('Error loading patient profile: ' . $e->getMessage());
+            echo '<pre>ERROR: ' . $e->getMessage() . '</pre>';
             $patient = null;
         }
 
         if (!$patient) {
-            $this->load->view('portal_no_access');
+            log_activity('No patient found for client ID: ' . $client_id);
+            echo '<h1>DEBUG: Patient not found for client ID: ' . $client_id . '</h1>';
+            echo '<p>Checking database...</p>';
+
+            // Debug query
+            $query = $this->db->get_where(db_prefix() . 'dietic_patients', ['client_id' => $client_id]);
+            echo '<pre>Query result: ' . print_r($query->result(), true) . '</pre>';
+            echo '<p><a href="' . site_url('dietetic/portal') . '">Retour à l\'accueil</a></p>';
             return;
         }
+
+        log_activity('Loading profile for patient ID: ' . $patient->id);
 
         $data = [];
         $data['patient'] = $patient;
@@ -4431,7 +4448,7 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         if (!$client) {
             log_activity('Client not found for patient ID: ' . $patient->id);
-            $this->load->view('portal_no_access');
+            echo '<h1>DEBUG: Client not found</h1>';
             return;
         }
         $data['client'] = $client;
@@ -4459,6 +4476,7 @@ class Portal extends App_Controller
             $data['age'] = null;
         }
 
+        log_activity('Loading profile view');
         $this->load->view('portal_profile', $data);
     }
 
