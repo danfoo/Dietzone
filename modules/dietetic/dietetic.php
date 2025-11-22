@@ -264,33 +264,12 @@ function dietetic_add_head_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Add jQuery shim to prevent csrf_jquery_ajax_setup error
-    // This must run BEFORE init_head() generates code
+    // Force load jQuery IMMEDIATELY if not available
+    // Use document.write to load synchronously before any other code executes
     echo '<script>
-    // Create a temporary jQuery shim if jQuery is not yet loaded
     if (typeof window.jQuery === "undefined") {
-        window.jQuery = window.$ = {
-            ajaxSetup: function() {
-                // Queue the ajax setup for when real jQuery loads
-                if (!window._pendingAjaxSetup) {
-                    window._pendingAjaxSetup = [];
-                }
-                window._pendingAjaxSetup.push(arguments);
-            }
-        };
-
-        // When real jQuery loads, replace shim and run pending setups
-        var checkJQuery = setInterval(function() {
-            if (typeof window.jQuery.fn !== "undefined" && window.jQuery.fn.jquery) {
-                clearInterval(checkJQuery);
-                // Real jQuery is loaded, run pending ajaxSetup calls
-                if (window._pendingAjaxSetup && window._pendingAjaxSetup.length > 0) {
-                    for (var i = 0; i < window._pendingAjaxSetup.length; i++) {
-                        window.jQuery.ajaxSetup.apply(window.jQuery, window._pendingAjaxSetup[i]);
-                    }
-                }
-            }
-        }, 50);
+        document.write(\'<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>\');
+        console.log("⚠️ jQuery was not loaded by Perfex, loading from CDN...");
     }
     </script>';
 
