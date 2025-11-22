@@ -215,7 +215,7 @@ class Debug_consultation extends AdminController
         echo "</pre>";
 
         // Prepare test data
-        $patients = $this->dietetic_patients_model->get();
+        $patients = $this->dietetic_patients_model->get_all();
         $this->load->model('staff_model');
         $staff = $this->staff_model->get();
 
