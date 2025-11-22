@@ -1,10 +1,43 @@
 <?php
 $active_page = 'meal_plans';
 $page_title = 'Plan de Repas';
-$this->load->view('portal/includes/portal_header');
 ?>
+<!-- FIX JQUERY: Charger jQuery AVANT init_head() pour éviter les erreurs CSRF -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<?php $this->load->view('portal/includes/portal_header'); ?>
 
 <style>
+        /* Modern Page Header */
+        .page-header-mobile {
+            background: linear-gradient(135deg, #01807B 0%, #F3911D 100%);
+            border-radius: 24px;
+            padding: 28px 24px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 12px 24px rgba(1, 128, 123, 0.25);
+        }
+
+        .page-header-mobile h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .page-header-mobile h1 i {
+            font-size: 28px;
+        }
+
+        .page-header-mobile p {
+            margin: 0;
+            font-size: 15px;
+            opacity: 0.95;
+            font-weight: 500;
+            color: white;
+        }
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -55,11 +88,10 @@ $this->load->view('portal/includes/portal_header');
 
         .objectives-card {
             background: white;
-            border-left: 4px solid #01807B;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 24px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
         }
 
         .objectives-title {
@@ -170,11 +202,10 @@ $this->load->view('portal/includes/portal_header');
 
         .meal-card {
             background: white;
-            border-left: 4px solid #F3911D;
-            border-radius: 12px;
+            border-radius: 20px;
             margin-bottom: 16px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
             transition: all 0.3s ease;
         }
 
@@ -258,13 +289,12 @@ $this->load->view('portal/includes/portal_header');
         .meal-name {
             background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 16px;
             font-style: italic;
             color: #2c3e50;
             font-size: 14px;
             font-weight: 600;
-            border-left: 3px solid #01807B;
         }
 
         .food-items {
@@ -274,9 +304,8 @@ $this->load->view('portal/includes/portal_header');
         .food-item {
             background: #f8f9fa;
             padding: 14px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 12px;
-            border-left: 3px solid #01807B;
         }
 
         .food-name {
@@ -356,9 +385,8 @@ $this->load->view('portal/includes/portal_header');
 
         .instructions {
             background: linear-gradient(135deg, rgba(243, 145, 29, 0.1) 0%, rgba(243, 145, 29, 0.05) 100%);
-            border-left: 4px solid #F3911D;
             padding: 14px;
-            border-radius: 0 8px 8px 0;
+            border-radius: 12px;
             font-size: 14px;
             line-height: 1.6;
             color: #495057;
@@ -399,11 +427,10 @@ $this->load->view('portal/includes/portal_header');
 
         .notes-card {
             background: white;
-            border-left: 4px solid #F3911D;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
         }
 
         .notes-title {
@@ -428,11 +455,10 @@ $this->load->view('portal/includes/portal_header');
 
         .weekly-summary {
             background: white;
-            border-left: 4px solid #01807B;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
         }
 
         .summary-title {
