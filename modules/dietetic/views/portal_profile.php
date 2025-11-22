@@ -698,7 +698,7 @@ $page_title = 'Mon Profil';
                 // Utiliser la photo de profil Perfex si disponible
                 if (isset($contact) && $contact && !empty($contact->profile_image)):
                 ?>
-                    <img src="<?php echo contact_profile_image_url($contact->id, 'small'); ?>" alt="<?php echo htmlspecialchars($client->company); ?>">
+                    <img src="<?php echo contact_profile_image_url($contact->id, 'small'); ?>" alt="<?php echo htmlspecialchars($client->company); ?>" id="profileImage">
                 <?php else:
                     // Afficher les initiales
                     $names = explode(' ', trim($client->company));
@@ -709,14 +709,15 @@ $page_title = 'Mon Profil';
                         $initials = strtoupper(substr($client->company, 0, 2));
                     }
                 ?>
-                    <div style="font-size: 36px; font-weight: 700; color: #01807B;">
+                    <div style="font-size: 36px; font-weight: 700; color: #01807B;" id="profileInitials">
                         <?php echo $initials; ?>
                     </div>
                 <?php endif; ?>
             </div>
-            <a href="<?php echo site_url('clients/profile'); ?>" class="profile-avatar-upload" title="Modifier ma photo de profil">
+            <input type="file" id="profileImageInput" accept="image/jpeg,image/jpg,image/png,image/gif" style="display: none;">
+            <button type="button" class="profile-avatar-upload" onclick="document.getElementById('profileImageInput').click()" title="Modifier ma photo de profil">
                 <i class="fa fa-camera"></i>
-            </a>
+            </button>
         </div>
 
         <h1 class="profile-name"><?php echo htmlspecialchars($client->company); ?></h1>
@@ -1260,6 +1261,63 @@ $(document).ready(function() {
                 },
                 error: function() {
                     alert('Erreur lors de l\'upload du document');
+                }
+            });
+        }
+    });
+
+    // Profile image upload
+    $('#profileImageInput').on('change', function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Type de fichier non autorisé. Utilisez une image (JPG, PNG ou GIF)');
+                this.value = '';
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('L\'image ne doit pas dépasser 5MB');
+                this.value = '';
+                return;
+            }
+
+            // Show loading state
+            var $avatar = $('#profileAvatar');
+            var originalContent = $avatar.html();
+            $avatar.html('<div style="font-size: 24px; color: #01807B;"><i class="fa fa-spinner fa-spin"></i><br><small>Upload...</small></div>');
+
+            var formData = new FormData();
+            formData.append('profile_image', file);
+            formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+            $.ajax({
+                url: '<?php echo site_url('dietetic/portal/upload_profile_photo'); ?>',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Update the avatar with new image
+                        $avatar.html('<img src="' + response.image_url + '?t=' + new Date().getTime() + '" alt="Photo de profil" id="profileImage" style="width: 100%; height: 100%; object-fit: cover;">');
+                        alert(response.message);
+                    } else {
+                        alert(response.message || 'Erreur lors de l\'upload de l\'image');
+                        $avatar.html(originalContent);
+                    }
+                },
+                error: function() {
+                    alert('Erreur lors de l\'upload de l\'image');
+                    $avatar.html(originalContent);
+                },
+                complete: function() {
+                    // Reset input
+                    $('#profileImageInput').val('');
                 }
             });
         }

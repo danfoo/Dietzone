@@ -112,7 +112,8 @@ class Portal extends App_Controller
             'update_password',
             'update_profile',
             'update_emergency_contact',
-            'upload_document'
+            'upload_document',
+            'upload_profile_photo'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -4643,6 +4644,9 @@ class Portal extends App_Controller
      */
     public function upload_document()
     {
+        // Set JSON header
+        header('Content-Type: application/json');
+
         // Check if client is logged in
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -4650,6 +4654,9 @@ class Portal extends App_Controller
         }
 
         $client_id = get_client_user_id();
+
+        // Load model
+        $this->load->model('dietetic/dietetic_patients_model');
 
         // Get patient
         $patient = $this->dietetic_patients_model->get_by_client($client_id);
@@ -4661,15 +4668,31 @@ class Portal extends App_Controller
 
         // Check if file was uploaded
         if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
-            echo json_encode(['success' => false, 'message' => 'Aucun fichier uploadé']);
+            $error_msg = 'Aucun fichier uploadé';
+            if (isset($_FILES['document']['error'])) {
+                switch ($_FILES['document']['error']) {
+                    case UPLOAD_ERR_INI_SIZE:
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $error_msg = 'Fichier trop volumineux';
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $error_msg = 'Aucun fichier sélectionné';
+                        break;
+                    default:
+                        $error_msg = 'Erreur lors de l\'upload (Code: ' . $_FILES['document']['error'] . ')';
+                }
+            }
+            echo json_encode(['success' => false, 'message' => $error_msg]);
             return;
         }
 
         // Validate file type
         $allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
         $file_type = $_FILES['document']['type'];
+        $extension = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png'];
 
-        if (!in_array($file_type, $allowed_types)) {
+        if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
             echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (PDF ou images uniquement)']);
             return;
         }
@@ -4681,25 +4704,171 @@ class Portal extends App_Controller
         }
 
         // Create upload directory if it doesn't exist
-        $upload_dir = DIETETIC_MODULE_UPLOAD_FOLDER . '/documents/patient_' . $patient->id;
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
+        $upload_base = FCPATH . 'uploads/dietetic/documents/patient_' . $patient->id;
+        if (!is_dir($upload_base)) {
+            if (!mkdir($upload_base, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de créer le dossier d\'upload']);
+                return;
+            }
         }
 
         // Generate unique filename
-        $extension = pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION);
         $original_name = pathinfo($_FILES['document']['name'], PATHINFO_FILENAME);
+        // Sanitize filename
+        $original_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $original_name);
         $filename = $original_name . '_' . time() . '.' . $extension;
-        $filepath = $upload_dir . '/' . $filename;
+        $filepath = $upload_base . '/' . $filename;
 
         // Move uploaded file
         if (move_uploaded_file($_FILES['document']['tmp_name'], $filepath)) {
             log_activity('Medical Document Uploaded [Patient ID: ' . $patient->id . ', File: ' . $filename . ']');
 
-            echo json_encode(['success' => true, 'message' => 'Document uploadé avec succès', 'filename' => $filename]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Document uploadé avec succès',
+                'filename' => $filename
+            ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload']);
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde du fichier']);
         }
+    }
+
+    /**
+     * Upload profile photo
+     */
+    public function upload_profile_photo()
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load models
+        $this->load->model('clients_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get client info
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client || empty($client->default_contact)) {
+            echo json_encode(['success' => false, 'message' => 'Contact non trouvé']);
+            return;
+        }
+
+        $contact_id = $client->default_contact;
+
+        // Check if file was uploaded
+        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            $error_msg = 'Aucune image uploadée';
+            if (isset($_FILES['profile_image']['error'])) {
+                switch ($_FILES['profile_image']['error']) {
+                    case UPLOAD_ERR_INI_SIZE:
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $error_msg = 'Image trop volumineuse';
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $error_msg = 'Aucune image sélectionnée';
+                        break;
+                    default:
+                        $error_msg = 'Erreur lors de l\'upload (Code: ' . $_FILES['profile_image']['error'] . ')';
+                }
+            }
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+            return;
+        }
+
+        // Validate file type (images only)
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $file_type = $_FILES['profile_image']['type'];
+        $extension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (images uniquement)']);
+            return;
+        }
+
+        // Validate file size (5MB max for profile images)
+        if ($_FILES['profile_image']['size'] > 5 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Image trop volumineuse (max 5MB)']);
+            return;
+        }
+
+        // Create upload directory for contact profile images (Perfex standard path)
+        $upload_path = FCPATH . 'uploads/client_profile_images/' . $contact_id;
+        if (!is_dir($upload_path)) {
+            if (!mkdir($upload_path, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de créer le dossier d\'upload']);
+                return;
+            }
+        }
+
+        // Remove old profile image if exists
+        $contact = $this->clients_model->get_contact($contact_id);
+        if ($contact && !empty($contact->profile_image)) {
+            $old_image_path = $upload_path . '/' . $contact->profile_image;
+            if (file_exists($old_image_path)) {
+                @unlink($old_image_path);
+            }
+            // Also remove thumb
+            $thumb_path = $upload_path . '/thumb_' . $contact->profile_image;
+            if (file_exists($thumb_path)) {
+                @unlink($thumb_path);
+            }
+        }
+
+        // Generate unique filename
+        $filename = 'profile_' . time() . '.' . $extension;
+        $filepath = $upload_path . '/' . $filename;
+
+        // Move uploaded file
+        if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], $filepath)) {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde de l\'image']);
+            return;
+        }
+
+        // Create thumbnail using Perfex's image library
+        $this->load->library('image_lib');
+
+        $config['image_library'] = 'gd2';
+        $config['source_image'] = $filepath;
+        $config['new_image'] = $upload_path . '/thumb_' . $filename;
+        $config['maintain_ratio'] = true;
+        $config['width'] = 160;
+        $config['height'] = 160;
+
+        $this->image_lib->initialize($config);
+        $this->image_lib->resize();
+        $this->image_lib->clear();
+
+        // Update contact record in database
+        $this->db->where('id', $contact_id);
+        $this->db->update(db_prefix() . 'contacts', [
+            'profile_image' => $filename,
+            'last_ip' => $this->input->ip_address(),
+            'last_login' => date('Y-m-d H:i:s')
+        ]);
+
+        log_activity('Contact Profile Image Updated [Contact ID: ' . $contact_id . ', File: ' . $filename . ']');
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Photo de profil mise à jour avec succès',
+            'image_url' => contact_profile_image_url($contact_id, 'small')
+        ]);
     }
 }
 
