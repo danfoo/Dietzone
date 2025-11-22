@@ -117,7 +117,7 @@ $this->load->view('portal/includes/portal_header');
             Consultation du <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
         </div>
         <div class="detail-subtitle">
-            <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
+            <?php echo dietetic_consultation_type_label($consultation->consultation_type); ?>
             <?php if ($dietitian) { ?>
                 · Dr. <?php echo $dietitian->firstname . ' ' . $dietitian->lastname; ?>
             <?php } ?>

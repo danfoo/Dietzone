@@ -877,3 +877,22 @@ function dietetic_get_available_permissions()
         ],
     ];
 }
+
+/**
+ * Translate consultation type to French
+ *
+ * @param string $type Consultation type (initial, follow_up, emergency, etc.)
+ * @return string Translated consultation type
+ */
+function dietetic_consultation_type_label($type)
+{
+    $labels = [
+        'initial' => 'Consultation Initiale',
+        'follow_up' => 'Suivi',
+        'emergency' => 'Urgence',
+        'checkup' => 'Bilan',
+        'control' => 'Contrôle',
+    ];
+
+    return $labels[$type] ?? ucfirst(str_replace('_', ' ', $type));
+}

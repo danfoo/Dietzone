@@ -494,7 +494,7 @@
                         <div class="info-item">
                             <span class="info-label">Type</span>
                             <span class="info-value">
-                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
+                                <?php echo dietetic_consultation_type_label($consultation->consultation_type); ?>
                             </span>
                         </div>
 

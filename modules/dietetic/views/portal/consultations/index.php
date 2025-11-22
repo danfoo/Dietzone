@@ -876,7 +876,7 @@
                                     <div class="info-item">
                                         <i class="fa fa-stethoscope"></i>
                                         <label>Type</label>
-                                        <div class="value"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
+                                        <div class="value"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
                                     </div>
 
                                     <?php if (isset($consultation->duration)) { ?>
@@ -980,7 +980,7 @@
                                     <div class="info-item">
                                         <i class="fa fa-stethoscope"></i>
                                         <label>Type</label>
-                                        <div class="value"><?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?></div>
+                                        <div class="value"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
                                     </div>
 
                                     <?php if (isset($consultation->duration)) { ?>
