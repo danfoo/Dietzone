@@ -4500,5 +4500,226 @@ class Portal extends App_Controller
 
         echo json_encode(['success' => true, 'message' => 'Mot de passe modifié avec succès']);
     }
+
+    /**
+     * Update patient profile information via AJAX
+     */
+    public function update_profile()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get posted data
+        $phone = $this->input->post('phone');
+        $dietary_preferences = $this->input->post('dietary_preferences');
+        $allergies = $this->input->post('allergies');
+
+        // Update patient data
+        $update_data = [
+            'phone' => $phone,
+            'dietary_preferences' => $dietary_preferences,
+            'allergies' => $allergies,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $patient->id);
+        $this->db->update(db_prefix() . 'dietic_patients', $update_data);
+
+        log_activity('Patient Profile Updated [Patient ID: ' . $patient->id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Profil mis à jour avec succès']);
+    }
+
+    /**
+     * Update emergency contact via AJAX
+     */
+    public function update_emergency_contact()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get posted data
+        $emergency_contact = $this->input->post('emergency_contact');
+        $emergency_phone = $this->input->post('emergency_phone');
+
+        // Update patient data
+        $update_data = [
+            'emergency_contact' => $emergency_contact,
+            'emergency_phone' => $emergency_phone,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $patient->id);
+        $this->db->update(db_prefix() . 'dietic_patients', $update_data);
+
+        log_activity('Emergency Contact Updated [Patient ID: ' . $patient->id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Contact d\'urgence mis à jour avec succès']);
+    }
+
+    /**
+     * Upload patient avatar
+     */
+    public function upload_avatar()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'Aucun fichier uploadé']);
+            return;
+        }
+
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $file_type = $_FILES['avatar']['type'];
+
+        if (!in_array($file_type, $allowed_types)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé']);
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if ($_FILES['avatar']['size'] > 5 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 5MB)']);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_dir = DIETETIC_MODULE_UPLOAD_FOLDER . '/avatars';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
+        $filename = 'avatar_' . $patient->id . '_' . time() . '.' . $extension;
+        $filepath = $upload_dir . '/' . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $filepath)) {
+            // Delete old avatar if exists
+            if (!empty($patient->avatar_url) && file_exists($patient->avatar_url)) {
+                @unlink($patient->avatar_url);
+            }
+
+            // Update patient record
+            $this->db->where('id', $patient->id);
+            $this->db->update(db_prefix() . 'dietic_patients', [
+                'avatar_url' => $filepath,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            log_activity('Avatar Uploaded [Patient ID: ' . $patient->id . ']');
+
+            echo json_encode(['success' => true, 'message' => 'Avatar uploadé avec succès', 'url' => $filepath]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload']);
+        }
+    }
+
+    /**
+     * Upload medical document
+     */
+    public function upload_document()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'Aucun fichier uploadé']);
+            return;
+        }
+
+        // Validate file type
+        $allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        $file_type = $_FILES['document']['type'];
+
+        if (!in_array($file_type, $allowed_types)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (PDF ou images uniquement)']);
+            return;
+        }
+
+        // Validate file size (10MB max)
+        if ($_FILES['document']['size'] > 10 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_dir = DIETETIC_MODULE_UPLOAD_FOLDER . '/documents/patient_' . $patient->id;
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION);
+        $original_name = pathinfo($_FILES['document']['name'], PATHINFO_FILENAME);
+        $filename = $original_name . '_' . time() . '.' . $extension;
+        $filepath = $upload_dir . '/' . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($_FILES['document']['tmp_name'], $filepath)) {
+            log_activity('Medical Document Uploaded [Patient ID: ' . $patient->id . ', File: ' . $filename . ']');
+
+            echo json_encode(['success' => true, 'message' => 'Document uploadé avec succès', 'filename' => $filename]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload']);
+        }
+    }
 }
 
