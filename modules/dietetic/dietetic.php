@@ -78,11 +78,6 @@ hooks()->add_action('admin_init', 'dietetic_module_init_menu_items');
 hooks()->add_action('pre_controller', 'dietetic_redirect_to_dashboard');
 
 /**
- * Redirect patient after login
- */
-hooks()->add_action('after_contact_login', 'dietetic_redirect_patient_after_login');
-
-/**
  * Add JavaScript to force recipes menu in admin
  */
 hooks()->add_action('app_admin_footer', 'dietetic_force_recipes_menu_js');
@@ -442,108 +437,37 @@ function dietetic_permissions()
 }
 
 /**
- * Redirect non-admin users to dietetic dashboard instead of main dashboard
- * Also redirects patients to dietetic portal from client home page
+ * Redirect non-admin staff to dietetic dashboard instead of main dashboard
  */
 function dietetic_redirect_to_dashboard()
 {
+    // Only check if user is logged in and accessing admin area
+    if (!is_staff_logged_in()) {
+        return;
+    }
+
     $CI = &get_instance();
+
+    // Get current URI
     $current_uri = $_SERVER['REQUEST_URI'] ?? '';
 
-    // ====================================
-    // STAFF REDIRECTION (Admin area)
-    // ====================================
-    if (is_staff_logged_in()) {
-        // Only redirect if user is accessing the main dashboard (/admin or /admin/dashboard)
-        if (!preg_match('#/admin/?$|/admin/dashboard/?$#', $current_uri)) {
-            return;
-        }
-
-        // Don't redirect admins - they need access to the full Perfex dashboard
-        if (is_admin()) {
-            return;
-        }
-
-        // Check if user has access to dietetic module
-        if (!has_permission('dietetic', '', 'view')) {
-            return;
-        }
-
-        // Redirect to dietetic dashboard
-        redirect(admin_url('dietetic/dashboard'));
-    }
-
-    // ====================================
-    // PATIENT REDIRECTION (Client portal)
-    // ====================================
-    if (is_client_logged_in()) {
-        // Don't redirect if already on dietetic portal
-        if (strpos($current_uri, '/dietetic/portal') !== false) {
-            return;
-        }
-
-        // Don't redirect from authentication/logout
-        if (strpos($current_uri, '/authentication/logout') !== false) {
-            return;
-        }
-
-        // Get client ID
-        $client_id = get_client_user_id();
-        if (!$client_id) {
-            return;
-        }
-
-        // Check if client has a dietetic patient profile
-        $CI->load->model('dietetic/dietetic_patients_model');
-
-        try {
-            $patient = $CI->dietetic_patients_model->get_by_client($client_id);
-
-            // If patient profile exists, redirect ALL client portal pages to dietetic portal
-            // This makes the dietetic portal the ONLY accessible area for patients
-            if ($patient) {
-                // Allow access to profile page
-                if (strpos($current_uri, '/clients/profile') !== false) {
-                    return;
-                }
-
-                // Redirect everything else to dietetic portal
-                redirect(site_url('dietetic/portal'));
-            }
-        } catch (Exception $e) {
-            // Patient profile doesn't exist, don't redirect
-            return;
-        }
-    }
-}
-
-/**
- * Redirect patient to dietetic portal immediately after login
- */
-function dietetic_redirect_patient_after_login($contact_id)
-{
-    if (!$contact_id) {
+    // Only redirect if user is accessing the main dashboard (/admin or /admin/dashboard)
+    if (!preg_match('#/admin/?$|/admin/dashboard/?$#', $current_uri)) {
         return;
     }
 
-    $CI = &get_instance();
-
-    // Load the patients model
-    $CI->load->model('dietetic/dietetic_patients_model');
-
-    try {
-        // Get client ID from contact
-        // In Perfex CRM, contact_id IS the client user ID
-        $patient = $CI->dietetic_patients_model->get_by_client($contact_id);
-
-        // If patient profile exists, redirect to dietetic portal
-        if ($patient) {
-            redirect(site_url('dietetic/portal'));
-        }
-    } catch (Exception $e) {
-        // Patient profile doesn't exist, don't redirect
+    // Don't redirect admins - they need access to the full Perfex dashboard
+    if (is_admin()) {
         return;
     }
+
+    // Check if user has access to dietetic module
+    if (!has_permission('dietetic', '', 'view')) {
+        return;
+    }
+
+    // Redirect to dietetic dashboard
+    redirect(admin_url('dietetic/dashboard'));
 }
 
 /**
