@@ -78,6 +78,11 @@ hooks()->add_action('admin_init', 'dietetic_module_init_menu_items');
 hooks()->add_action('pre_controller', 'dietetic_redirect_to_dashboard');
 
 /**
+ * Redirect patient after login
+ */
+hooks()->add_action('after_contact_login', 'dietetic_redirect_patient_after_login');
+
+/**
  * Add JavaScript to force recipes menu in admin
  */
 hooks()->add_action('app_admin_footer', 'dietetic_force_recipes_menu_js');
@@ -472,9 +477,18 @@ function dietetic_redirect_to_dashboard()
     // PATIENT REDIRECTION (Client portal)
     // ====================================
     if (is_client_logged_in()) {
-        // Only redirect from client home page
-        // Match: /, /clients, /clients/home, etc.
-        if (!preg_match('#^/?$|^/clients/?$|^/clients/home/?$#', $current_uri)) {
+        // Match various client portal home URLs
+        // /, /index.php, /clients, /clients/dashboard, /clients/home, etc.
+        $is_client_home = (
+            preg_match('#^/?$#', $current_uri) ||                           // Root /
+            preg_match('#^/index\.php/?$#', $current_uri) ||                // /index.php
+            preg_match('#^/clients/?$#', $current_uri) ||                   // /clients
+            preg_match('#^/clients/home#', $current_uri) ||                 // /clients/home
+            preg_match('#^/clients/dashboard#', $current_uri) ||            // /clients/dashboard
+            preg_match('#^/clients/announcements#', $current_uri)           // /clients/announcements (default page)
+        );
+
+        if (!$is_client_home) {
             return;
         }
 
@@ -498,6 +512,35 @@ function dietetic_redirect_to_dashboard()
             // Patient profile doesn't exist, don't redirect
             return;
         }
+    }
+}
+
+/**
+ * Redirect patient to dietetic portal immediately after login
+ */
+function dietetic_redirect_patient_after_login($contact_id)
+{
+    if (!$contact_id) {
+        return;
+    }
+
+    $CI = &get_instance();
+
+    // Load the patients model
+    $CI->load->model('dietetic/dietetic_patients_model');
+
+    try {
+        // Get client ID from contact
+        // In Perfex CRM, contact_id IS the client user ID
+        $patient = $CI->dietetic_patients_model->get_by_client($contact_id);
+
+        // If patient profile exists, redirect to dietetic portal
+        if ($patient) {
+            redirect(site_url('dietetic/portal'));
+        }
+    } catch (Exception $e) {
+        // Patient profile doesn't exist, don't redirect
+        return;
     }
 }
 
