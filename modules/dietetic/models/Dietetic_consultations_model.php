@@ -86,6 +86,17 @@ class Dietetic_consultations_model extends App_Model
     }
 
     /**
+     * Get consultations by status
+     *
+     * @param string $status
+     * @return array
+     */
+    public function get_by_status($status)
+    {
+        return $this->get_all(['cons.status' => $status]);
+    }
+
+    /**
      * Get consultations by patient
      *
      * @param int $patient_id

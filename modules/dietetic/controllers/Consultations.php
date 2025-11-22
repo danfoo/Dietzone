@@ -28,7 +28,17 @@ class Consultations extends AdminController
     public function index()
     {
         $data['title'] = _l('dietetic_consultations');
-        $data['consultations'] = $this->dietetic_consultations_model->get_all();
+
+        // Get filter status from GET parameter
+        $status = $this->input->get('status');
+
+        if ($status && $status !== 'all') {
+            // Filter by specific status
+            $data['consultations'] = $this->dietetic_consultations_model->get_by_status($status);
+        } else {
+            // Get all consultations
+            $data['consultations'] = $this->dietetic_consultations_model->get_all();
+        }
 
         $this->load->view('admin/consultations/list', $data);
     }

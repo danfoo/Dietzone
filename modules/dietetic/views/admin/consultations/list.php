@@ -554,6 +554,59 @@
     gap: 8px;
 }
 
+/* Filter Tabs */
+.filter-tabs {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.filter-tabs .nav-tabs {
+    border-bottom: 3px solid var(--primary-color);
+    margin: 0;
+    padding: 0 24px;
+    background: linear-gradient(to right, rgba(1, 128, 123, 0.03) 0%, transparent 100%);
+}
+
+.filter-tabs .nav-tabs li {
+    margin-bottom: -3px;
+}
+
+.filter-tabs .nav-tabs li a {
+    color: var(--text-light);
+    border: none;
+    padding: 16px 24px;
+    font-weight: 600;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+}
+
+.filter-tabs .nav-tabs li a:hover {
+    background: rgba(1, 128, 123, 0.05);
+    color: var(--primary-color);
+}
+
+.filter-tabs .nav-tabs li.active a {
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+    background: transparent;
+}
+
+.filter-tabs .nav-tabs li a .badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.filter-tabs .nav-tabs li.active a .badge {
+    background: var(--secondary-color);
+}
+
 /* DataTables Custom Styling */
 .dataTables_wrapper .dataTables_filter input {
     border: 2px solid var(--primary-color) !important;
@@ -760,6 +813,62 @@
             </div>
         </div>
 
+        <!-- Filter Tabs -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="filter-tabs">
+                    <ul class="nav nav-tabs">
+                        <li class="<?php echo (!isset($_GET['status']) || $_GET['status'] == 'all') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=all'); ?>">
+                                <i class="fa fa-list"></i> Toutes
+                                <span class="badge"><?php echo count($consultations); ?></span>
+                            </a>
+                        </li>
+                        <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'scheduled') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=scheduled'); ?>">
+                                <i class="fa fa-clock-o"></i> Programmées
+                                <span class="badge"><?php echo $scheduled_count; ?></span>
+                            </a>
+                        </li>
+                        <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=completed'); ?>">
+                                <i class="fa fa-check-circle"></i> Complétées
+                                <span class="badge"><?php echo $completed_count; ?></span>
+                            </a>
+                        </li>
+                        <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=cancelled'); ?>">
+                                <i class="fa fa-times-circle"></i> Annulées
+                                <span class="badge">
+                                    <?php
+                                    $cancelled_count = 0;
+                                    foreach ($consultations as $c) {
+                                        if ($c->status === 'cancelled') $cancelled_count++;
+                                    }
+                                    echo $cancelled_count;
+                                    ?>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'no_show') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=no_show'); ?>">
+                                <i class="fa fa-user-times"></i> Absents
+                                <span class="badge">
+                                    <?php
+                                    $no_show_count = 0;
+                                    foreach ($consultations as $c) {
+                                        if ($c->status === 'no_show') $no_show_count++;
+                                    }
+                                    echo $no_show_count;
+                                    ?>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Consultations Table -->
         <div class="row">
             <div class="col-md-12">
@@ -821,7 +930,7 @@
                                         </td>
                                         <td>
                                             <span class="type-badge">
-                                                <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
+                                                <?php echo dietetic_consultation_type_label($consultation->consultation_type); ?>
                                             </span>
                                         </td>
                                         <td>
