@@ -472,12 +472,42 @@ $(document).ready(function() {
                     $('#consultations-table').show();
                     $('.consultations-table-wrapper').show();
 
-                    logDiagnostic('Affichage forcé - Tableau visible: ' + $('#consultations-table').is(':visible'), 'success');
+                    // Force aussi tous les wrappers DataTables à être visibles
+                    $('#consultations-table_wrapper').show();
+                    $('.dataTables_wrapper').show();
 
-                    // Masquer le panneau de diagnostic après 3 secondes si tout va bien
-                    setTimeout(function() {
-                        $('#diagnostic-panel').fadeOut();
-                    }, 3000);
+                    logDiagnostic('Affichage forcé - Tableau visible: ' + $('#consultations-table').is(':visible'), 'success');
+                    logDiagnostic('Display CSS du tableau: ' + $('#consultations-table').css('display'), 'info');
+                    logDiagnostic('Display CSS du wrapper: ' + $('.consultations-table-wrapper').css('display'), 'info');
+
+                    // Monitoring continu pour détecter si le tableau disparaît
+                    var monitorCount = 0;
+                    var monitorInterval = setInterval(function() {
+                        monitorCount++;
+                        var isVisible = $('#consultations-table').is(':visible');
+                        var displayStyle = $('#consultations-table').css('display');
+
+                        if (!isVisible || displayStyle === 'none') {
+                            logDiagnostic('⚠️ ALERTE! Tableau devenu invisible à T+' + monitorCount + 's - Display: ' + displayStyle, 'error');
+
+                            // Re-forcer l'affichage
+                            $('#consultations-table').show();
+                            $('.consultations-table-wrapper').show();
+                            $('#consultations-table_wrapper').show();
+                            $('.dataTables_wrapper').show();
+
+                            logDiagnostic('Réaffichage forcé!', 'success');
+                        }
+
+                        if (monitorCount >= 10) {
+                            clearInterval(monitorInterval);
+                            logDiagnostic('Monitoring terminé après 10s', 'info');
+                            // Masquer le panneau après monitoring
+                            setTimeout(function() {
+                                $('#diagnostic-panel').fadeOut();
+                            }, 2000);
+                        }
+                    }, 1000);
                 }
             });
 
