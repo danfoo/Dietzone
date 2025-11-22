@@ -49,6 +49,10 @@ class Consultations extends AdminController
         $data['title'] = _l('dietetic_consultation') . ' #' . $id;
         $data['patient'] = $this->dietetic_patients_model->get($data['consultation']->patient_id);
 
+        // Get primary contact for patient
+        $this->load->model('dietetic/dietetic_notifications_model');
+        $data['primary_contact'] = $this->dietetic_notifications_model->get_client_primary_contact($data['patient']->client_id);
+
         $this->load->view('admin/consultations/view', $data);
     }
 

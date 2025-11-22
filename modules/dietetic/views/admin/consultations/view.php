@@ -433,15 +433,10 @@
                             </h6>
                             <p>
                                 <i class="fa fa-envelope"></i>
-                                <?php
-                                // Get primary contact email
-                                $this->load->model('dietetic/dietetic_notifications_model');
-                                $contact = $this->dietetic_notifications_model->get_client_primary_contact($patient->client_id);
-                                echo $contact ? $contact->email : 'Non défini';
-                                ?>
+                                <?php echo isset($primary_contact->email) ? $primary_contact->email : 'Non défini'; ?>
                                 &nbsp;&nbsp;|&nbsp;&nbsp;
                                 <i class="fa fa-phone"></i>
-                                <?php echo $contact ? $contact->phonenumber : 'Non défini'; ?>
+                                <?php echo isset($primary_contact->phonenumber) ? $primary_contact->phonenumber : 'Non défini'; ?>
                             </p>
                         </div>
                     </div>
