@@ -106,7 +106,13 @@ class Portal extends App_Controller
             'remove_from_favorites',
             // Legal pages
             'privacy',
-            'terms'
+            'terms',
+            // Profile methods
+            'profile',
+            'update_password',
+            'update_profile',
+            'update_emergency_contact',
+            'upload_document'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
