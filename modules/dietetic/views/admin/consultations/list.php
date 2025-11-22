@@ -268,14 +268,23 @@
                     </ul>
                 </div>
 
-                <!-- Panneau de Diagnostic -->
-                <div id="diagnostic-panel" class="alert alert-info" style="margin-bottom: 20px;">
-                    <h5><i class="fa fa-bug"></i> Diagnostic en cours...</h5>
-                    <div id="diagnostic-log"></div>
-                </div>
-
-                <!-- Consultations Table -->
+                <!-- Barre de recherche -->
                 <div class="consultations-table-wrapper">
+                    <div class="row" style="margin-bottom: 15px;">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                <input type="text"
+                                       class="form-control"
+                                       id="search-consultations"
+                                       placeholder="Rechercher par patient, date, type, statut...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="results-count" class="text-muted"></span>
+                        </div>
+                    </div>
+
                     <table class="table table-hover" id="consultations-table">
                         <thead>
                             <tr>
@@ -397,168 +406,49 @@
 </div>
 
 <script>
-// Fonction pour logger dans le panneau de diagnostic
-function logDiagnostic(message, type) {
-    type = type || 'info';
-    var icon = type === 'error' ? 'fa-times-circle text-danger' :
-               type === 'success' ? 'fa-check-circle text-success' :
-               'fa-info-circle text-info';
-
-    var html = '<div><i class="fa ' + icon + '"></i> ' + message + '</div>';
-    $('#diagnostic-log').append(html);
-    console.log('[DIAGNOSTIC] ' + message);
-}
-
 $(document).ready(function() {
-    logDiagnostic('jQuery chargé - Version: ' + $.fn.jquery, 'success');
-    logDiagnostic('DOM prêt', 'success');
+    // Fonctionnalité de recherche simple
+    var $searchInput = $('#search-consultations');
+    var $table = $('#consultations-table');
+    var $rows = $table.find('tbody tr');
+    var $resultsCount = $('#results-count');
 
-    // Vérifier que le tableau existe
-    var tableExists = $('#consultations-table').length > 0;
-    logDiagnostic('Tableau trouvé: ' + (tableExists ? 'OUI' : 'NON'), tableExists ? 'success' : 'error');
+    // Fonction pour mettre à jour le compteur
+    function updateResultsCount() {
+        var visibleRows = $rows.filter(':visible').length;
+        var totalRows = $rows.length;
 
-    if (tableExists) {
-        logDiagnostic('Nombre de lignes: ' + $('#consultations-table tbody tr').length, 'info');
+        if ($searchInput.val().trim() === '') {
+            $resultsCount.text(totalRows + ' consultation' + (totalRows > 1 ? 's' : ''));
+        } else {
+            $resultsCount.text(visibleRows + ' résultat' + (visibleRows > 1 ? 's' : '') + ' sur ' + totalRows);
+        }
     }
 
-    // Vérifier DataTables
-    var hasDataTables = typeof $.fn.DataTable !== 'undefined';
-    logDiagnostic('DataTables disponible: ' + (hasDataTables ? 'OUI' : 'NON'), hasDataTables ? 'success' : 'error');
+    // Initialiser le compteur
+    updateResultsCount();
 
-    // État initial
-    logDiagnostic('Tableau visible: ' + $('#consultations-table').is(':visible'), 'info');
-    logDiagnostic('Wrapper visible: ' + $('.consultations-table-wrapper').is(':visible'), 'info');
+    // Recherche en temps réel
+    $searchInput.on('keyup', function() {
+        var searchTerm = $(this).val().toLowerCase().trim();
 
-    // DÉSACTIVATION TEMPORAIRE DE DATATABLES POUR TEST
-    var ENABLE_DATATABLES = false;
+        if (searchTerm === '') {
+            $rows.show();
+        } else {
+            $rows.each(function() {
+                var $row = $(this);
+                var rowText = $row.text().toLowerCase();
 
-    // Initialize DataTables with custom styling and French language
-    if ($.fn.DataTable && ENABLE_DATATABLES) {
-        try {
-            logDiagnostic('Initialisation de DataTables...', 'info');
-
-            var table = $('#consultations-table').DataTable({
-                "order": [[2, "desc"]],
-                "pageLength": 25,
-                "language": {
-                    "decimal": "",
-                    "emptyTable": "Aucune donnée disponible",
-                    "info": "Affichage de _START_ à _END_ sur _TOTAL_ consultations",
-                    "infoEmpty": "Affichage de 0 à 0 sur 0 consultation",
-                    "infoFiltered": "(filtré de _MAX_ consultations au total)",
-                    "infoPostFix": "",
-                    "thousands": ",",
-                    "lengthMenu": "Afficher _MENU_ consultations",
-                    "loadingRecords": "Chargement...",
-                    "processing": "Traitement...",
-                    "search": "Rechercher:",
-                    "zeroRecords": "Aucune consultation trouvée",
-                    "paginate": {
-                        "first": "Premier",
-                        "last": "Dernier",
-                        "next": "Suivant",
-                        "previous": "Précédent"
-                    },
-                    "aria": {
-                        "sortAscending": ": activer pour trier la colonne par ordre croissant",
-                        "sortDescending": ": activer pour trier la colonne par ordre décroissant"
-                    }
-                },
-                "columnDefs": [
-                    { "orderable": false, "targets": 6 } // Actions column
-                ],
-                "initComplete": function(settings, json) {
-                    logDiagnostic('DataTables initialisé avec succès!', 'success');
-                    logDiagnostic('Tableau visible après init: ' + $('#consultations-table').is(':visible'), 'info');
-
-                    // Force l'affichage du tableau après l'initialisation
-                    $('#consultations-table').show();
-                    $('.consultations-table-wrapper').show();
-
-                    // Force aussi tous les wrappers DataTables à être visibles
-                    $('#consultations-table_wrapper').show();
-                    $('.dataTables_wrapper').show();
-
-                    logDiagnostic('Affichage forcé - Tableau visible: ' + $('#consultations-table').is(':visible'), 'success');
-                    logDiagnostic('Display CSS du tableau: ' + $('#consultations-table').css('display'), 'info');
-                    logDiagnostic('Display CSS du wrapper: ' + $('.consultations-table-wrapper').css('display'), 'info');
-
-                    // Monitoring continu pour détecter si le tableau disparaît
-                    var monitorCount = 0;
-                    var monitorInterval = setInterval(function() {
-                        monitorCount++;
-                        var isVisible = $('#consultations-table').is(':visible');
-                        var displayStyle = $('#consultations-table').css('display');
-
-                        if (!isVisible || displayStyle === 'none') {
-                            logDiagnostic('⚠️ ALERTE! Tableau devenu invisible à T+' + monitorCount + 's - Display: ' + displayStyle, 'error');
-
-                            // Re-forcer l'affichage
-                            $('#consultations-table').show();
-                            $('.consultations-table-wrapper').show();
-                            $('#consultations-table_wrapper').show();
-                            $('.dataTables_wrapper').show();
-
-                            logDiagnostic('Réaffichage forcé!', 'success');
-                        }
-
-                        if (monitorCount >= 10) {
-                            clearInterval(monitorInterval);
-                            logDiagnostic('Monitoring terminé après 10s', 'info');
-                            // Masquer le panneau après monitoring
-                            setTimeout(function() {
-                                $('#diagnostic-panel').fadeOut();
-                            }, 2000);
-                        }
-                    }, 1000);
+                if (rowText.indexOf(searchTerm) > -1) {
+                    $row.show();
+                } else {
+                    $row.hide();
                 }
             });
-
-            logDiagnostic('DataTables object créé', 'success');
-
-        } catch (error) {
-            logDiagnostic('ERREUR lors de l\'initialisation: ' + error.message, 'error');
-            // Afficher le tableau quand même
-            $('#consultations-table').show();
-            $('.consultations-table-wrapper').show();
         }
-    } else {
-        logDiagnostic('DataTables DÉSACTIVÉ - affichage direct du tableau', 'info');
 
-        // Afficher le tableau sans DataTables
-        $('#consultations-table').show();
-        $('.consultations-table-wrapper').show();
-
-        // Forcer tous les éléments parents à être visibles
-        $('#consultations-table').parents().show();
-
-        logDiagnostic('Tableau affiché en mode statique (sans DataTables)', 'success');
-
-        // Monitoring pour s'assurer qu'il reste visible
-        var staticMonitorCount = 0;
-        var staticMonitorInterval = setInterval(function() {
-            staticMonitorCount++;
-            var isVisible = $('#consultations-table').is(':visible');
-
-            if (!isVisible) {
-                logDiagnostic('⚠️ ALERTE! Tableau statique invisible à T+' + staticMonitorCount + 's', 'error');
-                $('#consultations-table').show();
-                $('.consultations-table-wrapper').show();
-                $('#consultations-table').parents().show();
-                logDiagnostic('Réaffichage forcé!', 'success');
-            } else if (staticMonitorCount === 1) {
-                logDiagnostic('✓ Tableau statique visible après 1s', 'success');
-            }
-
-            if (staticMonitorCount >= 10) {
-                clearInterval(staticMonitorInterval);
-                logDiagnostic('Monitoring statique terminé - Tableau reste visible!', 'success');
-                setTimeout(function() {
-                    $('#diagnostic-panel').fadeOut();
-                }, 2000);
-            }
-        }, 1000);
-    }
+        updateResultsCount();
+    });
 
     // Script simple pour le menu Diététique
     setTimeout(function() {
