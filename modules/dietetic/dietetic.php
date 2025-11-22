@@ -334,6 +334,9 @@ function dietetic_add_footer_components()
     })();
     </script>';
 
+    // Load diagnostic script to analyze menu
+    echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
+
     // Load full dietetic.js only on dietetic pages
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<script src="' . $module_path . 'assets/js/dietetic.js?v=' . time() . '"></script>';
