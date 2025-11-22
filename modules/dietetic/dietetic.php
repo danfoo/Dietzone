@@ -288,6 +288,9 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
+    // Load diagnostic script to see what's happening with the menu
+    echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
+
     // Load menu toggle script with async to avoid blocking on errors
     echo '<script async src="' . $module_path . 'assets/js/force_menu_toggle.js?v=' . time() . '"></script>';
 
