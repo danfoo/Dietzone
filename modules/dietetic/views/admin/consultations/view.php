@@ -391,7 +391,16 @@
                 <?php if ($consultation->status == 'scheduled'): ?>
                     <?php
                     $now = new DateTime();
-                    $consultation_datetime = new DateTime($consultation->consultation_date . ' ' . ($consultation->consultation_time ?? '00:00:00'));
+                    // Build datetime string correctly
+                    $datetime_string = $consultation->consultation_date;
+                    if (!empty($consultation->consultation_time) && strpos($consultation->consultation_date, ':') === false) {
+                        // Only append time if date doesn't already contain time
+                        $datetime_string .= ' ' . $consultation->consultation_time;
+                    } elseif (strpos($consultation->consultation_date, ':') === false) {
+                        // No time in date and no consultation_time, use midnight
+                        $datetime_string .= ' 00:00:00';
+                    }
+                    $consultation_datetime = new DateTime($datetime_string);
                     $interval = $now->diff($consultation_datetime);
 
                     if ($consultation_datetime > $now):
