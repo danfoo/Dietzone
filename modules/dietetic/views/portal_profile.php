@@ -694,16 +694,35 @@ $page_title = 'Mon Profil';
 
         <div class="profile-avatar-container">
             <div class="profile-avatar" id="profileAvatar">
-                <?php if (isset($patient->avatar_url) && !empty($patient->avatar_url) && file_exists($patient->avatar_url)): ?>
-                    <img src="<?php echo base_url($patient->avatar_url); ?>" alt="Avatar">
-                <?php else: ?>
-                    <i class="fa fa-user"></i>
+                <?php
+                // Utiliser la photo de profil Perfex si disponible
+                $contact = null;
+                if (!empty($client->default_contact)) {
+                    $this->load->model('clients_model');
+                    $contact = $this->clients_model->get_contact($client->default_contact);
+                }
+
+                if ($contact && !empty($contact->profile_image)):
+                ?>
+                    <img src="<?php echo contact_profile_image_url($contact->id, 'small'); ?>" alt="<?php echo htmlspecialchars($client->company); ?>">
+                <?php else:
+                    // Afficher les initiales
+                    $names = explode(' ', trim($client->company));
+                    $initials = '';
+                    if (count($names) >= 2) {
+                        $initials = strtoupper(substr($names[0], 0, 1) . substr($names[1], 0, 1));
+                    } else {
+                        $initials = strtoupper(substr($client->company, 0, 2));
+                    }
+                ?>
+                    <div style="font-size: 36px; font-weight: 700; color: #01807B;">
+                        <?php echo $initials; ?>
+                    </div>
                 <?php endif; ?>
             </div>
-            <div class="profile-avatar-upload" onclick="$('#avatarInput').click()">
+            <a href="<?php echo site_url('clients/profile'); ?>" class="profile-avatar-upload" title="Modifier ma photo de profil">
                 <i class="fa fa-camera"></i>
-            </div>
-            <input type="file" id="avatarInput" accept="image/*">
+            </a>
         </div>
 
         <h1 class="profile-name"><?php echo htmlspecialchars($client->company); ?></h1>
@@ -1213,47 +1232,6 @@ $(document).ready(function() {
                 $('#emergencySubmitBtn').prop('disabled', false).html('<i class="fa fa-check"></i> Enregistrer');
             }
         });
-    });
-
-    // Avatar upload
-    $('#avatarInput').on('change', function(e) {
-        var file = e.target.files[0];
-        if (file) {
-            if (!file.type.match('image.*')) {
-                alert('Veuillez sélectionner une image');
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                alert('L\'image ne doit pas dépasser 5MB');
-                return;
-            }
-
-            var formData = new FormData();
-            formData.append('avatar', file);
-
-            $.ajax({
-                url: '<?php echo site_url('dietetic/portal/upload_avatar'); ?>',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    if (response.success) {
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            $('#profileAvatar').html('<img src="' + e.target.result + '" alt="Avatar">');
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        alert(response.message || 'Erreur lors de l\'upload');
-                    }
-                },
-                error: function() {
-                    alert('Erreur lors de l\'upload de l\'avatar');
-                }
-            });
-        }
     });
 
     // Document upload
