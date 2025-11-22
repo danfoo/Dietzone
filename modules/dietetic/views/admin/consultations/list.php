@@ -1,6 +1,29 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<!-- FIX: Intercepter l'erreur csrf_jquery_ajax_setup si jQuery n'est pas encore chargé -->
+<script>
+// Si jQuery n'est pas encore chargé, créer un wrapper pour csrf_jquery_ajax_setup
+if (typeof jQuery === 'undefined' && typeof csrf_jquery_ajax_setup === 'undefined') {
+    window.csrf_jquery_ajax_setup = function() {
+        // Attendre que jQuery soit chargé
+        if (typeof jQuery !== 'undefined') {
+            // jQuery est maintenant disponible, configurer CSRF
+            if (jQuery.ajaxSetup) {
+                jQuery.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': typeof csrfHashName !== 'undefined' ? csrfHashName : ''
+                    }
+                });
+            }
+        } else {
+            // Réessayer après 50ms
+            setTimeout(csrf_jquery_ajax_setup, 50);
+        }
+    };
+}
+</script>
+
 <style>
 /* Modern Consultations List Styles with Mobile-First Approach */
 :root {
