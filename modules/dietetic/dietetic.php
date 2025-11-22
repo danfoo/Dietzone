@@ -475,6 +475,10 @@ function dietetic_redirect_to_dashboard()
  */
 function dietetic_add_legal_links_to_header()
 {
+    // Determine if we're in admin or client portal
+    $is_admin_area = is_staff_logged_in();
+    $privacy_url = $is_admin_area ? admin_url('dietetic/legal_pages/privacy') : site_url('dietetic/portal/privacy');
+    $terms_url = $is_admin_area ? admin_url('dietetic/legal_pages/terms') : site_url('dietetic/portal/terms');
     ?>
     <script>
     jQuery(document).ready(function($) {
@@ -484,9 +488,9 @@ function dietetic_add_legal_links_to_header()
             '<i class="fa fa-gavel"></i> Pages Légales <span class="caret"></span>' +
             '</a>' +
             '<ul class="dropdown-menu">' +
-            '<li><a href="<?php echo admin_url('dietetic/legal_pages/privacy'); ?>" target="_blank">' +
+            '<li><a href="<?php echo $privacy_url; ?>" target="_blank">' +
             '<i class="fa fa-shield"></i> Politique de Confidentialité</a></li>' +
-            '<li><a href="<?php echo admin_url('dietetic/legal_pages/terms'); ?>" target="_blank">' +
+            '<li><a href="<?php echo $terms_url; ?>" target="_blank">' +
             '<i class="fa fa-file-text"></i> Conditions d\'Utilisation</a></li>' +
             '</ul>' +
             '</li>';

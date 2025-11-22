@@ -4334,5 +4334,37 @@ class Portal extends App_Controller
         echo "<hr>";
         echo "<p><a href='" . site_url('dietetic/portal') . "'>🏠 Retour au portail</a></p>";
     }
+
+    /**
+     * Display Privacy Policy page (public access)
+     */
+    public function privacy()
+    {
+        $this->load->model('dietetic/dietetic_settings_model');
+
+        $data['title'] = 'Politique de Confidentialité';
+        $data['content'] = $this->dietetic_settings_model->get_setting('privacy_policy') ?? '<p>Aucune politique de confidentialité n\'a été définie.</p>';
+        $data['bodyclass'] = 'legal-page';
+
+        $this->data($data);
+        $this->view('legal_pages/view');
+        $this->layout();
+    }
+
+    /**
+     * Display Terms of Service page (public access)
+     */
+    public function terms()
+    {
+        $this->load->model('dietetic/dietetic_settings_model');
+
+        $data['title'] = 'Conditions Générales d\'Utilisation';
+        $data['content'] = $this->dietetic_settings_model->get_setting('terms_of_service') ?? '<p>Aucune condition d\'utilisation n\'a été définie.</p>';
+        $data['bodyclass'] = 'legal-page';
+
+        $this->data($data);
+        $this->view('legal_pages/view');
+        $this->layout();
+    }
 }
 
