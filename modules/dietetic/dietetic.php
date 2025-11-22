@@ -205,6 +205,15 @@ function dietetic_module_init_menu_items()
                 'href'     => admin_url('dietetic/staff_permissions'),
                 'position' => 98,
             ]);
+
+            // Legal Pages Management - Admin only
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-legal-pages',
+                'name'     => 'Pages Légales',
+                'icon'     => 'fa fa-gavel',
+                'href'     => admin_url('dietetic/legal_pages/manage'),
+                'position' => 98.5,
+            ]);
         }
 
         // Settings - requires settings permission
@@ -258,6 +267,12 @@ function dietetic_add_customer_profile_tab($client_id)
         }
     }
 }
+
+/**
+ * Add legal pages links to header
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_add_legal_links_to_header');
+hooks()->add_action('app_customers_portal_footer', 'dietetic_add_legal_links_to_header');
 
 /**
  * Add custom CSS for admin area (in head)
@@ -453,4 +468,60 @@ function dietetic_redirect_to_dashboard()
 
     // Redirect to dietetic dashboard
     redirect(admin_url('dietetic/dashboard'));
+}
+
+/**
+ * Add legal pages links to header navigation
+ */
+function dietetic_add_legal_links_to_header()
+{
+    ?>
+    <script>
+    jQuery(document).ready(function($) {
+        // Add legal links to the top navigation bar
+        var legalLinksHTML = '<li class="dropdown legal-pages-dropdown" style="margin-left: 15px;">' +
+            '<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">' +
+            '<i class="fa fa-gavel"></i> Pages Légales <span class="caret"></span>' +
+            '</a>' +
+            '<ul class="dropdown-menu">' +
+            '<li><a href="<?php echo admin_url('dietetic/legal_pages/privacy'); ?>" target="_blank">' +
+            '<i class="fa fa-shield"></i> Politique de Confidentialité</a></li>' +
+            '<li><a href="<?php echo admin_url('dietetic/legal_pages/terms'); ?>" target="_blank">' +
+            '<i class="fa fa-file-text"></i> Conditions d\'Utilisation</a></li>' +
+            '</ul>' +
+            '</li>';
+
+        // Try to add to navbar (admin interface)
+        if ($('nav.navbar .navbar-nav').length > 0) {
+            $('nav.navbar .navbar-nav').first().append(legalLinksHTML);
+        }
+
+        // Try to add to header (client portal)
+        if ($('.header .navbar-nav').length > 0) {
+            $('.header .navbar-nav').first().append(legalLinksHTML);
+        }
+
+        // Alternative: add to top-right navbar
+        if ($('.navbar-right').length > 0 && $('.legal-pages-dropdown').length === 0) {
+            $('.navbar-right').first().prepend(legalLinksHTML);
+        }
+    });
+    </script>
+
+    <style>
+    .legal-pages-dropdown a {
+        white-space: nowrap;
+    }
+
+    .legal-pages-dropdown .dropdown-menu {
+        min-width: 250px;
+    }
+
+    .legal-pages-dropdown .dropdown-menu i {
+        margin-right: 8px;
+        width: 16px;
+        text-align: center;
+    }
+    </style>
+    <?php
 }
