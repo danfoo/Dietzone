@@ -4459,6 +4459,13 @@ class Portal extends App_Controller
         }
         $data['client'] = $client;
 
+        // Get contact info for profile image
+        $contact = null;
+        if (!empty($client->default_contact)) {
+            $contact = $this->clients_model->get_contact($client->default_contact);
+        }
+        $data['contact'] = $contact;
+
         // Get latest measurement for current weight
         try {
             $latest_measurement = $this->dietetic_patients_model->get_latest_measurement($patient->id, true);

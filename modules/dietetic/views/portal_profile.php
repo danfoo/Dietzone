@@ -696,13 +696,7 @@ $page_title = 'Mon Profil';
             <div class="profile-avatar" id="profileAvatar">
                 <?php
                 // Utiliser la photo de profil Perfex si disponible
-                $contact = null;
-                if (!empty($client->default_contact)) {
-                    $this->load->model('clients_model');
-                    $contact = $this->clients_model->get_contact($client->default_contact);
-                }
-
-                if ($contact && !empty($contact->profile_image)):
+                if (isset($contact) && $contact && !empty($contact->profile_image)):
                 ?>
                     <img src="<?php echo contact_profile_image_url($contact->id, 'small'); ?>" alt="<?php echo htmlspecialchars($client->company); ?>">
                 <?php else:
@@ -1133,7 +1127,8 @@ $(document).ready(function() {
             data: {
                 current_password: currentPassword,
                 new_password: newPassword,
-                confirm_password: confirmPassword
+                confirm_password: confirmPassword,
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             },
             dataType: 'json',
             success: function(response) {
@@ -1169,7 +1164,8 @@ $(document).ready(function() {
             data: {
                 phone: $('#edit_phone').val(),
                 dietary_preferences: $('#edit_dietary_preferences').val(),
-                allergies: $('#edit_allergies').val()
+                allergies: $('#edit_allergies').val(),
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             },
             dataType: 'json',
             success: function(response) {
@@ -1208,7 +1204,8 @@ $(document).ready(function() {
             type: 'POST',
             data: {
                 emergency_contact: $('#emergency_contact').val(),
-                emergency_phone: $('#emergency_phone').val()
+                emergency_phone: $('#emergency_phone').val(),
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             },
             dataType: 'json',
             success: function(response) {
@@ -1245,6 +1242,7 @@ $(document).ready(function() {
 
             var formData = new FormData();
             formData.append('document', file);
+            formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
 
             $.ajax({
                 url: '<?php echo site_url('dietetic/portal/upload_document'); ?>',
