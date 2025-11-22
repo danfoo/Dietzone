@@ -63,6 +63,7 @@ class Portal extends App_Controller
             'mealplan',
             'meal_plan_view',
             'consultations',
+            'consultation',
             'my_dietitians',
             'rate_dietitian',
             'test',
