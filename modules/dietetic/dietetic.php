@@ -73,6 +73,11 @@ register_language_files(DIETETIC_MODULE_NAME, [DIETETIC_MODULE_NAME]);
 hooks()->add_action('admin_init', 'dietetic_module_init_menu_items');
 
 /**
+ * Redirect non-admin users with dietetic access to dietetic dashboard
+ */
+hooks()->add_action('pre_controller', 'dietetic_redirect_to_dashboard');
+
+/**
  * Add JavaScript to force recipes menu in admin
  */
 hooks()->add_action('app_admin_footer', 'dietetic_force_recipes_menu_js');
@@ -414,4 +419,38 @@ function dietetic_permissions()
     ];
 
     register_staff_capabilities('dietetic', $capabilities, _l('dietetic'));
+}
+
+/**
+ * Redirect non-admin users to dietetic dashboard instead of main dashboard
+ */
+function dietetic_redirect_to_dashboard()
+{
+    // Only check if user is logged in and accessing admin area
+    if (!is_staff_logged_in()) {
+        return;
+    }
+
+    $CI = &get_instance();
+
+    // Get current URI
+    $current_uri = $_SERVER['REQUEST_URI'] ?? '';
+
+    // Only redirect if user is accessing the main dashboard (/admin or /admin/dashboard)
+    if (!preg_match('#/admin/?$|/admin/dashboard/?$#', $current_uri)) {
+        return;
+    }
+
+    // Don't redirect admins - they need access to the full Perfex dashboard
+    if (is_admin()) {
+        return;
+    }
+
+    // Check if user has access to dietetic module
+    if (!has_permission('dietetic', '', 'view')) {
+        return;
+    }
+
+    // Redirect to dietetic dashboard
+    redirect(admin_url('dietetic/dashboard'));
 }
