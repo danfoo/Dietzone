@@ -4347,11 +4347,8 @@ class Portal extends App_Controller
 
         $data['title'] = 'Politique de Confidentialité';
         $data['content'] = $this->dietetic_settings_model->get_setting('privacy_policy') ?? '<p>Aucune politique de confidentialité n\'a été définie.</p>';
-        $data['bodyclass'] = 'legal-page';
 
-        $this->data($data);
-        $this->view('legal_pages/view');
-        $this->layout();
+        $this->load->view('portal_legal_page', $data);
     }
 
     /**
@@ -4363,11 +4360,8 @@ class Portal extends App_Controller
 
         $data['title'] = 'Conditions Générales d\'Utilisation';
         $data['content'] = $this->dietetic_settings_model->get_setting('terms_of_service') ?? '<p>Aucune condition d\'utilisation n\'a été définie.</p>';
-        $data['bodyclass'] = 'legal-page';
 
-        $this->data($data);
-        $this->view('legal_pages/view');
-        $this->layout();
+        $this->load->view('portal_legal_page', $data);
     }
 }
 
