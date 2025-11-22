@@ -90,15 +90,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 /* Gradient accent bar - subtle top accent instead of left border */
-.meal-plan-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
-}
+/* REMOVED - No gradient border on meal plan cards */
 
 .meal-plan-header {
     background: linear-gradient(135deg, #f8fcfc 0%, #f0f9f9 100%);
@@ -316,9 +308,7 @@ $this->load->view('portal/includes/portal_header');
     opacity: 0.75;
 }
 
-.meal-plan-card.historical::before {
-    background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
-}
+/* REMOVED - No gradient border on historical meal plan cards */
 
 .meal-plan-card.historical .week-badge {
     background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
@@ -358,19 +348,7 @@ $this->load->view('portal/includes/portal_header');
     position: relative;
 }
 
-.accordion-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
-}
-
-.accordion-header.historical::before {
-    background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
-}
+/* REMOVED - No gradient border on accordion headers */
 
 .accordion-header:hover {
     background: linear-gradient(135deg, rgba(1, 128, 123, 0.03) 0%, rgba(243, 145, 29, 0.03) 100%);
