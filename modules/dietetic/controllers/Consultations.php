@@ -40,20 +40,33 @@ class Consultations extends AdminController
      */
     public function view($id)
     {
-        $data['consultation'] = $this->dietetic_consultations_model->get($id);
+        try {
+            $data['consultation'] = $this->dietetic_consultations_model->get($id);
 
-        if (!$data['consultation']) {
-            show_404();
+            if (!$data['consultation']) {
+                show_404();
+            }
+
+            $data['title'] = _l('dietetic_consultation') . ' #' . $id;
+            $data['patient'] = $this->dietetic_patients_model->get($data['consultation']->patient_id);
+
+            if (!$data['patient']) {
+                die('DEBUG: Patient not found with ID: ' . $data['consultation']->patient_id);
+            }
+
+            // Debug patient data
+            if (!isset($data['patient']->client_id)) {
+                die('DEBUG: Patient object missing client_id. Patient data: ' . print_r($data['patient'], true));
+            }
+
+            // Get primary contact for patient
+            $this->load->model('dietetic/dietetic_notifications_model');
+            $data['primary_contact'] = $this->dietetic_notifications_model->get_client_primary_contact($data['patient']->client_id);
+
+            $this->load->view('admin/consultations/view', $data);
+        } catch (Exception $e) {
+            die('DEBUG ERROR: ' . $e->getMessage() . '<br>File: ' . $e->getFile() . '<br>Line: ' . $e->getLine() . '<br>Trace: <pre>' . $e->getTraceAsString() . '</pre>');
         }
-
-        $data['title'] = _l('dietetic_consultation') . ' #' . $id;
-        $data['patient'] = $this->dietetic_patients_model->get($data['consultation']->patient_id);
-
-        // Get primary contact for patient
-        $this->load->model('dietetic/dietetic_notifications_model');
-        $data['primary_contact'] = $this->dietetic_notifications_model->get_client_primary_contact($data['patient']->client_id);
-
-        $this->load->view('admin/consultations/view', $data);
     }
 
     /**
