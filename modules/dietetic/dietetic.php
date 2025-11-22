@@ -264,6 +264,36 @@ function dietetic_add_head_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
+    // Add jQuery shim to prevent csrf_jquery_ajax_setup error
+    // This must run BEFORE init_head() generates code
+    echo '<script>
+    // Create a temporary jQuery shim if jQuery is not yet loaded
+    if (typeof window.jQuery === "undefined") {
+        window.jQuery = window.$ = {
+            ajaxSetup: function() {
+                // Queue the ajax setup for when real jQuery loads
+                if (!window._pendingAjaxSetup) {
+                    window._pendingAjaxSetup = [];
+                }
+                window._pendingAjaxSetup.push(arguments);
+            }
+        };
+
+        // When real jQuery loads, replace shim and run pending setups
+        var checkJQuery = setInterval(function() {
+            if (typeof window.jQuery.fn !== "undefined" && window.jQuery.fn.jquery) {
+                clearInterval(checkJQuery);
+                // Real jQuery is loaded, run pending ajaxSetup calls
+                if (window._pendingAjaxSetup && window._pendingAjaxSetup.length > 0) {
+                    for (var i = 0; i < window._pendingAjaxSetup.length; i++) {
+                        window.jQuery.ajaxSetup.apply(window.jQuery, window._pendingAjaxSetup[i]);
+                    }
+                }
+            }
+        }, 50);
+    }
+    </script>';
+
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<link href="' . $module_path . 'assets/css/dietetic.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
     }
