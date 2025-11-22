@@ -523,7 +523,7 @@
                                            class="btn btn-info btn-sm">
                                             <i class="fa fa-eye"></i> Voir
                                         </a>
-                                        <?php if (dietetic_has_permission('edit')) : ?>
+                                        <?php if (dietetic_can_edit_recipe($recipe)) : ?>
                                             <a href="<?php echo admin_url('dietetic/recipes/edit/' . $recipe->id); ?>"
                                                class="btn btn-default btn-sm">
                                                 <i class="fa fa-pencil"></i> Modifier
@@ -535,7 +535,7 @@
                                                 <i class="fa fa-check"></i> Approuver
                                             </a>
                                         <?php endif; ?>
-                                        <?php if (dietetic_has_permission('delete')) : ?>
+                                        <?php if (dietetic_can_delete_recipe($recipe)) : ?>
                                             <a href="<?php echo admin_url('dietetic/recipes/delete/' . $recipe->id); ?>"
                                                class="btn btn-danger btn-sm"
                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette recette ?');">

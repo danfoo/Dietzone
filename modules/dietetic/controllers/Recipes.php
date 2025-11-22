@@ -167,14 +167,16 @@ class Recipes extends AdminController
      */
     public function edit($id)
     {
-        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('edit')) {
-            access_denied('dietetic');
-        }
-
         $data['recipe'] = $this->dietetic_recipes_model->get($id);
 
         if (!$data['recipe']) {
             show_404();
+        }
+
+        // Check if user can edit this specific recipe
+        if (!function_exists('dietetic_can_edit_recipe') || !dietetic_can_edit_recipe($data['recipe'])) {
+            set_alert('danger', 'Vous ne pouvez modifier que vos propres recettes.');
+            redirect(admin_url('dietetic/recipes/view/' . $id));
         }
 
         if ($this->input->post()) {
@@ -267,8 +269,10 @@ class Recipes extends AdminController
      */
     public function delete($id)
     {
-        if (!function_exists('dietetic_has_permission') || !dietetic_has_permission('delete')) {
-            ajax_access_denied();
+        // Check if user can delete this specific recipe
+        if (!function_exists('dietetic_can_delete_recipe') || !dietetic_can_delete_recipe($id)) {
+            set_alert('danger', 'Vous ne pouvez supprimer que vos propres recettes.');
+            redirect(admin_url('dietetic/recipes'));
         }
 
         if ($this->dietetic_recipes_model->delete($id)) {

@@ -335,6 +335,100 @@ function dietetic_has_permission($capability = 'view')
 }
 
 /**
+ * Check if current user can edit a specific recipe
+ * Users can only edit their own recipes unless they have 'edit_all_recipes' permission or are admin
+ *
+ * @param object|int $recipe Recipe object or recipe ID
+ * @return bool
+ */
+function dietetic_can_edit_recipe($recipe)
+{
+    // Admin can edit all recipes
+    if (is_admin()) {
+        return true;
+    }
+
+    // Check if user has general edit permission
+    if (!dietetic_has_permission('edit')) {
+        return false;
+    }
+
+    // Load CI instance to access models if needed
+    $CI =& get_instance();
+
+    // If recipe is an ID, load the full recipe
+    if (is_numeric($recipe)) {
+        $CI->load->model('dietetic/dietetic_recipes_model');
+        $recipe = $CI->dietetic_recipes_model->get($recipe);
+    }
+
+    // If recipe doesn't exist, deny access
+    if (!$recipe || !isset($recipe->dietitian_id)) {
+        return false;
+    }
+
+    // Check if user owns this recipe
+    $current_user_id = get_staff_user_id();
+    if ($recipe->dietitian_id == $current_user_id) {
+        return true;
+    }
+
+    // Check if user has permission to edit all recipes
+    if (has_permission('dietetic', '', 'edit_all_recipes')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Check if current user can delete a specific recipe
+ * Users can only delete their own recipes unless they have 'delete_all_recipes' permission or are admin
+ *
+ * @param object|int $recipe Recipe object or recipe ID
+ * @return bool
+ */
+function dietetic_can_delete_recipe($recipe)
+{
+    // Admin can delete all recipes
+    if (is_admin()) {
+        return true;
+    }
+
+    // Check if user has general delete permission
+    if (!dietetic_has_permission('delete')) {
+        return false;
+    }
+
+    // Load CI instance to access models if needed
+    $CI =& get_instance();
+
+    // If recipe is an ID, load the full recipe
+    if (is_numeric($recipe)) {
+        $CI->load->model('dietetic/dietetic_recipes_model');
+        $recipe = $CI->dietetic_recipes_model->get($recipe);
+    }
+
+    // If recipe doesn't exist, deny access
+    if (!$recipe || !isset($recipe->dietitian_id)) {
+        return false;
+    }
+
+    // Check if user owns this recipe
+    $current_user_id = get_staff_user_id();
+    if ($recipe->dietitian_id == $current_user_id) {
+        return true;
+    }
+
+    // Check if user has permission to delete all recipes
+    if (has_permission('dietetic', '', 'delete_all_recipes')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Get upload path for dietetic files
  *
  * @param string $subdir
