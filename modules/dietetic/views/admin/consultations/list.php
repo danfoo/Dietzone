@@ -392,18 +392,48 @@
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTables with custom styling
+    // Initialize DataTables with custom styling and French language
     if ($.fn.DataTable) {
         $('#consultations-table').DataTable({
             "order": [[2, "desc"]],
             "pageLength": 25,
             "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json"
+                "decimal": "",
+                "emptyTable": "Aucune donnée disponible",
+                "info": "Affichage de _START_ à _END_ sur _TOTAL_ consultations",
+                "infoEmpty": "Affichage de 0 à 0 sur 0 consultation",
+                "infoFiltered": "(filtré de _MAX_ consultations au total)",
+                "infoPostFix": "",
+                "thousands": ",",
+                "lengthMenu": "Afficher _MENU_ consultations",
+                "loadingRecords": "Chargement...",
+                "processing": "Traitement...",
+                "search": "Rechercher:",
+                "zeroRecords": "Aucune consultation trouvée",
+                "paginate": {
+                    "first": "Premier",
+                    "last": "Dernier",
+                    "next": "Suivant",
+                    "previous": "Précédent"
+                },
+                "aria": {
+                    "sortAscending": ": activer pour trier la colonne par ordre croissant",
+                    "sortDescending": ": activer pour trier la colonne par ordre décroissant"
+                }
             },
             "columnDefs": [
                 { "orderable": false, "targets": 6 } // Actions column
-            ]
+            ],
+            "initComplete": function() {
+                // Force l'affichage du tableau après l'initialisation
+                $('#consultations-table').show();
+                $('.consultations-table-wrapper').show();
+            }
         });
+    } else {
+        // Si DataTables n'est pas disponible, afficher le tableau quand même
+        $('#consultations-table').show();
+        $('.consultations-table-wrapper').show();
     }
 
     // Script simple pour le menu Diététique
