@@ -279,7 +279,8 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Simple menu initialization - let Perfex/Bootstrap handle the collapse
+    // Simple menu initialization - TEMPORARILY DISABLED FOR DEBUGGING
+    /*
     echo '<script>
     (function() {
         if (typeof jQuery !== "undefined") {
@@ -333,9 +334,10 @@ function dietetic_add_footer_components()
         }
     })();
     </script>';
+    */
 
-    // Load diagnostic script to analyze menu
-    echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
+    // Load diagnostic script to analyze menu (TEMPORARILY DISABLED)
+    // echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
 
     // Load full dietetic.js only on dietetic pages
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
