@@ -279,63 +279,6 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Simple menu initialization - TEMPORARILY DISABLED FOR DEBUGGING
-    /*
-    echo '<script>
-    (function() {
-        if (typeof jQuery !== "undefined") {
-            jQuery(document).ready(function($) {
-                function initDieteticMenu() {
-                    // Find the Diététique menu item
-                    var $menuItem = null;
-
-                    // Search by text content
-                    $("#side-menu > li").each(function() {
-                        var $link = $(this).find("> a");
-                        var text = $link.text().trim();
-                        if (text === "Diététique" || text.indexOf("Dietetic") !== -1) {
-                            $menuItem = $(this);
-                            return false;
-                        }
-                    });
-
-                    if ($menuItem && $menuItem.length > 0) {
-                        var $link = $menuItem.find("> a");
-                        var $submenu = $menuItem.find("> ul");
-
-                        // Ensure submenu has correct classes for Bootstrap collapse
-                        if ($submenu.length > 0) {
-                            $submenu.addClass("nav nav-second-level collapse");
-
-                            // Auto-open if on dietetic page
-                            var currentUrl = window.location.pathname;
-                            if (currentUrl.indexOf("/dietetic/") !== -1) {
-                                $submenu.addClass("in");
-                                $menuItem.addClass("active");
-
-                                // Highlight active submenu item
-                                $submenu.find("a").each(function() {
-                                    var href = $(this).attr("href");
-                                    if (href && currentUrl.indexOf(href) !== -1) {
-                                        $(this).parent("li").addClass("active");
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-
-                // Initialize on ready
-                initDieteticMenu();
-
-                // Re-initialize after short delay for late-loading sidebars
-                setTimeout(initDieteticMenu, 500);
-            });
-        }
-    })();
-    </script>';
-    */
-
     // Load menu toggle script with async to avoid blocking on errors
     echo '<script async src="' . $module_path . 'assets/js/force_menu_toggle.js?v=' . time() . '"></script>';
 
