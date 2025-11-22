@@ -629,11 +629,16 @@
 
             /* Optimisations pour le menu mobile */
             .slide-menu {
-                width: 100%;
-                right: -100%;
+                width: 85%; /* Laisse 15% pour l'overlay cliquable */
+                max-width: 350px;
+                right: -85%;
                 height: 100%;
                 max-height: -webkit-fill-available; /* Fix pour Safari iOS */
                 max-height: 100dvh; /* Dynamic viewport height pour mobiles modernes */
+            }
+
+            .slide-menu.active {
+                right: 0;
             }
 
             .menu-items {
