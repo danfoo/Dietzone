@@ -219,7 +219,7 @@
 /* Nutrition Cards */
 .nutrition-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
 }
 
@@ -271,6 +271,11 @@
 
 .nutrition-card.fats {
     background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.nutrition-card.fiber {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
     color: white;
 }
 
@@ -780,7 +785,7 @@
                                         <div class="nutrition-icon">🔥</div>
                                         <div class="nutrition-label">Calories</div>
                                         <div class="nutrition-value"><?php echo number_format($program->daily_calories, 0, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">kcal</div>
+                                        <div class="nutrition-unit">kcal / jour</div>
                                     </div>
                                 <?php } ?>
 
@@ -788,8 +793,14 @@
                                     <div class="nutrition-card protein">
                                         <div class="nutrition-icon">💪</div>
                                         <div class="nutrition-label">Protéines</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_protein, 0, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">grammes</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_protein, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $protein_cal = $program->daily_protein * 4;
+                                                $protein_pct = round(($protein_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $protein_pct . '%';
+                                            } ?>
+                                        </div>
                                     </div>
                                 <?php } ?>
 
@@ -797,8 +808,14 @@
                                     <div class="nutrition-card carbs">
                                         <div class="nutrition-icon">🌾</div>
                                         <div class="nutrition-label">Glucides</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_carbs, 0, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">grammes</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_carbs, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $carbs_cal = $program->daily_carbs * 4;
+                                                $carbs_pct = round(($carbs_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $carbs_pct . '%';
+                                            } ?>
+                                        </div>
                                     </div>
                                 <?php } ?>
 
@@ -806,11 +823,36 @@
                                     <div class="nutrition-card fats">
                                         <div class="nutrition-icon">🥑</div>
                                         <div class="nutrition-label">Lipides</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_fats, 0, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">grammes</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_fats, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $fats_cal = $program->daily_fats * 9;
+                                                $fats_pct = round(($fats_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $fats_pct . '%';
+                                            } ?>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if ($program->daily_fiber) { ?>
+                                    <div class="nutrition-card fiber">
+                                        <div class="nutrition-icon">🌿</div>
+                                        <div class="nutrition-label">Fibres</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_fiber, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour</div>
                                     </div>
                                 <?php } ?>
                             </div>
+
+                            <?php if ($program->daily_calories && $program->daily_protein && $program->daily_carbs && $program->daily_fats) { ?>
+                                <!-- Macro Distribution Chart -->
+                                <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <h4 style="font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 20px; text-align: center;">
+                                        <i class="fa fa-pie-chart" style="color: #11998e;"></i> Distribution des Macronutriments
+                                    </h4>
+                                    <canvas id="macroDistributionChart" style="max-height: 250px;"></canvas>
+                                </div>
+                            <?php } ?>
                         </div>
 
                         <!-- Description -->
@@ -941,3 +983,105 @@
 </div>
 
 <?php init_tail(); ?>
+
+<?php if ($program->daily_calories && $program->daily_protein && $program->daily_carbs && $program->daily_fats) { ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    // Calculate macro percentages
+    const protein = <?php echo $program->daily_protein; ?>;
+    const carbs = <?php echo $program->daily_carbs; ?>;
+    const fats = <?php echo $program->daily_fats; ?>;
+    const calories = <?php echo $program->daily_calories; ?>;
+
+    const proteinCal = protein * 4;
+    const carbsCal = carbs * 4;
+    const fatsCal = fats * 9;
+
+    const proteinPct = Math.round((proteinCal / calories) * 100 * 10) / 10;
+    const carbsPct = Math.round((carbsCal / calories) * 100 * 10) / 10;
+    const fatsPct = Math.round((fatsCal / calories) * 100 * 10) / 10;
+
+    // Create doughnut chart
+    const ctx = document.getElementById('macroDistributionChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Protéines (' + proteinPct + '%)', 'Glucides (' + carbsPct + '%)', 'Lipides (' + fatsPct + '%)'],
+                datasets: [{
+                    data: [proteinPct, carbsPct, fatsPct],
+                    backgroundColor: [
+                        'rgba(240, 147, 251, 0.8)',  // Protein (pink/purple)
+                        'rgba(79, 172, 254, 0.8)',   // Carbs (blue)
+                        'rgba(67, 233, 123, 0.8)'    // Fats (green)
+                    ],
+                    borderColor: [
+                        'rgba(240, 147, 251, 1)',
+                        'rgba(79, 172, 254, 1)',
+                        'rgba(67, 233, 123, 1)'
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            },
+                            color: '#2c3e50',
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+
+                                let grams = 0;
+                                if (context.dataIndex === 0) {
+                                    grams = protein + 'g';
+                                } else if (context.dataIndex === 1) {
+                                    grams = carbs + 'g';
+                                } else if (context.dataIndex === 2) {
+                                    grams = fats + 'g';
+                                }
+
+                                return label + ' • ' + grams;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%',
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000
+                }
+            }
+        });
+    }
+})();
+</script>
+<?php } ?>

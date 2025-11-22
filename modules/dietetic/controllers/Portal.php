@@ -17,7 +17,9 @@ class Portal extends App_Controller
             'dietetic/portal/delete_notification',
             'dietetic/portal/mark_all_notifications_read',
             'dietetic/portal/save_fcm_token',
-            'dietetic/portal/delete_fcm_token'
+            'dietetic/portal/delete_fcm_token',
+            'dietetic/portal/add_to_favorites',
+            'dietetic/portal/remove_from_favorites'
         ];
 
         $current_uri = uri_string();
@@ -3870,6 +3872,19 @@ class Portal extends App_Controller
 
         if (!$recipe) {
             show_404();
+            return;
+        }
+
+        // Check if recipe is assigned to patient
+        $is_assigned = $this->dietetic_recipes_model->is_assigned_to_patient($recipe_id, $patient->id);
+
+        if (!$is_assigned) {
+            // Show restriction message for non-assigned recipes
+            $data = [];
+            $data['title'] = 'Recette non disponible';
+            $data['recipe'] = $recipe;
+            $data['patient'] = $patient;
+            $this->load->view('portal/recipes/restricted', $data);
             return;
         }
 

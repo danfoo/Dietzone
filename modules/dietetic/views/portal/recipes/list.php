@@ -5,150 +5,419 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-.recipes-tabs {
-    background: white;
-    border-radius: 12px;
+/* === DESIGN INSPIRÉ DE L'IMAGE DE RÉFÉRENCE === */
+/* Style moderne, coloré, friendly avec aesthetic iOS */
+
+/* Variables de couleurs - Charte graphique officielle */
+:root {
+    --primary-color: #01807B;
+    --primary-dark: #026660;
+    --secondary-color: #dc3545;
+    --background: #F8F9FC;
+    --card-bg: #FFFFFF;
+    --text-primary: #1E1E1E;
+    --text-secondary: #6B7280;
+    --border-radius-lg: 20px;
+    --border-radius-md: 16px;
+    --border-radius-sm: 12px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body {
+    background: var(--background);
+}
+
+/* === MOBILE FIRST DESIGN === */
+
+/* Base Container */
+.container {
+    padding: 8px;
+    max-width: 100%;
+}
+
+/* Filter Section */
+.filter-section {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
     padding: 20px;
-    margin-bottom: 24px;
-    border: 2px solid #f1f3f5;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-section h4 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+}
+
+.filter-section h4 i {
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+.filter-section hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 2px solid #F1F3F5;
+}
+
+/* Search Input - Pill shaped avec icône intégrée */
+.filter-section .search-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.filter-section .search-wrapper .search-icon {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 16px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.filter-section .input-group {
+    margin-bottom: 16px;
+}
+
+.filter-section .form-control {
+    border-radius: 50px;
+    border: none;
+    background: #F3F4F6;
+    padding: 12px 45px 12px 18px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    width: 100%;
+}
+
+.filter-section .form-control::placeholder {
+    color: #9CA3AF;
+}
+
+.filter-section .form-control:focus {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 4px rgba(1, 128, 123, 0.1);
+    outline: none;
+}
+
+.filter-section .input-group-btn {
+    display: none;
+}
+
+.filter-section .btn-danger {
+    width: 100%;
+    border-radius: 50px;
+    padding: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    background: var(--secondary-color);
+    border: none;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    letter-spacing: -0.2px;
+}
+
+.filter-section .btn-danger:hover {
+    background: #FF5252;
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+}
+
+/* Category Filters - Pills */
+.category-filters {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+    margin-bottom: -10px;
+}
+
+.category-filters::-webkit-scrollbar {
+    height: 6px;
+}
+
+.category-filters::-webkit-scrollbar-track {
+    background: #F3F4F6;
+    border-radius: 10px;
+}
+
+.category-filters::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 10px;
+}
+
+.category-filters::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+.category-filter {
+    padding: 10px 16px;
+    border-radius: 50px;
+    background: #F3F4F6;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.category-filter i {
+    font-size: 12px;
+}
+
+.category-filter:hover,
+.category-filter.active {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+/* Tabs */
+.recipes-tabs {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 0;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
 .recipes-tabs .nav-tabs {
-    border-bottom: 2px solid #e9ecef;
-}
-
-.recipes-tabs .nav-tabs li a {
-    color: #6c757d;
-    padding: 12px 24px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.recipes-tabs .nav-tabs li.active a {
-    color: #01807B;
-    border-bottom: 3px solid #01807B;
-    background: transparent;
-}
-
-.recipe-card {
-    background: white;
-    border-radius: 12px;
-    border: 2px solid #f1f3f5;
-    margin-bottom: 20px;
-    overflow: hidden;
-    transition: all 0.3s;
+    border: none;
+    margin: 0;
     display: flex;
-    flex-direction: column;
+    background: #F8F9FA;
 }
 
-.recipe-card:hover {
-    border-color: #01807B;
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
-    transform: translateY(-4px);
-}
-
-.recipe-photo {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.recipe-photo-placeholder {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 64px;
-    color: #adb5bd;
-}
-
-.recipe-content {
-    padding: 20px;
+.recipes-tabs .nav-tabs li {
     flex: 1;
 }
 
-.recipe-title {
-    font-size: 18px;
+.recipes-tabs .nav-tabs li a {
+    color: var(--text-secondary);
+    padding: 14px 12px;
     font-weight: 700;
-    color: #212529;
-    margin-bottom: 10px;
+    font-size: 13px;
+    transition: all 0.2s;
+    text-align: center;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    letter-spacing: -0.2px;
 }
 
-.recipe-title a {
-    color: #212529;
-    text-decoration: none;
-    transition: color 0.3s;
+.recipes-tabs .nav-tabs li.active a {
+    color: var(--primary-color);
+    background: white;
 }
 
-.recipe-title a:hover {
-    color: #01807B;
+.recipes-tabs .tab-content {
+    padding: 20px;
+}
+
+/* Recipe List - Mobile First */
+.recipes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Recipe Card - Layout horizontal (image à gauche) */
+.recipe-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+}
+
+.recipe-card:active {
+    transform: scale(0.99);
+}
+
+/* Recipe Photo - À gauche, carrée */
+.recipe-photo {
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.recipe-photo-placeholder {
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: #D1D5DB;
+    flex-shrink: 0;
+}
+
+/* Recipe Content - À droite de l'image */
+.recipe-content {
+    padding: 12px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Recipe Header - Temps et catégorie en haut */
+.recipe-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 .recipe-meta {
     display: flex;
-    gap: 15px;
-    margin-bottom: 12px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .recipe-meta-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: #6c757d;
-    font-size: 13px;
-}
-
-.recipe-meta-item i {
-    color: #01807B;
-}
-
-.recipe-description {
-    color: #6c757d;
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
-
-.recipe-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-.recipe-tag {
-    background: #e9ecef;
-    color: #495057;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 11px;
     font-weight: 600;
 }
 
-.recipe-actions {
-    display: flex;
-    gap: 10px;
+.recipe-meta-item i {
+    color: var(--primary-color);
+    font-size: 11px;
 }
 
+.recipe-category-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+}
+
+/* Recipe Title - Cliquable */
+.recipe-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+}
+
+.recipe-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.recipe-title a:hover {
+    color: var(--primary-color);
+}
+
+.recipe-title a:active {
+    color: var(--primary-color);
+}
+
+/* Recipe Rating - En dessous du titre */
+.recipe-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+}
+
+.recipe-rating i {
+    color: #FFC107;
+    font-size: 13px;
+}
+
+.recipe-rating-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.recipe-rating-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Masquer les éléments non utilisés dans le layout liste */
+.recipe-description,
+.recipe-tags,
+.recipe-actions {
+    display: none;
+}
+
+/* Favorite Button - Flottant en haut à droite */
 .btn-favorite {
-    border: 2px solid #e9ecef;
-    background: white;
-    color: #6c757d;
-    transition: all 0.3s;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--text-secondary);
+    border: none;
+    transition: all 0.2s;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-card {
+    position: relative;
 }
 
 .btn-favorite:hover,
 .btn-favorite.active {
-    border-color: #dc3545;
-    background: #dc3545;
+    background: var(--secondary-color);
     color: white;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-favorite:active {
+    transform: scale(0.95);
 }
 
 .btn-favorite i.fa-heart {
     display: none;
+    font-size: 14px;
 }
 
 .btn-favorite.active i.fa-heart {
@@ -157,62 +426,194 @@ $this->load->view('portal/includes/portal_header');
 
 .btn-favorite i.fa-heart-o {
     display: inline;
+    font-size: 14px;
 }
 
 .btn-favorite.active i.fa-heart-o {
     display: none;
 }
 
-.filter-section {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
-    border: 2px solid #f1f3f5;
+.btn-favorite span {
+    display: none;
 }
 
-.filter-section h4 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #212529;
-}
-
-.category-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.category-filter {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 2px solid #e9ecef;
-    background: white;
-    color: #495057;
-    text-decoration: none;
-    font-size: 13px;
+/* Alerts */
+.alert {
+    border-radius: var(--border-radius-md);
+    border: none;
+    padding: 18px;
+    font-size: 15px;
     font-weight: 600;
-    transition: all 0.3s;
 }
 
-.category-filter:hover,
-.category-filter.active {
-    border-color: #01807B;
-    background: #01807B;
-    color: white;
+/* Pagination */
+.pagination-wrapper {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination a,
+.pagination span {
+    padding: 10px 16px;
+    border-radius: 50px;
+    background: #F3F4F6;
+    color: var(--text-primary);
     text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
 }
 
-.recipes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+.pagination a:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
+.pagination .active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pagination .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* === TABLET (576px+) === */
+@media (min-width: 576px) {
+    .container {
+        padding: 20px;
+    }
+
+    .filter-section {
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .filter-section .btn-danger {
+        width: auto;
+        min-width: 200px;
+        float: right;
+    }
+
+    .recipes-tabs {
+        margin-bottom: 24px;
+    }
+
+    .recipes-tabs .tab-content {
+        padding: 24px;
+    }
+
+    .recipes-tabs .nav-tabs li a {
+        padding: 18px 24px;
+        font-size: 15px;
+    }
+
     .recipes-grid {
-        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .recipe-photo,
+    .recipe-photo-placeholder {
+        width: 140px;
+        min-width: 140px;
+        height: 140px;
+    }
+
+    .recipe-title {
+        font-size: 17px;
+    }
+
+    .category-filter {
+        padding: 12px 22px;
+        font-size: 15px;
+    }
+}
+
+/* === DESKTOP (992px+) === */
+@media (min-width: 992px) {
+    .container {
+        padding: 32px;
+    }
+
+    .filter-section {
+        padding: 28px;
+        margin-bottom: 28px;
+    }
+
+    .filter-section .input-group {
+        margin-bottom: 0;
+    }
+
+    .recipes-tabs {
+        margin-bottom: 28px;
+    }
+
+    .recipes-tabs .tab-content {
+        padding: 28px;
+    }
+
+    .recipes-tabs .nav-tabs li a {
+        padding: 20px 28px;
+        font-size: 16px;
+    }
+
+    .recipes-grid {
+        gap: 20px;
+    }
+
+    .recipe-card:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .recipe-photo,
+    .recipe-photo-placeholder {
+        width: 160px;
+        min-width: 160px;
+        height: 160px;
+    }
+
+    .recipe-photo-placeholder {
+        font-size: 48px;
+    }
+
+    .recipe-content {
+        padding: 16px 20px;
+    }
+
+    .recipe-title {
+        font-size: 18px;
+    }
+
+    .recipe-title a:hover {
+        color: var(--primary-color);
+    }
+
+    .recipe-meta-item {
+        font-size: 13px;
+    }
+
+    .recipe-rating-value {
+        font-size: 15px;
+    }
+
+    .category-filter:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
     }
 }
 </style>
@@ -222,26 +623,26 @@ $this->load->view('portal/includes/portal_header');
     <div class="filter-section">
         <form method="get" action="<?php echo site_url('dietetic/portal/recipes'); ?>">
             <div class="row">
-                <div class="col-md-8">
-                    <div class="input-group">
+                <div class="col-md-12">
+                    <div class="search-wrapper">
                         <input type="text" class="form-control" name="search"
                                placeholder="Rechercher une recette..."
-                               value="<?php echo $this->input->get('search'); ?>">
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fa fa-search"></i> Rechercher
-                            </button>
-                        </span>
+                               value="<?php echo $this->input->get('search'); ?>"
+                               onkeypress="if(event.keyCode==13) this.form.submit();">
+                        <i class="fa fa-search search-icon"></i>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <a href="<?php echo site_url('dietetic/portal/recipes_favorites'); ?>"
-                       class="btn btn-danger btn-block">
-                        <i class="fa fa-heart"></i> Mes Favoris (<?php echo count($favorites); ?>)
-                    </a>
                 </div>
             </div>
         </form>
+
+        <div class="row" style="margin-top: 16px;">
+            <div class="col-md-12">
+                <a href="<?php echo site_url('dietetic/portal/recipes_favorites'); ?>"
+                   class="btn btn-danger btn-block">
+                    <i class="fa fa-heart"></i> Mes Favoris (<?php echo count($favorites); ?>)
+                </a>
+            </div>
+        </div>
 
         <hr>
 
@@ -267,6 +668,22 @@ $this->load->view('portal/includes/portal_header');
                class="category-filter <?php echo $this->input->get('category') == 'snack' ? 'active' : ''; ?>">
                 <i class="fa fa-apple"></i> Collation
             </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=smoothie'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'smoothie' ? 'active' : ''; ?>">
+                <i class="fa fa-glass"></i> Smoothie
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=juice'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'juice' ? 'active' : ''; ?>">
+                <i class="fa fa-tint"></i> Jus naturel
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=beverage'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'beverage' ? 'active' : ''; ?>">
+                <i class="fa fa-coffee"></i> Boisson
+            </a>
+            <a href="<?php echo site_url('dietetic/portal/recipes?category=dessert'); ?>"
+               class="category-filter <?php echo $this->input->get('category') == 'dessert' ? 'active' : ''; ?>">
+                <i class="fa fa-birthday-cake"></i> Dessert
+            </a>
         </div>
     </div>
 
@@ -275,12 +692,12 @@ $this->load->view('portal/includes/portal_header');
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#all" data-toggle="tab">
-                    <i class="fa fa-book"></i> Toutes les Recettes (<?php echo count($all_recipes); ?>)
+                    <i class="fa fa-book"></i> Les recettes
                 </a>
             </li>
             <li>
                 <a href="#assigned" data-toggle="tab">
-                    <i class="fa fa-star"></i> Mes Recettes Assignées (<?php echo count($assigned_recipes); ?>)
+                    <i class="fa fa-star"></i> Recommandées
                 </a>
             </li>
         </ul>
@@ -305,7 +722,8 @@ $this->load->view('portal/includes/portal_header');
                                 }
                             }
                             ?>
-                            <div class="recipe-card">
+                            <div class="recipe-card" onclick="window.location.href='<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>'">
+                                <!-- Image à gauche -->
                                 <?php if ($recipe->main_photo) : ?>
                                     <img src="<?php echo base_url($recipe->main_photo->photo_url); ?>"
                                          alt="<?php echo htmlspecialchars($recipe->name); ?>"
@@ -316,60 +734,86 @@ $this->load->view('portal/includes/portal_header');
                                     </div>
                                 <?php endif; ?>
 
+                                <!-- Contenu à droite -->
                                 <div class="recipe-content">
+                                    <!-- Header: Temps + Catégorie -->
+                                    <div class="recipe-header">
+                                        <div class="recipe-meta">
+                                            <?php if ($recipe->preparation_time) : ?>
+                                                <div class="recipe-meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo $recipe->preparation_time; ?> min
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($recipe->category) : ?>
+                                            <span class="recipe-category-badge">
+                                                <?php
+                                                $category_labels = [
+                                                    'breakfast' => 'Petit-déjeuner',
+                                                    'lunch' => 'Déjeuner',
+                                                    'dinner' => 'Dîner',
+                                                    'snack' => 'Collation',
+                                                    'smoothie' => 'Smoothie',
+                                                    'juice' => 'Jus naturel',
+                                                    'beverage' => 'Boisson',
+                                                    'dessert' => 'Dessert'
+                                                ];
+                                                echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                                ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Titre cliquable -->
                                     <h3 class="recipe-title">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>">
+                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>" onclick="event.stopPropagation();">
                                             <?php echo htmlspecialchars($recipe->name); ?>
                                         </a>
                                     </h3>
 
-                                    <div class="recipe-meta">
-                                        <?php if ($recipe->preparation_time) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-clock-o"></i>
-                                                <?php echo $recipe->preparation_time; ?> min
-                                            </div>
-                                        <?php endif; ?>
-                                        <?php if ($recipe->average_rating > 0) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-star" style="color: #f39c12;"></i>
-                                                <?php echo number_format($recipe->average_rating, 1); ?> (<?php echo $recipe->ratings_count; ?>)
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <?php if ($recipe->description) : ?>
-                                        <p class="recipe-description">
-                                            <?php echo nl2br(htmlspecialchars(substr($recipe->description, 0, 120))); ?>
-                                            <?php if (strlen($recipe->description) > 120) echo '...'; ?>
-                                        </p>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($recipe->tags)) : ?>
-                                        <div class="recipe-tags">
-                                            <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                                <span class="recipe-tag"><?php echo htmlspecialchars($tag); ?></span>
-                                            <?php endforeach; ?>
+                                    <!-- Rating sous le titre -->
+                                    <?php if ($recipe->average_rating > 0) : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star"></i>
+                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                        </div>
+                                    <?php else : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star-o"></i>
+                                            <span class="recipe-rating-count">Pas encore d'avis</span>
                                         </div>
                                     <?php endif; ?>
-
-                                    <div class="recipe-actions">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fa fa-eye"></i> Voir
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                                data-recipe-id="<?php echo $recipe->id; ?>">
-                                            <i class="fa fa-heart"></i>
-                                            <i class="fa fa-heart-o"></i>
-                                            Favori
-                                        </button>
-                                    </div>
                                 </div>
+
+                                <!-- Bouton favori flottant -->
+                                <button type="button"
+                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                    <i class="fa fa-heart"></i>
+                                    <i class="fa fa-heart-o"></i>
+                                    <span>Favori</span>
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination (seulement si > 12 recettes) -->
+                    <?php if (count($all_recipes) > 12) : ?>
+                        <div class="pagination-wrapper">
+                            <div class="pagination">
+                                <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                                <span class="active">1</span>
+                                <a href="#">2</a>
+                                <a href="#">3</a>
+                                <a href="#">4</a>
+                                <span>...</span>
+                                <a href="#"><?php echo ceil(count($all_recipes) / 12); ?></a>
+                                <a href="#"><i class="fa fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
 
@@ -392,7 +836,8 @@ $this->load->view('portal/includes/portal_header');
                                 }
                             }
                             ?>
-                            <div class="recipe-card">
+                            <div class="recipe-card" onclick="window.location.href='<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>'">
+                                <!-- Image à gauche -->
                                 <?php if ($recipe->main_photo) : ?>
                                     <img src="<?php echo base_url($recipe->main_photo->photo_url); ?>"
                                          alt="<?php echo htmlspecialchars($recipe->name); ?>"
@@ -403,58 +848,86 @@ $this->load->view('portal/includes/portal_header');
                                     </div>
                                 <?php endif; ?>
 
+                                <!-- Contenu à droite -->
                                 <div class="recipe-content">
+                                    <!-- Header: Temps + Catégorie -->
+                                    <div class="recipe-header">
+                                        <div class="recipe-meta">
+                                            <?php if ($recipe->preparation_time) : ?>
+                                                <div class="recipe-meta-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo $recipe->preparation_time; ?> min
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($recipe->category) : ?>
+                                            <span class="recipe-category-badge">
+                                                <?php
+                                                $category_labels = [
+                                                    'breakfast' => 'Petit-déjeuner',
+                                                    'lunch' => 'Déjeuner',
+                                                    'dinner' => 'Dîner',
+                                                    'snack' => 'Collation',
+                                                    'smoothie' => 'Smoothie',
+                                                    'juice' => 'Jus naturel',
+                                                    'beverage' => 'Boisson',
+                                                    'dessert' => 'Dessert'
+                                                ];
+                                                echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                                ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Titre cliquable -->
                                     <h3 class="recipe-title">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>">
+                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>" onclick="event.stopPropagation();">
                                             <?php echo htmlspecialchars($recipe->name); ?>
                                         </a>
                                     </h3>
 
-                                    <div class="recipe-meta">
-                                        <div class="recipe-meta-item">
-                                            <i class="fa fa-user"></i>
-                                            Assigné par <?php echo htmlspecialchars($recipe->dietitian_name); ?>
+                                    <!-- Rating sous le titre -->
+                                    <?php if ($recipe->average_rating > 0) : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star"></i>
+                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
                                         </div>
-                                        <?php if ($recipe->preparation_time) : ?>
-                                            <div class="recipe-meta-item">
-                                                <i class="fa fa-clock-o"></i>
-                                                <?php echo $recipe->preparation_time; ?> min
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <?php if ($recipe->notes) : ?>
-                                        <div class="alert alert-info" style="margin-top: 10px;">
-                                            <strong>Note de votre diététicien :</strong><br>
-                                            <?php echo nl2br(htmlspecialchars($recipe->notes)); ?>
+                                    <?php else : ?>
+                                        <div class="recipe-rating">
+                                            <i class="fa fa-star-o"></i>
+                                            <span class="recipe-rating-count">Pas encore d'avis</span>
                                         </div>
                                     <?php endif; ?>
-
-                                    <?php if (!empty($recipe->tags)) : ?>
-                                        <div class="recipe-tags">
-                                            <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                                <span class="recipe-tag"><?php echo htmlspecialchars($tag); ?></span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <div class="recipe-actions">
-                                        <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fa fa-eye"></i> Voir
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                                data-recipe-id="<?php echo $recipe->id; ?>">
-                                            <i class="fa fa-heart"></i>
-                                            <i class="fa fa-heart-o"></i>
-                                            Favori
-                                        </button>
-                                    </div>
                                 </div>
+
+                                <!-- Bouton favori flottant -->
+                                <button type="button"
+                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                    <i class="fa fa-heart"></i>
+                                    <i class="fa fa-heart-o"></i>
+                                    <span>Favori</span>
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination (seulement si > 12 recettes) -->
+                    <?php if (count($assigned_recipes) > 12) : ?>
+                        <div class="pagination-wrapper">
+                            <div class="pagination">
+                                <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                                <span class="active">1</span>
+                                <a href="#">2</a>
+                                <a href="#">3</a>
+                                <a href="#">4</a>
+                                <span>...</span>
+                                <a href="#"><?php echo ceil(count($assigned_recipes) / 12); ?></a>
+                                <a href="#"><i class="fa fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -462,31 +935,47 @@ $this->load->view('portal/includes/portal_header');
 </div>
 
 <script>
-$(document).ready(function() {
-    // Toggle favorite
-    $('.btn-favorite').click(function() {
-        const btn = $(this);
-        const recipeId = btn.data('recipe-id');
-        const isFavorite = btn.hasClass('active');
+// Fonction globale pour gérer les favoris (appelée via onclick)
+function toggleFavorite(recipeId, btnElement) {
+    const btn = $(btnElement);
+    const isFavorite = btn.hasClass('active');
+    const action = isFavorite ? 'remove_from_favorites' : 'add_to_favorites';
+    const url = '<?php echo site_url('dietetic/portal/'); ?>' + action;
 
-        const action = isFavorite ? 'remove_from_favorites' : 'add_to_favorites';
-
-        $.post('<?php echo site_url('dietetic/portal/'); ?>' + action, {
-            recipe_id: recipeId
-        }, function(response) {
+    $.post(url, {
+        recipe_id: recipeId,
+        '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+    }, function(response) {
+        try {
             const data = JSON.parse(response);
+
             if (data.success) {
                 btn.toggleClass('active');
-                // Show toast notification
                 if (window.alert_float) {
                     alert_float('success', data.message);
                 }
             } else {
-                alert(data.message);
+                if (window.alert_float) {
+                    alert_float('danger', data.message);
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
             }
-        });
+        } catch(e) {
+            if (window.alert_float) {
+                alert_float('danger', 'Une erreur est survenue');
+            } else {
+                alert('Une erreur est survenue');
+            }
+        }
+    }).fail(function(xhr, status, error) {
+        if (window.alert_float) {
+            alert_float('danger', 'Erreur de connexion');
+        } else {
+            alert('Erreur de connexion');
+        }
     });
-});
+}
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

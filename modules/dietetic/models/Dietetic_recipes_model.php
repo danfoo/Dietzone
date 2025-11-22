@@ -722,7 +722,23 @@ class Dietetic_recipes_model extends App_Model
         if ($assignment_id) {
             log_activity('Recipe Assigned [Recipe ID: ' . $recipe_id . ', Patient ID: ' . $patient_id . ']');
 
-            // TODO: Notifier le patient
+            // Notify patient
+            $recipe = $this->get($recipe_id);
+            if ($recipe) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+
+                // Get dietitian name
+                $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                $this->db->where('staffid', $dietitian_id);
+                $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+
+                $this->dietetic_notifications_model->notify_recipe_assigned(
+                    $patient_id,
+                    $recipe->name,
+                    $dietitian_name
+                );
+            }
         }
 
         return $assignment_id;
@@ -781,6 +797,21 @@ class Dietetic_recipes_model extends App_Model
         }
 
         return $recipes;
+    }
+
+    /**
+     * Check if recipe is assigned to patient
+     *
+     * @param int $recipe_id
+     * @param int $patient_id
+     * @return bool
+     */
+    public function is_assigned_to_patient($recipe_id, $patient_id)
+    {
+        $this->db->where('recipe_id', $recipe_id);
+        $this->db->where('patient_id', $patient_id);
+        $count = $this->db->count_all_results(db_prefix() . $this->table_assignments);
+        return $count > 0;
     }
 
     // =====================================

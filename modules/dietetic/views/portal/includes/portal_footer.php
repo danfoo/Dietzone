@@ -7,9 +7,9 @@
             <span class="footer-label">Accueil</span>
         </a>
 
-        <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">
+        <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'recipes') ? 'active' : ''; ?>">
             <i class="fa fa-cutlery footer-icon"></i>
-            <span class="footer-label">Repas</span>
+            <span class="footer-label">Recettes</span>
         </a>
 
         <?php

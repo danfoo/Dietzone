@@ -77,33 +77,38 @@
 
                                 <div class="form-group">
                                     <label for="daily_calories"><?php echo _l('dietetic_daily_calories'); ?> (kcal)</label>
-                                    <input type="number" class="form-control" name="daily_calories" value="<?php echo isset($program) ? $program->daily_calories : ''; ?>" />
+                                    <input type="number" class="form-control" id="daily_calories" name="daily_calories" value="<?php echo isset($program) ? $program->daily_calories : ''; ?>" />
+                                    <small class="text-muted">Les macronutriments seront calculés automatiquement selon les ratios standards (modifiables)</small>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="daily_protein"><?php echo _l('dietetic_protein'); ?> (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="daily_protein" value="<?php echo isset($program) ? $program->daily_protein : ''; ?>" />
+                                            <input type="number" step="0.1" class="form-control" id="daily_protein" name="daily_protein" value="<?php echo isset($program) ? $program->daily_protein : ''; ?>" />
+                                            <small class="text-muted macro-percentage" id="protein_percentage"></small>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="daily_carbs"><?php echo _l('dietetic_carbs'); ?> (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="daily_carbs" value="<?php echo isset($program) ? $program->daily_carbs : ''; ?>" />
+                                            <input type="number" step="0.1" class="form-control" id="daily_carbs" name="daily_carbs" value="<?php echo isset($program) ? $program->daily_carbs : ''; ?>" />
+                                            <small class="text-muted macro-percentage" id="carbs_percentage"></small>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="daily_fats"><?php echo _l('dietetic_fats'); ?> (g)</label>
-                                            <input type="number" step="0.1" class="form-control" name="daily_fats" value="<?php echo isset($program) ? $program->daily_fats : ''; ?>" />
+                                            <input type="number" step="0.1" class="form-control" id="daily_fats" name="daily_fats" value="<?php echo isset($program) ? $program->daily_fats : ''; ?>" />
+                                            <small class="text-muted macro-percentage" id="fats_percentage"></small>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="daily_fiber"><?php echo _l('dietetic_fiber'); ?> (g)</label>
-                                    <input type="number" step="0.1" class="form-control" name="daily_fiber" value="<?php echo isset($program) ? $program->daily_fiber : ''; ?>" />
+                                    <input type="number" step="0.1" class="form-control" id="daily_fiber" name="daily_fiber" value="<?php echo isset($program) ? $program->daily_fiber : ''; ?>" />
+                                    <small class="text-muted">Recommandé: 14g par 1000 kcal</small>
                                 </div>
                             </div>
                         </div>
@@ -141,3 +146,135 @@
 </div>
 
 <?php init_tail(); ?>
+
+<script>
+(function() {
+    'use strict';
+
+    // Nutritional constants
+    const CALORIES_PER_GRAM = {
+        protein: 4,
+        carbs: 4,
+        fats: 9
+    };
+
+    // Standard macro ratios (modifiable by user)
+    const DEFAULT_RATIOS = {
+        carbs: 0.50,    // 50% of calories from carbs
+        protein: 0.25,  // 25% of calories from protein
+        fats: 0.25      // 25% of calories from fats
+    };
+
+    const FIBER_PER_1000_KCAL = 14; // Standard recommendation
+
+    /**
+     * Calculate macronutrients from calories
+     */
+    function calculateMacrosFromCalories(calories) {
+        if (!calories || calories <= 0) {
+            return null;
+        }
+
+        return {
+            protein: Math.round((calories * DEFAULT_RATIOS.protein / CALORIES_PER_GRAM.protein) * 10) / 10,
+            carbs: Math.round((calories * DEFAULT_RATIOS.carbs / CALORIES_PER_GRAM.carbs) * 10) / 10,
+            fats: Math.round((calories * DEFAULT_RATIOS.fats / CALORIES_PER_GRAM.fats) * 10) / 10,
+            fiber: Math.round((calories / 1000 * FIBER_PER_1000_KCAL) * 10) / 10
+        };
+    }
+
+    /**
+     * Calculate percentage of calories from macros
+     */
+    function calculateMacroPercentages(calories, protein, carbs, fats) {
+        if (!calories || calories <= 0) {
+            return { protein: 0, carbs: 0, fats: 0 };
+        }
+
+        const proteinCals = protein * CALORIES_PER_GRAM.protein;
+        const carbsCals = carbs * CALORIES_PER_GRAM.carbs;
+        const fatsCals = fats * CALORIES_PER_GRAM.fats;
+
+        return {
+            protein: Math.round((proteinCals / calories * 100) * 10) / 10,
+            carbs: Math.round((carbsCals / calories * 100) * 10) / 10,
+            fats: Math.round((fatsCals / calories * 100) * 10) / 10
+        };
+    }
+
+    /**
+     * Update percentage displays
+     */
+    function updatePercentageDisplays() {
+        const calories = parseFloat($('#daily_calories').val()) || 0;
+        const protein = parseFloat($('#daily_protein').val()) || 0;
+        const carbs = parseFloat($('#daily_carbs').val()) || 0;
+        const fats = parseFloat($('#daily_fats').val()) || 0;
+
+        if (calories > 0 && (protein > 0 || carbs > 0 || fats > 0)) {
+            const percentages = calculateMacroPercentages(calories, protein, carbs, fats);
+
+            $('#protein_percentage').text(percentages.protein + '% des calories');
+            $('#carbs_percentage').text(percentages.carbs + '% des calories');
+            $('#fats_percentage').text(percentages.fats + '% des calories');
+        } else {
+            $('#protein_percentage').text('');
+            $('#carbs_percentage').text('');
+            $('#fats_percentage').text('');
+        }
+    }
+
+    /**
+     * Auto-fill macros when calories are entered
+     */
+    function autoFillMacros() {
+        const calories = parseFloat($('#daily_calories').val()) || 0;
+
+        if (calories > 0) {
+            // Only auto-fill if fields are empty
+            const protein = parseFloat($('#daily_protein').val()) || 0;
+            const carbs = parseFloat($('#daily_carbs').val()) || 0;
+            const fats = parseFloat($('#daily_fats').val()) || 0;
+            const fiber = parseFloat($('#daily_fiber').val()) || 0;
+
+            // Calculate suggested values
+            const suggested = calculateMacrosFromCalories(calories);
+
+            // Auto-fill empty fields
+            if (protein === 0) {
+                $('#daily_protein').val(suggested.protein);
+            }
+            if (carbs === 0) {
+                $('#daily_carbs').val(suggested.carbs);
+            }
+            if (fats === 0) {
+                $('#daily_fats').val(suggested.fats);
+            }
+            if (fiber === 0) {
+                $('#daily_fiber').val(suggested.fiber);
+            }
+
+            // Update percentages
+            updatePercentageDisplays();
+        }
+    }
+
+    // Initialize on document ready
+    $(document).ready(function() {
+        // Auto-calculate when calories change
+        $('#daily_calories').on('input change', function() {
+            autoFillMacros();
+        });
+
+        // Update percentages when macros change manually
+        $('#daily_protein, #daily_carbs, #daily_fats').on('input change', function() {
+            updatePercentageDisplays();
+        });
+
+        // Initialize percentages if editing existing program
+        <?php if (isset($program) && $program->daily_calories): ?>
+        updatePercentageDisplays();
+        <?php endif; ?>
+    });
+})();
+</script>
