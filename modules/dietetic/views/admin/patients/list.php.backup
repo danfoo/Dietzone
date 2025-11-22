@@ -1,6 +1,4 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<!-- FIX JQUERY: Charger jQuery AVANT init_head() pour éviter les erreurs CSRF -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <?php init_head(); ?>
 
 <style>
@@ -282,17 +280,17 @@
     letter-spacing: 0.3px;
 }
 
-.status-badge.patient-active {
+.status-badge.active {
     background: rgba(39, 174, 96, 0.1);
     color: #27ae60;
 }
 
-.status-badge.patient-inactive {
+.status-badge.inactive {
     background: rgba(149, 165, 166, 0.1);
     color: #95a5a6;
 }
 
-.status-badge.patient-completed {
+.status-badge.completed {
     background: rgba(52, 152, 219, 0.1);
     color: #3498db;
 }
@@ -476,11 +474,37 @@
     gap: 6px;
 }
 
-/* Search Box Styling */
-#patient-search:focus {
+/* DataTables Custom Styling */
+.dataTables_wrapper .dataTables_filter input {
+    border: 2px solid var(--primary-color) !important;
+    border-radius: 8px;
+    padding: 10px 16px !important;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
     border-color: var(--secondary-color) !important;
-    box-shadow: 0 0 12px rgba(1, 128, 123, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
     outline: none;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    color: white !important;
 }
 
 /* Responsive Mobile-First */
@@ -645,25 +669,10 @@
             </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="row">
-            <div class="col-md-12">
-                <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
-                    <div style="position: relative;">
-                        <input type="text" id="patient-search" class="form-control" placeholder="🔍 Rechercher un patient par nom, diététicien, statut..." style="padding: 15px 50px 15px 20px; font-size: 16px; border: 2px solid var(--primary-color); border-radius: 25px; box-shadow: 0 2px 8px rgba(1, 128, 123, 0.2);">
-                        <i class="fa fa-search" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--primary-color); font-size: 18px;"></i>
-                    </div>
-                    <div id="search-results-count" style="margin-top: 10px; color: var(--text-light); font-size: 14px;">
-                        <i class="fa fa-info-circle"></i> <span id="visible-count"><?php echo count($patients); ?></span> patient(s) affiché(s)
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Patients Table -->
         <div class="row">
             <div class="col-md-12">
-                <div class="table-container" id="table-wrapper">
+                <div class="table-container">
                     <div class="table-header">
                         <h4>
                             <i class="fa fa-list"></i>
@@ -702,9 +711,9 @@
                                         </td>
                                         <td>
                                             <?php
-                                            $status_class = 'patient-active';
-                                            if ($patient->status === 'inactive') $status_class = 'patient-inactive';
-                                            if ($patient->status === 'completed') $status_class = 'patient-completed';
+                                            $status_class = 'active';
+                                            if ($patient->status === 'inactive') $status_class = 'inactive';
+                                            if ($patient->status === 'completed') $status_class = 'completed';
                                             ?>
                                             <span class="status-badge <?php echo $status_class; ?>">
                                                 <?php echo ucfirst($patient->status); ?>
@@ -778,12 +787,6 @@
                         </table>
                     </div>
                 </div>
-
-                <div id="no-results" style="display: none; background: white; border-radius: 12px; padding: 60px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                    <i class="fa fa-search" style="font-size: 64px; color: #bdc3c7; margin-bottom: 20px;"></i>
-                    <h4 style="color: #7f8c8d; margin-bottom: 10px;">Aucun patient trouvé</h4>
-                    <p style="color: #95a5a6;">Essayez de modifier votre recherche</p>
-                </div>
             </div>
         </div>
 
@@ -822,64 +825,31 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    var ENABLE_DATATABLES = false; // DataTables désactivé pour éviter les conflits
+$(window).on('load', function() {
+    // Initialize DataTables
+    if ($.fn.DataTable) {
+        var dataTableOptions = {
+            "order": [[6, "desc"]], // Sort by created_at desc
+            "pageLength": 10,
+            "lengthChange": false,
+            "searching": true,
+            "info": true,
+            "paging": true,
+            "columnDefs": [
+                { "orderable": false, "targets": 7 } // Disable sorting on actions column
+            ]
+        };
 
-    // Search functionality
-    var $searchInput = $('#patient-search');
-    var $rows = $('#patients-table tbody tr');
-    var $tableWrapper = $('#table-wrapper');
-    var $noResults = $('#no-results');
+        <?php if (function_exists('perfex_get_datatables_language_file')) : ?>
+        dataTableOptions.language = {
+            "url": "<?php echo base_url('assets/plugins/jquery-datatables/language/' . perfex_get_datatables_language_file()); ?>"
+        };
+        <?php endif; ?>
 
-    $searchInput.on('keyup', function() {
-        var searchTerm = $(this).val().toLowerCase().trim();
-
-        if (searchTerm === '') {
-            $rows.show();
-            $tableWrapper.show();
-            $noResults.hide();
-        } else {
-            var visibleCount = 0;
-            $rows.each(function() {
-                var $row = $(this);
-                var rowText = $row.text().toLowerCase();
-
-                if (rowText.indexOf(searchTerm) > -1) {
-                    $row.show();
-                    visibleCount++;
-                } else {
-                    $row.hide();
-                }
-            });
-
-            if (visibleCount === 0) {
-                $tableWrapper.hide();
-                $noResults.show();
-            } else {
-                $tableWrapper.show();
-                $noResults.hide();
-            }
-        }
-
-        updateResultsCount();
-    });
-
-    function updateResultsCount() {
-        var visibleCount = $rows.filter(':visible').length;
-        $('#visible-count').text(visibleCount);
+        $('#patients-table').DataTable(dataTableOptions);
+    } else {
+        console.error('DataTables not loaded');
     }
-
-    // Fix menu toggle
-    setTimeout(function() {
-        $('#side-menu a[href*="dietetic"]').first().parent().find('> a').on('click', function(e) {
-            var $submenu = $(this).next('ul');
-            if ($submenu.length > 0) {
-                e.preventDefault();
-                $submenu.toggleClass('in');
-                $(this).parent().toggleClass('active');
-            }
-        });
-    }, 500);
 });
 </script>
 
