@@ -336,8 +336,8 @@ function dietetic_add_footer_components()
     </script>';
     */
 
-    // Load diagnostic script to analyze menu (TEMPORARILY DISABLED)
-    // echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
+    // Load menu toggle script with async to avoid blocking on errors
+    echo '<script async src="' . $module_path . 'assets/js/force_menu_toggle.js?v=' . time() . '"></script>';
 
     // Load full dietetic.js only on dietetic pages
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
