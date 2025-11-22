@@ -715,7 +715,63 @@ class Portal extends App_Controller
             $data['consultations'] = [];
         }
 
-        $this->load->view('portal_consultations', $data);
+        $this->load->view('portal/consultations/index', $data);
+    }
+
+    /**
+     * View consultation details
+     *
+     * @param int $id Consultation ID
+     */
+    public function consultation($id = null)
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        if (!$id) {
+            redirect(site_url('dietetic/portal/consultations'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get consultation
+        try {
+            $consultation = $this->dietetic_consultations_model->get($id);
+        } catch (Exception $e) {
+            $consultation = null;
+        }
+
+        // Verify consultation belongs to this patient
+        if (!$consultation || $consultation->patient_id != $patient->id) {
+            show_404();
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['consultation'] = $consultation;
+        $data['title'] = 'Détails de la Consultation';
+
+        // Get dietitian info
+        $this->load->model('staff_model');
+        $data['dietitian'] = $this->staff_model->get($consultation->dietitian_id);
+
+        $this->load->view('portal/consultations/view', $data);
     }
 
     /**
