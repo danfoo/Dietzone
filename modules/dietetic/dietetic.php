@@ -409,6 +409,8 @@ function dietetic_permissions()
         'settings' => _l('dietetic_permission_settings'),
         'manage_foods' => _l('dietetic_permission_manage_foods'),
         'view_dietitians' => _l('dietetic_permission_view_dietitians'),
+        'edit_all_recipes' => _l('dietetic_permission_edit_all_recipes'),
+        'delete_all_recipes' => _l('dietetic_permission_delete_all_recipes'),
     ];
 
     register_staff_capabilities('dietetic', $capabilities, _l('dietetic'));

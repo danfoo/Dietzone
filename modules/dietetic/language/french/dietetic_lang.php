@@ -294,6 +294,8 @@ $lang['permission_dietetic'] = 'Module Diététique';
 $lang['dietetic_permission_settings'] = 'Accéder aux Paramètres';
 $lang['dietetic_permission_manage_foods'] = 'Gérer la Base Alimentaire';
 $lang['dietetic_permission_view_dietitians'] = 'Voir la Liste des Diététiciens';
+$lang['dietetic_permission_edit_all_recipes'] = 'Modifier Toutes les Recettes';
+$lang['dietetic_permission_delete_all_recipes'] = 'Supprimer Toutes les Recettes';
 
 // Settings
 $lang['dietetic_setting_lam_api_url'] = 'URL API SMS LAM';
