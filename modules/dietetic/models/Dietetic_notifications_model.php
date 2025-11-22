@@ -1139,13 +1139,14 @@ class Dietetic_notifications_model extends App_Model
         $message .= "📝 Type : {$consultation_type}\n\n";
         $message .= "Nous avons hâte de vous voir ! 😊";
 
-        return $this->send_notification([
+        return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_scheduled',
             'subject' => '📅 Nouvelle Consultation Planifiée',
             'message' => $message,
             'email' => $client->email,
             'phone' => $client->phonenumber,
+            'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
@@ -1180,13 +1181,14 @@ class Dietetic_notifications_model extends App_Model
         $message .= "🕐 Heure : {$formatted_time}\n\n";
         $message .= "N'oubliez pas votre rendez-vous ! 📋";
 
-        return $this->send_notification([
+        return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_day',
             'subject' => '⏰ Rappel : Consultation Demain',
             'message' => $message,
             'email' => $client->email,
             'phone' => $client->phonenumber,
+            'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
@@ -1221,13 +1223,14 @@ class Dietetic_notifications_model extends App_Model
         $message .= "🕐 Heure : {$formatted_time}\n\n";
         $message .= "À tout de suite ! 😊";
 
-        return $this->send_notification([
+        return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_hour',
             'subject' => '⏰ Consultation dans 1 heure',
             'message' => $message,
             'email' => $client->email,
             'phone' => $client->phonenumber,
+            'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
@@ -1263,13 +1266,14 @@ class Dietetic_notifications_model extends App_Model
         }
         $message .= "Veuillez contacter votre diététicien pour reprogrammer.";
 
-        return $this->send_notification([
+        return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_cancelled',
             'subject' => '❌ Consultation Annulée',
             'message' => $message,
             'email' => $client->email,
             'phone' => $client->phonenumber,
+            'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
