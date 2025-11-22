@@ -156,31 +156,39 @@ class Dietetic_consultations_model extends App_Model
         if ($this->db->insert(db_prefix() . $this->table, $data)) {
             $consultation_id = $this->db->insert_id();
 
-            // Create reminder for this consultation
-            if ($data['status'] == 'scheduled') {
-                $this->create_consultation_reminder($consultation_id);
+            // Create reminder for this consultation (wrapped in try-catch to prevent errors)
+            if (isset($data['status']) && $data['status'] == 'scheduled') {
+                try {
+                    $this->create_consultation_reminder($consultation_id);
+                } catch (Exception $e) {
+                    log_activity('Consultation reminder creation failed [ID: ' . $consultation_id . ']: ' . $e->getMessage());
+                }
 
                 // Notify patient of new consultation
                 if (isset($data['patient_id']) && isset($data['consultation_date'])) {
-                    $this->load->model('dietetic/dietetic_notifications_model');
+                    try {
+                        $this->load->model('dietetic/dietetic_notifications_model');
 
-                    // Get dietitian name
-                    $dietitian_id = isset($data['dietitian_id']) ? $data['dietitian_id'] : get_staff_user_id();
-                    $this->db->select('CONCAT(firstname, " ", lastname) as name');
-                    $this->db->where('staffid', $dietitian_id);
-                    $dietitian = $this->db->get(db_prefix() . 'staff')->row();
-                    $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+                        // Get dietitian name
+                        $dietitian_id = isset($data['dietitian_id']) ? $data['dietitian_id'] : get_staff_user_id();
+                        $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                        $this->db->where('staffid', $dietitian_id);
+                        $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                        $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
 
-                    $consultation_time = isset($data['consultation_time']) ? $data['consultation_time'] : null;
-                    $consultation_type = isset($data['consultation_type']) ? $data['consultation_type'] : 'Consultation';
+                        $consultation_time = isset($data['consultation_time']) ? $data['consultation_time'] : null;
+                        $consultation_type = isset($data['consultation_type']) ? $data['consultation_type'] : 'Consultation';
 
-                    $this->dietetic_notifications_model->notify_consultation_scheduled(
-                        $data['patient_id'],
-                        $data['consultation_date'],
-                        $consultation_time,
-                        $dietitian_name,
-                        $consultation_type
-                    );
+                        $this->dietetic_notifications_model->notify_consultation_scheduled(
+                            $data['patient_id'],
+                            $data['consultation_date'],
+                            $consultation_time,
+                            $dietitian_name,
+                            $consultation_type
+                        );
+                    } catch (Exception $e) {
+                        log_activity('Consultation notification failed [ID: ' . $consultation_id . ']: ' . $e->getMessage());
+                    }
                 }
             }
 
@@ -270,10 +278,12 @@ class Dietetic_consultations_model extends App_Model
             return false;
         }
 
-        // Delete associated reminders
-        $this->db->where('reminder_type', 'appointment');
-        $this->db->where('related_id', $id);
-        $this->db->delete(db_prefix() . 'dietic_reminders');
+        // Delete associated reminders (if table exists)
+        if ($this->db->table_exists(db_prefix() . 'dietic_reminders')) {
+            $this->db->where('reminder_type', 'appointment');
+            $this->db->where('related_id', $id);
+            $this->db->delete(db_prefix() . 'dietic_reminders');
+        }
 
         $this->db->where('id', $id);
         if ($this->db->delete(db_prefix() . $this->table)) {
@@ -361,6 +371,12 @@ class Dietetic_consultations_model extends App_Model
      */
     private function create_consultation_reminder($consultation_id)
     {
+        // Check if reminders table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_reminders')) {
+            log_activity('Reminders table does not exist, skipping reminder creation for consultation [ID: ' . $consultation_id . ']');
+            return false;
+        }
+
         $consultation = $this->get($consultation_id);
 
         if (!$consultation) {
@@ -410,6 +426,11 @@ class Dietetic_consultations_model extends App_Model
      */
     private function update_consultation_reminder($consultation_id)
     {
+        // Check if reminders table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_reminders')) {
+            return false;
+        }
+
         // Delete old reminder
         $this->db->where('reminder_type', 'appointment');
         $this->db->where('related_id', $consultation_id);
