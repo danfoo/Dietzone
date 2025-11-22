@@ -279,54 +279,114 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Initialize Dietetic menu toggle using Bootstrap collapse
+    // Initialize Dietetic menu toggle - IMPROVED VERSION
     echo '<script>
     (function() {
         if (typeof jQuery !== "undefined") {
-            jQuery(window).on("load", function($) {
-                // Add delay to ensure sidebar is fully rendered
-                setTimeout(function() {
-                    var $menuItem = jQuery(".menu-item-dietetic");
-                    if ($menuItem.length) {
-                        var $link = $menuItem.find("> a");
-                        var $submenu = $menuItem.find("> ul");
+            jQuery(document).ready(function($) {
+                // Function to initialize menu
+                function initDieteticMenu() {
+                    console.log("=== Dietetic Menu Initialization ===");
+
+                    // Try multiple selectors to find the menu
+                    var $menuItem = $("li[class*=\'dietetic\'], li.menu-item-dietetic, #side-menu li a[href*=\'dietetic\']").closest("li");
+
+                    console.log("Found menu items:", $menuItem.length);
+
+                    if ($menuItem.length === 0) {
+                        // Try to find by checking menu text
+                        $("#side-menu li").each(function() {
+                            var text = $(this).find("a").first().text().trim();
+                            if (text === "Diététique" || text.indexOf("Dietetic") !== -1) {
+                                $menuItem = $(this);
+                                console.log("Found menu by text:", text);
+                                return false;
+                            }
+                        });
+                    }
+
+                    if ($menuItem.length > 0) {
+                        var $link = $menuItem.find("> a").first();
+                        var $submenu = $menuItem.find("> ul").first();
+
+                        console.log("Link found:", $link.length);
+                        console.log("Submenu found:", $submenu.length);
+                        console.log("Submenu items:", $submenu.find("li").length);
 
                         if ($link.length && $submenu.length) {
-                            console.log("Dietetic menu: Initializing Bootstrap collapse...");
-
-                            // Add unique ID to submenu
-                            $submenu.attr("id", "dietetic-submenu");
-                            $submenu.addClass("collapse");
-
-                            // Configure link for Bootstrap collapse
-                            $link.attr({
-                                "data-toggle": "collapse",
-                                "data-target": "#dietetic-submenu",
-                                "href": "#dietetic-submenu"
-                            });
-
-                            // Initialize Bootstrap collapse
-                            if (typeof $submenu.collapse === "function") {
-                                $submenu.collapse({toggle: false});
-                                console.log("Dietetic menu: Bootstrap collapse initialized");
-                            } else {
-                                console.error("Dietetic menu: Bootstrap collapse not available");
+                            // Make sure submenu has proper structure
+                            if (!$submenu.hasClass("nav-second-level")) {
+                                $submenu.addClass("nav nav-second-level collapse");
                             }
 
-                            // Handle click
-                            $link.on("click", function(e) {
+                            // Add unique ID
+                            var submenuId = "dietetic-submenu-" + Date.now();
+                            $submenu.attr("id", submenuId);
+
+                            // Remove any existing click handlers
+                            $link.off("click.dietetic");
+
+                            // Add click handler
+                            $link.on("click.dietetic", function(e) {
+                                console.log("Dietetic menu clicked!");
+
+                                // Prevent default link behavior
                                 e.preventDefault();
-                                console.log("Dietetic menu: Clicked");
-                                $submenu.collapse("toggle");
-                                $menuItem.toggleClass("active");
+                                e.stopPropagation();
+
+                                // Toggle submenu
+                                if ($submenu.hasClass("in")) {
+                                    $submenu.removeClass("in");
+                                    $menuItem.removeClass("active");
+                                    console.log("Menu closed");
+                                } else {
+                                    // Close other menus first
+                                    $("#side-menu .nav-second-level.in").removeClass("in");
+                                    $("#side-menu li.active").removeClass("active");
+
+                                    // Open this menu
+                                    $submenu.addClass("in");
+                                    $menuItem.addClass("active");
+                                    console.log("Menu opened");
+                                }
+
+                                return false;
                             });
+
+                            // Check if we are on a dietetic page and auto-open
+                            var currentUrl = window.location.pathname;
+                            if (currentUrl.indexOf("/dietetic/") !== -1) {
+                                console.log("On dietetic page, auto-opening menu");
+                                $submenu.addClass("in");
+                                $menuItem.addClass("active");
+
+                                // Highlight active submenu item
+                                $submenu.find("a").each(function() {
+                                    if (currentUrl.indexOf($(this).attr("href")) !== -1) {
+                                        $(this).closest("li").addClass("active");
+                                    }
+                                });
+                            }
+
+                            console.log("✅ Dietetic menu initialized successfully!");
                         } else {
-                            console.log("Dietetic menu: Link or submenu not found");
+                            console.warn("⚠️ Link or submenu not found");
                         }
                     } else {
-                        console.log("Dietetic menu: Menu item not found");
+                        console.warn("⚠️ Dietetic menu item not found");
                     }
-                }, 500);
+                }
+
+                // Try initialization immediately
+                initDieteticMenu();
+
+                // Try again after a delay (in case sidebar loads late)
+                setTimeout(initDieteticMenu, 1000);
+
+                // Also try when window is fully loaded
+                $(window).on("load", function() {
+                    setTimeout(initDieteticMenu, 500);
+                });
             });
         }
     })();
