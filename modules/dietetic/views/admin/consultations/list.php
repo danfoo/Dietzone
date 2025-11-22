@@ -294,11 +294,11 @@
                                     <tr>
                                         <td><strong>#<?php echo $consultation->id; ?></strong></td>
                                         <td>
-                                            <?php if (isset($consultation->patient_name)): ?>
+                                            <?php if (isset($consultation->client_name) && !empty($consultation->client_name)): ?>
                                                 <a href="<?php echo admin_url('dietetic/patients/view/' . $consultation->patient_id); ?>"
                                                    class="patient-link">
                                                     <i class="fa fa-user-circle"></i>
-                                                    <?php echo $consultation->patient_name; ?>
+                                                    <?php echo $consultation->client_name; ?>
                                                 </a>
                                             <?php else: ?>
                                                 <span class="text-muted">N/A</span>
