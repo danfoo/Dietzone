@@ -333,6 +333,119 @@ $this->load->view('portal/includes/portal_header');
     box-shadow: 0 8px 20px rgba(149, 165, 166, 0.35);
 }
 
+/* Accordion Styles */
+.accordion-program {
+    background: white;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.accordion-program.historical {
+    opacity: 0.75;
+}
+
+.accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.accordion-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+}
+
+.accordion-header.historical::before {
+    background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.accordion-header:hover {
+    background: linear-gradient(135deg, rgba(1, 128, 123, 0.03) 0%, rgba(243, 145, 29, 0.03) 100%);
+}
+
+.accordion-header:active {
+    transform: scale(0.99);
+}
+
+.accordion-icon {
+    font-size: 24px;
+    color: #01807B;
+    flex-shrink: 0;
+}
+
+.accordion-header.historical .accordion-icon {
+    color: #95a5a6;
+}
+
+.accordion-content-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.accordion-program-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.accordion-meta {
+    font-size: 11px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.accordion-meta i {
+    font-size: 10px;
+    margin-right: 4px;
+}
+
+.accordion-chevron {
+    font-size: 20px;
+    color: #01807B;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.accordion-header.historical .accordion-chevron {
+    color: #95a5a6;
+}
+
+.accordion-chevron.open {
+    transform: rotate(90deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 24px;
+}
+
+.accordion-content.open {
+    max-height: 5000px;
+    padding: 0 24px 24px 24px;
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -419,53 +532,85 @@ $this->load->view('portal/includes/portal_header');
         </div>
 
         <?php
-        // Helper function to render program section
-        function render_program_section($program, $is_historical = false) {
+        // Helper function to render program section as accordion
+        function render_program_section($program, $is_historical = false, $is_first = false) {
             $status_class = $program->status;
             $status_label = $program->status === 'active' ? 'ACTIF' : ($program->status === 'completed' ? 'TERMINÉ' : 'ANNULÉ');
             $status_icon = $program->status === 'active' ? 'check-circle' : ($program->status === 'completed' ? 'check' : 'times-circle');
-            ?>
-            <!-- Program Badge -->
-            <div class="program-badge <?php echo $is_historical ? 'historical' : ''; ?> animate-in delay-1">
-                <i class="fa fa-heartbeat"></i>
-                <div class="program-badge-text">
-                    <div class="program-badge-label"><?php echo $is_historical ? 'Programme' : 'Programme Actif'; ?></div>
-                    <div class="program-badge-name"><?php echo htmlspecialchars($program->program_name); ?></div>
-                </div>
-                <span class="status-badge <?php echo $status_class; ?>">
-                    <i class="fa fa-<?php echo $status_icon; ?>"></i>
-                    <?php echo $status_label; ?>
-                </span>
-            </div>
 
-            <?php if (!empty($program->meal_plans)) { ?>
-                <!-- Meal Plans Grid -->
-                <div class="meal-plans-grid animate-in delay-2">
-                    <?php foreach ($program->meal_plans as $plan) { ?>
-                        <div class="meal-plan-card <?php echo $is_historical ? 'historical' : ''; ?>">
-                            <div class="meal-plan-header">
-                                <div class="week-badge">
-                                    <i class="fa fa-calendar"></i>
-                                    Semaine <?php echo $plan->week_number; ?>
-                                </div>
-                                <h3 class="meal-plan-title"><?php echo htmlspecialchars($plan->plan_name); ?></h3>
-                            </div>
-                            <div class="meal-plan-body">
-                                <?php if ($plan->notes) { ?>
-                                    <div class="meal-plan-notes">
-                                        <i class="fa fa-sticky-note-o"></i> <?php echo nl2br(htmlspecialchars($plan->notes)); ?>
-                                    </div>
-                                <?php } ?>
-                                <div class="meal-plan-actions">
-                                    <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-view-meal">
-                                        <i class="fa fa-eye"></i> Voir les Repas
-                                    </a>
-                                </div>
-                            </div>
+            // Count meal plans
+            $meal_plan_count = !empty($program->meal_plans) ? count($program->meal_plans) : 0;
+            $meal_plan_text = $meal_plan_count > 1 ? "$meal_plan_count semaines" : "$meal_plan_count semaine";
+
+            // Dates
+            $start_date = !empty($program->start_date) ? date('d/m/Y', strtotime($program->start_date)) : '';
+            $end_date = !empty($program->end_date) ? date('d/m/Y', strtotime($program->end_date)) : '';
+            $date_range = $start_date . ($end_date ? ' - ' . $end_date : '');
+
+            // Unique ID for accordion
+            $accordion_id = 'program-' . $program->id;
+
+            // Check if should be open by default (first active program only)
+            $is_open = $is_first && !$is_historical;
+            ?>
+            <!-- Accordion Program -->
+            <div class="accordion-program <?php echo $is_historical ? 'historical' : ''; ?> animate-in">
+                <div class="accordion-header <?php echo $is_historical ? 'historical' : ''; ?>" onclick="toggleAccordion('<?php echo $accordion_id; ?>')">
+                    <i class="fa fa-heartbeat accordion-icon"></i>
+                    <div class="accordion-content-wrapper">
+                        <div class="accordion-program-name">
+                            <?php echo htmlspecialchars($program->program_name); ?>
+                            <span class="status-badge <?php echo $status_class; ?>">
+                                <i class="fa fa-<?php echo $status_icon; ?>"></i>
+                                <?php echo $status_label; ?>
+                            </span>
                         </div>
+                        <div class="accordion-meta">
+                            <?php if ($date_range) { ?>
+                                <span><i class="fa fa-calendar"></i><?php echo $date_range; ?></span>
+                            <?php } ?>
+                            <?php if ($meal_plan_count > 0) { ?>
+                                <span><i class="fa fa-list"></i><?php echo $meal_plan_text; ?></span>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <i class="fa fa-chevron-right accordion-chevron <?php echo $is_open ? 'open' : ''; ?>" id="chevron-<?php echo $accordion_id; ?>"></i>
+                </div>
+
+                <div class="accordion-content <?php echo $is_open ? 'open' : ''; ?>" id="content-<?php echo $accordion_id; ?>">
+                    <?php if (!empty($program->meal_plans)) { ?>
+                        <!-- Meal Plans Grid -->
+                        <div class="meal-plans-grid">
+                            <?php foreach ($program->meal_plans as $plan) { ?>
+                                <div class="meal-plan-card <?php echo $is_historical ? 'historical' : ''; ?>">
+                                    <div class="meal-plan-header">
+                                        <div class="week-badge">
+                                            <i class="fa fa-calendar"></i>
+                                            Semaine <?php echo $plan->week_number; ?>
+                                        </div>
+                                        <h3 class="meal-plan-title"><?php echo htmlspecialchars($plan->plan_name); ?></h3>
+                                    </div>
+                                    <div class="meal-plan-body">
+                                        <?php if ($plan->notes) { ?>
+                                            <div class="meal-plan-notes">
+                                                <i class="fa fa-sticky-note-o"></i> <?php echo nl2br(htmlspecialchars($plan->notes)); ?>
+                                            </div>
+                                        <?php } ?>
+                                        <div class="meal-plan-actions">
+                                            <a href="<?php echo site_url('dietetic/portal/view_meal_plan/' . $plan->id); ?>" class="btn-view-meal">
+                                                <i class="fa fa-eye"></i> Voir les Repas
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    <?php } else { ?>
+                        <p style="color: #6c757d; text-align: center; padding: 20px;">Aucun plan de repas dans ce programme.</p>
                     <?php } ?>
                 </div>
-            <?php }
+            </div>
+            <?php
         }
         ?>
 
@@ -480,8 +625,11 @@ $this->load->view('portal/includes/portal_header');
                     </h2>
                 </div>
 
-                <?php foreach ($active_programs as $program) {
-                    render_program_section($program, false);
+                <?php
+                $is_first_active = true;
+                foreach ($active_programs as $program) {
+                    render_program_section($program, false, $is_first_active);
+                    $is_first_active = false; // Only first one is open
                 } ?>
             <?php } else { ?>
                 <div class="empty-state animate-in delay-1">
@@ -505,7 +653,7 @@ $this->load->view('portal/includes/portal_header');
                 </div>
 
                 <?php foreach ($historical_programs as $program) {
-                    render_program_section($program, true);
+                    render_program_section($program, true, false); // All historical programs closed by default
                 } ?>
             <?php } ?>
 
@@ -528,5 +676,27 @@ $this->load->view('portal/includes/portal_header');
                 <i class="fa fa-arrow-left"></i> Retour au Tableau de bord
             </a>
         </div>
+
+<script>
+// Toggle accordion function
+function toggleAccordion(accordionId) {
+    const content = document.getElementById('content-' + accordionId);
+    const chevron = document.getElementById('chevron-' + accordionId);
+
+    if (content && chevron) {
+        const isOpen = content.classList.contains('open');
+
+        if (isOpen) {
+            // Close
+            content.classList.remove('open');
+            chevron.classList.remove('open');
+        } else {
+            // Open
+            content.classList.add('open');
+            chevron.classList.add('open');
+        }
+    }
+}
+</script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

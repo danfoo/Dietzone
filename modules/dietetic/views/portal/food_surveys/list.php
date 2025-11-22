@@ -383,6 +383,107 @@ $this->load->view('portal/includes/portal_header');
     background: #95a5a6;
     color: white;
 }
+
+/* Accordion Styles for Surveys */
+.accordion-survey {
+    background: white;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.accordion-survey.historical {
+    opacity: 0.75;
+}
+
+.accordion-survey-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    position: relative;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+}
+
+.accordion-survey-header.historical {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.accordion-survey-header:hover {
+    filter: brightness(1.05);
+}
+
+.accordion-survey-header:active {
+    transform: scale(0.99);
+}
+
+.accordion-survey-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.accordion-survey-content-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.accordion-survey-name {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.accordion-survey-meta {
+    font-size: 11px;
+    opacity: 0.95;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.accordion-survey-meta i {
+    font-size: 10px;
+    margin-right: 4px;
+}
+
+.accordion-survey-chevron {
+    font-size: 20px;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.accordion-survey-chevron.open {
+    transform: rotate(90deg);
+}
+
+.accordion-survey-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 24px;
+}
+
+.accordion-survey-content.open {
+    max-height: 3000px;
+    padding: 24px;
+}
+
+.survey-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 </style>
 
         <!-- Page Header -->
@@ -392,71 +493,99 @@ $this->load->view('portal/includes/portal_header');
         </div>
 
         <?php
-        // Helper function to render survey card
-        function render_survey_card($survey, $is_historical = false) {
+        // Helper function to render survey as accordion
+        function render_survey_card($survey, $is_historical = false, $is_first = false) {
             $completion = $survey->completion_percentage;
             $status_class = '';
             $status_text = '';
+            $status_icon = '';
 
             if ($survey->status == 'active') {
                 $status_class = 'active';
                 $status_text = 'Active';
+                $status_icon = 'play-circle';
             } elseif ($survey->status == 'completed') {
                 $status_class = 'completed';
                 $status_text = 'Terminée';
+                $status_icon = 'check-circle';
             } elseif ($survey->status == 'cancelled') {
                 $status_class = 'cancelled';
                 $status_text = 'Annulée';
+                $status_icon = 'times-circle';
             }
+
+            // Dates
+            $start_date = date('d/m/Y', strtotime($survey->start_date));
+            $end_date = date('d/m/Y', strtotime($survey->end_date));
+            $date_range = $start_date . ' - ' . $end_date;
+
+            // Duration
+            $duration_text = $survey->duration_days . ' jours';
+
+            // Unique ID
+            $accordion_id = 'survey-' . $survey->id;
+
+            // Check if should be open by default (first active survey only)
+            $is_open = $is_first && !$is_historical;
             ?>
-            <div class="survey-card <?php echo $is_historical ? 'historical' : ''; ?>">
-                <div class="survey-card-header">
-                    <h3><?php echo htmlspecialchars($survey->survey_name); ?></h3>
-                    <?php if (!empty($survey->objective)) { ?>
-                        <div class="survey-objective"><?php echo nl2br(htmlspecialchars($survey->objective)); ?></div>
-                    <?php } ?>
+            <!-- Accordion Survey -->
+            <div class="accordion-survey <?php echo $is_historical ? 'historical' : ''; ?>">
+                <div class="accordion-survey-header <?php echo $is_historical ? 'historical' : ''; ?>" onclick="toggleSurveyAccordion('<?php echo $accordion_id; ?>')">
+                    <i class="fa fa-list-alt accordion-survey-icon"></i>
+                    <div class="accordion-survey-content-wrapper">
+                        <div class="accordion-survey-name">
+                            <?php echo htmlspecialchars($survey->survey_name); ?>
+                            <span class="status-badge <?php echo $status_class; ?>">
+                                <i class="fa fa-<?php echo $status_icon; ?>"></i>
+                                <?php echo $status_text; ?>
+                            </span>
+                        </div>
+                        <div class="accordion-survey-meta">
+                            <span><i class="fa fa-calendar"></i><?php echo $date_range; ?></span>
+                            <span><i class="fa fa-clock-o"></i><?php echo $duration_text; ?></span>
+                            <?php if ($survey->status == 'active') { ?>
+                                <span><i class="fa fa-bar-chart"></i><?php echo round($completion); ?>% complété</span>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <i class="fa fa-chevron-right accordion-survey-chevron <?php echo $is_open ? 'open' : ''; ?>" id="chevron-<?php echo $accordion_id; ?>"></i>
                 </div>
 
-                <div class="survey-card-body">
-                    <div class="survey-info-item">
-                        <i class="fa fa-calendar"></i>
-                        <div>
-                            <strong>Période:</strong>
-                            <?php echo date('d/m/Y', strtotime($survey->start_date)); ?> -
-                            <?php echo date('d/m/Y', strtotime($survey->end_date)); ?>
+                <div class="accordion-survey-content <?php echo $is_open ? 'open' : ''; ?>" id="content-<?php echo $accordion_id; ?>">
+                    <div class="survey-details">
+                        <?php if (!empty($survey->objective)) { ?>
+                            <div class="survey-info-item">
+                                <i class="fa fa-bullseye"></i>
+                                <div>
+                                    <strong>Objectif:</strong>
+                                    <?php echo nl2br(htmlspecialchars($survey->objective)); ?>
+                                </div>
+                            </div>
+                        <?php } ?>
+
+                        <?php if ($survey->status == 'active') { ?>
+                        <div class="progress-section">
+                            <div class="progress-label">
+                                <span>Progression</span>
+                                <span class="progress-percentage"><?php echo round($completion); ?>%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: <?php echo $completion; ?>%"></div>
+                            </div>
+                        </div>
+                        <?php } ?>
+
+                        <div class="survey-card-footer">
+                            <?php if ($survey->status == 'active') { ?>
+                                <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-action btn-primary-action">
+                                    <i class="fa fa-camera"></i> Soumettre un repas
+                                </a>
+                            <?php } ?>
+                            <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-action btn-secondary-action">
+                                <i class="fa fa-comments"></i> Recommandations
+                            </a>
                         </div>
                     </div>
-
-                    <div class="survey-info-item">
-                        <i class="fa fa-info-circle"></i>
-                        <div>
-                            <strong>Statut:</strong>
-                            <span class="status-badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                        </div>
-                    </div>
-
-                    <?php if ($survey->status == 'active') { ?>
-                    <div class="progress-section">
-                        <div class="progress-label">
-                            <span>Progression</span>
-                            <span class="progress-percentage"><?php echo round($completion); ?>%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: <?php echo $completion; ?>%"></div>
-                        </div>
-                    </div>
-                    <?php } ?>
-                </div>
-
-                <div class="survey-card-footer">
-                    <?php if ($survey->status == 'active') { ?>
-                        <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-action btn-primary-action">
-                            <i class="fa fa-camera"></i> Soumettre un repas
-                        </a>
-                    <?php } ?>
-                    <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-action btn-secondary-action">
-                        <i class="fa fa-comments"></i> Recommandations
-                    </a>
                 </div>
             </div>
             <?php
@@ -474,9 +603,12 @@ $this->load->view('portal/includes/portal_header');
                     </h2>
                 </div>
 
-                <div class="surveys-grid">
-                    <?php foreach ($active_surveys as $survey) {
-                        render_survey_card($survey, false);
+                <div>
+                    <?php
+                    $is_first_active = true;
+                    foreach ($active_surveys as $survey) {
+                        render_survey_card($survey, false, $is_first_active);
+                        $is_first_active = false; // Only first one is open
                     } ?>
                 </div>
             <?php } else { ?>
@@ -496,9 +628,9 @@ $this->load->view('portal/includes/portal_header');
                     </h2>
                 </div>
 
-                <div class="surveys-grid">
+                <div>
                     <?php foreach ($historical_surveys as $survey) {
-                        render_survey_card($survey, true);
+                        render_survey_card($survey, true, false); // All historical surveys closed by default
                     } ?>
                 </div>
             <?php } ?>
@@ -512,5 +644,27 @@ $this->load->view('portal/includes/portal_header');
                 <p>Les enquêtes vous permettent de partager vos repas et de recevoir des recommandations personnalisées.</p>
             </div>
         <?php } ?>
+
+<script>
+// Toggle survey accordion function
+function toggleSurveyAccordion(accordionId) {
+    const content = document.getElementById('content-' + accordionId);
+    const chevron = document.getElementById('chevron-' + accordionId);
+
+    if (content && chevron) {
+        const isOpen = content.classList.contains('open');
+
+        if (isOpen) {
+            // Close
+            content.classList.remove('open');
+            chevron.classList.remove('open');
+        } else {
+            // Open
+            content.classList.add('open');
+            chevron.classList.add('open');
+        }
+    }
+}
+</script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
