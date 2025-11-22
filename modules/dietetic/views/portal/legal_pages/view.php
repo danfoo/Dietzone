@@ -1,5 +1,12 @@
 <?php
-$active_page = 'legal';
+// Set active page based on the title
+if (strpos($title, 'Confidentialité') !== false) {
+    $active_page = 'privacy';
+} elseif (strpos($title, 'Utilisation') !== false) {
+    $active_page = 'terms';
+} else {
+    $active_page = 'legal';
+}
 $page_title = $title;
 $this->load->view('portal/includes/portal_header');
 ?>

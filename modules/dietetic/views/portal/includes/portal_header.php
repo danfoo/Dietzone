@@ -728,6 +728,21 @@
             </a>
             <?php } ?>
 
+            <div class="menu-divider"></div>
+
+            <!-- Legal Pages -->
+            <a href="<?php echo site_url('dietetic/portal/privacy'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'privacy') ? 'active' : ''; ?>">
+                <i class="fa fa-shield"></i>
+                <span>Politique de Confidentialité</span>
+            </a>
+
+            <a href="<?php echo site_url('dietetic/portal/terms'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'terms') ? 'active' : ''; ?>">
+                <i class="fa fa-file-text"></i>
+                <span>Conditions d'Utilisation</span>
+            </a>
+
+            <div class="menu-divider"></div>
+
             <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
                 <i class="fa fa-user"></i>
                 <span>Mon Profil</span>
