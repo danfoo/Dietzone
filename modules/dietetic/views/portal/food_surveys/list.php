@@ -323,6 +323,66 @@ $this->load->view('portal/includes/portal_header');
         flex-direction: column;
     }
 }
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 32px 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header.first {
+    margin-top: 0;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header .badge-count {
+    background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Historical Surveys - Grayed Out */
+.survey-card.historical {
+    opacity: 0.75;
+}
+
+.survey-card.historical::before {
+    background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.survey-card.historical .survey-card-header {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.survey-card.historical .btn-primary-action {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.survey-card.historical .btn-secondary-action {
+    border-color: #95a5a6;
+    color: #95a5a6;
+}
+
+.survey-card.historical .btn-secondary-action:hover {
+    background: #95a5a6;
+    color: white;
+}
 </style>
 
         <!-- Page Header -->
@@ -331,84 +391,125 @@ $this->load->view('portal/includes/portal_header');
             <p>Suivez vos habitudes alimentaires</p>
         </div>
 
-        <?php if (empty($surveys)) { ?>
-            <!-- Empty State -->
+        <?php
+        // Helper function to render survey card
+        function render_survey_card($survey, $is_historical = false) {
+            $completion = $survey->completion_percentage;
+            $status_class = '';
+            $status_text = '';
+
+            if ($survey->status == 'active') {
+                $status_class = 'active';
+                $status_text = 'Active';
+            } elseif ($survey->status == 'completed') {
+                $status_class = 'completed';
+                $status_text = 'Terminée';
+            } elseif ($survey->status == 'cancelled') {
+                $status_class = 'cancelled';
+                $status_text = 'Annulée';
+            }
+            ?>
+            <div class="survey-card <?php echo $is_historical ? 'historical' : ''; ?>">
+                <div class="survey-card-header">
+                    <h3><?php echo htmlspecialchars($survey->survey_name); ?></h3>
+                    <?php if (!empty($survey->objective)) { ?>
+                        <div class="survey-objective"><?php echo nl2br(htmlspecialchars($survey->objective)); ?></div>
+                    <?php } ?>
+                </div>
+
+                <div class="survey-card-body">
+                    <div class="survey-info-item">
+                        <i class="fa fa-calendar"></i>
+                        <div>
+                            <strong>Période:</strong>
+                            <?php echo date('d/m/Y', strtotime($survey->start_date)); ?> -
+                            <?php echo date('d/m/Y', strtotime($survey->end_date)); ?>
+                        </div>
+                    </div>
+
+                    <div class="survey-info-item">
+                        <i class="fa fa-info-circle"></i>
+                        <div>
+                            <strong>Statut:</strong>
+                            <span class="status-badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
+                        </div>
+                    </div>
+
+                    <?php if ($survey->status == 'active') { ?>
+                    <div class="progress-section">
+                        <div class="progress-label">
+                            <span>Progression</span>
+                            <span class="progress-percentage"><?php echo round($completion); ?>%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: <?php echo $completion; ?>%"></div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
+
+                <div class="survey-card-footer">
+                    <?php if ($survey->status == 'active') { ?>
+                        <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-action btn-primary-action">
+                            <i class="fa fa-camera"></i> Soumettre un repas
+                        </a>
+                    <?php } ?>
+                    <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-action btn-secondary-action">
+                        <i class="fa fa-comments"></i> Recommandations
+                    </a>
+                </div>
+            </div>
+            <?php
+        }
+        ?>
+
+        <?php if (!empty($active_surveys) || !empty($historical_surveys)) { ?>
+
+            <!-- ACTIVE SURVEYS SECTION -->
+            <?php if (!empty($active_surveys)) { ?>
+                <div class="section-header first">
+                    <h2>
+                        <i class="fa fa-play-circle"></i> Enquêtes Actives
+                        <span class="badge-count"><?php echo count($active_surveys); ?></span>
+                    </h2>
+                </div>
+
+                <div class="surveys-grid">
+                    <?php foreach ($active_surveys as $survey) {
+                        render_survey_card($survey, false);
+                    } ?>
+                </div>
+            <?php } else { ?>
+                <div class="empty-state">
+                    <i class="fa fa-info-circle"></i>
+                    <h3>Aucune enquête active</h3>
+                    <p>Vous n'avez pas d'enquête alimentaire en cours.</p>
+                </div>
+            <?php } ?>
+
+            <!-- HISTORICAL SURVEYS SECTION -->
+            <?php if (!empty($historical_surveys)) { ?>
+                <div class="section-header">
+                    <h2>
+                        <i class="fa fa-history"></i> Historique
+                        <span class="badge-count"><?php echo count($historical_surveys); ?></span>
+                    </h2>
+                </div>
+
+                <div class="surveys-grid">
+                    <?php foreach ($historical_surveys as $survey) {
+                        render_survey_card($survey, true);
+                    } ?>
+                </div>
+            <?php } ?>
+
+        <?php } else { ?>
+            <!-- No Surveys at all -->
             <div class="empty-state">
                 <i class="fa fa-list-alt"></i>
                 <h3>Aucune enquête disponible</h3>
                 <p>Votre diététicien ne vous a pas encore assigné d'enquête alimentaire.</p>
                 <p>Les enquêtes vous permettent de partager vos repas et de recevoir des recommandations personnalisées.</p>
-            </div>
-        <?php } else { ?>
-            <!-- Surveys Grid -->
-            <div class="surveys-grid">
-                <?php foreach ($surveys as $survey) {
-                    $completion = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
-                    $status_class = '';
-                    $status_text = '';
-
-                    if ($survey->status == 'active') {
-                        $status_class = 'active';
-                        $status_text = 'Active';
-                    } elseif ($survey->status == 'completed') {
-                        $status_class = 'completed';
-                        $status_text = 'Terminée';
-                    } elseif ($survey->status == 'cancelled') {
-                        $status_class = 'cancelled';
-                        $status_text = 'Annulée';
-                    }
-                ?>
-                <div class="survey-card">
-                    <div class="survey-card-header">
-                        <h3><?php echo htmlspecialchars($survey->survey_name); ?></h3>
-                        <?php if (!empty($survey->objective)) { ?>
-                            <div class="survey-objective"><?php echo nl2br(htmlspecialchars($survey->objective)); ?></div>
-                        <?php } ?>
-                    </div>
-
-                    <div class="survey-card-body">
-                        <div class="survey-info-item">
-                            <i class="fa fa-calendar"></i>
-                            <div>
-                                <strong>Période:</strong>
-                                <?php echo date('d/m/Y', strtotime($survey->start_date)); ?> -
-                                <?php echo date('d/m/Y', strtotime($survey->end_date)); ?>
-                            </div>
-                        </div>
-
-                        <div class="survey-info-item">
-                            <i class="fa fa-info-circle"></i>
-                            <div>
-                                <strong>Statut:</strong>
-                                <span class="status-badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                            </div>
-                        </div>
-
-                        <?php if ($survey->status == 'active') { ?>
-                        <div class="progress-section">
-                            <div class="progress-label">
-                                <span>Progression</span>
-                                <span class="progress-percentage"><?php echo round($completion); ?>%</span>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill" style="width: <?php echo $completion; ?>%"></div>
-                            </div>
-                        </div>
-                        <?php } ?>
-                    </div>
-
-                    <div class="survey-card-footer">
-                        <?php if ($survey->status == 'active') { ?>
-                            <a href="<?php echo site_url('dietetic/portal/food_survey_submit/' . $survey->id); ?>" class="btn-action btn-primary-action">
-                                <i class="fa fa-camera"></i> Soumettre un repas
-                            </a>
-                        <?php } ?>
-                        <a href="<?php echo site_url('dietetic/portal/view_recommendations/' . $survey->id); ?>" class="btn-action btn-secondary-action">
-                            <i class="fa fa-comments"></i> Recommandations
-                        </a>
-                    </div>
-                </div>
-                <?php } ?>
             </div>
         <?php } ?>
 

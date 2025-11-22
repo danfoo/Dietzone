@@ -244,6 +244,95 @@ $this->load->view('portal/includes/portal_header');
     transform: translateY(1px);
 }
 
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 32px 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header.first {
+    margin-top: 0;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header .badge-count {
+    background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+}
+
+.status-badge.completed {
+    background: #95a5a6;
+    color: white;
+}
+
+.status-badge.cancelled {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Historical Programs - Grayed Out */
+.program-badge.historical {
+    opacity: 0.7;
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.meal-plan-card.historical {
+    opacity: 0.75;
+}
+
+.meal-plan-card.historical::before {
+    background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.meal-plan-card.historical .week-badge {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+.meal-plan-card.historical .btn-view-meal {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    box-shadow: 0 6px 16px rgba(149, 165, 166, 0.25);
+}
+
+.meal-plan-card.historical .btn-view-meal:hover {
+    box-shadow: 0 8px 20px rgba(149, 165, 166, 0.35);
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -329,21 +418,31 @@ $this->load->view('portal/includes/portal_header');
             <p>Plans alimentaires personnalisés</p>
         </div>
 
-        <?php if (isset($active_program) && $active_program) { ?>
+        <?php
+        // Helper function to render program section
+        function render_program_section($program, $is_historical = false) {
+            $status_class = $program->status;
+            $status_label = $program->status === 'active' ? 'ACTIF' : ($program->status === 'completed' ? 'TERMINÉ' : 'ANNULÉ');
+            $status_icon = $program->status === 'active' ? 'check-circle' : ($program->status === 'completed' ? 'check' : 'times-circle');
+            ?>
             <!-- Program Badge -->
-            <div class="program-badge animate-in delay-1">
+            <div class="program-badge <?php echo $is_historical ? 'historical' : ''; ?> animate-in delay-1">
                 <i class="fa fa-heartbeat"></i>
                 <div class="program-badge-text">
-                    <div class="program-badge-label">Programme Actif</div>
-                    <div class="program-badge-name"><?php echo htmlspecialchars($active_program->program_name); ?></div>
+                    <div class="program-badge-label"><?php echo $is_historical ? 'Programme' : 'Programme Actif'; ?></div>
+                    <div class="program-badge-name"><?php echo htmlspecialchars($program->program_name); ?></div>
                 </div>
+                <span class="status-badge <?php echo $status_class; ?>">
+                    <i class="fa fa-<?php echo $status_icon; ?>"></i>
+                    <?php echo $status_label; ?>
+                </span>
             </div>
 
-            <?php if (!empty($meal_plans)) { ?>
+            <?php if (!empty($program->meal_plans)) { ?>
                 <!-- Meal Plans Grid -->
                 <div class="meal-plans-grid animate-in delay-2">
-                    <?php foreach ($meal_plans as $plan) { ?>
-                        <div class="meal-plan-card">
+                    <?php foreach ($program->meal_plans as $plan) { ?>
+                        <div class="meal-plan-card <?php echo $is_historical ? 'historical' : ''; ?>">
                             <div class="meal-plan-header">
                                 <div class="week-badge">
                                     <i class="fa fa-calendar"></i>
@@ -366,28 +465,59 @@ $this->load->view('portal/includes/portal_header');
                         </div>
                     <?php } ?>
                 </div>
+            <?php }
+        }
+        ?>
+
+        <?php if (!empty($active_programs) || !empty($historical_programs)) { ?>
+
+            <!-- ACTIVE PROGRAMS SECTION -->
+            <?php if (!empty($active_programs)) { ?>
+                <div class="section-header first">
+                    <h2>
+                        <i class="fa fa-heartbeat"></i> Programmes Actifs
+                        <span class="badge-count"><?php echo count($active_programs); ?></span>
+                    </h2>
+                </div>
+
+                <?php foreach ($active_programs as $program) {
+                    render_program_section($program, false);
+                } ?>
             <?php } else { ?>
-                <!-- Empty State -->
-                <div class="empty-state animate-in delay-2">
+                <div class="empty-state animate-in delay-1">
                     <div class="empty-state-icon">
-                        <i class="fa fa-cutlery"></i>
+                        <i class="fa fa-info-circle"></i>
                     </div>
-                    <div class="empty-state-title">Aucun plan alimentaire</div>
+                    <div class="empty-state-title">Aucun programme actif</div>
                     <div class="empty-state-text">
-                        Votre diététicien n'a pas encore créé de plan alimentaire. Contactez-le pour plus d'informations.
+                        Vous n'avez pas de programme diététique actif. Contactez votre diététicien pour commencer.
                     </div>
                 </div>
             <?php } ?>
 
+            <!-- HISTORICAL PROGRAMS SECTION -->
+            <?php if (!empty($historical_programs)) { ?>
+                <div class="section-header">
+                    <h2>
+                        <i class="fa fa-history"></i> Historique
+                        <span class="badge-count"><?php echo count($historical_programs); ?></span>
+                    </h2>
+                </div>
+
+                <?php foreach ($historical_programs as $program) {
+                    render_program_section($program, true);
+                } ?>
+            <?php } ?>
+
         <?php } else { ?>
-            <!-- No Program -->
+            <!-- No Programs at all -->
             <div class="empty-state animate-in delay-1">
                 <div class="empty-state-icon">
                     <i class="fa fa-info-circle"></i>
                 </div>
-                <div class="empty-state-title">Aucun programme actif</div>
+                <div class="empty-state-title">Aucun programme</div>
                 <div class="empty-state-text">
-                    Vous n'avez pas de programme diététique actif. Contactez votre diététicien pour commencer.
+                    Vous n'avez aucun programme diététique. Contactez votre diététicien pour commencer.
                 </div>
             </div>
         <?php } ?>

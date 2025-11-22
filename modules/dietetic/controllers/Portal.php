@@ -499,18 +499,33 @@ class Portal extends App_Controller
         // Load meal plans model
         $this->load->model('dietetic/dietetic_meal_plans_model');
 
-        // Get active program
+        // Get ALL programs (active, completed, cancelled) for displaying history
         try {
-            $active_program = $this->dietetic_programs_model->get_active_program($patient->id);
-            $data['active_program'] = $active_program;
+            $all_programs = $this->dietetic_programs_model->get_all_by_patient($patient->id);
+            $data['programs'] = $all_programs;
 
-            if ($active_program) {
+            // Separate active and historical programs
+            $data['active_programs'] = [];
+            $data['historical_programs'] = [];
+
+            foreach ($all_programs as $program) {
                 // Get meal plans for this program
-                $data['meal_plans'] = $this->dietetic_meal_plans_model->get_by_program($active_program->id);
-            } else {
-                $data['meal_plans'] = [];
+                $program->meal_plans = $this->dietetic_meal_plans_model->get_by_program($program->id);
+
+                if ($program->status === 'active') {
+                    $data['active_programs'][] = $program;
+                } else {
+                    $data['historical_programs'][] = $program;
+                }
             }
+
+            // Keep backward compatibility - set the first active program as active_program
+            $data['active_program'] = !empty($data['active_programs']) ? $data['active_programs'][0] : null;
+            $data['meal_plans'] = $data['active_program'] ? $data['active_program']->meal_plans : [];
         } catch (Exception $e) {
+            $data['programs'] = [];
+            $data['active_programs'] = [];
+            $data['historical_programs'] = [];
             $data['active_program'] = null;
             $data['meal_plans'] = [];
         }
@@ -1253,13 +1268,26 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         $data['client'] = $client;
 
-        // Get all surveys for this patient
-        $data['surveys'] = $this->dietetic_food_surveys_model->get_by_patient($patient->id);
+        // Get all surveys for this patient (active, completed, cancelled)
+        $all_surveys = $this->dietetic_food_surveys_model->get_by_patient($patient->id);
 
-        // Calculate completion percentages
-        foreach ($data['surveys'] as &$survey) {
+        // Separate active and historical surveys
+        $data['active_surveys'] = [];
+        $data['historical_surveys'] = [];
+
+        foreach ($all_surveys as $survey) {
+            // Calculate completion percentage
             $survey->completion_percentage = $this->dietetic_food_surveys_model->get_completion_percentage($survey->id);
+
+            if ($survey->status === 'active') {
+                $data['active_surveys'][] = $survey;
+            } else {
+                $data['historical_surveys'][] = $survey;
+            }
         }
+
+        // Keep backward compatibility
+        $data['surveys'] = $all_surveys;
 
         $this->load->view('portal/food_surveys/list', $data);
     }

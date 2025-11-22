@@ -132,6 +132,27 @@ class Dietetic_programs_model extends App_Model
     }
 
     /**
+     * Get all programs for a patient (active, completed, cancelled)
+     *
+     * @param int $patient_id
+     * @return array
+     */
+    public function get_all_by_patient($patient_id)
+    {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access programs for Patient ID ' . $patient_id);
+            return [];
+        }
+
+        $this->db->where('patient_id', $patient_id);
+        $this->db->order_by('status', 'ASC'); // active first, then completed/cancelled
+        $this->db->order_by('start_date', 'DESC');
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
      * Add new program
      *
      * @param array $data
