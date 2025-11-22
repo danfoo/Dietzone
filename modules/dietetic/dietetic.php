@@ -477,18 +477,13 @@ function dietetic_redirect_to_dashboard()
     // PATIENT REDIRECTION (Client portal)
     // ====================================
     if (is_client_logged_in()) {
-        // Match various client portal home URLs
-        // /, /index.php, /clients, /clients/dashboard, /clients/home, etc.
-        $is_client_home = (
-            preg_match('#^/?$#', $current_uri) ||                           // Root /
-            preg_match('#^/index\.php/?$#', $current_uri) ||                // /index.php
-            preg_match('#^/clients/?$#', $current_uri) ||                   // /clients
-            preg_match('#^/clients/home#', $current_uri) ||                 // /clients/home
-            preg_match('#^/clients/dashboard#', $current_uri) ||            // /clients/dashboard
-            preg_match('#^/clients/announcements#', $current_uri)           // /clients/announcements (default page)
-        );
+        // Don't redirect if already on dietetic portal
+        if (strpos($current_uri, '/dietetic/portal') !== false) {
+            return;
+        }
 
-        if (!$is_client_home) {
+        // Don't redirect from authentication/logout
+        if (strpos($current_uri, '/authentication/logout') !== false) {
             return;
         }
 
@@ -504,8 +499,15 @@ function dietetic_redirect_to_dashboard()
         try {
             $patient = $CI->dietetic_patients_model->get_by_client($client_id);
 
-            // If patient profile exists, redirect to dietetic portal
+            // If patient profile exists, redirect ALL client portal pages to dietetic portal
+            // This makes the dietetic portal the ONLY accessible area for patients
             if ($patient) {
+                // Allow access to profile page
+                if (strpos($current_uri, '/clients/profile') !== false) {
+                    return;
+                }
+
+                // Redirect everything else to dietetic portal
                 redirect(site_url('dietetic/portal'));
             }
         } catch (Exception $e) {
