@@ -62,19 +62,31 @@ class Consultations extends AdminController
         }
 
         if ($this->input->post()) {
-            $data = $this->input->post();
+            // DEBUG MODE - Log everything
+            log_activity('DEBUG: Consultation creation started');
 
-            // Set dietitian if not set
-            if (!isset($data['dietitian_id'])) {
-                $data['dietitian_id'] = get_staff_user_id();
+            try {
+                $data = $this->input->post();
+                log_activity('DEBUG: POST data received - ' . json_encode($data));
+
+                // Set dietitian if not set
+                if (!isset($data['dietitian_id'])) {
+                    $data['dietitian_id'] = get_staff_user_id();
+                }
+
+                // Set default duration
+                if (!isset($data['duration']) || empty($data['duration'])) {
+                    $data['duration'] = dietetic_get_option('default_consultation_duration', 60);
+                }
+
+                log_activity('DEBUG: About to call add() with data - ' . json_encode($data));
+                $consultation_id = $this->dietetic_consultations_model->add($data);
+                log_activity('DEBUG: add() returned - ' . ($consultation_id ? $consultation_id : 'FALSE'));
+            } catch (Exception $e) {
+                log_activity('DEBUG: EXCEPTION in create() - ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+                set_alert('danger', 'Erreur: ' . $e->getMessage());
+                redirect(admin_url('dietetic/consultations/create'));
             }
-
-            // Set default duration
-            if (!isset($data['duration']) || empty($data['duration'])) {
-                $data['duration'] = dietetic_get_option('default_consultation_duration', 60);
-            }
-
-            $consultation_id = $this->dietetic_consultations_model->add($data);
 
             if ($consultation_id) {
                 // Send notification to patient
