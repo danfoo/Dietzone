@@ -5,12 +5,20 @@
 (function() {
     'use strict';
 
+    // Vérifier que jQuery est chargé
+    if (typeof jQuery === 'undefined') {
+        console.error("❌ jQuery n'est pas chargé! Le diagnostic ne peut pas s'exécuter.");
+        return;
+    }
+
     console.log("========================================");
     console.log("DIAGNOSTIC MENU DIÉTÉTIQUE");
     console.log("========================================");
+    console.log("✅ jQuery version:", jQuery.fn.jquery);
 
     // Attendre que le DOM soit chargé
-    setTimeout(function() {
+    jQuery(document).ready(function($) {
+        setTimeout(function() {
 
         // 1. Analyser la structure du sidebar
         console.log("\n1. STRUCTURE DU SIDEBAR:");
@@ -156,6 +164,7 @@
         console.log("FIN DU DIAGNOSTIC");
         console.log("========================================");
 
-    }, 1500); // Attendre 1.5s pour être sûr que tout est chargé
+        }, 1500); // Attendre 1.5s pour être sûr que tout est chargé
+    }); // Fin jQuery(document).ready
 
-})();
+})(); // Fin IIFE
