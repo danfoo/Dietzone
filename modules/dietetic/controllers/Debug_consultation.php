@@ -175,7 +175,7 @@ class Debug_consultation extends AdminController
         echo "<p class='info'>Nous allons maintenant tester la création d'une consultation avec des données fictives.</p>";
 
         if (!empty($patients) && !empty($staff) && empty($missing_columns)) {
-            echo "<form method='POST' action='" . admin_url('dietetic/debug_consultation') . "'>";
+            echo form_open(admin_url('dietetic/debug_consultation'));
             echo "<input type='hidden' name='test_create' value='1'>";
             echo "<button type='submit' class='btn'>🧪 Tester la Création</button>";
             echo "</form>";
