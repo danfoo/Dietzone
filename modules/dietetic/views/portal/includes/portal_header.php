@@ -458,7 +458,7 @@
             width: 320px;
             height: 100vh;
             background: white;
-            z-index: 1001;
+            z-index: 1003;
             transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
             overflow-y: auto;
