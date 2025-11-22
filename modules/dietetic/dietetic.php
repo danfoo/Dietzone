@@ -100,7 +100,7 @@ function dietetic_module_init_menu_items()
         $CI->app_menu->add_sidebar_menu_item('dietetic', [
             'name'     => _l('dietetic'),
             'icon'     => 'fa fa-heartbeat',
-            'href'     => admin_url('dietetic/patients'),
+            'href'     => '#',
             'position' => 15,
         ]);
 
@@ -279,114 +279,56 @@ function dietetic_add_footer_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Initialize Dietetic menu toggle - IMPROVED VERSION
+    // Simple menu initialization - let Perfex/Bootstrap handle the collapse
     echo '<script>
     (function() {
         if (typeof jQuery !== "undefined") {
             jQuery(document).ready(function($) {
-                // Function to initialize menu
                 function initDieteticMenu() {
-                    console.log("=== Dietetic Menu Initialization ===");
+                    // Find the Diététique menu item
+                    var $menuItem = null;
 
-                    // Try multiple selectors to find the menu
-                    var $menuItem = $("li[class*=\'dietetic\'], li.menu-item-dietetic, #side-menu li a[href*=\'dietetic\']").closest("li");
+                    // Search by text content
+                    $("#side-menu > li").each(function() {
+                        var $link = $(this).find("> a");
+                        var text = $link.text().trim();
+                        if (text === "Diététique" || text.indexOf("Dietetic") !== -1) {
+                            $menuItem = $(this);
+                            return false;
+                        }
+                    });
 
-                    console.log("Found menu items:", $menuItem.length);
+                    if ($menuItem && $menuItem.length > 0) {
+                        var $link = $menuItem.find("> a");
+                        var $submenu = $menuItem.find("> ul");
 
-                    if ($menuItem.length === 0) {
-                        // Try to find by checking menu text
-                        $("#side-menu li").each(function() {
-                            var text = $(this).find("a").first().text().trim();
-                            if (text === "Diététique" || text.indexOf("Dietetic") !== -1) {
-                                $menuItem = $(this);
-                                console.log("Found menu by text:", text);
-                                return false;
-                            }
-                        });
-                    }
+                        // Ensure submenu has correct classes for Bootstrap collapse
+                        if ($submenu.length > 0) {
+                            $submenu.addClass("nav nav-second-level collapse");
 
-                    if ($menuItem.length > 0) {
-                        var $link = $menuItem.find("> a").first();
-                        var $submenu = $menuItem.find("> ul").first();
-
-                        console.log("Link found:", $link.length);
-                        console.log("Submenu found:", $submenu.length);
-                        console.log("Submenu items:", $submenu.find("li").length);
-
-                        if ($link.length && $submenu.length) {
-                            // Make sure submenu has proper structure
-                            if (!$submenu.hasClass("nav-second-level")) {
-                                $submenu.addClass("nav nav-second-level collapse");
-                            }
-
-                            // Add unique ID
-                            var submenuId = "dietetic-submenu-" + Date.now();
-                            $submenu.attr("id", submenuId);
-
-                            // Remove any existing click handlers
-                            $link.off("click.dietetic");
-
-                            // Add click handler
-                            $link.on("click.dietetic", function(e) {
-                                console.log("Dietetic menu clicked!");
-
-                                // Prevent default link behavior
-                                e.preventDefault();
-                                e.stopPropagation();
-
-                                // Toggle submenu
-                                if ($submenu.hasClass("in")) {
-                                    $submenu.removeClass("in");
-                                    $menuItem.removeClass("active");
-                                    console.log("Menu closed");
-                                } else {
-                                    // Close other menus first
-                                    $("#side-menu .nav-second-level.in").removeClass("in");
-                                    $("#side-menu li.active").removeClass("active");
-
-                                    // Open this menu
-                                    $submenu.addClass("in");
-                                    $menuItem.addClass("active");
-                                    console.log("Menu opened");
-                                }
-
-                                return false;
-                            });
-
-                            // Check if we are on a dietetic page and auto-open
+                            // Auto-open if on dietetic page
                             var currentUrl = window.location.pathname;
                             if (currentUrl.indexOf("/dietetic/") !== -1) {
-                                console.log("On dietetic page, auto-opening menu");
                                 $submenu.addClass("in");
                                 $menuItem.addClass("active");
 
                                 // Highlight active submenu item
                                 $submenu.find("a").each(function() {
-                                    if (currentUrl.indexOf($(this).attr("href")) !== -1) {
-                                        $(this).closest("li").addClass("active");
+                                    var href = $(this).attr("href");
+                                    if (href && currentUrl.indexOf(href) !== -1) {
+                                        $(this).parent("li").addClass("active");
                                     }
                                 });
                             }
-
-                            console.log("✅ Dietetic menu initialized successfully!");
-                        } else {
-                            console.warn("⚠️ Link or submenu not found");
                         }
-                    } else {
-                        console.warn("⚠️ Dietetic menu item not found");
                     }
                 }
 
-                // Try initialization immediately
+                // Initialize on ready
                 initDieteticMenu();
 
-                // Try again after a delay (in case sidebar loads late)
-                setTimeout(initDieteticMenu, 1000);
-
-                // Also try when window is fully loaded
-                $(window).on("load", function() {
-                    setTimeout(initDieteticMenu, 500);
-                });
+                // Re-initialize after short delay for late-loading sidebars
+                setTimeout(initDieteticMenu, 500);
             });
         }
     })();
