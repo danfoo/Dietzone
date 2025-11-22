@@ -100,7 +100,7 @@ function dietetic_module_init_menu_items()
         $CI->app_menu->add_sidebar_menu_item('dietetic', [
             'name'     => _l('dietetic'),
             'icon'     => 'fa fa-heartbeat',
-            'href'     => '#',
+            'href'     => admin_url('dietetic/dashboard'),
             'position' => 15,
         ]);
 
@@ -264,15 +264,6 @@ function dietetic_add_head_components()
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Force load jQuery IMMEDIATELY if not available
-    // Use document.write to load synchronously before any other code executes
-    echo '<script>
-    if (typeof window.jQuery === "undefined") {
-        document.write(\'<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>\');
-        console.log("⚠️ jQuery was not loaded by Perfex, loading from CDN...");
-    }
-    </script>';
-
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
         echo '<link href="' . $module_path . 'assets/css/dietetic.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
     }
@@ -287,12 +278,6 @@ function dietetic_add_footer_components()
 {
     $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
-
-    // Load diagnostic script to see what's happening with the menu
-    echo '<script src="' . $module_path . 'assets/js/menu_diagnostic.js?v=' . time() . '"></script>';
-
-    // Load menu toggle script with async to avoid blocking on errors
-    echo '<script async src="' . $module_path . 'assets/js/force_menu_toggle.js?v=' . time() . '"></script>';
 
     // Load full dietetic.js only on dietetic pages
     if (strpos($_SERVER['REQUEST_URI'], '/admin/dietetic') !== false) {
