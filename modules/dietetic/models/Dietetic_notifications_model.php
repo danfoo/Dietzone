@@ -1010,6 +1010,102 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    /**
+     * Notify dietitian when their recipe is approved
+     */
+    public function notify_recipe_approved($dietitian_id, $recipe_name)
+    {
+        try {
+            $this->load->model('staff_model');
+            $dietitian = $this->staff_model->get($dietitian_id);
+
+            if (!$dietitian || empty($dietitian->email)) {
+                log_activity("Diététicien non trouvé ou sans email: ID {$dietitian_id}");
+                return false;
+            }
+
+            // Préparer le message
+            $message = "Bonjour {$dietitian->firstname},\n\n";
+            $message .= "Votre recette \"{$recipe_name}\" a été approuvée par l'administrateur.\n\n";
+            $message .= "Elle est maintenant disponible dans votre liste de recettes et peut être assignée à vos patients.\n\n";
+            $message .= "Consultez vos recettes :\n";
+            $message .= admin_url('dietetic/recipes') . "\n\n";
+            $message .= "Bonne journée !";
+
+            // Envoyer l'email
+            $this->load->library('email');
+            $this->email->clear();
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($dietitian->email);
+            $this->email->subject("Recette Approuvée - {$recipe_name}");
+            $this->email->message(nl2br($message));
+            $email_sent = $this->email->send();
+
+            if ($email_sent) {
+                log_activity("Email envoyé au diététicien {$dietitian->firstname} {$dietitian->lastname} - Recette approuvée: {$recipe_name}");
+            } else {
+                log_activity("Échec envoi email au diététicien {$dietitian->firstname} {$dietitian->lastname} - Recette approuvée");
+            }
+
+            return $email_sent;
+
+        } catch (Exception $e) {
+            log_activity("Erreur notification diététicien (approbation recette): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify dietitian when their recipe is rejected
+     */
+    public function notify_recipe_rejected($dietitian_id, $recipe_name, $reason = '')
+    {
+        try {
+            $this->load->model('staff_model');
+            $dietitian = $this->staff_model->get($dietitian_id);
+
+            if (!$dietitian || empty($dietitian->email)) {
+                log_activity("Diététicien non trouvé ou sans email: ID {$dietitian_id}");
+                return false;
+            }
+
+            // Préparer le message
+            $message = "Bonjour {$dietitian->firstname},\n\n";
+            $message .= "Votre recette \"{$recipe_name}\" n'a pas été approuvée par l'administrateur.\n\n";
+
+            if (!empty($reason)) {
+                $message .= "Raison du rejet:\n";
+                $message .= "{$reason}\n\n";
+            }
+
+            $message .= "Vous pouvez modifier votre recette et la soumettre à nouveau.\n\n";
+            $message .= "Consultez vos recettes :\n";
+            $message .= admin_url('dietetic/recipes') . "\n\n";
+            $message .= "Bonne journée !";
+
+            // Envoyer l'email
+            $this->load->library('email');
+            $this->email->clear();
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($dietitian->email);
+            $this->email->subject("Recette Non Approuvée - {$recipe_name}");
+            $this->email->message(nl2br($message));
+            $email_sent = $this->email->send();
+
+            if ($email_sent) {
+                log_activity("Email envoyé au diététicien {$dietitian->firstname} {$dietitian->lastname} - Recette rejetée: {$recipe_name}");
+            } else {
+                log_activity("Échec envoi email au diététicien {$dietitian->firstname} {$dietitian->lastname} - Recette rejetée");
+            }
+
+            return $email_sent;
+
+        } catch (Exception $e) {
+            log_activity("Erreur notification diététicien (rejet recette): " . $e->getMessage());
+            return false;
+        }
+    }
+
     // ==================== CONSULTATION NOTIFICATIONS ====================
 
     /**

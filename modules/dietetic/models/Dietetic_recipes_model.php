@@ -318,6 +318,9 @@ class Dietetic_recipes_model extends App_Model
             $admin_id = get_staff_user_id();
         }
 
+        // Get recipe info before update (for notification)
+        $recipe = $this->get($id);
+
         $data = [
             'status' => 'approved',
             'approved_by_admin_id' => $admin_id,
@@ -328,10 +331,17 @@ class Dietetic_recipes_model extends App_Model
         $this->db->where('id', $id);
         $result = $this->db->update(db_prefix() . $this->table, $data);
 
-        if ($result) {
+        if ($result && $recipe) {
             log_activity('Recipe Approved [ID: ' . $id . ']');
 
-            // TODO: Notifier le diététicien créateur
+            // Notify dietitian creator
+            if ($recipe->dietitian_id) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $this->dietetic_notifications_model->notify_recipe_approved(
+                    $recipe->dietitian_id,
+                    $recipe->name
+                );
+            }
         }
 
         return $result;
@@ -351,6 +361,9 @@ class Dietetic_recipes_model extends App_Model
             $admin_id = get_staff_user_id();
         }
 
+        // Get recipe info before update (for notification)
+        $recipe = $this->get($id);
+
         $data = [
             'status' => 'rejected',
             'approved_by_admin_id' => $admin_id,
@@ -361,10 +374,18 @@ class Dietetic_recipes_model extends App_Model
         $this->db->where('id', $id);
         $result = $this->db->update(db_prefix() . $this->table, $data);
 
-        if ($result) {
+        if ($result && $recipe) {
             log_activity('Recipe Rejected [ID: ' . $id . ', Reason: ' . $reason . ']');
 
-            // TODO: Notifier le diététicien créateur
+            // Notify dietitian creator
+            if ($recipe->dietitian_id) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $this->dietetic_notifications_model->notify_recipe_rejected(
+                    $recipe->dietitian_id,
+                    $recipe->name,
+                    $reason
+                );
+            }
         }
 
         return $result;
