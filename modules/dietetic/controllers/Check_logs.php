@@ -17,6 +17,86 @@ class Check_logs extends AdminController
 
         header('Content-Type: text/plain; charset=utf-8');
 
+        // Check if patient_id is provided
+        $patient_id = $this->input->get('patient_id');
+
+        if ($patient_id) {
+            echo "=== Test de notification pour patient #{$patient_id} ===\n\n";
+
+            // Get patient
+            $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+            if (!$patient) {
+                echo "ERREUR: Patient #{$patient_id} introuvable!\n";
+                exit;
+            }
+
+            echo "Patient trouvé: ID {$patient->id}\n";
+            echo "Client ID: {$patient->client_id}\n\n";
+
+            // Get client
+            $this->load->model('clients_model');
+            $client = $this->clients_model->get($patient->client_id);
+            if (!$client) {
+                echo "ERREUR: Client #{$patient->client_id} introuvable!\n";
+                exit;
+            }
+
+            echo "Client: {$client->company}\n";
+            echo "Email: {$client->email}\n";
+            echo "Téléphone: {$client->phonenumber}\n\n";
+
+            // Get preferences
+            echo "=== Vérification des préférences ===\n\n";
+
+            $prefs = $this->db->get_where(db_prefix() . 'dietic_notification_preferences', ['patient_id' => $patient_id])->row();
+
+            if (!$prefs) {
+                echo "❌ PROBLÈME: Aucune préférence trouvée!\n";
+                echo "→ Les préférences devraient être créées automatiquement.\n";
+                echo "→ Test de création manuelle...\n\n";
+
+                $this->dietetic_notifications_model->create_default_preferences($patient_id);
+                $prefs = $this->db->get_where(db_prefix() . 'dietic_notification_preferences', ['patient_id' => $patient_id])->row();
+
+                if ($prefs) {
+                    echo "✅ Préférences créées avec succès!\n\n";
+                } else {
+                    echo "❌ ERREUR: Impossible de créer les préférences!\n";
+                    exit;
+                }
+            } else {
+                echo "✅ Préférences existantes\n\n";
+            }
+
+            echo "Notification consultation: " . ($prefs->notify_consultation ? '✅ Activé' : '❌ Désactivé') . "\n";
+            echo "Canal Email: " . ($prefs->channel_email ? '✅ Activé' : '❌ Désactivé') . "\n";
+            echo "Canal SMS: " . ($prefs->channel_sms ? '✅ Activé' : '❌ Désactivé') . "\n";
+            echo "Canal WhatsApp: " . ($prefs->channel_whatsapp ? '✅ Activé' : '❌ Désactivé') . "\n";
+            echo "Canal Push: " . (isset($prefs->channel_push) && $prefs->channel_push ? '✅ Activé' : '❌ Désactivé') . "\n\n";
+
+            // Test notification
+            echo "=== Test d'envoi de notification ===\n\n";
+
+            $result = $this->dietetic_notifications_model->notify_consultation_scheduled(
+                $patient_id,
+                date('Y-m-d', strtotime('+1 day')),
+                '10:00:00',
+                'Dr. Test',
+                'Consultation de suivi'
+            );
+
+            if ($result) {
+                echo "✅ Notification envoyée avec succès!\n\n";
+                echo "Résultats:\n";
+                print_r($result);
+            } else {
+                echo "❌ Échec de l'envoi de la notification!\n";
+                echo "→ Vérifiez que notify_consultation est activé dans les préférences.\n";
+            }
+
+            exit;
+        }
+
         echo "=== Derniers logs de notifications consultation_scheduled ===\n\n";
 
         $this->db->select('*');
