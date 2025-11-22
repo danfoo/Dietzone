@@ -1067,4 +1067,19 @@ $(window).on('load', function() {
 });
 </script>
 
+<!-- Script ultra-simple pour le menu Diététique -->
+<script>
+$(document).ready(function() {
+    // Trouver le lien du menu Diététique et empêcher la navigation
+    $('#side-menu a[href*="dietetic"]').first().parent().find('> a').on('click', function(e) {
+        if ($(this).next('ul').length > 0) {
+            e.preventDefault();
+            $(this).next('ul').toggleClass('in');
+            $(this).parent().toggleClass('active');
+        }
+    });
+});
+</script>
+
+
 <?php init_tail(); ?>
