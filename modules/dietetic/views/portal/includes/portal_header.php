@@ -457,11 +457,14 @@
             right: -350px;
             width: 320px;
             height: 100vh;
+            max-height: 100vh;
             background: white;
             z-index: 1003;
             transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling sur iOS */
         }
 
         .slide-menu.active {
@@ -488,7 +491,7 @@
         }
 
         .menu-items {
-            padding: 15px 0;
+            padding: 15px 0 80px 0; /* Padding en bas pour accès facile au dernier élément sur mobile */
         }
 
         .menu-item {
@@ -622,6 +625,23 @@
         @media (max-width: 768px) {
             .content-container {
                 padding: 15px;
+            }
+
+            /* Optimisations pour le menu mobile */
+            .slide-menu {
+                width: 100%;
+                right: -100%;
+                height: 100%;
+                max-height: -webkit-fill-available; /* Fix pour Safari iOS */
+                max-height: 100dvh; /* Dynamic viewport height pour mobiles modernes */
+            }
+
+            .menu-items {
+                padding: 15px 0 100px 0; /* Plus de padding en bas sur mobile */
+            }
+
+            .menu-item {
+                padding: 18px 20px; /* Items plus grands pour meilleure accessibilité tactile */
             }
         }
     </style>
