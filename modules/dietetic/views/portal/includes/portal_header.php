@@ -768,7 +768,7 @@
 
             <div class="menu-divider"></div>
 
-            <a href="<?php echo site_url('clients/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
+            <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
                 <i class="fa fa-user"></i>
                 <span>Mon Profil</span>
             </a>

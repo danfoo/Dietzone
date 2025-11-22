@@ -4391,5 +4391,114 @@ class Portal extends App_Controller
 
         $this->load->view('portal_legal_page', $data);
     }
+
+    /**
+     * Display patient profile page
+     */
+    public function profile()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mon Profil';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        // Get latest measurement for current weight
+        $latest_measurement = $this->dietetic_patients_model->get_latest_measurement($patient->id, true);
+        $data['latest_measurement'] = $latest_measurement;
+
+        // Calculate age from birth_date
+        if ($patient->birth_date) {
+            $birth_date = new DateTime($patient->birth_date);
+            $today = new DateTime();
+            $age = $today->diff($birth_date)->y;
+            $data['age'] = $age;
+        } else {
+            $data['age'] = null;
+        }
+
+        $this->load->view('portal_profile', $data);
+    }
+
+    /**
+     * Update patient password via AJAX
+     */
+    public function update_password()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        // Get posted data
+        $current_password = $this->input->post('current_password');
+        $new_password = $this->input->post('new_password');
+        $confirm_password = $this->input->post('confirm_password');
+
+        // Validate inputs
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            echo json_encode(['success' => false, 'message' => 'Tous les champs sont requis']);
+            return;
+        }
+
+        if ($new_password !== $confirm_password) {
+            echo json_encode(['success' => false, 'message' => 'Les mots de passe ne correspondent pas']);
+            return;
+        }
+
+        if (strlen($new_password) < 6) {
+            echo json_encode(['success' => false, 'message' => 'Le mot de passe doit contenir au moins 6 caractères']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load clients model
+        $this->load->model('clients_model');
+
+        // Get current client data
+        $client = $this->clients_model->get($client_id);
+
+        // Verify current password
+        $this->load->library('App_password_hasher');
+        $hasher = new App_password_hasher();
+
+        if (!$hasher->CheckPassword($current_password, $client->password)) {
+            echo json_encode(['success' => false, 'message' => 'Mot de passe actuel incorrect']);
+            return;
+        }
+
+        // Update password
+        $hashed_password = $hasher->HashPassword($new_password);
+
+        $this->db->where('userid', $client_id);
+        $this->db->update(db_prefix() . 'clients', [
+            'password' => $hashed_password,
+            'last_password_change' => date('Y-m-d H:i:s')
+        ]);
+
+        log_activity('Patient Password Changed [Client ID: ' . $client_id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Mot de passe modifié avec succès']);
+    }
 }
 
