@@ -69,6 +69,9 @@ class Consultations extends AdminController
                 $data = $this->input->post();
                 log_activity('DEBUG: POST data received - ' . json_encode($data));
 
+                // Remove fields that don't exist in database
+                unset($data['height_patient']); // Used only for BMI calculation in form
+
                 // Set dietitian if not set
                 if (!isset($data['dietitian_id'])) {
                     $data['dietitian_id'] = get_staff_user_id();
@@ -152,6 +155,9 @@ class Consultations extends AdminController
 
         if ($this->input->post()) {
             $update_data = $this->input->post();
+
+            // Remove fields that don't exist in database
+            unset($update_data['height_patient']); // Used only for BMI calculation in form
 
             // Check if consultation was cancelled
             $was_cancelled = (isset($update_data['status']) &&
