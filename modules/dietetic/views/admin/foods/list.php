@@ -44,39 +44,39 @@
     letter-spacing: 0.5px;
 }
 
-.stat-card.total {
+.stat-card.food-total {
     border-left: 4px solid #f39c12;
 }
 
-.stat-card.total .stat-icon,
-.stat-card.total .stat-value {
+.stat-card.food-total .stat-icon,
+.stat-card.food-total .stat-value {
     color: #f39c12;
 }
 
-.stat-card.active {
+.stat-card.food-active {
     border-left: 4px solid #27ae60;
 }
 
-.stat-card.active .stat-icon,
-.stat-card.active .stat-value {
+.stat-card.food-active .stat-icon,
+.stat-card.food-active .stat-value {
     color: #27ae60;
 }
 
-.stat-card.categories {
+.stat-card.food-categories {
     border-left: 4px solid #3498db;
 }
 
-.stat-card.categories .stat-icon,
-.stat-card.categories .stat-value {
+.stat-card.food-categories .stat-icon,
+.stat-card.food-categories .stat-value {
     color: #3498db;
 }
 
-.stat-card.calories {
+.stat-card.food-calories {
     border-left: 4px solid #e67e22;
 }
 
-.stat-card.calories .stat-icon,
-.stat-card.calories .stat-value {
+.stat-card.food-calories .stat-icon,
+.stat-card.food-calories .stat-value {
     color: #e67e22;
 }
 </style>
@@ -139,7 +139,7 @@
 
         <div class="stats-row row" style="margin-bottom: 20px;">
             <div class="col-md-3">
-                <div class="stat-card total">
+                <div class="stat-card food-total">
                     <div class="stat-icon">
                         <i class="fa fa-database"></i>
                     </div>
@@ -148,7 +148,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card active">
+                <div class="stat-card food-active">
                     <div class="stat-icon">
                         <i class="fa fa-check-circle"></i>
                     </div>
@@ -157,7 +157,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card categories">
+                <div class="stat-card food-categories">
                     <div class="stat-icon">
                         <i class="fa fa-tags"></i>
                     </div>
@@ -166,7 +166,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card calories">
+                <div class="stat-card food-calories">
                     <div class="stat-icon">
                         <i class="fa fa-fire"></i>
                     </div>
