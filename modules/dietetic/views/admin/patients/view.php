@@ -6,11 +6,12 @@
 <style>
 /* Modern Patient View Styles */
 :root {
-    --primary-purple: #667eea;
-    --primary-purple-dark: #764ba2;
+    --primary-color: #01807B;
+    --primary-dark: #015a57;
+    --secondary-color: #F3911D;
     --weight-blue: #3498db;
     --current-green: #2ecc71;
-    --target-orange: #f39c12;
+    --target-orange: #F3911D;
     --bmi-red: #e74c3c;
 }
 
@@ -160,6 +161,49 @@ html {
     min-height: 300px;
     color: #95a5a6;
 }
+
+/* Upload Zone for Documents */
+.upload-zone-documents {
+    border: 3px dashed #4299e1;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(66, 153, 225, 0.05);
+    margin-top: 12px;
+}
+
+.upload-zone-documents:hover {
+    background: rgba(66, 153, 225, 0.1);
+    border-color: #2b6cb0;
+    transform: translateY(-2px);
+}
+
+.upload-zone-documents i {
+    font-size: 48px;
+    color: #4299e1;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.upload-zone-documents p {
+    margin: 0;
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.upload-zone-documents small {
+    color: #718096;
+    display: block;
+    margin-top: 8px;
+}
+
+.upload-zone-documents.uploading {
+    opacity: 0.6;
+    pointer-events: none;
+}
 </style>
 
 <div id="wrapper">
@@ -168,7 +212,7 @@ html {
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s patient-header-enhanced">
-                    <div class="panel-body" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;">
+                    <div class="panel-body" style="background: linear-gradient(135deg, #01807B 0%, #015a57 100%); color: white; border-radius: 10px;">
                         <div class="row">
                             <div class="col-md-9">
                                 <h2 style="color: white; margin-top: 10px;">
@@ -264,8 +308,8 @@ html {
                 <!-- Patient Information -->
                 <div class="panel_s">
                     <div class="panel-body">
-                        <h4 style="border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px;">
-                            <i class="fa fa-info-circle" style="color: #667eea;"></i> <?php echo _l('dietetic_patient_profile'); ?>
+                        <h4 style="border-bottom: 3px solid #01807B; padding-bottom: 10px; margin-bottom: 20px;">
+                            <i class="fa fa-info-circle" style="color: #01807B;"></i> <?php echo _l('dietetic_patient_profile'); ?>
                         </h4>
 
                         <div class="row">
@@ -432,8 +476,8 @@ html {
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="clearfix">
-                            <h4 class="pull-left" style="border-bottom: 3px solid #9b59b6; padding-bottom: 10px; margin-bottom: 20px;">
-                                <i class="fa fa-list-alt" style="color: #9b59b6;"></i> <?php echo _l('dietetic_programs'); ?>
+                            <h4 class="pull-left" style="border-bottom: 3px solid #01807B; padding-bottom: 10px; margin-bottom: 20px;">
+                                <i class="fa fa-list-alt" style="color: #01807B;"></i> <?php echo _l('dietetic_programs'); ?>
                             </h4>
                             <?php if (dietetic_has_permission('create')) { ?>
                                 <a href="<?php echo admin_url('dietetic/programs/create?patient_id=' . $patient->id); ?>" class="btn btn-primary pull-right">
@@ -595,6 +639,87 @@ html {
                     </div>
                 </div>
                 <?php } ?>
+
+                <!-- Documents Médicaux -->
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="clearfix">
+                            <h4 class="pull-left" style="border-bottom: 3px solid #4299e1; padding-bottom: 10px; margin-bottom: 20px;">
+                                <i class="fa fa-file-text" style="color: #4299e1;"></i> Documents Médicaux
+                            </h4>
+                        </div>
+                        <div class="clearfix"></div>
+
+                        <?php if (dietetic_has_permission('edit')) { ?>
+                        <!-- Upload Zone -->
+                        <div class="upload-zone-documents" onclick="document.getElementById('medicalDocumentInput').click()">
+                            <i class="fa fa-cloud-upload"></i>
+                            <p>Cliquez ou glissez pour uploader des documents</p>
+                            <small>PDF, images (max 10MB par fichier)</small>
+                        </div>
+                        <input type="file" id="medicalDocumentInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                        <?php } ?>
+
+                        <!-- Documents List -->
+                        <div id="documentsList" style="margin-top: 20px;">
+                            <?php if (!empty($documents)) { ?>
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr style="background: #f8f9fa;">
+                                            <th><i class="fa fa-file"></i> Nom du fichier</th>
+                                            <th><i class="fa fa-calendar"></i> Date d'upload</th>
+                                            <th><i class="fa fa-hdd-o"></i> Taille</th>
+                                            <th class="text-center"><i class="fa fa-cog"></i> Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($documents as $doc) {
+                                            $file_icon = 'fa-file-o';
+                                            if ($doc->file_type == 'application/pdf') {
+                                                $file_icon = 'fa-file-pdf-o';
+                                            } elseif (strpos($doc->file_type, 'image') !== false) {
+                                                $file_icon = 'fa-file-image-o';
+                                            }
+
+                                            $file_size = $doc->file_size;
+                                            $size_formatted = $file_size < 1024 ? $file_size . ' B' :
+                                                            ($file_size < 1048576 ? round($file_size / 1024, 2) . ' KB' :
+                                                            round($file_size / 1048576, 2) . ' MB');
+                                        ?>
+                                            <tr data-document-id="<?php echo $doc->id; ?>">
+                                                <td>
+                                                    <i class="fa <?php echo $file_icon; ?>" style="color: #4299e1; margin-right: 8px;"></i>
+                                                    <strong><?php echo htmlspecialchars($doc->original_filename); ?></strong>
+                                                </td>
+                                                <td><?php echo date('d/m/Y à H:i', strtotime($doc->uploaded_at)); ?></td>
+                                                <td><?php echo $size_formatted; ?></td>
+                                                <td class="text-center">
+                                                    <a href="<?php echo admin_url('dietetic/patients/download_document/' . $doc->id); ?>"
+                                                       class="btn btn-info btn-sm"
+                                                       title="Télécharger">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                    <?php if (dietetic_has_permission('delete')) { ?>
+                                                        <button type="button"
+                                                                class="btn btn-danger btn-sm delete-document"
+                                                                data-document-id="<?php echo $doc->id; ?>"
+                                                                title="Supprimer">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    <?php } ?>
+                                                </td>
+                                            </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            <?php } else { ?>
+                                <div class="alert alert-info" style="border-left: 4px solid #4299e1;">
+                                    <i class="fa fa-info-circle"></i> Aucun document médical pour ce patient.
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Sidebar -->
@@ -602,8 +727,8 @@ html {
                 <!-- Quick Actions -->
                 <div class="panel_s">
                     <div class="panel-body">
-                        <h4 style="border-bottom: 3px solid #f39c12; padding-bottom: 10px; margin-bottom: 15px;">
-                            <i class="fa fa-bolt" style="color: #f39c12;"></i> Actions Rapides
+                        <h4 style="border-bottom: 3px solid #F3911D; padding-bottom: 10px; margin-bottom: 15px;">
+                            <i class="fa fa-bolt" style="color: #F3911D;"></i> Actions Rapides
                         </h4>
                         <?php if (dietetic_has_permission('create')) { ?>
                             <a href="<?php echo admin_url('dietetic/measurements/create?patient_id=' . $patient->id); ?>" class="btn btn-success btn-block btn-lg" style="margin-bottom: 10px;">
@@ -866,6 +991,119 @@ html {
             }, 'json');
         }
     }
+
+    // Document Upload Handler
+    $('#medicalDocumentInput').on('change', function(e) {
+        var file = e.target.files[0];
+
+        if (!file) return;
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+            alert_float('danger', 'Le fichier dépasse 10MB');
+            this.value = '';
+            return;
+        }
+
+        // Validate file type
+        var allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (allowedTypes.indexOf(file.type) === -1) {
+            alert_float('danger', 'Type de fichier non autorisé (PDF ou images uniquement)');
+            this.value = '';
+            return;
+        }
+
+        // Show uploading state
+        $('.upload-zone-documents').addClass('uploading');
+        $('.upload-zone-documents p').text('Upload en cours...');
+
+        // Upload file
+        var formData = new FormData();
+        formData.append('document', file);
+
+        $.ajax({
+            url: '<?php echo admin_url('dietetic/patients/upload_document/' . $patient->id); ?>',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    location.reload();
+                } else {
+                    alert_float('danger', response.message);
+                    $('.upload-zone-documents').removeClass('uploading');
+                    $('.upload-zone-documents p').text('Cliquez ou glissez pour uploader des documents');
+                }
+            },
+            error: function() {
+                alert_float('danger', 'Erreur lors de l\'upload du document');
+                $('.upload-zone-documents').removeClass('uploading');
+                $('.upload-zone-documents p').text('Cliquez ou glissez pour uploader des documents');
+            }
+        });
+
+        // Reset input
+        this.value = '';
+    });
+
+    // Drag and drop support
+    $('.upload-zone-documents').on('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).css('background', 'rgba(66, 153, 225, 0.15)');
+    });
+
+    $('.upload-zone-documents').on('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).css('background', 'rgba(66, 153, 225, 0.05)');
+    });
+
+    $('.upload-zone-documents').on('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).css('background', 'rgba(66, 153, 225, 0.05)');
+
+        var files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            $('#medicalDocumentInput')[0].files = files;
+            $('#medicalDocumentInput').trigger('change');
+        }
+    });
+
+    // Delete document handler
+    $(document).on('click', '.delete-document', function() {
+        var documentId = $(this).data('document-id');
+        var $row = $(this).closest('tr');
+
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/patients/delete_document/'); ?>' + documentId,
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert_float('success', response.message);
+                        $row.fadeOut(300, function() {
+                            $(this).remove();
+
+                            // Check if table is empty
+                            if ($('#documentsList tbody tr').length === 0) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        alert_float('danger', response.message);
+                    }
+                },
+                error: function() {
+                    alert_float('danger', 'Erreur lors de la suppression du document');
+                }
+            });
+        }
+    });
 </script>
 
 <?php init_tail(); ?>
