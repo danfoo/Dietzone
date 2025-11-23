@@ -226,7 +226,7 @@ html {
                             </div>
                             <div class="col-md-3 text-right">
                                 <?php if (dietetic_has_permission('edit')) { ?>
-                                    <a href="<?php echo admin_url('dietetic/patients/edit/' . $patient->id); ?>" class="btn btn-light btn-lg" style="margin-top: 15px;">
+                                    <a href="<?php echo admin_url('dietetic/patients/edit/' . $patient->id); ?>" class="btn btn-lg" style="margin-top: 15px; background: white; color: #01807B; border: 2px solid white; font-weight: 600;">
                                         <i class="fa fa-pencil"></i> <?php echo _l('edit'); ?>
                                     </a>
                                 <?php } ?>
@@ -910,7 +910,107 @@ html {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     $(function() {
-        dietetic.loadWeightChart(<?php echo $patient->id; ?>, 'weightChart');
+        // Weight Evolution Chart
+        <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
+        var ctx = document.getElementById('weightChart');
+        if (ctx) {
+            ctx = ctx.getContext('2d');
+            var weightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [
+                        <?php foreach ($weight_evolution as $point) {
+                            echo '"' . date('d/m/Y', strtotime($point->measurement_date)) . '",';
+                        } ?>
+                    ],
+                    datasets: [{
+                        label: 'Poids (kg)',
+                        data: [
+                            <?php foreach ($weight_evolution as $point) {
+                                echo $point->weight . ',';
+                            } ?>
+                        ],
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#2ecc71',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                                    size: 13
+                                },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                            },
+                            bodyFont: {
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                            },
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        <?php } else { ?>
+        // No weight data available - show message
+        var chartCanvas = document.getElementById('weightChart');
+        if (chartCanvas) {
+            var ctx = chartCanvas.getContext('2d');
+            ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif';
+            ctx.fillStyle = '#95a5a6';
+            ctx.textAlign = 'center';
+            ctx.fillText('Aucune donnée d\'évolution disponible', chartCanvas.width / 2, chartCanvas.height / 2);
+            ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif';
+            ctx.fillText('Ajoutez au moins 2 mesures pour voir l\'évolution', chartCanvas.width / 2, chartCanvas.height / 2 + 25);
+        }
+        <?php } ?>
 
         // Initialize selectpicker if available
         if ($.fn.selectpicker) {
