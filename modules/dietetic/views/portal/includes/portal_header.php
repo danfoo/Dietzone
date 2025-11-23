@@ -732,12 +732,12 @@
         .content-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0;
+            padding: 20px;
         }
 
         @media (max-width: 768px) {
             .content-container {
-                padding: 0;
+                padding: 15px;
             }
 
             /* Optimisations pour le menu mobile */
