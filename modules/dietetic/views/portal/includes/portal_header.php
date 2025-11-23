@@ -131,8 +131,7 @@
         .header-profile-btn {
             width: 40px;
             height: 40px;
-            background: white;
-            border: 2px solid #01807B;
+            background: #e9ecef;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -141,12 +140,12 @@
             transition: all 0.3s;
             overflow: hidden;
             text-decoration: none;
-            box-shadow: 0 2px 8px rgba(1, 128, 123, 0.2);
+            margin-right: auto; /* Push to the left */
         }
 
         .header-profile-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+            transform: scale(1.05);
+            background: #dee2e6;
             text-decoration: none;
         }
 
@@ -707,10 +706,6 @@
 <body>
     <!-- HEADER MAGNIFIQUE -->
     <header class="app-header">
-        <button class="hamburger-btn" id="menuToggle">
-            <i class="fa fa-bars"></i>
-        </button>
-
         <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="header-profile-btn" title="Mon Profil">
             <?php
             // Get contact for profile image
@@ -737,8 +732,9 @@
             }
 
             if ($header_contact && !empty($header_contact->profile_image)):
+                $header_profile_image_url = base_url('uploads/client_profile_images/' . $header_contact->id . '/thumb_' . $header_contact->profile_image);
             ?>
-                <img src="<?php echo contact_profile_image_url($header_contact->id, 'small'); ?>" alt="Profil">
+                <img src="<?php echo $header_profile_image_url; ?>" alt="Profil">
             <?php else:
                 // Afficher les initiales
                 $header_name = isset($client->company) ? $client->company : (isset($patient->client->company) ? $patient->client->company : 'U');
@@ -757,6 +753,10 @@
         <button class="notification-btn" id="notificationBtn">
             <i class="fa fa-bell"></i>
             <span class="notification-badge" style="display: none;">0</span>
+        </button>
+
+        <button class="hamburger-btn" id="menuToggle">
+            <i class="fa fa-bars"></i>
         </button>
     </header>
 

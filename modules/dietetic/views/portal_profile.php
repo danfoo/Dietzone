@@ -746,8 +746,9 @@ $page_title = 'Mon Profil';
                 <?php
                 // Utiliser la photo de profil Perfex si disponible
                 if (isset($contact) && $contact && !empty($contact->profile_image)):
+                    $profile_image_url = base_url('uploads/client_profile_images/' . $contact->id . '/thumb_' . $contact->profile_image);
                 ?>
-                    <img src="<?php echo contact_profile_image_url($contact->id, 'small'); ?>" alt="<?php echo htmlspecialchars($client->company); ?>" id="profileImage">
+                    <img src="<?php echo $profile_image_url; ?>" alt="<?php echo htmlspecialchars($client->company); ?>" id="profileImage">
                 <?php else:
                     // Afficher les initiales
                     $names = explode(' ', trim($client->company));
