@@ -907,6 +907,11 @@
                 <span>Mes Mesures</span>
             </a>
 
+            <a href="<?php echo site_url('clients/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
+                <i class="fa fa-file-text"></i>
+                <span>Mon plan</span>
+            </a>
+
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'consultations') ? 'active' : ''; ?>">
