@@ -859,6 +859,43 @@ html {
                         <?php } ?>
                     </div>
                 </div>
+
+                <!-- Contact d'Urgence -->
+                <?php if (!empty($patient->emergency_contact) || !empty($patient->emergency_phone)) { ?>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 style="border-bottom: 3px solid #F3911D; padding-bottom: 10px; margin-bottom: 15px;">
+                            <i class="fa fa-phone-square" style="color: #F3911D;"></i> Contact d'Urgence
+                        </h4>
+
+                        <div style="padding: 15px; background: #fff7ed; border-left: 4px solid #F3911D; border-radius: 8px;">
+                            <?php if (!empty($patient->emergency_contact)) { ?>
+                                <div style="margin-bottom: 12px;">
+                                    <div style="font-size: 12px; color: #F3911D; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                                        <i class="fa fa-user"></i> Nom du contact
+                                    </div>
+                                    <div style="font-size: 16px; color: #2c3e50; font-weight: 600;">
+                                        <?php echo htmlspecialchars($patient->emergency_contact); ?>
+                                    </div>
+                                </div>
+                            <?php } ?>
+
+                            <?php if (!empty($patient->emergency_phone)) { ?>
+                                <div>
+                                    <div style="font-size: 12px; color: #F3911D; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                                        <i class="fa fa-phone"></i> Téléphone
+                                    </div>
+                                    <div style="font-size: 16px; color: #2c3e50; font-weight: 600;">
+                                        <a href="tel:<?php echo htmlspecialchars($patient->emergency_phone); ?>" style="color: #01807B; text-decoration: none;">
+                                            <?php echo htmlspecialchars($patient->emergency_phone); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
             </div>
         </div>
     </div>
