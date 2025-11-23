@@ -84,7 +84,7 @@ $this->load->view('portal/includes/portal_header');
         background-attachment: fixed;
         margin: 0;
         padding: 0;
-        padding-top: 80px;
+        padding-top: 65px;
         padding-bottom: 80px;
         min-height: 100vh;
         color: var(--text-medium);
@@ -93,8 +93,14 @@ $this->load->view('portal/includes/portal_header');
 
     .container-fluid {
         padding: 20px;
-        max-width: 1600px;
+        max-width: 95%;
         margin: 0 auto;
+    }
+
+    @media (min-width: 1400px) {
+        .container-fluid {
+            max-width: 1800px;
+        }
     }
 
     /* Page header */
@@ -247,18 +253,18 @@ $this->load->view('portal/includes/portal_header');
 
     @media (max-width: 768px) {
         .date-navigation {
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
         .date-nav-btn {
-            width: 100%;
-            justify-content: center;
+            flex: 0 0 auto;
         }
 
         .date-display {
+            flex: 1 1 100%;
             order: -1;
-            width: 100%;
             justify-content: center;
         }
 
@@ -351,26 +357,8 @@ $this->load->view('portal/includes/portal_header');
         box-shadow: var(--shadow-sm);
     }
 
-    .meal-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
-        opacity: 0;
-        transition: var(--transition);
-    }
-
     .meal-card:hover {
-        border-color: var(--primary-color);
         box-shadow: var(--shadow-md);
-        transform: translateX(4px);
-    }
-
-    .meal-card:hover::before {
-        opacity: 1;
     }
 
     .meal-card:last-child {
@@ -384,13 +372,7 @@ $this->load->view('portal/includes/portal_header');
         box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
     }
 
-    .meal-card.has-photo::before {
-        background: linear-gradient(180deg, var(--success-color), var(--success-light));
-        opacity: 1;
-    }
-
     .meal-card.has-photo:hover {
-        border-color: var(--success-color);
         box-shadow: 0 8px 24px rgba(72, 187, 120, 0.25);
     }
 

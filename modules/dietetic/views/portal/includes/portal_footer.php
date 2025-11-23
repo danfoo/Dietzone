@@ -30,12 +30,12 @@
 
         <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'my_dietitians') ? 'active' : ''; ?>">
             <i class="fa fa-user-md footer-icon"></i>
-            <span class="footer-label">Contact</span>
+            <span class="footer-label">Mon coach</span>
         </a>
 
-        <a href="<?php echo site_url('clients/profile'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
-            <i class="fa fa-user footer-icon"></i>
-            <span class="footer-label">Profil</span>
+        <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">
+            <i class="fa fa-calendar footer-icon"></i>
+            <span class="footer-label">Programmes</span>
         </a>
     </footer>
 
