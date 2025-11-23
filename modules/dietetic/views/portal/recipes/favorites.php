@@ -89,7 +89,7 @@ body {
     color: white;
     padding: 30px;
     border-radius: var(--border-radius-lg);
-    margin-bottom: 30px;
+    margin-bottom: 45px;
     box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
@@ -416,21 +416,25 @@ body {
                                     <?php echo number_format($recipe->average_rating, 1); ?>
                                 </div>
                             <?php endif; ?>
-                            <div class="recipe-meta-item">
-                                <i class="fa fa-heart"></i>
-                                Ajouté le <?php echo date('d/m/Y', strtotime($recipe->added_at)); ?>
-                            </div>
+                            <?php if ($recipe->category) : ?>
+                                <div class="recipe-meta-item">
+                                    <i class="fa fa-tag"></i>
+                                    <?php
+                                    $category_labels = [
+                                        'breakfast' => 'Petit-déjeuner',
+                                        'lunch' => 'Déjeuner',
+                                        'dinner' => 'Dîner',
+                                        'snack' => 'Collation',
+                                        'smoothie' => 'Smoothie',
+                                        'juice' => 'Jus naturel',
+                                        'beverage' => 'Boisson',
+                                        'dessert' => 'Dessert'
+                                    ];
+                                    echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                    ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
-
-                        <?php if (!empty($recipe->tags)) : ?>
-                            <div class="recipe-tags">
-                                <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                    <span class="recipe-tag">
-                                        <?php echo htmlspecialchars($tag); ?>
-                                    </span>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
 
                         <div class="recipe-actions">
                             <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
