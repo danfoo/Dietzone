@@ -83,10 +83,6 @@
             <i class="fa fa-cutlery"></i>
             <span>Plans de Repas</span>
         </a>
-        <a href="<?php echo site_url('clients/invoices'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'invoices' ? 'active' : ''; ?>">
-            <i class="fa fa-file-text"></i>
-            <span>Mon plan</span>
-        </a>
         <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'food_surveys' ? 'active' : ''; ?>">
             <i class="fa fa-clipboard-list"></i>
@@ -102,6 +98,10 @@
         <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'measurements' ? 'active' : ''; ?>">
             <i class="fa fa-heartbeat"></i>
             <span>Mes Mesures</span>
+        </a>
+        <a href="<?php echo site_url('clients/invoices'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'invoices' ? 'active' : ''; ?>">
+            <i class="fa fa-file-text"></i>
+            <span>Mon plan</span>
         </a>
         <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="mobile-menu-item <?php echo isset($active_page) && $active_page == 'dietitians' ? 'active' : ''; ?>">
             <i class="fa fa-user-md"></i>
