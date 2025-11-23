@@ -4926,10 +4926,13 @@ class Portal extends App_Controller
 
         log_activity('Contact Profile Image Updated [Contact ID: ' . $contact_id . ', File: ' . $filename . ']');
 
+        // Build direct URL to the uploaded image
+        $image_url = base_url('uploads/client_profile_images/' . $contact_id . '/thumb_' . $filename);
+
         echo json_encode([
             'success' => true,
             'message' => 'Photo de profil mise à jour avec succès',
-            'image_url' => contact_profile_image_url($contact_id, 'small')
+            'image_url' => $image_url
         ]);
     }
 

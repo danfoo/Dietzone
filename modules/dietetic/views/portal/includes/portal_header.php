@@ -127,6 +127,46 @@
             box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
         }
 
+        /* Header Profile Button */
+        .header-profile-btn {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #01807B;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(1, 128, 123, 0.2);
+        }
+
+        .header-profile-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+            text-decoration: none;
+        }
+
+        .header-profile-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-profile-initials {
+            font-size: 14px;
+            font-weight: 700;
+            color: #01807B;
+            text-transform: uppercase;
+        }
+
         /* Notification Panel */
         .notification-panel {
             position: fixed;
@@ -670,6 +710,49 @@
         <button class="hamburger-btn" id="menuToggle">
             <i class="fa fa-bars"></i>
         </button>
+
+        <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="header-profile-btn" title="Mon Profil">
+            <?php
+            // Get contact for profile image
+            $header_contact = null;
+            $header_contact_id = null;
+
+            if (isset($client) && !empty($client->default_contact)) {
+                $header_contact_id = $client->default_contact;
+            } elseif (isset($client) && isset($client->userid)) {
+                $CI = &get_instance();
+                $CI->load->model('clients_model');
+                $contacts = $CI->clients_model->get_contacts($client->userid);
+                if (!empty($contacts)) {
+                    $header_contact_id = $contacts[0]['id'];
+                }
+            }
+
+            if ($header_contact_id) {
+                $CI = &get_instance();
+                if (!isset($CI->clients_model)) {
+                    $CI->load->model('clients_model');
+                }
+                $header_contact = $CI->clients_model->get_contact($header_contact_id);
+            }
+
+            if ($header_contact && !empty($header_contact->profile_image)):
+            ?>
+                <img src="<?php echo contact_profile_image_url($header_contact->id, 'small'); ?>" alt="Profil">
+            <?php else:
+                // Afficher les initiales
+                $header_name = isset($client->company) ? $client->company : (isset($patient->client->company) ? $patient->client->company : 'U');
+                $header_names = explode(' ', trim($header_name));
+                $header_initials = '';
+                if (count($header_names) >= 2) {
+                    $header_initials = strtoupper(substr($header_names[0], 0, 1) . substr($header_names[1], 0, 1));
+                } else {
+                    $header_initials = strtoupper(substr($header_name, 0, 2));
+                }
+            ?>
+                <div class="header-profile-initials"><?php echo $header_initials; ?></div>
+            <?php endif; ?>
+        </a>
 
         <button class="notification-btn" id="notificationBtn">
             <i class="fa fa-bell"></i>
