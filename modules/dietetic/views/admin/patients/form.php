@@ -114,9 +114,15 @@ h4.no-margin:before {
 .form-control, select.form-control, textarea.form-control {
     border-radius: 8px;
     border: 2px solid var(--border-color);
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 14px 16px;
+    font-size: 15px;
+    min-height: 48px;
     transition: var(--transition);
+}
+
+textarea.form-control {
+    min-height: 100px;
+    padding: 14px 16px;
 }
 
 .form-control:focus, select.form-control:focus, textarea.form-control:focus {
