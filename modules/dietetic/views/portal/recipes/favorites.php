@@ -66,6 +66,11 @@ body {
     line-height: 1.6;
 }
 
+/* Override content-container padding for this page */
+.content-container {
+    padding: 0 !important;
+}
+
 .container {
     padding: 15px;
     max-width: calc(100% - 30px);

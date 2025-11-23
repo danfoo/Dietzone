@@ -97,10 +97,22 @@ body {
 
 /* === MOBILE FIRST DESIGN === */
 
+/* Override content-container padding for this page */
+.content-container {
+    padding: 0 !important;
+}
+
 /* Base Container */
 .container {
-    padding: 8px;
-    max-width: 100%;
+    padding: 15px;
+    max-width: calc(100% - 30px);
+    margin: 0 auto;
+}
+
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1800px;
+    }
 }
 
 /* Filter Section */
