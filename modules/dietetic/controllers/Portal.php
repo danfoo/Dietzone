@@ -4462,9 +4462,22 @@ class Portal extends App_Controller
 
         // Get contact info for profile image
         $contact = null;
+        $contact_id = null;
+
         if (!empty($client->default_contact)) {
-            $contact = $this->clients_model->get_contact($client->default_contact);
+            $contact_id = $client->default_contact;
+        } else {
+            // Get all contacts for this client
+            $contacts = $this->clients_model->get_contacts($client->userid);
+            if (!empty($contacts)) {
+                $contact_id = $contacts[0]['id'];
+            }
         }
+
+        if ($contact_id) {
+            $contact = $this->clients_model->get_contact($contact_id);
+        }
+
         $data['contact'] = $contact;
 
         // Get latest measurement for current weight
@@ -4488,6 +4501,21 @@ class Portal extends App_Controller
             }
         } else {
             $data['age'] = null;
+        }
+
+        // Get patient documents
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
+
+        try {
+            $data['documents'] = $this->dietetic_patient_documents_model->get_by_patient($patient->id);
+        } catch (Exception $e) {
+            log_activity('Error loading patient documents: ' . $e->getMessage());
+            $data['documents'] = [];
         }
 
         log_activity('Loading profile view');
@@ -4655,8 +4683,14 @@ class Portal extends App_Controller
 
         $client_id = get_client_user_id();
 
-        // Load model
+        // Load models
         $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
 
         // Get patient
         $patient = $this->dietetic_patients_model->get_by_client($client_id);
@@ -4721,12 +4755,24 @@ class Portal extends App_Controller
 
         // Move uploaded file
         if (move_uploaded_file($_FILES['document']['tmp_name'], $filepath)) {
-            log_activity('Medical Document Uploaded [Patient ID: ' . $patient->id . ', File: ' . $filename . ']');
+            // Save document metadata to database
+            $document_data = [
+                'patient_id' => $patient->id,
+                'filename' => $filename,
+                'original_filename' => $_FILES['document']['name'],
+                'file_type' => $file_type,
+                'file_size' => $_FILES['document']['size']
+            ];
+
+            $document_id = $this->dietetic_patient_documents_model->add($document_data);
+
+            log_activity('Medical Document Uploaded [Patient ID: ' . $patient->id . ', File: ' . $filename . ', Document ID: ' . $document_id . ']');
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Document uploadé avec succès',
-                'filename' => $filename
+                'filename' => $filename,
+                'document_id' => $document_id
             ]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde du fichier']);
@@ -4763,12 +4809,27 @@ class Portal extends App_Controller
 
         // Get client info
         $client = $this->clients_model->get($patient->client_id);
-        if (!$client || empty($client->default_contact)) {
-            echo json_encode(['success' => false, 'message' => 'Contact non trouvé']);
+        if (!$client) {
+            echo json_encode(['success' => false, 'message' => 'Client non trouvé']);
             return;
         }
 
-        $contact_id = $client->default_contact;
+        // Get contact ID - use default_contact or find first contact for this client
+        $contact_id = null;
+        if (!empty($client->default_contact)) {
+            $contact_id = $client->default_contact;
+        } else {
+            // Get all contacts for this client
+            $contacts = $this->clients_model->get_contacts($client->userid);
+            if (!empty($contacts)) {
+                $contact_id = $contacts[0]['id'];
+            }
+        }
+
+        if (!$contact_id) {
+            echo json_encode(['success' => false, 'message' => 'Aucun contact trouvé pour ce client']);
+            return;
+        }
 
         // Check if file was uploaded
         if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {

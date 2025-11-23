@@ -926,10 +926,44 @@ $page_title = 'Mon Profil';
         <input type="file" id="documentInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
 
         <div class="documents-grid" id="documentsGrid">
-            <!-- Documents will be loaded here dynamically -->
-            <div class="text-content empty" style="grid-column: 1 / -1;">
-                Aucun document médical uploadé
-            </div>
+            <?php if (!empty($documents)): ?>
+                <?php foreach ($documents as $doc): ?>
+                    <?php
+                    // Determine icon based on file type
+                    $icon = 'fa-file';
+                    if (strpos($doc->file_type, 'pdf') !== false) {
+                        $icon = 'fa-file-pdf-o';
+                    } elseif (strpos($doc->file_type, 'image') !== false) {
+                        $icon = 'fa-file-image-o';
+                    }
+
+                    // Format file size
+                    $size = $doc->file_size;
+                    if ($size < 1024) {
+                        $size_text = $size . ' B';
+                    } elseif ($size < 1024 * 1024) {
+                        $size_text = round($size / 1024, 1) . ' KB';
+                    } else {
+                        $size_text = round($size / (1024 * 1024), 1) . ' MB';
+                    }
+
+                    // Format date
+                    $date = new DateTime($doc->uploaded_at);
+                    $date_text = $date->format('d/m/Y');
+                    ?>
+                    <div class="document-item">
+                        <i class="fa <?php echo $icon; ?>"></i>
+                        <div class="document-info">
+                            <strong><?php echo htmlspecialchars($doc->original_filename); ?></strong>
+                            <small><?php echo $size_text; ?> • <?php echo $date_text; ?></small>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="text-content empty" style="grid-column: 1 / -1;">
+                    Aucun document médical uploadé
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
