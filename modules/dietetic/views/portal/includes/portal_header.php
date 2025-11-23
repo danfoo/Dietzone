@@ -129,23 +129,57 @@
 
         /* Header Profile Button */
         .header-profile-btn {
-            width: 40px;
-            height: 40px;
-            background: #e9ecef;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #01807B, #F3911D, #01807B);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
-            overflow: hidden;
             text-decoration: none;
             margin-right: auto; /* Push to the left */
+            padding: 2px;
+            position: relative;
+        }
+
+        .header-profile-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, #01807B, #F3911D, #4CAF50, #01807B);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 1;
+            animation: rotate-gradient 3s linear infinite;
+        }
+
+        @keyframes rotate-gradient {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .header-profile-btn-inner {
+            width: 40px;
+            height: 40px;
+            background: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
         .header-profile-btn:hover {
             transform: scale(1.05);
-            background: #dee2e6;
             text-decoration: none;
         }
 
@@ -164,6 +198,46 @@
             font-weight: 700;
             color: #01807B;
             text-transform: uppercase;
+        }
+
+        /* Header Logo */
+        .header-logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .header-logo img {
+            height: 100%;
+            max-width: 120px;
+            object-fit: contain;
+        }
+
+        .header-logo-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #01807B;
+        }
+
+        .header-logo-text i {
+            font-size: 24px;
+        }
+
+        .header-logo-text span {
+            display: none;
+        }
+
+        @media (min-width: 480px) {
+            .header-logo-text span {
+                display: inline;
+            }
         }
 
         /* Notification Panel */
@@ -707,47 +781,68 @@
     <!-- HEADER MAGNIFIQUE -->
     <header class="app-header">
         <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="header-profile-btn" title="Mon Profil">
-            <?php
-            // Get contact for profile image
-            $header_contact = null;
-            $header_contact_id = null;
+            <div class="header-profile-btn-inner">
+                <?php
+                // Get contact for profile image
+                $header_contact = null;
+                $header_contact_id = null;
 
-            if (isset($client) && !empty($client->default_contact)) {
-                $header_contact_id = $client->default_contact;
-            } elseif (isset($client) && isset($client->userid)) {
-                $CI = &get_instance();
-                $CI->load->model('clients_model');
-                $contacts = $CI->clients_model->get_contacts($client->userid);
-                if (!empty($contacts)) {
-                    $header_contact_id = $contacts[0]['id'];
-                }
-            }
-
-            if ($header_contact_id) {
-                $CI = &get_instance();
-                if (!isset($CI->clients_model)) {
+                if (isset($client) && !empty($client->default_contact)) {
+                    $header_contact_id = $client->default_contact;
+                } elseif (isset($client) && isset($client->userid)) {
+                    $CI = &get_instance();
                     $CI->load->model('clients_model');
+                    $contacts = $CI->clients_model->get_contacts($client->userid);
+                    if (!empty($contacts)) {
+                        $header_contact_id = $contacts[0]['id'];
+                    }
                 }
-                $header_contact = $CI->clients_model->get_contact($header_contact_id);
+
+                if ($header_contact_id) {
+                    $CI = &get_instance();
+                    if (!isset($CI->clients_model)) {
+                        $CI->load->model('clients_model');
+                    }
+                    $header_contact = $CI->clients_model->get_contact($header_contact_id);
+                }
+
+                if ($header_contact && !empty($header_contact->profile_image)):
+                    $header_profile_image_url = base_url('uploads/client_profile_images/' . $header_contact->id . '/thumb_' . $header_contact->profile_image);
+                ?>
+                    <img src="<?php echo $header_profile_image_url; ?>" alt="Profil">
+                <?php else:
+                    // Afficher les initiales
+                    $header_name = isset($client->company) ? $client->company : (isset($patient->client->company) ? $patient->client->company : 'U');
+                    $header_names = explode(' ', trim($header_name));
+                    $header_initials = '';
+                    if (count($header_names) >= 2) {
+                        $header_initials = strtoupper(substr($header_names[0], 0, 1) . substr($header_names[1], 0, 1));
+                    } else {
+                        $header_initials = strtoupper(substr($header_name, 0, 2));
+                    }
+                ?>
+                    <div class="header-profile-initials"><?php echo $header_initials; ?></div>
+                <?php endif; ?>
+            </div>
+        </a>
+
+        <!-- Logo -->
+        <a href="<?php echo site_url('dietetic/portal'); ?>" class="header-logo">
+            <?php
+            $logo_path = get_option('company_logo_dark');
+            if (!$logo_path || !file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
+                $logo_path = get_option('company_logo');
             }
 
-            if ($header_contact && !empty($header_contact->profile_image)):
-                $header_profile_image_url = base_url('uploads/client_profile_images/' . $header_contact->id . '/thumb_' . $header_contact->profile_image);
+            if ($logo_path && file_exists(FCPATH . 'uploads/company/' . $logo_path)) {
             ?>
-                <img src="<?php echo $header_profile_image_url; ?>" alt="Profil">
-            <?php else:
-                // Afficher les initiales
-                $header_name = isset($client->company) ? $client->company : (isset($patient->client->company) ? $patient->client->company : 'U');
-                $header_names = explode(' ', trim($header_name));
-                $header_initials = '';
-                if (count($header_names) >= 2) {
-                    $header_initials = strtoupper(substr($header_names[0], 0, 1) . substr($header_names[1], 0, 1));
-                } else {
-                    $header_initials = strtoupper(substr($header_name, 0, 2));
-                }
-            ?>
-                <div class="header-profile-initials"><?php echo $header_initials; ?></div>
-            <?php endif; ?>
+                <img src="<?php echo base_url('uploads/company/' . $logo_path); ?>" alt="<?php echo get_option('companyname'); ?>">
+            <?php } else { ?>
+                <div class="header-logo-text">
+                    <i class="fa fa-heartbeat"></i>
+                    <span><?php echo get_option('companyname'); ?></span>
+                </div>
+            <?php } ?>
         </a>
 
         <button class="notification-btn" id="notificationBtn">
