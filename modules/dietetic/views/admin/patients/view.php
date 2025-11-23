@@ -1086,7 +1086,8 @@ html {
         $.post('<?php echo admin_url('dietetic/patients/assign_dietitian/' . $patient->id); ?>', {
             dietitian_id: dietitian_id,
             is_primary: is_primary,
-            notes: notes
+            notes: notes,
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
         }, function(response) {
             if (response.success) {
                 alert_float('success', response.message);
@@ -1101,7 +1102,8 @@ html {
     function setPrimaryDietitian(dietitian_id) {
         if (confirm('Définir ce diététicien comme principal ?')) {
             $.post('<?php echo admin_url('dietetic/patients/set_primary_dietitian/' . $patient->id); ?>', {
-                dietitian_id: dietitian_id
+                dietitian_id: dietitian_id,
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             }, function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
@@ -1117,7 +1119,8 @@ html {
     function removeDietitian(dietitian_id) {
         if (confirm('Retirer ce diététicien du patient ?')) {
             $.post('<?php echo admin_url('dietetic/patients/remove_dietitian/' . $patient->id); ?>', {
-                dietitian_id: dietitian_id
+                dietitian_id: dietitian_id,
+                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
             }, function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
