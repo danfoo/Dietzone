@@ -135,10 +135,12 @@
             <i class="fa fa-cutlery"></i>
             <span>Repas</span>
         </a>
-        <a href="<?php echo site_url('clients/invoices'); ?>" class="bottom-nav-item <?php echo isset($active_page) && $active_page == 'invoices' ? 'active' : ''; ?>">
-            <i class="fa fa-file-text"></i>
-            <span>Mon plan</span>
+        <?php if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) { ?>
+        <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="bottom-nav-item <?php echo isset($active_page) && $active_page == 'food_surveys' ? 'active' : ''; ?>">
+            <i class="fa fa-clipboard-list"></i>
+            <span>Enquêtes</span>
         </a>
+        <?php } ?>
         <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="bottom-nav-item <?php echo isset($active_page) && $active_page == 'measurements' ? 'active' : ''; ?>">
             <i class="fa fa-plus-circle"></i>
             <span>Mesure</span>
