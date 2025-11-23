@@ -428,6 +428,13 @@ body {
     align-items: center;
     gap: 4px;
     margin-top: auto;
+    justify-content: space-between;
+}
+
+.recipe-rating-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .recipe-rating i {
@@ -453,34 +460,33 @@ body {
     display: none;
 }
 
-/* Favorite Button - Flottant en haut à droite */
+/* Favorite Button - Inline avec les notes */
 .btn-favorite {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(255, 255, 255, 0.95);
+    background: transparent;
     color: var(--text-secondary);
     border: none;
     transition: var(--transition-fast);
-    padding: 8px;
+    padding: 4px;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
 .recipe-card {
     position: relative;
 }
 
-.btn-favorite:hover,
+.btn-favorite:hover {
+    background: rgba(243, 145, 29, 0.1);
+    color: var(--secondary-color);
+}
+
 .btn-favorite.active {
-    background: var(--secondary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
+    color: var(--secondary-color);
 }
 
 .btn-favorite:active {
@@ -489,7 +495,7 @@ body {
 
 .btn-favorite i.fa-heart {
     display: none;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-favorite.active i.fa-heart {
@@ -498,7 +504,7 @@ body {
 
 .btn-favorite i.fa-heart-o {
     display: inline;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-favorite.active i.fa-heart-o {
@@ -847,26 +853,35 @@ body {
                                     <!-- Rating sous le titre -->
                                     <?php if ($recipe->average_rating > 0) : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star"></i>
-                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
-                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star"></i>
+                                                <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                                <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php else : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star-o"></i>
-                                            <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star-o"></i>
+                                                <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Bouton favori flottant -->
-                                <button type="button"
-                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                    <i class="fa fa-heart"></i>
-                                    <i class="fa fa-heart-o"></i>
-                                    <span>Favori</span>
-                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -961,26 +976,35 @@ body {
                                     <!-- Rating sous le titre -->
                                     <?php if ($recipe->average_rating > 0) : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star"></i>
-                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
-                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star"></i>
+                                                <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                                <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php else : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star-o"></i>
-                                            <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star-o"></i>
+                                                <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Bouton favori flottant -->
-                                <button type="button"
-                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                    <i class="fa fa-heart"></i>
-                                    <i class="fa fa-heart-o"></i>
-                                    <span>Favori</span>
-                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
