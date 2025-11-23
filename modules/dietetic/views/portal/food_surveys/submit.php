@@ -84,7 +84,7 @@ $this->load->view('portal/includes/portal_header');
         background-attachment: fixed;
         margin: 0;
         padding: 0;
-        padding-top: 65px;
+        padding-top: 50px;
         padding-bottom: 80px;
         min-height: 100vh;
         color: var(--text-medium);
@@ -92,8 +92,8 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .container-fluid {
-        padding: 20px;
-        max-width: 95%;
+        padding: 15px;
+        max-width: calc(100% - 30px);
         margin: 0 auto;
     }
 
