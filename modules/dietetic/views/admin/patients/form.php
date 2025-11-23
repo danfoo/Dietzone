@@ -135,6 +135,26 @@ textarea.form-control {
     border-radius: 8px !important;
 }
 
+/* Bootstrap Select - Augmenter la hauteur */
+.bootstrap-select .btn {
+    border-radius: 8px !important;
+    border: 2px solid var(--border-color) !important;
+    padding: 14px 16px !important;
+    font-size: 15px !important;
+    min-height: 48px !important;
+    transition: var(--transition) !important;
+}
+
+.bootstrap-select .btn:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1) !important;
+    outline: none !important;
+}
+
+.bootstrap-select .dropdown-toggle::after {
+    margin-top: 4px;
+}
+
 /* Upload Zone */
 .upload-zone {
     border: 3px dashed var(--primary-color);
