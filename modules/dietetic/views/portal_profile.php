@@ -546,6 +546,55 @@ $page_title = 'Mon Profil';
         margin-top: 20px;
     }
 
+    .document-item {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 2px solid transparent;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .document-item:hover {
+        background: #e9ecef;
+        border-color: #01807B;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .document-item > i:first-child {
+        font-size: 32px;
+        color: #01807B;
+        flex-shrink: 0;
+    }
+
+    .document-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .document-info strong {
+        display: block;
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .document-info small {
+        color: #718096;
+        font-size: 12px;
+    }
+
     .document-card {
         background: #f8f9fa;
         padding: 16px;
@@ -951,13 +1000,14 @@ $page_title = 'Mon Profil';
                     $date = new DateTime($doc->uploaded_at);
                     $date_text = $date->format('d/m/Y');
                     ?>
-                    <div class="document-item">
+                    <a href="<?php echo site_url('dietetic/portal/download_document/' . $doc->id); ?>" class="document-item" title="Télécharger <?php echo htmlspecialchars($doc->original_filename); ?>">
                         <i class="fa <?php echo $icon; ?>"></i>
                         <div class="document-info">
                             <strong><?php echo htmlspecialchars($doc->original_filename); ?></strong>
                             <small><?php echo $size_text; ?> • <?php echo $date_text; ?></small>
                         </div>
-                    </div>
+                        <i class="fa fa-download" style="color: #01807B; font-size: 16px;"></i>
+                    </a>
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="text-content empty" style="grid-column: 1 / -1;">

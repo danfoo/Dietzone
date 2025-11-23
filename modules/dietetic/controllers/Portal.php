@@ -113,7 +113,8 @@ class Portal extends App_Controller
             'update_profile',
             'update_emergency_contact',
             'upload_document',
-            'upload_profile_photo'
+            'upload_profile_photo',
+            'download_document'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -4930,6 +4931,63 @@ class Portal extends App_Controller
             'message' => 'Photo de profil mise à jour avec succès',
             'image_url' => contact_profile_image_url($contact_id, 'small')
         ]);
+    }
+
+    /**
+     * Download patient document
+     *
+     * @param int $document_id
+     */
+    public function download_document($document_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            show_404();
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_404();
+            return;
+        }
+
+        // Get document
+        $document = $this->dietetic_patient_documents_model->get($document_id);
+
+        if (!$document) {
+            show_404();
+            return;
+        }
+
+        // Verify that document belongs to this patient (security check)
+        if ($document->patient_id != $patient->id) {
+            show_404();
+            return;
+        }
+
+        // Build file path
+        $filepath = FCPATH . 'uploads/dietetic/documents/patient_' . $patient->id . '/' . $document->filename;
+
+        // Check if file exists
+        if (!file_exists($filepath)) {
+            show_404();
+            return;
+        }
+
+        // Force download
+        $this->load->helper('download');
+        force_download($document->original_filename, file_get_contents($filepath));
+
+        log_activity('Medical Document Downloaded [Patient ID: ' . $patient->id . ', Document ID: ' . $document_id . ', File: ' . $document->original_filename . ']');
     }
 }
 
