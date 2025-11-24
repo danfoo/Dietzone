@@ -240,12 +240,26 @@ class Patients extends AdminController
     /**
      * Delete patient
      *
+     * IMPORTANT: Seuls les administrateurs peuvent supprimer des patients
+     * pour des raisons de comptabilité et de conformité RGPD
+     *
      * @param int $id
      */
     public function delete($id)
     {
+        // Vérification 1: Permission delete requise
         if (!dietetic_has_permission('delete')) {
             ajax_access_denied();
+        }
+
+        // Vérification 2: Seuls les administrateurs peuvent supprimer
+        // Les diététiciens ne peuvent PAS supprimer de patients (comptabilité + RGPD)
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Seuls les administrateurs peuvent supprimer des patients.'
+            ]);
+            return;
         }
 
         if ($this->dietetic_patients_model->delete($id)) {
