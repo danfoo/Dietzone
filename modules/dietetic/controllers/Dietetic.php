@@ -386,7 +386,14 @@ class Dietetic extends AdminController
     public function check_anamnesis_fields()
     {
         // Charger la vue de vérification
-        include DIETETIC_MODULE_PATH . 'migrations/check_anamnesis_fields.php';
+        $migration_path = dirname(__DIR__) . '/migrations/check_anamnesis_fields.php';
+
+        if (!file_exists($migration_path)) {
+            show_error('Fichier de migration non trouvé : ' . $migration_path);
+            return;
+        }
+
+        include $migration_path;
     }
 
     /**
@@ -398,9 +405,17 @@ class Dietetic extends AdminController
         // Vérifier les permissions admin
         if (!is_admin()) {
             access_denied('Migration - Administrateur requis');
+            return;
         }
 
         // Charger la vue d'application de migration
-        include DIETETIC_MODULE_PATH . 'migrations/apply_anamnesis_migration.php';
+        $migration_path = dirname(__DIR__) . '/migrations/apply_anamnesis_migration.php';
+
+        if (!file_exists($migration_path)) {
+            show_error('Fichier de migration non trouvé : ' . $migration_path);
+            return;
+        }
+
+        include $migration_path;
     }
 }

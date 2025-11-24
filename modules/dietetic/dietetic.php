@@ -12,6 +12,7 @@ Requires at least: 2.3.*
 */
 
 define('DIETETIC_MODULE_NAME', 'dietetic');
+define('DIETETIC_MODULE_PATH', __DIR__ . '/');
 define('DIETETIC_MODULE_UPLOAD_FOLDER', module_dir_path(DIETETIC_MODULE_NAME, 'uploads'));
 
 /**
