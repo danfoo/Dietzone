@@ -418,4 +418,27 @@ class Dietetic extends AdminController
 
         include $migration_path;
     }
+
+    /**
+     * Page de correction des champs manquants
+     * URL: admin/dietetic/fix_missing_anamnesis_fields
+     */
+    public function fix_missing_anamnesis_fields()
+    {
+        // Vérifier les permissions admin
+        if (!is_admin()) {
+            access_denied('Correction - Administrateur requis');
+            return;
+        }
+
+        // Charger la vue de correction
+        $fix_path = dirname(__DIR__) . '/migrations/fix_missing_fields.php';
+
+        if (!file_exists($fix_path)) {
+            show_error('Fichier de correction non trouvé : ' . $fix_path);
+            return;
+        }
+
+        include $fix_path;
+    }
 }
