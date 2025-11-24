@@ -464,4 +464,27 @@ class Dietetic extends AdminController
 
         include $diagnostic_path;
     }
+
+    /**
+     * Liste simple des colonnes de la table patients
+     * URL: admin/dietetic/list_db_columns
+     */
+    public function list_db_columns()
+    {
+        // Vérifier les permissions admin
+        if (!is_admin()) {
+            access_denied('Liste colonnes - Administrateur requis');
+            return;
+        }
+
+        // Charger la vue
+        $list_path = dirname(__DIR__) . '/migrations/list_db_columns.php';
+
+        if (!file_exists($list_path)) {
+            show_error('Fichier non trouvé : ' . $list_path);
+            return;
+        }
+
+        include $list_path;
+    }
 }

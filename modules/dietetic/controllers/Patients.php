@@ -94,6 +94,9 @@ class Patients extends AdminController
         if ($this->input->post()) {
             $data = $this->input->post();
 
+            // Filter POST data to only include valid database columns
+            $data = $this->_filter_patient_data($data);
+
             // Set dietitian - force to current user if not admin
             if (!is_admin()) {
                 // Non-admins can only create patients for themselves
@@ -193,20 +196,11 @@ class Patients extends AdminController
         }
 
         if ($this->input->post()) {
-            // Filter POST data to only include valid patient fields
-            $allowed_fields = [
-                'dietitian_id', 'status', 'gender', 'birth_date', 'phone', 'email',
-                'emergency_contact', 'emergency_phone', 'medical_conditions', 'allergies',
-                'medications', 'lifestyle_notes', 'dietary_preferences', 'activity_level',
-                'initial_weight', 'target_weight', 'height', 'objective'
-            ];
+            // Get all POST data
+            $update_data = $this->input->post();
 
-            $update_data = [];
-            foreach ($allowed_fields as $field) {
-                if ($this->input->post($field) !== null) {
-                    $update_data[$field] = $this->input->post($field);
-                }
-            }
+            // Filter POST data to only include valid database columns
+            $update_data = $this->_filter_patient_data($update_data);
 
             // Security: Non-admins cannot change the dietitian
             if (!is_admin() && isset($update_data['dietitian_id'])) {
@@ -743,5 +737,42 @@ class Patients extends AdminController
                 log_activity('Medical Document Uploaded [Patient ID: ' . $patient_id . ', File: ' . $filename . ', Document ID: ' . $document_id . ']');
             }
         }
+    }
+
+    /**
+     * Filter POST data to only include valid database columns
+     * This prevents SQL errors when the form has fields that don't exist in the database
+     *
+     * @param array $data
+     * @return array
+     */
+    private function _filter_patient_data($data)
+    {
+        // Get valid columns from database
+        $table_name = db_prefix() . 'dietic_patients';
+        $query = $this->db->query("DESCRIBE `{$table_name}`");
+
+        if (!$query) {
+            // If query fails, return data as-is and let the model handle it
+            return $data;
+        }
+
+        $valid_columns = [];
+        foreach ($query->result_array() as $row) {
+            $valid_columns[] = $row['Field'];
+        }
+
+        // Filter data to only include valid columns
+        $filtered_data = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, $valid_columns)) {
+                $filtered_data[$key] = $value;
+            } else {
+                // Log skipped fields for debugging
+                log_activity('Skipped invalid field in patient form: ' . $key);
+            }
+        }
+
+        return $filtered_data;
     }
 }
