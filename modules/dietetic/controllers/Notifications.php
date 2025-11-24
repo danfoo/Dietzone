@@ -716,11 +716,25 @@ class Notifications extends AdminController
 
         // Load existing templates from database
         $template_keys = [
-            // Email templates
+            // Welcome
+            'welcome',
+            // Programs
+            'program_assigned', 'program_updated',
+            // Consultations
+            'consultation_scheduled', 'consultation_reminder', 'consultation_cancelled',
+            // Food Surveys
+            'food_survey_assigned', 'food_survey_reminder',
+            // Measurements & Weight
+            'weight_reminder', 'milestone',
+            // Hydration
+            'water_reminder',
+            // Messages
+            'new_message',
+            // Email templates (legacy)
             'email_recommendation', 'email_consultation', 'email_milestone',
-            // SMS templates
+            // SMS templates (legacy)
             'sms_hydration', 'sms_weight_reminder', 'sms_consultation_reminder',
-            // WhatsApp templates
+            // WhatsApp templates (legacy)
             'whatsapp_program_assigned', 'whatsapp_food_entry_reminder'
         ];
 

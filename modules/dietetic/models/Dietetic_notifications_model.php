@@ -2298,6 +2298,138 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    // ==================== FOOD SURVEY NOTIFICATIONS ====================
+
+    /**
+     * Notify patient when a new food survey is assigned
+     *
+     * @param int $patient_id
+     * @param string $survey_name
+     * @param string $start_date
+     * @param int $duration_days
+     * @param string $dietitian_name
+     * @return array|false
+     */
+    public function notify_food_survey_assigned($patient_id, $survey_name, $start_date, $duration_days, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_food_entry) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? ($contact->firstname ?: $client->company) : $client->company;
+
+        $formatted_date = date('d/m/Y', strtotime($start_date));
+        $end_date = date('d/m/Y', strtotime($start_date . ' + ' . $duration_days . ' days'));
+
+        $subject = '📋 Nouvelle Enquête Alimentaire';
+
+        $message = "Bonjour {$contact_name},\n\n";
+        $message .= "Votre diététicien {$dietitian_name} vous a assigné une nouvelle enquête alimentaire :\n\n";
+        $message .= "📝 {$survey_name}\n";
+        $message .= "📅 Du {$formatted_date} au {$end_date}\n";
+        $message .= "⏱️ Durée : {$duration_days} jour" . ($duration_days > 1 ? 's' : '') . "\n\n";
+        $message .= "Cette enquête nous aidera à mieux comprendre vos habitudes alimentaires et à adapter votre programme.\n\n";
+        $message .= "🔗 Accédez à votre enquête :\n";
+        $message .= site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Merci de votre collaboration ! 💪\n\n";
+        $message .= "L'équipe DietSénégal";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'food_survey_assigned',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/food_surveys'),
+                'survey_name' => $survey_name,
+                'start_date' => $start_date
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when a food survey is about to expire
+     *
+     * @param int $patient_id
+     * @param string $survey_name
+     * @param string $end_date
+     * @return array|false
+     */
+    public function notify_food_survey_reminder($patient_id, $survey_name, $end_date)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_food_entry) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? ($contact->firstname ?: $client->company) : $client->company;
+
+        $formatted_date = date('d/m/Y', strtotime($end_date));
+
+        $subject = '⏰ Rappel : Enquête Alimentaire';
+
+        $message = "Bonjour {$contact_name},\n\n";
+        $message .= "Votre enquête alimentaire \"{$survey_name}\" se termine bientôt !\n\n";
+        $message .= "📅 Date de fin : {$formatted_date}\n\n";
+        $message .= "N'oubliez pas de compléter vos entrées pour nous aider à mieux vous accompagner.\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Merci ! 😊";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'food_survey_reminder',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/food_surveys'),
+                'survey_name' => $survey_name
+            ]
+        ]);
+    }
+
+    // ==================== GENERIC NOTIFICATIONS ====================
+
     /**
      * Send generic push notification
      *
