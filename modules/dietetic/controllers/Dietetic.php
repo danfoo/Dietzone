@@ -487,4 +487,27 @@ class Dietetic extends AdminController
 
         include $list_path;
     }
+
+    /**
+     * Diagnostic rate limiting
+     * URL: admin/dietetic/diagnose_rate_limit
+     */
+    public function diagnose_rate_limit()
+    {
+        // Vérifier les permissions admin
+        if (!is_admin()) {
+            access_denied('Diagnostic - Administrateur requis');
+            return;
+        }
+
+        // Charger la vue de diagnostic
+        $diag_path = dirname(__DIR__) . '/migrations/diagnose_rate_limit.php';
+
+        if (!file_exists($diag_path)) {
+            show_error('Fichier de diagnostic non trouvé : ' . $diag_path);
+            return;
+        }
+
+        include $diag_path;
+    }
 }
