@@ -153,9 +153,10 @@ class Dietetic_patients_model extends App_Model
             return false;
         }
 
-        // Calculate BMI if weight and height provided
+        // Calculate BMI if weight and height provided (for initial measurement, not for patient table)
+        $calculated_bmi = null;
         if (!empty($data['initial_weight']) && !empty($data['height'])) {
-            $data['bmi'] = dietetic_calculate_bmi($data['initial_weight'], $data['height']);
+            $calculated_bmi = dietetic_calculate_bmi($data['initial_weight'], $data['height']);
         }
 
         $data['created_at'] = date('Y-m-d H:i:s');
@@ -181,7 +182,7 @@ class Dietetic_patients_model extends App_Model
                     'patient_id'       => $patient_id,
                     'measurement_date' => date('Y-m-d'),
                     'weight'           => $data['initial_weight'],
-                    'bmi'              => isset($data['bmi']) ? $data['bmi'] : null,
+                    'bmi'              => $calculated_bmi,
                     'notes'            => 'Initial measurement',
                     'added_by'         => get_staff_user_id(),
                     'added_by_type'    => 'staff',
