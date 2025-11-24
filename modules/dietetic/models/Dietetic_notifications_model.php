@@ -436,6 +436,93 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    // ==================== WELCOME NOTIFICATION ====================
+
+    /**
+     * Send welcome notification to new patient
+     * Sends Push, SMS, and WhatsApp notifications when a patient account is created
+     *
+     * @param int $patient_id
+     * @return array Results of notification sending
+     */
+    public function send_welcome_notification($patient_id)
+    {
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient data
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient || !$patient->client) {
+            log_activity('send_welcome_notification: Patient or client not found [ID: ' . $patient_id . ']');
+            return ['success' => false, 'error' => 'Patient not found'];
+        }
+
+        // Get or create notification preferences
+        $prefs = $this->get_preferences($patient_id);
+        if (!$prefs) {
+            $this->create_default_preferences($patient_id);
+            $prefs = $this->get_preferences($patient_id);
+        }
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $email = $contact ? $contact->email : $patient->client->email ?? null;
+        $phone = $contact ? $contact->phonenumber : $patient->client->phonenumber ?? null;
+
+        // Get client name
+        $firstname = $patient->client->company; // In Perfex, company name is often used for individual clients
+        if ($contact && !empty($contact->firstname)) {
+            $firstname = $contact->firstname;
+        }
+
+        // Build welcome message
+        $subject = "🎉 Bienvenue dans votre espace DietSénégal !";
+
+        $message = "Bonjour {$firstname},\n\n";
+        $message .= "Bienvenue dans votre espace personnel DietSénégal ! 🎉\n\n";
+        $message .= "Votre compte a été créé avec succès. Vous pouvez maintenant accéder à votre portail patient pour :\n\n";
+        $message .= "✅ Suivre votre évolution de poids\n";
+        $message .= "✅ Enregistrer vos mesures\n";
+        $message .= "✅ Suivre vos repas et hydratation quotidienne\n";
+        $message .= "✅ Consulter vos programmes nutritionnels\n";
+        $message .= "✅ Gérer vos rendez-vous\n\n";
+        $message .= "🔗 Accédez à votre portail :\n";
+        $message .= site_url('dietetic/portal') . "\n\n";
+
+        // Add credentials info if available
+        if (!empty($patient->client->password)) {
+            $message .= "📧 Email : {$email}\n";
+            $message .= "🔑 Mot de passe : (envoyé séparément par email)\n\n";
+        }
+
+        $message .= "💪 Nous sommes ravis de vous accompagner dans votre parcours vers une meilleure santé !\n\n";
+        $message .= "L'équipe DietSénégal";
+
+        // Send notification through all enabled channels
+        $result = $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'welcome',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $email,
+            'phone' => $phone,
+            'channels' => [
+                'email' => $prefs->channel_email ?? 1,
+                'sms' => $prefs->channel_sms ?? 0,
+                'whatsapp' => $prefs->channel_whatsapp ?? 0,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/dashboard'),
+                'action' => 'welcome'
+            ]
+        ]);
+
+        log_activity('Welcome notification sent to patient [ID: ' . $patient_id . ']');
+
+        return $result;
+    }
+
     // ==================== GENERAL NOTIFICATIONS ====================
 
     /**

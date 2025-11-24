@@ -190,6 +190,18 @@ class Dietetic_patients_model extends App_Model
             }
 
             log_activity('New Dietetic Patient Created [ID: ' . $patient_id . ']');
+
+            // Send welcome notification (Push, SMS, WhatsApp)
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                $this->load->model('dietetic/dietetic_notifications_model');
+                try {
+                    $this->dietetic_notifications_model->send_welcome_notification($patient_id);
+                } catch (Exception $e) {
+                    // Log error but don't fail patient creation
+                    log_activity('Welcome notification failed for patient [ID: ' . $patient_id . ']: ' . $e->getMessage());
+                }
+            }
+
             return $patient_id;
         }
 
