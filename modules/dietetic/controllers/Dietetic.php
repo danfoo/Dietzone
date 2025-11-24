@@ -441,4 +441,27 @@ class Dietetic extends AdminController
 
         include $fix_path;
     }
+
+    /**
+     * Page de diagnostic des champs du formulaire
+     * URL: admin/dietetic/check_form_fields
+     */
+    public function check_form_fields()
+    {
+        // Vérifier les permissions admin
+        if (!is_admin()) {
+            access_denied('Diagnostic - Administrateur requis');
+            return;
+        }
+
+        // Charger la vue de diagnostic
+        $diagnostic_path = dirname(__DIR__) . '/migrations/check_form_fields.php';
+
+        if (!file_exists($diagnostic_path)) {
+            show_error('Fichier de diagnostic non trouvé : ' . $diagnostic_path);
+            return;
+        }
+
+        include $diagnostic_path;
+    }
 }
