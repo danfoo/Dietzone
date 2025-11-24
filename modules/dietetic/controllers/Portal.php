@@ -106,7 +106,15 @@ class Portal extends App_Controller
             'remove_from_favorites',
             // Legal pages
             'privacy',
-            'terms'
+            'terms',
+            // Profile methods
+            'profile',
+            'update_password',
+            'update_profile',
+            'update_emergency_contact',
+            'upload_document',
+            'upload_profile_photo',
+            'download_document'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -4390,6 +4398,599 @@ class Portal extends App_Controller
         $data['content'] = $this->dietetic_settings_model->get_setting('terms_of_service') ?? '<p>Aucune condition d\'utilisation n\'a été définie.</p>';
 
         $this->load->view('portal_legal_page', $data);
+    }
+
+    /**
+     * Display patient profile page
+     */
+    public function profile()
+    {
+        // DEBUG: Enable error display
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            log_activity('Profile access denied - not logged in');
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        log_activity('Profile accessed by client ID: ' . $client_id);
+
+        // Load required models
+        $this->load->model('clients_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+            log_activity('Patient lookup result: ' . ($patient ? 'Found ID ' . $patient->id : 'NOT FOUND'));
+        } catch (Exception $e) {
+            log_activity('Error loading patient profile: ' . $e->getMessage());
+            echo '<pre>ERROR: ' . $e->getMessage() . '</pre>';
+            $patient = null;
+        }
+
+        if (!$patient) {
+            log_activity('No patient found for client ID: ' . $client_id);
+            echo '<h1>DEBUG: Patient not found for client ID: ' . $client_id . '</h1>';
+            echo '<p>Checking database...</p>';
+
+            // Debug query
+            $query = $this->db->get_where(db_prefix() . 'dietic_patients', ['client_id' => $client_id]);
+            echo '<pre>Query result: ' . print_r($query->result(), true) . '</pre>';
+            echo '<p><a href="' . site_url('dietetic/portal') . '">Retour à l\'accueil</a></p>';
+            return;
+        }
+
+        log_activity('Loading profile for patient ID: ' . $patient->id);
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mon Profil';
+        $data['active_page'] = 'profile';
+
+        // Get client info
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) {
+            log_activity('Client not found for patient ID: ' . $patient->id);
+            echo '<h1>DEBUG: Client not found</h1>';
+            return;
+        }
+        $data['client'] = $client;
+
+        // Get contact info for profile image
+        $contact = null;
+        $contact_id = null;
+
+        if (!empty($client->default_contact)) {
+            $contact_id = $client->default_contact;
+        } else {
+            // Get all contacts for this client
+            $contacts = $this->clients_model->get_contacts($client->userid);
+            if (!empty($contacts)) {
+                $contact_id = $contacts[0]['id'];
+            }
+        }
+
+        if ($contact_id) {
+            $contact = $this->clients_model->get_contact($contact_id);
+        }
+
+        $data['contact'] = $contact;
+
+        // Get latest measurement for current weight
+        try {
+            $latest_measurement = $this->dietetic_patients_model->get_latest_measurement($patient->id, true);
+            $data['latest_measurement'] = $latest_measurement;
+        } catch (Exception $e) {
+            log_activity('Error loading latest measurement: ' . $e->getMessage());
+            $data['latest_measurement'] = null;
+        }
+
+        // Calculate age from birth_date
+        if (!empty($patient->birth_date)) {
+            try {
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $today->diff($birth_date)->y;
+                $data['age'] = $age;
+            } catch (Exception $e) {
+                $data['age'] = null;
+            }
+        } else {
+            $data['age'] = null;
+        }
+
+        // Get patient documents
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
+
+        try {
+            $data['documents'] = $this->dietetic_patient_documents_model->get_by_patient($patient->id);
+        } catch (Exception $e) {
+            log_activity('Error loading patient documents: ' . $e->getMessage());
+            $data['documents'] = [];
+        }
+
+        log_activity('Loading profile view');
+        $this->load->view('portal_profile', $data);
+    }
+
+    /**
+     * Update patient password via AJAX
+     */
+    public function update_password()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        // Get posted data
+        $current_password = $this->input->post('current_password');
+        $new_password = $this->input->post('new_password');
+        $confirm_password = $this->input->post('confirm_password');
+
+        // Validate inputs
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            echo json_encode(['success' => false, 'message' => 'Tous les champs sont requis']);
+            return;
+        }
+
+        if ($new_password !== $confirm_password) {
+            echo json_encode(['success' => false, 'message' => 'Les mots de passe ne correspondent pas']);
+            return;
+        }
+
+        if (strlen($new_password) < 6) {
+            echo json_encode(['success' => false, 'message' => 'Le mot de passe doit contenir au moins 6 caractères']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load clients model
+        $this->load->model('clients_model');
+
+        // Get current client data
+        $client = $this->clients_model->get($client_id);
+
+        // Verify current password
+        $this->load->library('App_password_hasher');
+        $hasher = new App_password_hasher();
+
+        if (!$hasher->CheckPassword($current_password, $client->password)) {
+            echo json_encode(['success' => false, 'message' => 'Mot de passe actuel incorrect']);
+            return;
+        }
+
+        // Update password
+        $hashed_password = $hasher->HashPassword($new_password);
+
+        $this->db->where('userid', $client_id);
+        $this->db->update(db_prefix() . 'clients', [
+            'password' => $hashed_password,
+            'last_password_change' => date('Y-m-d H:i:s')
+        ]);
+
+        log_activity('Patient Password Changed [Client ID: ' . $client_id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Mot de passe modifié avec succès']);
+    }
+
+    /**
+     * Update patient profile information via AJAX
+     */
+    public function update_profile()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get posted data
+        $phone = $this->input->post('phone');
+        $dietary_preferences = $this->input->post('dietary_preferences');
+        $allergies = $this->input->post('allergies');
+
+        // Update patient data
+        $update_data = [
+            'phone' => $phone,
+            'dietary_preferences' => $dietary_preferences,
+            'allergies' => $allergies,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $patient->id);
+        $this->db->update(db_prefix() . 'dietic_patients', $update_data);
+
+        log_activity('Patient Profile Updated [Patient ID: ' . $patient->id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Profil mis à jour avec succès']);
+    }
+
+    /**
+     * Update emergency contact via AJAX
+     */
+    public function update_emergency_contact()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get posted data
+        $emergency_contact = $this->input->post('emergency_contact');
+        $emergency_phone = $this->input->post('emergency_phone');
+
+        // Update patient data
+        $update_data = [
+            'emergency_contact' => $emergency_contact,
+            'emergency_phone' => $emergency_phone,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $patient->id);
+        $this->db->update(db_prefix() . 'dietic_patients', $update_data);
+
+        log_activity('Emergency Contact Updated [Patient ID: ' . $patient->id . ']');
+
+        echo json_encode(['success' => true, 'message' => 'Contact d\'urgence mis à jour avec succès']);
+    }
+
+    /**
+     * Upload medical document
+     */
+    public function upload_document()
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
+            $error_msg = 'Aucun fichier uploadé';
+            if (isset($_FILES['document']['error'])) {
+                switch ($_FILES['document']['error']) {
+                    case UPLOAD_ERR_INI_SIZE:
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $error_msg = 'Fichier trop volumineux';
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $error_msg = 'Aucun fichier sélectionné';
+                        break;
+                    default:
+                        $error_msg = 'Erreur lors de l\'upload (Code: ' . $_FILES['document']['error'] . ')';
+                }
+            }
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+            return;
+        }
+
+        // Validate file type
+        $allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        $file_type = $_FILES['document']['type'];
+        $extension = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png'];
+
+        if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (PDF ou images uniquement)']);
+            return;
+        }
+
+        // Validate file size (10MB max)
+        if ($_FILES['document']['size'] > 10 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_base = FCPATH . 'uploads/dietetic/documents/patient_' . $patient->id;
+        if (!is_dir($upload_base)) {
+            if (!mkdir($upload_base, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de créer le dossier d\'upload']);
+                return;
+            }
+        }
+
+        // Generate unique filename
+        $original_name = pathinfo($_FILES['document']['name'], PATHINFO_FILENAME);
+        // Sanitize filename
+        $original_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $original_name);
+        $filename = $original_name . '_' . time() . '.' . $extension;
+        $filepath = $upload_base . '/' . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($_FILES['document']['tmp_name'], $filepath)) {
+            // Save document metadata to database
+            $document_data = [
+                'patient_id' => $patient->id,
+                'filename' => $filename,
+                'original_filename' => $_FILES['document']['name'],
+                'file_type' => $file_type,
+                'file_size' => $_FILES['document']['size']
+            ];
+
+            $document_id = $this->dietetic_patient_documents_model->add($document_data);
+
+            log_activity('Medical Document Uploaded [Patient ID: ' . $patient->id . ', File: ' . $filename . ', Document ID: ' . $document_id . ']');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Document uploadé avec succès',
+                'filename' => $filename,
+                'document_id' => $document_id
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde du fichier']);
+        }
+    }
+
+    /**
+     * Upload profile photo
+     */
+    public function upload_profile_photo()
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load models
+        $this->load->model('clients_model');
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Get client info
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) {
+            echo json_encode(['success' => false, 'message' => 'Client non trouvé']);
+            return;
+        }
+
+        // Get contact ID - use default_contact or find first contact for this client
+        $contact_id = null;
+        if (!empty($client->default_contact)) {
+            $contact_id = $client->default_contact;
+        } else {
+            // Get all contacts for this client
+            $contacts = $this->clients_model->get_contacts($client->userid);
+            if (!empty($contacts)) {
+                $contact_id = $contacts[0]['id'];
+            }
+        }
+
+        if (!$contact_id) {
+            echo json_encode(['success' => false, 'message' => 'Aucun contact trouvé pour ce client']);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            $error_msg = 'Aucune image uploadée';
+            if (isset($_FILES['profile_image']['error'])) {
+                switch ($_FILES['profile_image']['error']) {
+                    case UPLOAD_ERR_INI_SIZE:
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $error_msg = 'Image trop volumineuse';
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $error_msg = 'Aucune image sélectionnée';
+                        break;
+                    default:
+                        $error_msg = 'Erreur lors de l\'upload (Code: ' . $_FILES['profile_image']['error'] . ')';
+                }
+            }
+            echo json_encode(['success' => false, 'message' => $error_msg]);
+            return;
+        }
+
+        // Validate file type (images only)
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $file_type = $_FILES['profile_image']['type'];
+        $extension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (images uniquement)']);
+            return;
+        }
+
+        // Validate file size (5MB max for profile images)
+        if ($_FILES['profile_image']['size'] > 5 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Image trop volumineuse (max 5MB)']);
+            return;
+        }
+
+        // Create upload directory for contact profile images (Perfex standard path)
+        $upload_path = FCPATH . 'uploads/client_profile_images/' . $contact_id;
+        if (!is_dir($upload_path)) {
+            if (!mkdir($upload_path, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de créer le dossier d\'upload']);
+                return;
+            }
+        }
+
+        // Remove old profile image if exists
+        $contact = $this->clients_model->get_contact($contact_id);
+        if ($contact && !empty($contact->profile_image)) {
+            $old_image_path = $upload_path . '/' . $contact->profile_image;
+            if (file_exists($old_image_path)) {
+                @unlink($old_image_path);
+            }
+            // Also remove thumb
+            $thumb_path = $upload_path . '/thumb_' . $contact->profile_image;
+            if (file_exists($thumb_path)) {
+                @unlink($thumb_path);
+            }
+        }
+
+        // Generate unique filename
+        $filename = 'profile_' . time() . '.' . $extension;
+        $filepath = $upload_path . '/' . $filename;
+
+        // Move uploaded file
+        if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], $filepath)) {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde de l\'image']);
+            return;
+        }
+
+        // Create thumbnail using Perfex's image library
+        $this->load->library('image_lib');
+
+        $config['image_library'] = 'gd2';
+        $config['source_image'] = $filepath;
+        $config['new_image'] = $upload_path . '/thumb_' . $filename;
+        $config['maintain_ratio'] = true;
+        $config['width'] = 160;
+        $config['height'] = 160;
+
+        $this->image_lib->initialize($config);
+        $this->image_lib->resize();
+        $this->image_lib->clear();
+
+        // Update contact record in database
+        $this->db->where('id', $contact_id);
+        $this->db->update(db_prefix() . 'contacts', [
+            'profile_image' => $filename,
+            'last_ip' => $this->input->ip_address(),
+            'last_login' => date('Y-m-d H:i:s')
+        ]);
+
+        log_activity('Contact Profile Image Updated [Contact ID: ' . $contact_id . ', File: ' . $filename . ']');
+
+        // Build direct URL to the uploaded image
+        $image_url = base_url('uploads/client_profile_images/' . $contact_id . '/thumb_' . $filename);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Photo de profil mise à jour avec succès',
+            'image_url' => $image_url
+        ]);
+    }
+
+    /**
+     * Download patient document
+     *
+     * @param int $document_id
+     */
+    public function download_document($document_id)
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            show_404();
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_patient_documents_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            show_404();
+            return;
+        }
+
+        // Get document
+        $document = $this->dietetic_patient_documents_model->get($document_id);
+
+        if (!$document) {
+            show_404();
+            return;
+        }
+
+        // Verify that document belongs to this patient (security check)
+        if ($document->patient_id != $patient->id) {
+            show_404();
+            return;
+        }
+
+        // Build file path
+        $filepath = FCPATH . 'uploads/dietetic/documents/patient_' . $patient->id . '/' . $document->filename;
+
+        // Check if file exists
+        if (!file_exists($filepath)) {
+            show_404();
+            return;
+        }
+
+        // Force download
+        $this->load->helper('download');
+        force_download($document->original_filename, file_get_contents($filepath));
+
+        log_activity('Medical Document Downloaded [Patient ID: ' . $patient->id . ', Document ID: ' . $document_id . ', File: ' . $document->original_filename . ']');
     }
 }
 

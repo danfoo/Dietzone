@@ -719,28 +719,29 @@ function dietetic_apply_dietitian_filter(&$db, $table_alias = 'pd')
 
     $staff_id = dietetic_get_staff_user_id();
 
-    // Only super admin (user ID 1) sees all patients
-    // Other staff members (including admins) only see assigned patients
-    if (dietetic_is_admin() && $staff_id == 1) {
-        return; // Super admin sees all
+    // STRICT FILTERING: Only super admin (user ID 1) sees ALL patients
+    // ALL other users (including regular admins) only see their assigned patients
+    if ($staff_id == 1 && dietetic_is_admin()) {
+        return; // Super admin (user ID 1) sees all
     }
 
+    // For all other users (dietitians, admins with ID != 1), apply strict filtering
     if ($staff_id) {
-        // Use LEFT JOIN to include patients without assignments
+        // Use LEFT JOIN to include patients without assignments in patient_dietitians table
         // This handles both the new system (patient_dietitians) and old system (dietitian_id field)
         $db->join(db_prefix() . 'dietic_patient_dietitians ' . $table_alias,
                   $table_alias . '.patient_id = p.id AND ' . $table_alias . '.status = "active"', 'left');
 
         // Show patients where EITHER:
-        // 1. Staff is assigned in patient_dietitians table (new system)
-        // 2. Staff matches the dietitian_id field (old system / fallback)
+        // 1. Staff is assigned in patient_dietitians table (new many-to-many system)
+        // 2. Staff matches the dietitian_id field (old system / fallback for legacy patients)
         $db->group_start();
         $db->where($table_alias . '.dietitian_id', $staff_id);
         $db->or_where('p.dietitian_id', $staff_id);
         $db->group_end();
     } else {
         // No staff user and not a client = no access
-        $db->where('1', '0'); // Always false
+        $db->where('1', '0'); // Always false - no patients visible
     }
 }
 

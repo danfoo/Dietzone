@@ -17,6 +17,7 @@ class Patients extends AdminController
         $this->load->model('dietetic/dietetic_measurements_model');
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_programs_model');
+        $this->load->model('dietetic/dietetic_patient_documents_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
@@ -72,6 +73,12 @@ class Patients extends AdminController
             $data['food_surveys'] = $this->dietetic_food_surveys_model->get_by_patient($id);
         }
 
+        // Get documents
+        $data['documents'] = [];
+        if ($this->dietetic_patient_documents_model->table_exists()) {
+            $data['documents'] = $this->dietetic_patient_documents_model->get_by_patient($id);
+        }
+
         $this->load->view('admin/patients/view', $data);
     }
 
@@ -99,10 +106,26 @@ class Patients extends AdminController
             $patient_id = $this->dietetic_patients_model->add($data);
 
             if ($patient_id) {
+                // Handle document uploads if any
+                $this->_handle_document_uploads($patient_id);
+
                 set_alert('success', _l('added_successfully'));
+
+                // Check if AJAX request
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['success' => true, 'patient_id' => $patient_id]);
+                    return;
+                }
+
                 redirect(admin_url('dietetic/patients/view/' . $patient_id));
             } else {
                 set_alert('danger', _l('dietetic_error_patient_exists'));
+
+                // Check if AJAX request
+                if ($this->input->is_ajax_request()) {
+                    echo json_encode(['success' => false, 'message' => _l('dietetic_error_patient_exists')]);
+                    return;
+                }
             }
         }
 
@@ -116,29 +139,24 @@ class Patients extends AdminController
             $data['clients'] = $this->clients_model->get();
         } else {
             // Other dietitians only see clients that:
-            // 1. Don't have a patient record yet, OR
-            // 2. Have a patient assigned to them
+            // 1. Don't have a patient record yet (available for new patient creation)
+            // Clients with existing patients are NOT shown to ensure dietitians only see their assigned patients
 
             $all_clients = $this->clients_model->get();
             $filtered_clients = [];
 
             foreach ($all_clients as $client) {
                 // Check if this client has a patient
-                $existing_patient = $this->dietetic_patients_model->get_by_client($client['userid']);
+                // Use direct query to bypass access check that get_by_client uses
+                $this->db->where('client_id', $client['userid']);
+                $existing_patient = $this->db->get(db_prefix() . 'dietic_patients')->row();
 
                 if (!$existing_patient) {
                     // Client has no patient yet - available for creation
                     $filtered_clients[] = $client;
-                } elseif ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-                    // Check if dietitian is assigned to this patient
-                    $this->load->model('dietetic/dietetic_patient_dietitians_model');
-                    if ($this->dietetic_patient_dietitians_model->has_access($existing_patient->id, $current_staff_id)) {
-                        $filtered_clients[] = $client;
-                    }
-                } elseif ($existing_patient->dietitian_id == $current_staff_id) {
-                    // Fallback: dietitian owns this patient
-                    $filtered_clients[] = $client;
                 }
+                // Note: We don't include clients that already have patients, even if assigned to this dietitian
+                // Those patients are accessible via the patient list page instead
             }
 
             $data['clients'] = $filtered_clients;
@@ -222,12 +240,26 @@ class Patients extends AdminController
     /**
      * Delete patient
      *
+     * IMPORTANT: Seuls les administrateurs peuvent supprimer des patients
+     * pour des raisons de comptabilité et de conformité RGPD
+     *
      * @param int $id
      */
     public function delete($id)
     {
+        // Vérification 1: Permission delete requise
         if (!dietetic_has_permission('delete')) {
             ajax_access_denied();
+        }
+
+        // Vérification 2: Seuls les administrateurs peuvent supprimer
+        // Les diététiciens ne peuvent PAS supprimer de patients (comptabilité + RGPD)
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Seuls les administrateurs peuvent supprimer des patients.'
+            ]);
+            return;
         }
 
         if ($this->dietetic_patients_model->delete($id)) {
@@ -453,6 +485,263 @@ class Patients extends AdminController
             echo json_encode(['success' => true, 'message' => 'Diététicien retiré avec succès']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors du retrait']);
+        }
+    }
+
+    /**
+     * Upload document for a patient (AJAX)
+     *
+     * @param int $patient_id
+     */
+    public function upload_document($patient_id)
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        if (!dietetic_has_permission('edit')) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
+
+        // Check if patient exists
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'Aucun fichier uploadé']);
+            return;
+        }
+
+        // Validate file type
+        $allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        $file_type = $_FILES['document']['type'];
+        $extension = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
+        $allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png'];
+
+        if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier non autorisé (PDF ou images uniquement)']);
+            return;
+        }
+
+        // Validate file size (10MB max)
+        if ($_FILES['document']['size'] > 10 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_base = FCPATH . 'uploads/dietetic/documents/patient_' . $patient_id;
+        if (!is_dir($upload_base)) {
+            if (!mkdir($upload_base, 0755, true)) {
+                echo json_encode(['success' => false, 'message' => 'Impossible de créer le dossier d\'upload']);
+                return;
+            }
+        }
+
+        // Generate unique filename
+        $original_name = pathinfo($_FILES['document']['name'], PATHINFO_FILENAME);
+        $original_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $original_name);
+        $filename = $original_name . '_' . time() . '.' . $extension;
+        $filepath = $upload_base . '/' . $filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($_FILES['document']['tmp_name'], $filepath)) {
+            // Save document metadata to database
+            $document_data = [
+                'patient_id' => $patient_id,
+                'filename' => $filename,
+                'original_filename' => $_FILES['document']['name'],
+                'file_type' => $file_type,
+                'file_size' => $_FILES['document']['size']
+            ];
+
+            $document_id = $this->dietetic_patient_documents_model->add($document_data);
+
+            log_activity('Medical Document Uploaded [Patient ID: ' . $patient_id . ', File: ' . $filename . ', Document ID: ' . $document_id . ']');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Document uploadé avec succès',
+                'document_id' => $document_id
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload du fichier']);
+        }
+    }
+
+    /**
+     * Download document
+     *
+     * @param int $document_id
+     */
+    public function download_document($document_id)
+    {
+        if (!dietetic_has_permission('view')) {
+            show_404();
+            return;
+        }
+
+        // Get document
+        $document = $this->dietetic_patient_documents_model->get($document_id);
+
+        if (!$document) {
+            show_404();
+            return;
+        }
+
+        // Check if user has access to this patient
+        if (!dietetic_can_access_patient($document->patient_id)) {
+            access_denied('dietetic');
+            return;
+        }
+
+        // Build file path
+        $filepath = FCPATH . 'uploads/dietetic/documents/patient_' . $document->patient_id . '/' . $document->filename;
+
+        if (!file_exists($filepath)) {
+            show_404();
+            return;
+        }
+
+        // Force download
+        header('Content-Description: File Transfer');
+        header('Content-Type: ' . $document->file_type);
+        header('Content-Disposition: attachment; filename="' . $document->original_filename . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Pragma: public');
+        header('Cache-Control: must-revalidate');
+        header('Expires: 0');
+
+        readfile($filepath);
+        exit;
+    }
+
+    /**
+     * Delete document (AJAX)
+     *
+     * @param int $document_id
+     */
+    public function delete_document($document_id)
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+
+        if (!dietetic_has_permission('delete')) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        // Get document
+        $document = $this->dietetic_patient_documents_model->get($document_id);
+
+        if (!$document) {
+            echo json_encode(['success' => false, 'message' => 'Document non trouvé']);
+            return;
+        }
+
+        // Check if user has access to this patient
+        if (!dietetic_can_access_patient($document->patient_id)) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        // Delete file from disk
+        $filepath = FCPATH . 'uploads/dietetic/documents/patient_' . $document->patient_id . '/' . $document->filename;
+        if (file_exists($filepath)) {
+            unlink($filepath);
+        }
+
+        // Delete from database
+        if ($this->dietetic_patient_documents_model->delete($document_id)) {
+            log_activity('Medical Document Deleted [Patient ID: ' . $document->patient_id . ', Document ID: ' . $document_id . ']');
+            echo json_encode(['success' => true, 'message' => 'Document supprimé avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la suppression']);
+        }
+    }
+
+    /**
+     * Handle document uploads for a patient
+     *
+     * @param int $patient_id
+     * @return void
+     */
+    private function _handle_document_uploads($patient_id)
+    {
+        // Ensure table exists
+        if (!$this->dietetic_patient_documents_model->table_exists()) {
+            $this->dietetic_patient_documents_model->create_table();
+        }
+
+        // Check if documents were uploaded
+        if (!isset($_FILES['documents']) || empty($_FILES['documents']['name'][0])) {
+            return;
+        }
+
+        // Create upload directory if it doesn't exist
+        $upload_base = FCPATH . 'uploads/dietetic/documents/patient_' . $patient_id;
+        if (!is_dir($upload_base)) {
+            if (!mkdir($upload_base, 0755, true)) {
+                log_activity('Failed to create upload directory for patient ' . $patient_id);
+                return;
+            }
+        }
+
+        // Process each uploaded file
+        $files_count = count($_FILES['documents']['name']);
+
+        for ($i = 0; $i < $files_count; $i++) {
+            // Check if file was uploaded successfully
+            if ($_FILES['documents']['error'][$i] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
+            // Validate file type
+            $allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            $file_type = $_FILES['documents']['type'][$i];
+            $extension = strtolower(pathinfo($_FILES['documents']['name'][$i], PATHINFO_EXTENSION));
+            $allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png'];
+
+            if (!in_array($file_type, $allowed_types) && !in_array($extension, $allowed_extensions)) {
+                continue;
+            }
+
+            // Validate file size (10MB max)
+            if ($_FILES['documents']['size'][$i] > 10 * 1024 * 1024) {
+                continue;
+            }
+
+            // Generate unique filename
+            $original_name = pathinfo($_FILES['documents']['name'][$i], PATHINFO_FILENAME);
+            // Sanitize filename
+            $original_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', $original_name);
+            $filename = $original_name . '_' . time() . '_' . $i . '.' . $extension;
+            $filepath = $upload_base . '/' . $filename;
+
+            // Move uploaded file
+            if (move_uploaded_file($_FILES['documents']['tmp_name'][$i], $filepath)) {
+                // Save document metadata to database
+                $document_data = [
+                    'patient_id' => $patient_id,
+                    'filename' => $filename,
+                    'original_filename' => $_FILES['documents']['name'][$i],
+                    'file_type' => $file_type,
+                    'file_size' => $_FILES['documents']['size'][$i]
+                ];
+
+                $document_id = $this->dietetic_patient_documents_model->add($document_data);
+
+                log_activity('Medical Document Uploaded [Patient ID: ' . $patient_id . ', File: ' . $filename . ', Document ID: ' . $document_id . ']');
+            }
         }
     }
 }

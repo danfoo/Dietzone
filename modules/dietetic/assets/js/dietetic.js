@@ -171,15 +171,31 @@ if (typeof jQuery === 'undefined') {
      * Delete confirmation
      */
     function deleteConfirm(url, callback) {
-        if (confirm('Are you sure you want to delete this item?')) {
-            $.post(url, function(response) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+            // Get CSRF token from global dietetic object or meta tags
+            var csrfData = {};
+            if (window.dietetic && window.dietetic.csrf) {
+                csrfData[window.dietetic.csrf.name] = window.dietetic.csrf.hash;
+            } else {
+                // Fallback: try to get from meta tags
+                var csrfName = $('meta[name="csrf-token-name"]').attr('content');
+                var csrfHash = $('meta[name="csrf-token"]').attr('content');
+                if (csrfName && csrfHash) {
+                    csrfData[csrfName] = csrfHash;
+                }
+            }
+
+            $.post(url, csrfData, function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
                     if (callback) callback();
                 } else {
-                    alert_float('danger', response.message);
+                    alert_float('danger', response.message || 'Erreur lors de la suppression');
                 }
-            }, 'json');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Delete failed:', status, error);
+                alert_float('danger', 'Erreur lors de la suppression: ' + (xhr.status === 419 ? 'Token CSRF invalide' : error));
+            });
         }
     }
 

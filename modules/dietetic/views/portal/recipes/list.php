@@ -11,30 +11,108 @@ $this->load->view('portal/includes/portal_header');
 /* Variables de couleurs - Charte graphique officielle */
 :root {
     --primary-color: #01807B;
-    --primary-dark: #026660;
-    --secondary-color: #dc3545;
+    --primary-dark: #015a57;
+    --primary-light: #019B95;
+    --secondary-color: #F3911D;
+    --secondary-dark: #e07d0f;
+    --secondary-light: #FFA74D;
+    --tertiary-color: #FFFFFF;
     --background: #F8F9FC;
     --card-bg: #FFFFFF;
     --text-primary: #1E1E1E;
     --text-secondary: #6B7280;
+    --text-dark: #1a202c;
+    --text-medium: #2d3748;
+    --text-light: #718096;
+    --border-color: #e2e8f0;
+    --border-light: #edf2f7;
+    --success-color: #48bb78;
+    --success-light: #9ae6b4;
+    --danger-color: #f56565;
+    --warning-color: #ed8936;
+    --info-color: #4299e1;
     --border-radius-lg: 20px;
     --border-radius-md: 16px;
     --border-radius-sm: 12px;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
 }
 
 body {
-    background: var(--background);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8eff5 50%, #f5f7fa 100%);
+    background-attachment: fixed;
+    padding-top: 50px;
+    padding-bottom: 80px;
+    min-height: 100vh;
+    color: var(--text-medium);
+    line-height: 1.6;
 }
 
 /* === MOBILE FIRST DESIGN === */
 
+/* Override content-container padding for this page */
+.content-container {
+    padding: 0 !important;
+}
+
 /* Base Container */
 .container {
-    padding: 8px;
-    max-width: 100%;
+    padding: 15px;
+    max-width: calc(100% - 30px);
+    margin: 0 auto;
+}
+
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1800px;
+    }
 }
 
 /* Filter Section */
@@ -44,6 +122,7 @@ body {
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.5s ease-out;
 }
 
 .filter-section h4 {
@@ -98,6 +177,7 @@ body {
     color: var(--text-primary);
     font-weight: 500;
     width: 100%;
+    transition: var(--transition);
 }
 
 .filter-section .form-control::placeholder {
@@ -122,13 +202,15 @@ body {
     font-size: 14px;
     background: var(--secondary-color);
     border: none;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
     letter-spacing: -0.2px;
+    transition: var(--transition);
 }
 
 .filter-section .btn-danger:hover {
-    background: #FF5252;
-    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+    background: var(--secondary-light);
+    box-shadow: 0 6px 16px rgba(243, 145, 29, 0.4);
+    transform: translateY(-2px);
 }
 
 /* Category Filters - Pills */
@@ -169,7 +251,7 @@ body {
     text-decoration: none;
     font-size: 13px;
     font-weight: 700;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -199,6 +281,7 @@ body {
     margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
 }
 
 .recipes-tabs .nav-tabs {
@@ -217,7 +300,7 @@ body {
     padding: 14px 12px;
     font-weight: 700;
     font-size: 13px;
-    transition: all 0.2s;
+    transition: var(--transition);
     text-align: center;
     border: none;
     border-radius: 0;
@@ -247,10 +330,11 @@ body {
     border-radius: var(--border-radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
+    transition: var(--transition);
     display: flex;
     flex-direction: row;
     cursor: pointer;
+    animation: scaleIn 0.4s ease-out;
 }
 
 .recipe-card:active {
@@ -356,6 +440,13 @@ body {
     align-items: center;
     gap: 4px;
     margin-top: auto;
+    justify-content: space-between;
+}
+
+.recipe-rating-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .recipe-rating i {
@@ -381,34 +472,33 @@ body {
     display: none;
 }
 
-/* Favorite Button - Flottant en haut à droite */
+/* Favorite Button - Inline avec les notes */
 .btn-favorite {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(255, 255, 255, 0.95);
+    background: transparent;
     color: var(--text-secondary);
     border: none;
-    transition: all 0.2s;
-    padding: 8px;
+    transition: var(--transition-fast);
+    padding: 4px;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
 .recipe-card {
     position: relative;
 }
 
-.btn-favorite:hover,
+.btn-favorite:hover {
+    background: rgba(243, 145, 29, 0.1);
+    color: var(--secondary-color);
+}
+
 .btn-favorite.active {
-    background: var(--secondary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    color: var(--secondary-color);
 }
 
 .btn-favorite:active {
@@ -417,7 +507,7 @@ body {
 
 .btn-favorite i.fa-heart {
     display: none;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-favorite.active i.fa-heart {
@@ -426,7 +516,7 @@ body {
 
 .btn-favorite i.fa-heart-o {
     display: inline;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-favorite.active i.fa-heart-o {
@@ -469,7 +559,7 @@ body {
     text-decoration: none;
     font-size: 14px;
     font-weight: 700;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -775,26 +865,35 @@ body {
                                     <!-- Rating sous le titre -->
                                     <?php if ($recipe->average_rating > 0) : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star"></i>
-                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
-                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star"></i>
+                                                <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                                <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php else : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star-o"></i>
-                                            <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star-o"></i>
+                                                <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Bouton favori flottant -->
-                                <button type="button"
-                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                    <i class="fa fa-heart"></i>
-                                    <i class="fa fa-heart-o"></i>
-                                    <span>Favori</span>
-                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -889,26 +988,35 @@ body {
                                     <!-- Rating sous le titre -->
                                     <?php if ($recipe->average_rating > 0) : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star"></i>
-                                            <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
-                                            <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star"></i>
+                                                <span class="recipe-rating-value"><?php echo number_format($recipe->average_rating, 1); ?></span>
+                                                <span class="recipe-rating-count">(<?php echo $recipe->ratings_count; ?> avis)</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php else : ?>
                                         <div class="recipe-rating">
-                                            <i class="fa fa-star-o"></i>
-                                            <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            <div class="recipe-rating-info">
+                                                <i class="fa fa-star-o"></i>
+                                                <span class="recipe-rating-count">Pas encore d'avis</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
+                                                    onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
+                                                <i class="fa fa-heart"></i>
+                                                <i class="fa fa-heart-o"></i>
+                                                <span>Favori</span>
+                                            </button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Bouton favori flottant -->
-                                <button type="button"
-                                        class="btn btn-favorite btn-sm <?php echo $is_favorite ? 'active' : ''; ?>"
-                                        onclick="event.stopPropagation(); toggleFavorite(<?php echo $recipe->id; ?>, this); return false;">
-                                    <i class="fa fa-heart"></i>
-                                    <i class="fa fa-heart-o"></i>
-                                    <span>Favori</span>
-                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>

@@ -5,98 +5,372 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
-.recipes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+/* Variables de couleurs - Charte graphique officielle */
+:root {
+    --primary-color: #01807B;
+    --primary-dark: #015a57;
+    --primary-light: #019B95;
+    --secondary-color: #F3911D;
+    --secondary-dark: #e07d0f;
+    --secondary-light: #FFA74D;
+    --tertiary-color: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --text-primary: #1E1E1E;
+    --text-secondary: #6B7280;
+    --text-dark: #1a202c;
+    --text-medium: #2d3748;
+    --text-light: #718096;
+    --border-radius-lg: 20px;
+    --border-radius-md: 16px;
+    --border-radius-sm: 12px;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.recipe-card {
-    background: white;
-    border-radius: 12px;
-    border: 2px solid #f1f3f5;
-    margin-bottom: 20px;
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8eff5 50%, #f5f7fa 100%);
+    background-attachment: fixed;
+    padding-top: 50px;
+    padding-bottom: 80px;
+    min-height: 100vh;
+    color: var(--text-medium);
+    line-height: 1.6;
+}
+
+/* Override content-container padding for this page */
+.content-container {
+    padding: 0 !important;
+}
+
+.container {
+    padding: 15px;
+    max-width: calc(100% - 30px);
+    margin: 0 auto;
+}
+
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1800px;
+    }
+}
+
+/* Page Header */
+.page-header-fav {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+    color: white;
+    padding: 30px;
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 45px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
     overflow: hidden;
-    transition: all 0.3s;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.page-header-fav::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+}
+
+.page-header-fav h1 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.page-header-fav h1 i {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+.page-header-fav p {
+    margin: 10px 0 0 0;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
+
+.page-header-fav .btn-default {
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 700;
+    transition: var(--transition);
+    position: relative;
+    z-index: 1;
+}
+
+.page-header-fav .btn-default:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Recipe Grid - Layout liste vertical */
+.recipes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Recipe Card - Layout horizontal */
+.recipe-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+    animation: scaleIn 0.4s ease-out;
 }
 
 .recipe-card:hover {
-    border-color: #01807B;
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
-    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
 }
 
+.recipe-card:active {
+    transform: scale(0.99);
+}
+
+/* Recipe Photo - À gauche */
 .recipe-photo {
-    width: 100%;
-    height: 200px;
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .recipe-photo-placeholder {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 64px;
-    color: #adb5bd;
+    font-size: 36px;
+    color: #D1D5DB;
+    flex-shrink: 0;
 }
 
+/* Recipe Content - À droite */
 .recipe-content {
-    padding: 20px;
+    padding: 12px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .recipe-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #212529;
-    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
 }
 
 .recipe-title a {
-    color: #212529;
+    color: var(--text-primary);
     text-decoration: none;
+    transition: var(--transition-fast);
 }
 
 .recipe-title a:hover {
-    color: #01807B;
+    color: var(--primary-color);
 }
 
 .recipe-meta {
     display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 12px;
     flex-wrap: wrap;
+    margin-bottom: 8px;
 }
 
 .recipe-meta-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: #6c757d;
-    font-size: 13px;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .recipe-meta-item i {
-    color: #01807B;
+    color: var(--primary-color);
+    font-size: 11px;
 }
 
+.recipe-meta-item i.fa-star {
+    color: #FFC107;
+}
+
+.recipe-meta-item i.fa-heart {
+    color: var(--secondary-color);
+}
+
+/* Tags */
+.recipe-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.recipe-tag {
+    background: #F3F4F6;
+    color: var(--text-primary);
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* Actions */
 .recipe-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.recipe-actions .btn {
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: var(--transition);
+    border: none;
+}
+
+.recipe-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.recipe-actions .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.recipe-actions .btn-danger {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.recipe-actions .btn-danger:hover {
+    background: var(--secondary-dark);
+    transform: translateY(-2px);
+}
+
+/* Alert */
+.alert {
+    border-radius: var(--border-radius-md);
+    border: none;
+    padding: 18px;
+    font-size: 15px;
+    font-weight: 600;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive */
+@media (min-width: 576px) {
+    .recipe-photo,
+    .recipe-photo-placeholder {
+        width: 140px;
+        min-width: 140px;
+        height: 140px;
+    }
+
+    .recipe-title {
+        font-size: 17px;
+    }
+}
+
+@media (min-width: 992px) {
+    .recipe-photo,
+    .recipe-photo-placeholder {
+        width: 160px;
+        min-width: 160px;
+        height: 160px;
+    }
+
+    .recipe-photo-placeholder {
+        font-size: 48px;
+    }
+
+    .recipe-content {
+        padding: 16px 20px;
+    }
+
+    .recipe-title {
+        font-size: 18px;
+    }
+
+    .recipe-meta-item {
+        font-size: 13px;
+    }
 }
 </style>
 
 <div class="container">
-    <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px;">
-        <h1 style="margin: 0; font-size: 28px; font-weight: 700;">
+    <div class="page-header-fav">
+        <h1>
             <i class="fa fa-heart"></i> Mes Recettes Favorites
         </h1>
-        <p style="margin: 10px 0 0 0; opacity: 0.9;">
+        <p>
             Retrouvez ici toutes vos recettes préférées
         </p>
-        <div style="margin-top: 20px;">
+        <div>
             <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Retour aux recettes
             </a>
@@ -138,25 +412,29 @@ $this->load->view('portal/includes/portal_header');
                             <?php endif; ?>
                             <?php if ($recipe->average_rating > 0) : ?>
                                 <div class="recipe-meta-item">
-                                    <i class="fa fa-star" style="color: #f39c12;"></i>
+                                    <i class="fa fa-star"></i>
                                     <?php echo number_format($recipe->average_rating, 1); ?>
                                 </div>
                             <?php endif; ?>
-                            <div class="recipe-meta-item">
-                                <i class="fa fa-heart" style="color: #dc3545;"></i>
-                                Ajouté le <?php echo date('d/m/Y', strtotime($recipe->added_at)); ?>
-                            </div>
+                            <?php if ($recipe->category) : ?>
+                                <div class="recipe-meta-item">
+                                    <i class="fa fa-tag"></i>
+                                    <?php
+                                    $category_labels = [
+                                        'breakfast' => 'Petit-déjeuner',
+                                        'lunch' => 'Déjeuner',
+                                        'dinner' => 'Dîner',
+                                        'snack' => 'Collation',
+                                        'smoothie' => 'Smoothie',
+                                        'juice' => 'Jus naturel',
+                                        'beverage' => 'Boisson',
+                                        'dessert' => 'Dessert'
+                                    ];
+                                    echo $category_labels[$recipe->category] ?? ucfirst($recipe->category);
+                                    ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
-
-                        <?php if (!empty($recipe->tags)) : ?>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                                <?php foreach (array_slice($recipe->tags, 0, 3) as $tag) : ?>
-                                    <span style="background: #e9ecef; color: #495057; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-                                        <?php echo htmlspecialchars($tag); ?>
-                                    </span>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
 
                         <div class="recipe-actions">
                             <a href="<?php echo site_url('dietetic/portal/recipe_view/' . $recipe->id); ?>"
