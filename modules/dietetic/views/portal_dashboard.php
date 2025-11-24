@@ -1197,6 +1197,12 @@ $this->load->view('portal/includes/portal_header');
     transition: all 0.2s ease;
 }
 
+/* Water item full width */
+.water-item {
+    width: 100%;
+    justify-content: space-between;
+}
+
 .daily-item:hover {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
@@ -1244,6 +1250,37 @@ $this->load->view('portal/includes/portal_header');
     cursor: pointer;
     flex-shrink: 0;
     accent-color: #01807B;
+}
+
+/* Progress bar for meals */
+.meals-progress-container {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.meals-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.meals-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.meals-progress-text {
+    font-size: 10px;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 4px;
+    font-weight: 600;
 }
 
 /* Water counter buttons */
@@ -1750,22 +1787,39 @@ body {
                    <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
                    onchange="toggleMeal('dinner', this.checked)">
         </div>
+    </div>
 
-        <!-- Item 4: Hydratation -->
-        <div class="daily-item water-item">
+    <!-- Progress bar for meals -->
+    <div class="meals-progress-container">
+        <div class="meals-progress-bar">
+            <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
+                $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
+                              ($daily_tracking->lunch_checked ? 1 : 0) +
+                              ($daily_tracking->dinner_checked ? 1 : 0);
+                echo ($meals_count / 3 * 100);
+            ?>%;"></div>
+        </div>
+        <div class="meals-progress-text">
+            <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
+        </div>
+    </div>
+
+    <!-- Item 4: Hydratation (full width) -->
+    <div class="daily-item water-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
             <div class="daily-item-icon">
                 <i class="fa fa-tint"></i>
             </div>
             <span class="daily-item-label">Hydratation</span>
-            <div class="water-actions">
-                <button class="btn-water" onclick="updateWater('decrement')" <?php echo $daily_tracking->water_glasses == 0 ? 'disabled' : ''; ?>>
-                    <i class="fa fa-minus"></i>
-                </button>
-                <span class="water-count-display" id="water-count"><?php echo $daily_tracking->water_glasses; ?></span>
-                <button class="btn-water" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
-                    <i class="fa fa-plus"></i>
-                </button>
-            </div>
+        </div>
+        <div class="water-actions">
+            <button class="btn-water" onclick="updateWater('decrement')" <?php echo $daily_tracking->water_glasses == 0 ? 'disabled' : ''; ?>>
+                <i class="fa fa-minus"></i>
+            </button>
+            <span class="water-count-display" id="water-count"><?php echo $daily_tracking->water_glasses; ?></span>
+            <button class="btn-water" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
+                <i class="fa fa-plus"></i>
+            </button>
         </div>
     </div>
 
@@ -2418,16 +2472,20 @@ document.addEventListener('keydown', function(e) {
 // DAILY TRACKING JAVASCRIPT FUNCTIONS
 // ============================================================
 
+// CSRF Token for AJAX requests
+const csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+const csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+
 /**
  * Update water count (increment or decrement)
  */
 function updateWater(action) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>';
+    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>?' + csrf_token_name + '=' + csrf_hash;
 
     fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ action: action })
     })
@@ -2460,12 +2518,12 @@ function updateWater(action) {
  * Toggle meal checkbox (breakfast, lunch, dinner)
  */
 function toggleMeal(mealType, checked) {
-    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>';
+    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>?' + csrf_token_name + '=' + csrf_hash;
 
     fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             meal: mealType,
@@ -2475,6 +2533,9 @@ function toggleMeal(mealType, checked) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Update progress bar
+            updateMealsProgress();
+
             // Visual feedback
             const mealNames = {
                 breakfast: 'Petit-déjeuner',
@@ -2485,18 +2546,45 @@ function toggleMeal(mealType, checked) {
             showToast(icon + ' ' + mealNames[mealType] + ' ' + (checked ? 'validé' : 'non validé'), 'success');
         } else {
             // Revert checkbox on error
-            const checkbox = document.querySelector(`.meal-checkbox[data-meal="${mealType}"]`);
-            checkbox.checked = !checked;
+            const checkbox = document.querySelector(`.daily-checkbox[data-meal="${mealType}"]`);
+            if (checkbox) {
+                checkbox.checked = !checked;
+            }
             showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
         // Revert checkbox on error
-        const checkbox = document.querySelector(`.meal-checkbox[data-meal="${mealType}"]`);
-        checkbox.checked = !checked;
+        const checkbox = document.querySelector(`.daily-checkbox[data-meal="${mealType}"]`);
+        if (checkbox) {
+            checkbox.checked = !checked;
+        }
         showToast('❌ Erreur de connexion', 'error');
     });
+}
+
+/**
+ * Update meals progress bar
+ */
+function updateMealsProgress() {
+    const checkboxes = document.querySelectorAll('.daily-checkbox');
+    let count = 0;
+    checkboxes.forEach(cb => {
+        if (cb.checked) count++;
+    });
+
+    const percentage = (count / 3 * 100);
+    const progressFill = document.getElementById('meals-progress-fill');
+    const progressText = document.getElementById('meals-progress-text');
+
+    if (progressFill) {
+        progressFill.style.width = percentage + '%';
+    }
+
+    if (progressText) {
+        progressText.textContent = count + '/3 repas validés';
+    }
 }
 
 /**

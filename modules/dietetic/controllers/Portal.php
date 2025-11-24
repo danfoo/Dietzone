@@ -10,30 +10,6 @@ class Portal extends App_Controller
     {
         parent::__construct();
 
-        // Disable CSRF protection for AJAX notification methods
-        $csrf_exclude_uris = [
-            'dietetic/portal/get_notifications',
-            'dietetic/portal/mark_notification_read',
-            'dietetic/portal/delete_notification',
-            'dietetic/portal/mark_all_notifications_read',
-            'dietetic/portal/save_fcm_token',
-            'dietetic/portal/delete_fcm_token',
-            'dietetic/portal/add_to_favorites',
-            'dietetic/portal/remove_from_favorites',
-            // Daily tracking API endpoints
-            'dietetic/portal/api_get_daily_tracking',
-            'dietetic/portal/api_update_water',
-            'dietetic/portal/api_toggle_meal',
-            'dietetic/portal/api_update_activity',
-            'dietetic/portal/api_update_calories',
-            'dietetic/portal/api_get_streak'
-        ];
-
-        $current_uri = uri_string();
-        if (in_array($current_uri, $csrf_exclude_uris)) {
-            $this->config->set_item('csrf_protection', FALSE);
-        }
-
         // Load helper functions
         $this->load->helper('dietetic/dietetic');
 
