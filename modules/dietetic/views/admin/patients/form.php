@@ -622,46 +622,541 @@ textarea.form-control {
                             </div>
                         </div>
 
-                        <!-- Section 3: Informations Médicales -->
-                        <div class="form-section">
-                            <div class="section-title">
+                        <!-- Section 3: Antécédents & Historique Médical (ENRICHIE) -->
+                        <div class="form-section" style="border-left-color: #e67e22;">
+                            <div class="section-title" style="color: #e67e22;">
                                 <i class="fa fa-medkit"></i>
-                                <span>Informations Médicales</span>
+                                <span>Antécédents & Historique Médical</span>
+                            </div>
+
+                            <h5 style="color: #e67e22; margin-bottom: 15px; font-weight: 600;">
+                                <i class="fa fa-stethoscope"></i> État de Santé Actuel
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="medical_conditions"><?php echo _l('dietetic_medical_conditions'); ?> <i class="fa fa-info-circle" title="Diabète, hypertension, cholestérol..."></i></label>
+                                        <textarea class="form-control" name="medical_conditions" rows="3" placeholder="Ex: Diabète type 2, Hypertension artérielle, Hypothyroïdie..."><?php echo isset($patient) ? $patient->medical_conditions : ''; ?></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="medications"><?php echo _l('dietetic_medications'); ?> <i class="fa fa-info-circle" title="Nom, dosage et fréquence"></i></label>
+                                        <textarea class="form-control" name="medications" rows="3" placeholder="Ex: Metformine 500mg 2x/jour, Levothyrox 75µg 1x/jour..."><?php echo isset($patient) ? $patient->medications : ''; ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="allergies"><?php echo _l('dietetic_allergies'); ?> <i class="fa fa-info-circle" title="Alimentaires et médicamenteuses"></i></label>
+                                        <textarea class="form-control" name="allergies" rows="2" placeholder="Ex: Arachides, Lactose, Gluten, Pénicilline..."><?php echo isset($patient) ? $patient->allergies : ''; ?></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="supplements">Compléments alimentaires & Vitamines</label>
+                                        <textarea class="form-control" name="supplements" rows="2" placeholder="Ex: Vitamine D, Oméga-3, Magnésium..."><?php echo isset($patient) ? $patient->supplements : ''; ?></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="recent_blood_work">Dernières analyses sanguines <i class="fa fa-info-circle" title="Date et résultats clés"></i></label>
+                                        <textarea class="form-control" name="recent_blood_work" rows="2" placeholder="Ex: Glycémie à jeun 1.2g/L, Cholestérol total 2.5g/L (01/2025)..."><?php echo isset($patient) ? $patient->recent_blood_work : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #e67e22; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-history"></i> Historique de Poids & Régimes
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="weight_history">Historique de poids</label>
+                                        <textarea class="form-control" name="weight_history" rows="2" placeholder="Ex: Poids maximum 90kg (2020), Poids minimum 65kg (2018)..."><?php echo isset($patient) ? $patient->weight_history : ''; ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="previous_diets">Régimes précédents <i class="fa fa-info-circle" title="Régimes tentés et résultats"></i></label>
+                                        <textarea class="form-control" name="previous_diets" rows="2" placeholder="Ex: Régime hypocalorique (-8kg puis reprise), Keto (difficultés)..."><?php echo isset($patient) ? $patient->previous_diets : ''; ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="weight_gain_triggers">Facteurs de prise de poids</label>
+                                        <textarea class="form-control" name="weight_gain_triggers" rows="2" placeholder="Ex: Grossesse, Arrêt du sport, Stress, Médicaments..."><?php echo isset($patient) ? $patient->weight_gain_triggers : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #e67e22; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-users"></i> Antécédents Familiaux
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="family_history">Maladies familiales <i class="fa fa-info-circle" title="Diabète, obésité, maladies cardiovasculaires..."></i></label>
+                                        <textarea class="form-control" name="family_history" rows="2" placeholder="Ex: Mère diabétique, Père hypertension, Grand-mère obésité..."><?php echo isset($patient) ? $patient->family_history : ''; ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="surgeries">Chirurgies & Hospitalisations</label>
+                                        <textarea class="form-control" name="surgeries" rows="2" placeholder="Ex: Appendicectomie (2015), Césarienne (2018)..."><?php echo isset($patient) ? $patient->surgeries : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #e67e22; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-moon-o"></i> Sommeil & Santé Mentale
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="sleep_hours">Heures de sommeil/nuit</label>
+                                        <input type="number" step="0.5" class="form-control" name="sleep_hours" value="<?php echo isset($patient) ? $patient->sleep_hours : ''; ?>" placeholder="7.5" min="0" max="24" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="sleep_quality">Qualité du sommeil</label>
+                                        <select name="sleep_quality" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="very_good" <?php echo set_select('sleep_quality', 'very_good', isset($patient) && $patient->sleep_quality == 'very_good'); ?>>Très bonne</option>
+                                            <option value="good" <?php echo set_select('sleep_quality', 'good', isset($patient) && $patient->sleep_quality == 'good'); ?>>Bonne</option>
+                                            <option value="average" <?php echo set_select('sleep_quality', 'average', isset($patient) && $patient->sleep_quality == 'average'); ?>>Moyenne</option>
+                                            <option value="poor" <?php echo set_select('sleep_quality', 'poor', isset($patient) && $patient->sleep_quality == 'poor'); ?>>Mauvaise</option>
+                                            <option value="very_poor" <?php echo set_select('sleep_quality', 'very_poor', isset($patient) && $patient->sleep_quality == 'very_poor'); ?>>Très mauvaise</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="stress_level">Niveau de stress <i class="fa fa-info-circle" title="1=Très faible, 10=Extrême"></i></label>
+                                        <input type="number" class="form-control" name="stress_level" value="<?php echo isset($patient) ? $patient->stress_level : ''; ?>" placeholder="5" min="1" max="10" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="mental_health">Santé mentale</label>
+                                        <select name="mental_health" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="excellent" <?php echo set_select('mental_health', 'excellent', isset($patient) && $patient->mental_health == 'excellent'); ?>>Excellente</option>
+                                            <option value="good" <?php echo set_select('mental_health', 'good', isset($patient) && $patient->mental_health == 'good'); ?>>Bonne</option>
+                                            <option value="moderate" <?php echo set_select('mental_health', 'moderate', isset($patient) && $patient->mental_health == 'moderate'); ?>>Modérée</option>
+                                            <option value="anxiety" <?php echo set_select('mental_health', 'anxiety', isset($patient) && $patient->mental_health == 'anxiety'); ?>>Anxiété</option>
+                                            <option value="depression" <?php echo set_select('mental_health', 'depression', isset($patient) && $patient->mental_health == 'depression'); ?>>Dépression</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="medical_conditions"><?php echo _l('dietetic_medical_conditions'); ?></label>
-                                        <textarea class="form-control" name="medical_conditions" rows="3"><?php echo isset($patient) ? $patient->medical_conditions : ''; ?></textarea>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="allergies"><?php echo _l('dietetic_allergies'); ?></label>
-                                        <textarea class="form-control" name="allergies" rows="2"><?php echo isset($patient) ? $patient->allergies : ''; ?></textarea>
+                                        <label for="stress_eating">Alimentation émotionnelle ? <i class="fa fa-info-circle" title="Manger en réponse au stress/émotions"></i></label>
+                                        <select name="stress_eating" class="form-control">
+                                            <option value="no" <?php echo set_select('stress_eating', 'no', !isset($patient) || (isset($patient) && $patient->stress_eating == 'no')); ?>>Non</option>
+                                            <option value="sometimes" <?php echo set_select('stress_eating', 'sometimes', isset($patient) && $patient->stress_eating == 'sometimes'); ?>>Parfois</option>
+                                            <option value="often" <?php echo set_select('stress_eating', 'often', isset($patient) && $patient->stress_eating == 'often'); ?>>Souvent</option>
+                                            <option value="always" <?php echo set_select('stress_eating', 'always', isset($patient) && $patient->stress_eating == 'always'); ?>>Toujours</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="medications"><?php echo _l('dietetic_medications'); ?></label>
-                                        <textarea class="form-control" name="medications" rows="2"><?php echo isset($patient) ? $patient->medications : ''; ?></textarea>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="dietary_preferences"><?php echo _l('dietetic_dietary_preferences'); ?></label>
-                                        <input type="text" class="form-control" name="dietary_preferences" value="<?php echo isset($patient) ? $patient->dietary_preferences : ''; ?>" placeholder="e.g., vegetarian, vegan, halal" />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="lifestyle_notes"><?php echo _l('dietetic_lifestyle_notes'); ?></label>
-                                        <textarea class="form-control" name="lifestyle_notes" rows="2"><?php echo isset($patient) ? $patient->lifestyle_notes : ''; ?></textarea>
+                                        <label for="eating_disorders_history">Historique de troubles alimentaires ?</label>
+                                        <textarea class="form-control" name="eating_disorders_history" rows="2" placeholder="Ex: Anorexie, boulimie, hyperphagie boulimique..."><?php echo isset($patient) ? $patient->eating_disorders_history : ''; ?></textarea>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="alert" style="background: #fef5e7; border-left: 4px solid #e67e22; color: #7d4d1a;">
+                                <i class="fa fa-exclamation-triangle"></i> <strong>Confidentialité:</strong> Toutes ces informations médicales sont strictement confidentielles et sécurisées.
+                            </div>
                         </div>
 
-                        <!-- Section 4: Contact d'Urgence -->
+                        <!-- Section 4: Système Digestif & Intolérances (NOUVELLE) -->
+                        <div class="form-section" style="border-left-color: #3498db;">
+                            <div class="section-title" style="color: #3498db;">
+                                <i class="fa fa-heartbeat"></i>
+                                <span>Système Digestif & Intolérances</span>
+                            </div>
+
+                            <h5 style="color: #3498db; margin-bottom: 15px; font-weight: 600;">
+                                <i class="fa fa-cutlery"></i> Système Digestif
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="digestive_issues">Problèmes digestifs</label>
+                                        <select name="digestive_issues" id="digestive_issues" class="form-control">
+                                            <option value="none" <?php echo set_select('digestive_issues', 'none', !isset($patient) || (isset($patient) && $patient->digestive_issues == 'none')); ?>>Aucun</option>
+                                            <option value="constipation" <?php echo set_select('digestive_issues', 'constipation', isset($patient) && $patient->digestive_issues == 'constipation'); ?>>Constipation</option>
+                                            <option value="diarrhea" <?php echo set_select('digestive_issues', 'diarrhea', isset($patient) && $patient->digestive_issues == 'diarrhea'); ?>>Diarrhée</option>
+                                            <option value="bloating" <?php echo set_select('digestive_issues', 'bloating', isset($patient) && $patient->digestive_issues == 'bloating'); ?>>Ballonnements</option>
+                                            <option value="reflux" <?php echo set_select('digestive_issues', 'reflux', isset($patient) && $patient->digestive_issues == 'reflux'); ?>>Reflux gastrique (RGO)</option>
+                                            <option value="ibs" <?php echo set_select('digestive_issues', 'ibs', isset($patient) && $patient->digestive_issues == 'ibs'); ?>>Syndrome intestin irritable (SII)</option>
+                                            <option value="multiple" <?php echo set_select('digestive_issues', 'multiple', isset($patient) && $patient->digestive_issues == 'multiple'); ?>>Plusieurs symptômes</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="bowel_frequency">Fréquence des selles/jour</label>
+                                        <input type="number" step="0.5" class="form-control" name="bowel_frequency" value="<?php echo isset($patient) ? $patient->bowel_frequency : ''; ?>" placeholder="1.0" min="0" max="10" />
+                                        <small class="text-muted">Normal: 1-3 fois/jour</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="water_intake">Consommation d'eau (L/jour) <i class="fa fa-tint"></i></label>
+                                        <input type="number" step="0.1" class="form-control" name="water_intake" value="<?php echo isset($patient) ? $patient->water_intake : ''; ?>" placeholder="1.5" min="0" max="10" />
+                                        <small class="text-muted">Recommandé: 1.5-2L</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="digestive_details">Détails des problèmes digestifs</label>
+                                        <textarea class="form-control" name="digestive_details" rows="2" placeholder="Ex: Ballonnements après les repas, constipation chronique depuis 2 ans..."><?php echo isset($patient) ? $patient->digestive_details : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #3498db; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-ban"></i> Intolérances & Sensibilités Alimentaires
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="lactose_intolerance" value="1" <?php echo (isset($patient) && $patient->lactose_intolerance) ? 'checked' : ''; ?>>
+                                            Intolérance au lactose
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="gluten_intolerance" value="1" <?php echo (isset($patient) && $patient->gluten_intolerance) ? 'checked' : ''; ?>>
+                                            Intolérance au gluten / Maladie cœliaque
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="fructose_intolerance" value="1" <?php echo (isset($patient) && $patient->fructose_intolerance) ? 'checked' : ''; ?>>
+                                            Intolérance au fructose
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="fodmap_sensitivity" value="1" <?php echo (isset($patient) && $patient->fodmap_sensitivity) ? 'checked' : ''; ?>>
+                                            Sensibilité aux FODMAPs
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="histamine_intolerance" value="1" <?php echo (isset($patient) && $patient->histamine_intolerance) ? 'checked' : ''; ?>>
+                                            Intolérance à l'histamine
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" name="caffeine_sensitivity" value="1" <?php echo (isset($patient) && $patient->caffeine_sensitivity) ? 'checked' : ''; ?>>
+                                            Sensibilité à la caféine
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="food_dislikes">Aliments non tolérés / Aversions</label>
+                                        <textarea class="form-control" name="food_dislikes" rows="4" placeholder="Ex: Oignons (ballonnements), Poivrons (indigestion), Œufs (nausées)..."><?php echo isset($patient) ? $patient->food_dislikes : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #3498db; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-leaf"></i> Préférences & Restrictions Alimentaires
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="dietary_preferences"><?php echo _l('dietetic_dietary_preferences'); ?> <i class="fa fa-info-circle" title="Végétarien, végan, halal, etc."></i></label>
+                                        <input type="text" class="form-control" name="dietary_preferences" value="<?php echo isset($patient) ? $patient->dietary_preferences : ''; ?>" placeholder="Ex: Végétarien, Végan, Halal, Casher, Pescetarien..." />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="favorite_foods">Aliments favoris <i class="fa fa-heart" style="color: #e74c3c;"></i></label>
+                                        <textarea class="form-control" name="favorite_foods" rows="2" placeholder="Ex: Poulet grillé, Avocat, Riz basmati, Chocolat noir..."><?php echo isset($patient) ? $patient->favorite_foods : ''; ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="cultural_food_preferences">Préférences culturelles alimentaires</label>
+                                        <textarea class="form-control" name="cultural_food_preferences" rows="2" placeholder="Ex: Cuisine sénégalaise, asiatique, méditerranéenne..."><?php echo isset($patient) ? $patient->cultural_food_preferences : ''; ?></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="cooking_skills">Compétences culinaires</label>
+                                        <select name="cooking_skills" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="beginner" <?php echo set_select('cooking_skills', 'beginner', isset($patient) && $patient->cooking_skills == 'beginner'); ?>>Débutant</option>
+                                            <option value="basic" <?php echo set_select('cooking_skills', 'basic', isset($patient) && $patient->cooking_skills == 'basic'); ?>>Basique</option>
+                                            <option value="intermediate" <?php echo set_select('cooking_skills', 'intermediate', isset($patient) && $patient->cooking_skills == 'intermediate'); ?>>Intermédiaire</option>
+                                            <option value="advanced" <?php echo set_select('cooking_skills', 'advanced', isset($patient) && $patient->cooking_skills == 'advanced'); ?>>Avancé</option>
+                                            <option value="professional" <?php echo set_select('cooking_skills', 'professional', isset($patient) && $patient->cooking_skills == 'professional'); ?>>Professionnel</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert" style="background: #ebf5fb; border-left: 4px solid #3498db; color: #1b4f72;">
+                                <i class="fa fa-info-circle"></i> <strong>Conseil:</strong> Ces informations permettent de personnaliser les recommandations alimentaires en tenant compte des intolérances et préférences.
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Mode de Vie Détaillé (NOUVELLE) -->
+                        <div class="form-section" style="border-left-color: #9b59b6;">
+                            <div class="section-title" style="color: #9b59b6;">
+                                <i class="fa fa-life-ring"></i>
+                                <span>Mode de Vie Détaillé</span>
+                            </div>
+
+                            <h5 style="color: #9b59b6; margin-bottom: 15px; font-weight: 600;">
+                                <i class="fa fa-coffee"></i> Habitudes Alimentaires Quotidiennes
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="meals_per_day">Nombre de repas/jour</label>
+                                        <input type="number" class="form-control" name="meals_per_day" value="<?php echo isset($patient) ? $patient->meals_per_day : ''; ?>" placeholder="3" min="1" max="10" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="snacks_per_day">Collations/jour</label>
+                                        <input type="number" class="form-control" name="snacks_per_day" value="<?php echo isset($patient) ? $patient->snacks_per_day : ''; ?>" placeholder="2" min="0" max="10" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="breakfast_time">Heure petit-déjeuner</label>
+                                        <input type="time" class="form-control" name="breakfast_time" value="<?php echo isset($patient) ? $patient->breakfast_time : ''; ?>" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="dinner_time">Heure dîner</label>
+                                        <input type="time" class="form-control" name="dinner_time" value="<?php echo isset($patient) ? $patient->dinner_time : ''; ?>" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="eating_speed">Vitesse d'alimentation</label>
+                                        <select name="eating_speed" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="very_slow" <?php echo set_select('eating_speed', 'very_slow', isset($patient) && $patient->eating_speed == 'very_slow'); ?>>Très lent (>30min)</option>
+                                            <option value="slow" <?php echo set_select('eating_speed', 'slow', isset($patient) && $patient->eating_speed == 'slow'); ?>>Lent (20-30min)</option>
+                                            <option value="normal" <?php echo set_select('eating_speed', 'normal', isset($patient) && $patient->eating_speed == 'normal'); ?>>Normal (15-20min)</option>
+                                            <option value="fast" <?php echo set_select('eating_speed', 'fast', isset($patient) && $patient->eating_speed == 'fast'); ?>>Rapide (10-15min)</option>
+                                            <option value="very_fast" <?php echo set_select('eating_speed', 'very_fast', isset($patient) && $patient->eating_speed == 'very_fast'); ?>>Très rapide (<10min)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="eating_environment">Environnement de repas</label>
+                                        <select name="eating_environment" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="table_calm" <?php echo set_select('eating_environment', 'table_calm', isset($patient) && $patient->eating_environment == 'table_calm'); ?>>Table, calme, en pleine conscience</option>
+                                            <option value="table_distracted" <?php echo set_select('eating_environment', 'table_distracted', isset($patient) && $patient->eating_environment == 'table_distracted'); ?>>Table, avec TV/téléphone</option>
+                                            <option value="standing" <?php echo set_select('eating_environment', 'standing', isset($patient) && $patient->eating_environment == 'standing'); ?>>Debout / en marchant</option>
+                                            <option value="working" <?php echo set_select('eating_environment', 'working', isset($patient) && $patient->eating_environment == 'working'); ?>>En travaillant (bureau)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="meal_preparation">Préparation des repas</label>
+                                        <select name="meal_preparation" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="home_fresh" <?php echo set_select('meal_preparation', 'home_fresh', isset($patient) && $patient->meal_preparation == 'home_fresh'); ?>>Maison (frais quotidien)</option>
+                                            <option value="home_batch" <?php echo set_select('meal_preparation', 'home_batch', isset($patient) && $patient->meal_preparation == 'home_batch'); ?>>Maison (batch cooking)</option>
+                                            <option value="mixed" <?php echo set_select('meal_preparation', 'mixed', isset($patient) && $patient->meal_preparation == 'mixed'); ?>>Mixte (maison + restaurant)</option>
+                                            <option value="mostly_out" <?php echo set_select('meal_preparation', 'mostly_out', isset($patient) && $patient->meal_preparation == 'mostly_out'); ?>>Principalement restaurant/livraison</option>
+                                            <option value="processed" <?php echo set_select('meal_preparation', 'processed', isset($patient) && $patient->meal_preparation == 'processed'); ?>>Plats préparés/surgelés</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="typical_day_diet">Description d'une journée alimentaire typique</label>
+                                        <textarea class="form-control" name="typical_day_diet" rows="3" placeholder="Ex: Matin: Café + pain beurre. Midi: Riz + poisson + légumes. Soir: Soupe + salade..."><?php echo isset($patient) ? $patient->typical_day_diet : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #9b59b6; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-glass"></i> Consommations Spécifiques
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="coffee_per_day">Cafés/jour <i class="fa fa-coffee"></i></label>
+                                        <input type="number" class="form-control" name="coffee_per_day" value="<?php echo isset($patient) ? $patient->coffee_per_day : ''; ?>" placeholder="0" min="0" max="20" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="tea_per_day">Thés/jour</label>
+                                        <input type="number" class="form-control" name="tea_per_day" value="<?php echo isset($patient) ? $patient->tea_per_day : ''; ?>" placeholder="0" min="0" max="20" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="soda_per_week">Sodas/semaine</label>
+                                        <input type="number" class="form-control" name="soda_per_week" value="<?php echo isset($patient) ? $patient->soda_per_week : ''; ?>" placeholder="0" min="0" max="50" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="alcohol_per_week">Verres d'alcool/semaine</label>
+                                        <input type="number" class="form-control" name="alcohol_per_week" value="<?php echo isset($patient) ? $patient->alcohol_per_week : ''; ?>" placeholder="0" min="0" max="50" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="sweet_cravings">Envies de sucré</label>
+                                        <select name="sweet_cravings" class="form-control">
+                                            <option value="never" <?php echo set_select('sweet_cravings', 'never', isset($patient) && $patient->sweet_cravings == 'never'); ?>>Jamais</option>
+                                            <option value="rarely" <?php echo set_select('sweet_cravings', 'rarely', isset($patient) && $patient->sweet_cravings == 'rarely'); ?>>Rarement</option>
+                                            <option value="sometimes" <?php echo set_select('sweet_cravings', 'sometimes', isset($patient) && $patient->sweet_cravings == 'sometimes'); ?>>Parfois</option>
+                                            <option value="often" <?php echo set_select('sweet_cravings', 'often', isset($patient) && $patient->sweet_cravings == 'often'); ?>>Souvent</option>
+                                            <option value="daily" <?php echo set_select('sweet_cravings', 'daily', isset($patient) && $patient->sweet_cravings == 'daily'); ?>>Quotidien</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="salt_preference">Préférence pour le sel</label>
+                                        <select name="salt_preference" class="form-control">
+                                            <option value="low" <?php echo set_select('salt_preference', 'low', isset($patient) && $patient->salt_preference == 'low'); ?>>Faible</option>
+                                            <option value="normal" <?php echo set_select('salt_preference', 'normal', isset($patient) && $patient->salt_preference == 'normal'); ?>>Normal</option>
+                                            <option value="high" <?php echo set_select('salt_preference', 'high', isset($patient) && $patient->salt_preference == 'high'); ?>>Élevé</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="smoking">Tabagisme</label>
+                                        <select name="smoking" class="form-control">
+                                            <option value="no" <?php echo set_select('smoking', 'no', !isset($patient) || (isset($patient) && $patient->smoking == 'no')); ?>>Non</option>
+                                            <option value="former" <?php echo set_select('smoking', 'former', isset($patient) && $patient->smoking == 'former'); ?>>Ancien fumeur</option>
+                                            <option value="occasional" <?php echo set_select('smoking', 'occasional', isset($patient) && $patient->smoking == 'occasional'); ?>>Occasionnel</option>
+                                            <option value="light" <?php echo set_select('smoking', 'light', isset($patient) && $patient->smoking == 'light'); ?>>Léger (<10/jour)</option>
+                                            <option value="moderate" <?php echo set_select('smoking', 'moderate', isset($patient) && $patient->smoking == 'moderate'); ?>>Modéré (10-20/jour)</option>
+                                            <option value="heavy" <?php echo set_select('smoking', 'heavy', isset($patient) && $patient->smoking == 'heavy'); ?>>Fort (>20/jour)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #9b59b6; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-calendar"></i> Contraintes & Organisation
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="time_for_cooking">Temps disponible pour cuisiner/jour</label>
+                                        <select name="time_for_cooking" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="none" <?php echo set_select('time_for_cooking', 'none', isset($patient) && $patient->time_for_cooking == 'none'); ?>>Aucun / Très peu</option>
+                                            <option value="15_30min" <?php echo set_select('time_for_cooking', '15_30min', isset($patient) && $patient->time_for_cooking == '15_30min'); ?>>15-30 minutes</option>
+                                            <option value="30_60min" <?php echo set_select('time_for_cooking', '30_60min', isset($patient) && $patient->time_for_cooking == '30_60min'); ?>>30-60 minutes</option>
+                                            <option value="1_2hours" <?php echo set_select('time_for_cooking', '1_2hours', isset($patient) && $patient->time_for_cooking == '1_2hours'); ?>>1-2 heures</option>
+                                            <option value="flexible" <?php echo set_select('time_for_cooking', 'flexible', isset($patient) && $patient->time_for_cooking == 'flexible'); ?>>Flexible / Beaucoup</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="budget_level">Niveau de budget alimentaire</label>
+                                        <select name="budget_level" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="tight" <?php echo set_select('budget_level', 'tight', isset($patient) && $patient->budget_level == 'tight'); ?>>Serré</option>
+                                            <option value="moderate" <?php echo set_select('budget_level', 'moderate', isset($patient) && $patient->budget_level == 'moderate'); ?>>Modéré</option>
+                                            <option value="comfortable" <?php echo set_select('budget_level', 'comfortable', isset($patient) && $patient->budget_level == 'comfortable'); ?>>Confortable</option>
+                                            <option value="high" <?php echo set_select('budget_level', 'high', isset($patient) && $patient->budget_level == 'high'); ?>>Élevé</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="lifestyle_notes"><?php echo _l('dietetic_lifestyle_notes'); ?></label>
+                                        <textarea class="form-control" name="lifestyle_notes" rows="5" placeholder="Ex: Horaires de travail variables, mange souvent au restaurant le midi, famille nombreuse..."><?php echo isset($patient) ? $patient->lifestyle_notes : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="barriers_to_change">Obstacles au changement alimentaire</label>
+                                        <textarea class="form-control" name="barriers_to_change" rows="2" placeholder="Ex: Manque de temps, budget limité, stress, famille peu coopérative, environnement social..."><?php echo isset($patient) ? $patient->barriers_to_change : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="motivation_level">Niveau de motivation pour le changement <i class="fa fa-info-circle" title="1=Très faible, 10=Extrême"></i></label>
+                                        <input type="range" class="form-control" name="motivation_level" id="motivation_level_slider" value="<?php echo isset($patient) ? $patient->motivation_level : '5'; ?>" min="1" max="10" style="height: auto;" />
+                                        <div style="text-align: center; margin-top: 10px;">
+                                            <span style="font-size: 24px; font-weight: bold; color: #9b59b6;" id="motivation_display">5</span> / 10
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert" style="background: #f4ecf7; border-left: 4px solid #9b59b6; color: #4a235a;">
+                                <i class="fa fa-lightbulb-o"></i> <strong>Personnalisation:</strong> Ces informations permettent d'adapter le plan nutritionnel à votre style de vie réel et d'identifier les obstacles potentiels au succès.
+                            </div>
+                        </div>
+
+                        <!-- Section 6: Contact d'Urgence -->
                         <div class="form-section">
                             <div class="section-title">
                                 <i class="fa fa-phone-square"></i>
@@ -789,6 +1284,177 @@ function removeDocument(index) {
     documentsToUpload.splice(index, 1);
     updateDocumentsList();
 }
+
+// ============================================
+// CALCULS AUTOMATIQUES
+// ============================================
+
+// Calcul de l'IMC (Indice de Masse Corporelle)
+function calculateBMI() {
+    const weight = parseFloat(document.getElementById('initial_weight').value);
+    const height = parseFloat(document.getElementById('height').value);
+    const bmiDisplay = document.getElementById('bmi_display');
+
+    if (weight && height && height > 0) {
+        const heightInMeters = height / 100;
+        const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+        bmiDisplay.value = bmi;
+
+        // Colorier selon l'IMC
+        if (bmi < 18.5) {
+            bmiDisplay.style.color = '#3498db'; // Sous-poids - bleu
+        } else if (bmi >= 18.5 && bmi < 25) {
+            bmiDisplay.style.color = '#2ecc71'; // Normal - vert
+        } else if (bmi >= 25 && bmi < 30) {
+            bmiDisplay.style.color = '#f39c12'; // Surpoids - orange
+        } else {
+            bmiDisplay.style.color = '#e74c3c'; // Obésité - rouge
+        }
+    } else {
+        bmiDisplay.value = '';
+        bmiDisplay.style.color = '#2ecc71';
+    }
+}
+
+// Calcul du Rapport Taille/Hanches et Morphologie
+function calculateWaistHipRatio() {
+    const waist = parseFloat(document.getElementById('waist_circumference').value);
+    const hip = parseFloat(document.getElementById('hip_circumference').value);
+    const ratioDisplay = document.getElementById('waist_hip_ratio_display');
+    const shapeDisplay = document.getElementById('body_shape_display');
+    const gender = document.getElementById('gender').value;
+
+    if (waist && hip && hip > 0) {
+        const ratio = (waist / hip).toFixed(2);
+        ratioDisplay.value = ratio;
+
+        // Déterminer la morphologie selon le sexe
+        let bodyShape = '';
+        let shapeColor = '#9b59b6';
+
+        if (gender === 'male') {
+            if (ratio > 0.95) {
+                bodyShape = 'Androïde (Pomme)';
+                shapeColor = '#e74c3c'; // Rouge - risque cardiovasculaire
+            } else {
+                bodyShape = 'Gynoïde (Poire)';
+                shapeColor = '#2ecc71'; // Vert - plus sain
+            }
+        } else if (gender === 'female') {
+            if (ratio > 0.85) {
+                bodyShape = 'Androïde (Pomme)';
+                shapeColor = '#e74c3c'; // Rouge - risque cardiovasculaire
+            } else {
+                bodyShape = 'Gynoïde (Poire)';
+                shapeColor = '#2ecc71'; // Vert - plus sain
+            }
+        } else {
+            bodyShape = 'Non déterminé';
+            shapeColor = '#95a5a6';
+        }
+
+        shapeDisplay.value = bodyShape;
+        shapeDisplay.style.color = shapeColor;
+        ratioDisplay.style.color = shapeColor;
+    } else {
+        ratioDisplay.value = '';
+        shapeDisplay.value = '';
+        ratioDisplay.style.color = '#2ecc71';
+        shapeDisplay.style.color = '#9b59b6';
+    }
+}
+
+// ============================================
+// CHAMPS CONDITIONNELS
+// ============================================
+
+// Afficher/Masquer la section femmes
+function toggleWomenSection() {
+    const gender = document.getElementById('gender').value;
+    const womenSection = document.getElementById('women-section');
+
+    if (gender === 'female') {
+        womenSection.style.display = 'block';
+    } else {
+        womenSection.style.display = 'none';
+    }
+}
+
+// Afficher/Masquer le champ mois de grossesse
+function togglePregnancyMonths() {
+    const isPregnant = document.getElementById('is_pregnant').value;
+    const pregnancyMonthsGroup = document.getElementById('pregnancy-months-group');
+
+    if (isPregnant === 'yes') {
+        pregnancyMonthsGroup.style.display = 'block';
+    } else {
+        pregnancyMonthsGroup.style.display = 'none';
+    }
+}
+
+// Mise à jour du slider de motivation
+function updateMotivationDisplay() {
+    const slider = document.getElementById('motivation_level_slider');
+    const display = document.getElementById('motivation_display');
+
+    if (slider && display) {
+        display.textContent = slider.value;
+
+        // Colorier selon le niveau
+        const value = parseInt(slider.value);
+        if (value <= 3) {
+            display.style.color = '#e74c3c'; // Rouge - faible
+        } else if (value <= 6) {
+            display.style.color = '#f39c12'; // Orange - moyen
+        } else {
+            display.style.color = '#2ecc71'; // Vert - élevé
+        }
+    }
+}
+
+// ============================================
+// ÉVÉNEMENTS
+// ============================================
+
+// Attacher les événements après le chargement du DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculs automatiques
+    const weightInput = document.getElementById('initial_weight');
+    const heightInput = document.getElementById('height');
+    const waistInput = document.getElementById('waist_circumference');
+    const hipInput = document.getElementById('hip_circumference');
+    const genderSelect = document.getElementById('gender');
+
+    if (weightInput) weightInput.addEventListener('input', calculateBMI);
+    if (heightInput) heightInput.addEventListener('input', calculateBMI);
+    if (waistInput) waistInput.addEventListener('input', calculateWaistHipRatio);
+    if (hipInput) hipInput.addEventListener('input', calculateWaistHipRatio);
+    if (genderSelect) {
+        genderSelect.addEventListener('change', function() {
+            toggleWomenSection();
+            calculateWaistHipRatio();
+        });
+    }
+
+    // Champs conditionnels
+    const isPregnantSelect = document.getElementById('is_pregnant');
+    if (isPregnantSelect) {
+        isPregnantSelect.addEventListener('change', togglePregnancyMonths);
+    }
+
+    // Slider motivation
+    const motivationSlider = document.getElementById('motivation_level_slider');
+    if (motivationSlider) {
+        motivationSlider.addEventListener('input', updateMotivationDisplay);
+    }
+
+    // Initialiser les valeurs au chargement (pour mode édition)
+    calculateBMI();
+    calculateWaistHipRatio();
+    toggleWomenSection();
+    togglePregnancyMonths();
+    updateMotivationDisplay();
+});
 
 // Handle form submission
 document.querySelector('form').addEventListener('submit', function(e) {
