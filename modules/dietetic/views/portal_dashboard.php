@@ -39,14 +39,15 @@ $this->load->view('portal/includes/portal_header');
 .stat-card {
     background: white;
     border-radius: 12px;
-    padding: 16px 12px;
+    padding: 12px 10px;
     text-align: center;
     border: none;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    min-height: 120px;
+    min-height: 100px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -59,13 +60,13 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-card .stat-icon {
-    width: 32px;
-    height: 32px;
-    margin: 0 auto 8px;
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     position: relative;
 }
 
@@ -86,29 +87,19 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-card.bmi {
-    background: #FF5722;
+    background: white;
 }
 
 .stat-card.bmi .stat-icon {
-    color: white;
-}
-
-.stat-card.bmi .stat-value,
-.stat-card.bmi .stat-label {
-    color: white;
+    color: #FF5722;
 }
 
 .stat-card.progress {
-    background: #4CAF50;
+    background: white;
 }
 
 .stat-card.progress .stat-icon {
-    color: white;
-}
-
-.stat-card.progress .stat-value,
-.stat-card.progress .stat-label {
-    color: white;
+    color: #4CAF50;
 }
 
 .stat-card .stat-value {
@@ -602,7 +593,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultations-title {
-    font-size: 20px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -1392,7 +1383,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 body {
-    padding-bottom: 20px !important;
+    padding-bottom: 50px !important;
 }
 
 @media (max-width: 768px) {
