@@ -100,16 +100,16 @@ class Dietetic_patients_model extends App_Model
 
         // Apply staff permissions using new many-to-many system
         if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-            // Use new permission system
+            // Use new permission system with many-to-many relationships
             dietetic_apply_dietitian_filter($this->db, 'pd');
         } else {
             // Fallback to old system if table doesn't exist yet
-            // Only show all patients to super admins (user ID 1) or users with explicit permission
+            // STRICT FILTERING: Only super admin (user ID 1) sees all patients
             $current_staff_id = get_staff_user_id();
 
-            // Super admin (user ID 1) sees all patients
-            // Other staff members only see their own patients
-            if (!is_admin() || $current_staff_id != 1) {
+            // Only super admin (user ID 1) sees all patients
+            // ALL other users (including regular admins) only see their assigned patients
+            if ($current_staff_id != 1 || !is_admin()) {
                 $this->db->where('p.dietitian_id', $current_staff_id);
             }
         }
