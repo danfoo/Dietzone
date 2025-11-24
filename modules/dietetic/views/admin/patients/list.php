@@ -881,6 +881,15 @@ $(document).ready(function() {
         });
     }, 500);
 });
+
+// Initialize CSRF token for AJAX requests
+window.dietetic = window.dietetic || {};
+window.dietetic.csrf = {
+    name: '<?php echo $this->security->get_csrf_token_name(); ?>',
+    hash: '<?php echo $this->security->get_csrf_hash(); ?>'
+};
 </script>
+
+<script src="<?php echo module_dir_url('dietetic', 'assets/js/dietetic.js'); ?>"></script>
 
 <?php init_tail(); ?>
