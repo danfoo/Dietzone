@@ -1464,6 +1464,35 @@ body {
         transform: rotate(90deg);
         margin: 8px 0;
     }
+
+    /* Responsive Ma Journée */
+    .daily-tracking-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .my-day-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .my-day-streak {
+        align-self: stretch;
+        text-align: center;
+    }
+
+    .daily-card {
+        min-height: 160px;
+        padding: 16px 12px;
+    }
+
+    .daily-card-value {
+        font-size: 28px;
+    }
+
+    .daily-unit {
+        font-size: 16px;
+    }
 }
 
 /* Weight Goal Card - Program Style Design */
@@ -2540,6 +2569,274 @@ document.addEventListener('keydown', function(e) {
         closeFabModal();
     }
 });
+
+// ============================================================
+// DAILY TRACKING JAVASCRIPT FUNCTIONS
+// ============================================================
+
+/**
+ * Update water count (increment or decrement)
+ */
+function updateWater(action) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update counter
+            document.getElementById('water-count').textContent = data.water_glasses;
+
+            // Update buttons disabled state
+            const decrementBtn = document.querySelector('[onclick="updateWater(\'decrement\')"]');
+            const incrementBtn = document.querySelector('[onclick="updateWater(\'increment\')"]');
+
+            decrementBtn.disabled = data.water_glasses == 0;
+            incrementBtn.disabled = data.water_glasses >= 20;
+
+            // Visual feedback
+            showToast('💧 Hydratation mise à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Toggle meal checkbox (breakfast, lunch, dinner)
+ */
+function toggleMeal(mealType, checked) {
+    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            meal: mealType,
+            checked: checked
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update meals count
+            updateMealsCount();
+
+            // Visual feedback
+            const mealNames = {
+                breakfast: 'Petit-déjeuner',
+                lunch: 'Déjeuner',
+                dinner: 'Dîner'
+            };
+            const icon = checked ? '✅' : '🔲';
+            showToast(icon + ' ' + mealNames[mealType] + ' ' + (checked ? 'validé' : 'non validé'), 'success');
+        } else {
+            // Revert checkbox on error
+            const checkbox = document.querySelector(`.meal-checkbox[data-meal="${mealType}"]`);
+            checkbox.checked = !checked;
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert checkbox on error
+        const checkbox = document.querySelector(`.meal-checkbox[data-meal="${mealType}"]`);
+        checkbox.checked = !checked;
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Update meals count display
+ */
+function updateMealsCount() {
+    const checkboxes = document.querySelectorAll('.meal-checkbox');
+    let count = 0;
+    checkboxes.forEach(cb => {
+        if (cb.checked) count++;
+    });
+    document.getElementById('meals-count').textContent = count;
+}
+
+/**
+ * Open modal to enter calories
+ */
+function openCaloriesModal() {
+    const currentCalories = document.getElementById('calories-count').textContent;
+    const calories = prompt('Entrez vos calories consommées aujourd\'hui:', currentCalories !== '-' ? currentCalories : '');
+
+    if (calories !== null && calories !== '') {
+        const caloriesNum = parseInt(calories);
+        if (isNaN(caloriesNum) || caloriesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateCalories(caloriesNum);
+    }
+}
+
+/**
+ * Update calories consumed
+ */
+function updateCalories(calories) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_calories'); ?>';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ calories: calories })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('calories-count').textContent = data.calories_consumed || '-';
+            showToast('🔥 Calories mises à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Open modal to add activity
+ */
+function openActivityModal() {
+    const currentActivity = document.getElementById('activity-count').textContent;
+    const minutes = prompt('Combien de minutes d\'activité physique aujourd\'hui ?', currentActivity || '0');
+
+    if (minutes !== null && minutes !== '') {
+        const minutesNum = parseInt(minutes);
+        if (isNaN(minutesNum) || minutesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateActivity(minutesNum);
+    }
+}
+
+/**
+ * Update activity minutes
+ */
+function updateActivity(minutes) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_activity'); ?>';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ minutes: minutes })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('activity-count').textContent = data.activity_minutes;
+            showToast('🏃 Activité mise à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Simple toast notification
+ */
+function showToast(message, type = 'info') {
+    // Check if toast container exists, if not create it
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; bottom: 100px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColors = {
+        success: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+        error: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
+        info: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)'
+    };
+
+    toast.style.cssText = `
+        background: ${bgColors[type] || bgColors.info};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 250px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    toast.textContent = message;
+
+    // Add CSS animation
+    if (!document.getElementById('toast-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animation-style';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    toastContainer.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
