@@ -197,7 +197,9 @@ class Debug_patient_create extends AdminController
 
             $staff_id = get_staff_user_id();
 
-            echo "<form method='post' style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>";
+            // Use form_open to include CSRF token automatically
+            $form_attributes = ['style' => 'background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'];
+            echo form_open($this->uri->uri_string(), $form_attributes);
             echo "<h3>Formulaire de test avec données minimales</h3>";
 
             echo "<div style='margin:10px 0;'>";
