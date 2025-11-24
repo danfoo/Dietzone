@@ -510,4 +510,27 @@ class Dietetic extends AdminController
 
         include $diag_path;
     }
+
+    /**
+     * Migration: Création de la table de suivi quotidien
+     * URL: admin/dietetic/create_daily_tracking_table
+     */
+    public function create_daily_tracking_table()
+    {
+        // Vérifier les permissions admin
+        if (!is_admin()) {
+            access_denied('Migration - Administrateur requis');
+            return;
+        }
+
+        // Charger le script de migration
+        $migration_path = dirname(__DIR__) . '/migrations/create_daily_tracking_table.php';
+
+        if (!file_exists($migration_path)) {
+            show_error('Fichier de migration non trouvé : ' . $migration_path);
+            return;
+        }
+
+        include $migration_path;
+    }
 }

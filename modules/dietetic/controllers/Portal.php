@@ -25,7 +25,8 @@ class Portal extends App_Controller
             'dietetic/portal/api_update_water',
             'dietetic/portal/api_toggle_meal',
             'dietetic/portal/api_update_activity',
-            'dietetic/portal/api_update_calories'
+            'dietetic/portal/api_update_calories',
+            'dietetic/portal/api_get_streak'
         ];
 
         $current_uri = uri_string();
