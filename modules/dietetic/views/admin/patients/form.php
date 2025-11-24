@@ -292,11 +292,11 @@ textarea.form-control {
 
                         <?php echo form_open_multipart($this->uri->uri_string()); ?>
 
-                        <!-- Section 1: Informations de Base -->
+                        <!-- Section 1: Informations Personnelles -->
                         <div class="form-section">
                             <div class="section-title">
                                 <i class="fa fa-user-circle"></i>
-                                <span>Informations de Base</span>
+                                <span>Informations Personnelles</span>
                             </div>
 
                             <div class="row">
@@ -321,6 +321,33 @@ textarea.form-control {
                                     <?php } ?>
 
                                     <div class="form-group">
+                                        <label for="title">Civilité</label>
+                                        <select name="title" id="title" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="M." <?php echo set_select('title', 'M.', isset($patient) && $patient->title == 'M.'); ?>>M.</option>
+                                            <option value="Mme" <?php echo set_select('title', 'Mme', isset($patient) && $patient->title == 'Mme'); ?>>Mme</option>
+                                            <option value="Mlle" <?php echo set_select('title', 'Mlle', isset($patient) && $patient->title == 'Mlle'); ?>>Mlle</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="gender"><?php echo _l('dietetic_gender'); ?> <i class="fa fa-info-circle" title="Important pour les calculs spécifiques"></i></label>
+                                        <select name="gender" id="gender" class="form-control">
+                                            <option value="">-- <?php echo _l('select'); ?> --</option>
+                                            <option value="male" <?php echo set_select('gender', 'male', isset($patient) && $patient->gender == 'male'); ?>>Homme</option>
+                                            <option value="female" <?php echo set_select('gender', 'female', isset($patient) && $patient->gender == 'female'); ?>>Femme</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="birth_date"><?php echo _l('dietetic_birth_date'); ?></label>
+                                        <input type="date" class="form-control" id="birth_date" name="birth_date" value="<?php echo isset($patient) ? $patient->birth_date : ''; ?>" />
+                                        <small class="text-muted">L'âge sera calculé automatiquement</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         <label for="dietitian_id"><?php echo _l('dietetic_dietitian'); ?> *</label>
                                         <select name="dietitian_id" id="dietitian_id" class="form-control selectpicker" required>
                                             <?php foreach ($staff as $member) { ?>
@@ -330,24 +357,19 @@ textarea.form-control {
                                             <?php } ?>
                                         </select>
                                     </div>
-                                </div>
 
-                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="status"><?php echo _l('dietetic_status'); ?></label>
-                                        <select name="status" id="status" class="form-control">
-                                            <option value="active" <?php echo set_select('status', 'active', (isset($patient) && $patient->status == 'active') || !isset($patient)); ?>>Active</option>
-                                            <option value="inactive" <?php echo set_select('status', 'inactive', isset($patient) && $patient->status == 'inactive'); ?>>Inactive</option>
-                                            <option value="archived" <?php echo set_select('status', 'archived', isset($patient) && $patient->status == 'archived'); ?>>Archived</option>
-                                        </select>
+                                        <label for="occupation">Profession</label>
+                                        <input type="text" class="form-control" name="occupation" id="occupation" value="<?php echo isset($patient) ? $patient->occupation : ''; ?>" placeholder="Ex: Enseignant, Infirmière, Informaticien..." />
+                                        <small class="text-muted">Important pour évaluer le niveau d'activité</small>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="gender"><?php echo _l('dietetic_gender'); ?></label>
-                                        <select name="gender" id="gender" class="form-control">
-                                            <option value="">-- <?php echo _l('select'); ?> --</option>
-                                            <option value="male" <?php echo set_select('gender', 'male', isset($patient) && $patient->gender == 'male'); ?>>Male</option>
-                                            <option value="female" <?php echo set_select('gender', 'female', isset($patient) && $patient->gender == 'female'); ?>>Female</option>
+                                        <label for="status"><?php echo _l('dietetic_status'); ?></label>
+                                        <select name="status" id="status" class="form-control">
+                                            <option value="active" <?php echo set_select('status', 'active', (isset($patient) && $patient->status == 'active') || !isset($patient)); ?>>Actif</option>
+                                            <option value="inactive" <?php echo set_select('status', 'inactive', isset($patient) && $patient->status == 'inactive'); ?>>Inactif</option>
+                                            <option value="archived" <?php echo set_select('status', 'archived', isset($patient) && $patient->status == 'archived'); ?>>Archivé</option>
                                         </select>
                                     </div>
                                 </div>
@@ -356,53 +378,208 @@ textarea.form-control {
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="birth_date"><?php echo _l('dietetic_birth_date'); ?></label>
-                                        <input type="date" class="form-control" name="birth_date" value="<?php echo isset($patient) ? $patient->birth_date : ''; ?>" />
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <div class="form-group">
                                         <label for="phone"><?php echo _l('dietetic_phone'); ?></label>
-                                        <input type="text" class="form-control" name="phone" value="<?php echo isset($patient) ? $patient->phone : ''; ?>" />
+                                        <input type="text" class="form-control" name="phone" value="<?php echo isset($patient) ? $patient->phone : ''; ?>" placeholder="+221 XX XXX XX XX" />
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="email"><?php echo _l('dietetic_email'); ?></label>
-                                        <input type="email" class="form-control" name="email" value="<?php echo isset($patient) ? $patient->email : ''; ?>" />
+                                        <input type="email" class="form-control" name="email" value="<?php echo isset($patient) ? $patient->email : ''; ?>" placeholder="email@example.com" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="work_type">Type de travail</label>
+                                        <select name="work_type" id="work_type" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="sedentary" <?php echo set_select('work_type', 'sedentary', isset($patient) && $patient->work_type == 'sedentary'); ?>>Sédentaire (Bureau)</option>
+                                            <option value="light" <?php echo set_select('work_type', 'light', isset($patient) && $patient->work_type == 'light'); ?>>Léger (Debout occasionnellement)</option>
+                                            <option value="moderate" <?php echo set_select('work_type', 'moderate', isset($patient) && $patient->work_type == 'moderate'); ?>>Modéré (Marche régulière)</option>
+                                            <option value="physical" <?php echo set_select('work_type', 'physical', isset($patient) && $patient->work_type == 'physical'); ?>>Physique (Charges, déplacements)</option>
+                                            <option value="very_physical" <?php echo set_select('work_type', 'very_physical', isset($patient) && $patient->work_type == 'very_physical'); ?>>Très physique (Travail intense)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="address">Adresse complète</label>
+                                        <textarea class="form-control" name="address" id="address" rows="2" placeholder="Rue, Quartier, Ville, Pays"><?php echo isset($patient) ? $patient->address : ''; ?></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Section 2: Données Physiques et Objectifs -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fa fa-heartbeat"></i>
-                                <span>Données Physiques & Objectifs</span>
+                        <!-- Section 1.5: Informations Spécifiques Femmes (Conditionnelle) -->
+                        <div class="form-section" id="women-section" style="display: none; border-left-color: #e91e63;">
+                            <div class="section-title" style="color: #e91e63;">
+                                <i class="fa fa-venus"></i>
+                                <span>Informations Spécifiques Femmes</span>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="initial_weight"><?php echo _l('dietetic_initial_weight'); ?> (kg)</label>
-                                        <input type="number" step="0.1" class="form-control" name="initial_weight" value="<?php echo isset($patient) ? $patient->initial_weight : ''; ?>" />
+                                        <label for="is_pregnant">Grossesse en cours ?</label>
+                                        <select name="is_pregnant" id="is_pregnant" class="form-control">
+                                            <option value="no" <?php echo set_select('is_pregnant', 'no', !isset($patient) || (isset($patient) && $patient->is_pregnant == 'no')); ?>>Non</option>
+                                            <option value="yes" <?php echo set_select('is_pregnant', 'yes', isset($patient) && $patient->is_pregnant == 'yes'); ?>>Oui</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3" id="pregnancy-months-group" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="pregnancy_months">Mois de grossesse <i class="fa fa-info-circle" title="1 à 9 mois"></i></label>
+                                        <input type="number" class="form-control" name="pregnancy_months" id="pregnancy_months" min="1" max="9" value="<?php echo isset($patient) ? $patient->pregnancy_months : ''; ?>" placeholder="1-9" />
                                     </div>
                                 </div>
 
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="target_weight"><?php echo _l('dietetic_target_weight'); ?> (kg)</label>
-                                        <input type="number" step="0.1" class="form-control" name="target_weight" value="<?php echo isset($patient) ? $patient->target_weight : ''; ?>" />
+                                        <label for="breastfeeding">Allaitement ?</label>
+                                        <select name="breastfeeding" id="breastfeeding" class="form-control">
+                                            <option value="no" <?php echo set_select('breastfeeding', 'no', !isset($patient) || (isset($patient) && $patient->breastfeeding == 'no')); ?>>Non</option>
+                                            <option value="yes" <?php echo set_select('breastfeeding', 'yes', isset($patient) && $patient->breastfeeding == 'yes'); ?>>Oui</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="height"><?php echo _l('dietetic_height'); ?> (cm)</label>
-                                        <input type="number" step="0.1" class="form-control" name="height" value="<?php echo isset($patient) ? $patient->height : ''; ?>" />
+                                        <label for="menstrual_cycle">Cycle menstruel</label>
+                                        <select name="menstrual_cycle" id="menstrual_cycle" class="form-control">
+                                            <option value="">-- Sélectionner --</option>
+                                            <option value="regular" <?php echo set_select('menstrual_cycle', 'regular', isset($patient) && $patient->menstrual_cycle == 'regular'); ?>>Régulier</option>
+                                            <option value="irregular" <?php echo set_select('menstrual_cycle', 'irregular', isset($patient) && $patient->menstrual_cycle == 'irregular'); ?>>Irrégulier</option>
+                                            <option value="absent" <?php echo set_select('menstrual_cycle', 'absent', isset($patient) && $patient->menstrual_cycle == 'absent'); ?>>Absent (aménorrhée)</option>
+                                            <option value="menopause" <?php echo set_select('menstrual_cycle', 'menopause', isset($patient) && $patient->menstrual_cycle == 'menopause'); ?>>Ménopause</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert" style="background: #fce4ec; border-left: 4px solid #e91e63; color: #880e4f;">
+                                <i class="fa fa-info-circle"></i> <strong>Important:</strong> Ces informations permettent d'adapter les besoins nutritionnels spécifiques à la grossesse et l'allaitement.
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Données Physiques, Mensurations & Objectifs -->
+                        <div class="form-section" style="border-left-color: #2ecc71;">
+                            <div class="section-title" style="color: #2ecc71;">
+                                <i class="fa fa-heartbeat"></i>
+                                <span>Données Physiques, Mensurations & Objectifs</span>
+                            </div>
+
+                            <h5 style="color: #2ecc71; margin-bottom: 15px; font-weight: 600;">
+                                <i class="fa fa-weight"></i> Poids et Taille
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="initial_weight"><?php echo _l('dietetic_initial_weight'); ?> (kg) <i class="fa fa-info-circle" title="Poids actuel du patient"></i></label>
+                                        <input type="number" step="0.1" class="form-control" id="initial_weight" name="initial_weight" value="<?php echo isset($patient) ? $patient->initial_weight : ''; ?>" placeholder="70.5" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="target_weight"><?php echo _l('dietetic_target_weight'); ?> (kg) <i class="fa fa-info-circle" title="Objectif de poids"></i></label>
+                                        <input type="number" step="0.1" class="form-control" name="target_weight" value="<?php echo isset($patient) ? $patient->target_weight : ''; ?>" placeholder="65.0" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="height"><?php echo _l('dietetic_height'); ?> (cm) <i class="fa fa-info-circle" title="Taille en centimètres"></i></label>
+                                        <input type="number" step="0.1" class="form-control" id="height" name="height" value="<?php echo isset($patient) ? $patient->height : ''; ?>" placeholder="170" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="bmi_display">IMC (kg/m²)</label>
+                                        <input type="text" class="form-control" id="bmi_display" readonly style="background: #f0f0f0; font-weight: bold; color: #2ecc71;" placeholder="Calculé auto" />
+                                        <small class="text-muted">Calculé automatiquement</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="color: #2ecc71; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-arrows-h"></i> Circonférences et Mensurations
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="waist_circumference">Tour de taille (cm) <i class="fa fa-info-circle" title="Mesurer à l'ombilic"></i></label>
+                                        <input type="number" step="0.1" class="form-control" id="waist_circumference" name="waist_circumference" value="<?php echo isset($patient) ? $patient->waist_circumference : ''; ?>" placeholder="85" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="hip_circumference">Tour de hanches (cm) <i class="fa fa-info-circle" title="Au point le plus large"></i></label>
+                                        <input type="number" step="0.1" class="form-control" id="hip_circumference" name="hip_circumference" value="<?php echo isset($patient) ? $patient->hip_circumference : ''; ?>" placeholder="100" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="waist_hip_ratio_display">Rapport T/H</label>
+                                        <input type="text" class="form-control" id="waist_hip_ratio_display" readonly style="background: #f0f0f0; font-weight: bold; color: #2ecc71;" placeholder="Calculé auto" />
+                                        <small class="text-muted">Taille/Hanches</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="body_shape_display">Morphologie</label>
+                                        <input type="text" class="form-control" id="body_shape_display" readonly style="background: #f0f0f0; font-weight: bold; color: #9b59b6;" placeholder="Auto" />
+                                        <small class="text-muted">Android/Gynoïde</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="neck_circumference">Tour de cou (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" name="neck_circumference" value="<?php echo isset($patient) ? $patient->neck_circumference : ''; ?>" placeholder="35" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="chest_circumference">Tour de poitrine (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" name="chest_circumference" value="<?php echo isset($patient) ? $patient->chest_circumference : ''; ?>" placeholder="95" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="arm_circumference">Tour de bras (cm) <i class="fa fa-info-circle" title="Biceps relâché"></i></label>
+                                        <input type="number" step="0.1" class="form-control" name="arm_circumference" value="<?php echo isset($patient) ? $patient->arm_circumference : ''; ?>" placeholder="28" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="thigh_circumference">Tour de cuisse (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" name="thigh_circumference" value="<?php echo isset($patient) ? $patient->thigh_circumference : ''; ?>" placeholder="55" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="calf_circumference">Tour de mollet (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" name="calf_circumference" value="<?php echo isset($patient) ? $patient->calf_circumference : ''; ?>" placeholder="36" />
                                     </div>
                                 </div>
 
@@ -419,13 +596,27 @@ textarea.form-control {
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="physical_activity_details">Détails activité physique</label>
+                                        <input type="text" class="form-control" name="physical_activity_details" value="<?php echo isset($patient) ? $patient->physical_activity_details : ''; ?>" placeholder="Ex: Marche 30min/jour, Gym 3x/semaine..." />
+                                    </div>
+                                </div>
                             </div>
 
+                            <div class="alert" style="background: #e8f8f5; border-left: 4px solid #2ecc71; color: #0e6655;">
+                                <i class="fa fa-lightbulb-o"></i> <strong>Astuce:</strong> Les mensurations permettent de suivre l'évolution de la composition corporelle au-delà du simple poids. Mesurer régulièrement pour un suivi optimal!
+                            </div>
+
+                            <h5 style="color: #2ecc71; margin: 25px 0 15px 0; font-weight: 600;">
+                                <i class="fa fa-bullseye"></i> Objectifs
+                            </h5>
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="objective"><?php echo _l('dietetic_objective'); ?></label>
-                                        <textarea class="form-control" name="objective" rows="3"><?php echo isset($patient) ? $patient->objective : ''; ?></textarea>
+                                        <textarea class="form-control" name="objective" rows="3" placeholder="Ex: Perdre 5kg en 3 mois, Améliorer l'énergie, Réduire le cholestérol..."><?php echo isset($patient) ? $patient->objective : ''; ?></textarea>
                                     </div>
                                 </div>
                             </div>
