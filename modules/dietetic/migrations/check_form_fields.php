@@ -29,31 +29,21 @@
         <h1>🔍 Diagnostic: Vérification Champs Formulaire Patient</h1>
 
         <?php
-        // Connect to database
-        require_once(dirname(__DIR__, 4) . '/application/config/database.php');
+        // Use CodeIgniter database instance
+        $CI =& get_instance();
 
-        $conn = mysqli_connect($db['default']['hostname'], $db['default']['username'], $db['default']['password'], $db['default']['database']);
-
-        if (!$conn) {
-            die('<div class="error">Erreur de connexion à la base de données: ' . mysqli_connect_error() . '</div>');
-        }
-
-        // Get database prefix from config
-        require_once(dirname(__DIR__, 4) . '/application/config/app.php');
-        $prefix = isset($app_db_prefix) ? $app_db_prefix : 'tbl';
-
-        // Get table name
-        $table_name = $prefix . 'dietic_patients';
+        // Get table name with prefix
+        $table_name = db_prefix() . 'dietic_patients';
 
         // Get table structure
-        $result = mysqli_query($conn, "DESCRIBE `{$table_name}`");
+        $query = $CI->db->query("DESCRIBE `{$table_name}`");
 
-        if (!$result) {
-            die('<div class="error">Erreur lors de la récupération de la structure de la table: ' . mysqli_error($conn) . '</div>');
+        if (!$query) {
+            die('<div class="error">Erreur lors de la récupération de la structure de la table</div>');
         }
 
         $db_columns = [];
-        while ($row = mysqli_fetch_assoc($result)) {
+        foreach ($query->result_array() as $row) {
             $db_columns[] = $row['Field'];
         }
 
@@ -238,8 +228,6 @@
             echo '</tbody>';
             echo '</table>';
         }
-
-        mysqli_close($conn);
         ?>
 
         <div style="margin-top: 40px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #007bff;">
