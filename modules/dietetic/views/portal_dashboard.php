@@ -1458,8 +1458,8 @@ body {
 .weight-goal-card {
     background: #BAE2E1;
     border-radius: 24px;
-    padding: 24px 20px;
-    margin-bottom: 30px;
+    padding: 16px 14px;
+    margin-bottom: 20px;
     color: #2c3e50;
     position: relative;
     overflow: hidden;
@@ -1483,7 +1483,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
 }
@@ -1539,7 +1539,7 @@ body {
 }
 
 .weight-values-compact {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
     margin-left: -4px;
@@ -1554,7 +1554,7 @@ body {
 .weight-value-compact {
     background: white;
     border-radius: 12px;
-    padding: 10px 16px;
+    padding: 8px 12px;
     text-align: center;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1562,7 +1562,7 @@ body {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    min-height: 75px;
+    min-height: 65px;
     transition: all 0.3s ease;
     gap: 6px;
 }
@@ -1624,8 +1624,8 @@ body {
 
 .weight-remaining-simple {
     text-align: center;
-    margin-bottom: 12px;
-    padding: 16px 12px;
+    margin-bottom: 8px;
+    padding: 12px 10px;
     background: #F3911D;
     border-radius: 12px;
     position: relative;
@@ -1649,8 +1649,8 @@ body {
 }
 
 .progress-gauge-container {
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 8px;
+    padding: 10px 8px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
     backdrop-filter: blur(10px);
