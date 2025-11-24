@@ -18,6 +18,7 @@ class Patients extends AdminController
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_patient_documents_model');
+        $this->load->model('dietetic/dietetic_daily_tracking_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
@@ -77,6 +78,21 @@ class Patients extends AdminController
         $data['documents'] = [];
         if ($this->dietetic_patient_documents_model->table_exists()) {
             $data['documents'] = $this->dietetic_patient_documents_model->get_by_patient($id);
+        }
+
+        // Get daily tracking data (if table exists)
+        $data['daily_tracking'] = [];
+        $data['daily_tracking_weekly_summary'] = null;
+        $data['daily_tracking_streak'] = 0;
+        if ($this->db->table_exists(db_prefix() . 'dietic_daily_tracking')) {
+            // Get last 14 days of tracking
+            $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_history($id, 14);
+
+            // Get weekly summary
+            $data['daily_tracking_weekly_summary'] = $this->dietetic_daily_tracking_model->get_weekly_summary($id);
+
+            // Get current streak
+            $data['daily_tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($id);
         }
 
         $this->load->view('admin/patients/view', $data);

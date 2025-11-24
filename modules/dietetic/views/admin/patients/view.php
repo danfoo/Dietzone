@@ -703,6 +703,181 @@ html {
                     </div>
                 </div>
 
+                <!-- Daily Tracking Section -->
+                <?php if (!empty($daily_tracking) || $daily_tracking_weekly_summary) { ?>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 style="border-bottom: 3px solid #F3911D; padding-bottom: 10px; margin-bottom: 20px;">
+                            <i class="fa fa-tasks" style="color: #F3911D;"></i> Suivi Quotidien du Patient
+                        </h4>
+
+                        <!-- Summary Cards -->
+                        <div class="row" style="margin-bottom: 20px;">
+                            <!-- Streak Card -->
+                            <div class="col-md-3 col-sm-6">
+                                <div class="info-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <i class="fa fa-fire" style="font-size: 32px; margin-bottom: 10px;"></i>
+                                    <h3 style="margin: 10px 0; color: white;"><?php echo $daily_tracking_streak; ?> jours</h3>
+                                    <p style="margin: 0; opacity: 0.9;">Série en cours</p>
+                                </div>
+                            </div>
+
+                            <!-- Weekly Water -->
+                            <div class="col-md-3 col-sm-6">
+                                <div class="info-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <i class="fa fa-tint" style="font-size: 32px; margin-bottom: 10px;"></i>
+                                    <h3 style="margin: 10px 0; color: white;">
+                                        <?php echo $daily_tracking_weekly_summary ? round($daily_tracking_weekly_summary->avg_water, 1) : '0'; ?> verres
+                                    </h3>
+                                    <p style="margin: 0; opacity: 0.9;">Moy. hydratation/jour</p>
+                                </div>
+                            </div>
+
+                            <!-- Weekly Meals -->
+                            <div class="col-md-3 col-sm-6">
+                                <div class="info-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <i class="fa fa-cutlery" style="font-size: 32px; margin-bottom: 10px;"></i>
+                                    <h3 style="margin: 10px 0; color: white;">
+                                        <?php
+                                        if ($daily_tracking_weekly_summary) {
+                                            $total_meals = $daily_tracking_weekly_summary->breakfasts +
+                                                          $daily_tracking_weekly_summary->lunches +
+                                                          $daily_tracking_weekly_summary->dinners;
+                                            echo $total_meals . '/21';
+                                        } else {
+                                            echo '0/21';
+                                        }
+                                        ?>
+                                    </h3>
+                                    <p style="margin: 0; opacity: 0.9;">Repas cette semaine</p>
+                                </div>
+                            </div>
+
+                            <!-- Weekly Activity -->
+                            <div class="col-md-3 col-sm-6">
+                                <div class="info-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <i class="fa fa-heartbeat" style="font-size: 32px; margin-bottom: 10px;"></i>
+                                    <h3 style="margin: 10px 0; color: white;">
+                                        <?php echo $daily_tracking_weekly_summary ? round($daily_tracking_weekly_summary->avg_activity) : '0'; ?> min
+                                    </h3>
+                                    <p style="margin: 0; opacity: 0.9;">Moy. activité/jour</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Tracking Table -->
+                        <?php if (!empty($daily_tracking)) { ?>
+                            <h5 style="margin-top: 30px; margin-bottom: 15px; color: #2c3e50; font-weight: 600;">
+                                <i class="fa fa-calendar"></i> Détails des 14 derniers jours
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered" style="background: white;">
+                                    <thead>
+                                        <tr style="background: #f8f9fa;">
+                                            <th><i class="fa fa-calendar"></i> Date</th>
+                                            <th class="text-center"><i class="fa fa-tint"></i> Eau</th>
+                                            <th class="text-center"><i class="fa fa-coffee"></i> P.Déj</th>
+                                            <th class="text-center"><i class="fa fa-cutlery"></i> Déj</th>
+                                            <th class="text-center"><i class="fa fa-moon-o"></i> Dîner</th>
+                                            <th class="text-center"><i class="fa fa-heartbeat"></i> Activité</th>
+                                            <th class="text-center"><i class="fa fa-fire"></i> Calories</th>
+                                            <th class="text-center"><i class="fa fa-check-circle"></i> Complétion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($daily_tracking as $day) {
+                                            // Calculate completion
+                                            $meals_count = ($day->breakfast_checked ? 1 : 0) +
+                                                          ($day->lunch_checked ? 1 : 0) +
+                                                          ($day->dinner_checked ? 1 : 0);
+                                            $completion = 0;
+                                            if ($day->water_glasses >= 8) $completion += 25;
+                                            else if ($day->water_glasses > 0) $completion += round(($day->water_glasses / 8) * 25);
+                                            $completion += round(($meals_count / 3) * 25);
+                                            if ($day->activity_minutes >= 30) $completion += 25;
+                                            else if ($day->activity_minutes > 0) $completion += round(($day->activity_minutes / 30) * 25);
+                                            if ($day->calories_consumed > 0) $completion += 25;
+
+                                            // Row color based on completion
+                                            $row_style = '';
+                                            if ($completion >= 75) $row_style = 'background: rgba(76, 175, 80, 0.1);';
+                                            else if ($completion >= 50) $row_style = 'background: rgba(255, 193, 7, 0.1);';
+                                            else if ($completion > 0) $row_style = 'background: rgba(255, 152, 0, 0.1);';
+                                        ?>
+                                            <tr style="<?php echo $row_style; ?>">
+                                                <td>
+                                                    <strong><?php echo date('d/m/Y', strtotime($day->tracking_date)); ?></strong>
+                                                    <br>
+                                                    <small class="text-muted"><?php echo strftime('%A', strtotime($day->tracking_date)); ?></small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge" style="background: #4facfe; font-size: 13px; padding: 5px 10px;">
+                                                        <?php echo $day->water_glasses; ?> <i class="fa fa-tint"></i>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php if ($day->breakfast_checked) { ?>
+                                                        <i class="fa fa-check-circle" style="color: #4CAF50; font-size: 20px;"></i>
+                                                    <?php } else { ?>
+                                                        <i class="fa fa-times-circle" style="color: #ccc; font-size: 20px;"></i>
+                                                    <?php } ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php if ($day->lunch_checked) { ?>
+                                                        <i class="fa fa-check-circle" style="color: #4CAF50; font-size: 20px;"></i>
+                                                    <?php } else { ?>
+                                                        <i class="fa fa-times-circle" style="color: #ccc; font-size: 20px;"></i>
+                                                    <?php } ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php if ($day->dinner_checked) { ?>
+                                                        <i class="fa fa-check-circle" style="color: #4CAF50; font-size: 20px;"></i>
+                                                    <?php } else { ?>
+                                                        <i class="fa fa-times-circle" style="color: #ccc; font-size: 20px;"></i>
+                                                    <?php } ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php if ($day->activity_minutes > 0) { ?>
+                                                        <span class="badge" style="background: #fa709a; font-size: 13px; padding: 5px 10px;">
+                                                            <?php echo $day->activity_minutes; ?> min
+                                                        </span>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php if ($day->calories_consumed > 0) { ?>
+                                                        <span class="badge" style="background: #f5576c; font-size: 13px; padding: 5px 10px;">
+                                                            <?php echo $day->calories_consumed; ?> kcal
+                                                        </span>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div style="position: relative; width: 60px; margin: 0 auto;">
+                                                        <div style="width: 100%; height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
+                                                            <div style="width: <?php echo $completion; ?>%; height: 100%; background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%); transition: width 0.3s;"></div>
+                                                        </div>
+                                                        <small style="position: absolute; top: 2px; left: 0; right: 0; text-align: center; font-weight: bold; color: #333;">
+                                                            <?php echo $completion; ?>%
+                                                        </small>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php } else { ?>
+                            <div class="alert alert-info" style="margin-top: 20px;">
+                                <i class="fa fa-info-circle"></i> Aucune donnée de suivi quotidien pour le moment. Le patient peut remplir ces informations depuis son portail.
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
+
                 <!-- Consultations -->
                 <div class="panel_s">
                     <div class="panel-body">
