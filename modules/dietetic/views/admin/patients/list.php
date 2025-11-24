@@ -764,7 +764,7 @@
                                                 <?php } ?>
                                                 <?php if (dietetic_has_permission('delete')) { ?>
                                                     <a href="#"
-                                                       onclick="dietetic.deleteConfirm('<?php echo admin_url('dietetic/patients/delete/' . $patient->id); ?>', function() { location.reload(); }); return false;"
+                                                       onclick="deletePatient(<?php echo $patient->id; ?>); return false;"
                                                        class="action-btn delete"
                                                        title="Supprimer">
                                                         <i class="fa fa-trash"></i>
@@ -880,14 +880,37 @@ $(document).ready(function() {
             }
         });
     }, 500);
-});
 
-// Initialize CSRF token for AJAX requests
-window.dietetic = window.dietetic || {};
-window.dietetic.csrf = {
-    name: '<?php echo $this->security->get_csrf_token_name(); ?>',
-    hash: '<?php echo $this->security->get_csrf_hash(); ?>'
-};
+    // Delete patient function with inline CSRF token
+    window.deletePatient = function(patientId) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.')) {
+            $.ajax({
+                url: admin_url + 'dietetic/patients/delete/' + patientId,
+                type: 'POST',
+                data: {
+                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert_float('success', response.message || 'Patient supprimé avec succès');
+                        location.reload();
+                    } else {
+                        alert_float('danger', response.message || 'Erreur lors de la suppression');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Delete failed:', xhr.status, error);
+                    if (xhr.status === 419) {
+                        alert_float('danger', 'Session expirée. Veuillez rafraîchir la page et réessayer.');
+                    } else {
+                        alert_float('danger', 'Erreur lors de la suppression: ' + error);
+                    }
+                }
+            });
+        }
+    };
+});
 </script>
 
 <script src="<?php echo module_dir_url('dietetic', 'assets/js/dietetic.js'); ?>"></script>
