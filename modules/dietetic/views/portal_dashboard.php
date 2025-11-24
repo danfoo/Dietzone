@@ -38,98 +38,77 @@ $this->load->view('portal/includes/portal_header');
 
 .stat-card {
     background: white;
-    border-radius: 16px;
-    padding: 24px 20px;
+    border-radius: 12px;
+    padding: 16px 12px;
     text-align: center;
     border: none;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    min-height: 160px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    min-height: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.4s;
-}
-
-.stat-card:hover::before {
-    opacity: 1;
-}
-
 .stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card .stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    margin: 0 auto 16px;
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     position: relative;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
 }
 
 .stat-card.weight {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    background: white;
 }
 
 .stat-card.weight .stat-icon {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(66, 153, 225, 0.3);
+    color: #4299e1;
 }
 
 .stat-card.target {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    background: white;
 }
 
 .stat-card.target .stat-icon {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+    color: #48bb78;
 }
 
 .stat-card.bmi {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    background: #FF5722;
 }
 
 .stat-card.bmi .stat-icon {
-    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
     color: white;
-    box-shadow: 0 8px 16px rgba(237, 137, 54, 0.3);
+}
+
+.stat-card.bmi .stat-value,
+.stat-card.bmi .stat-label {
+    color: white;
 }
 
 .stat-card.progress {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    background: #4CAF50;
 }
 
 .stat-card.progress .stat-icon {
-    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
     color: white;
-    box-shadow: 0 8px 16px rgba(159, 122, 234, 0.3);
+}
+
+.stat-card.progress .stat-value,
+.stat-card.progress .stat-label {
+    color: white;
 }
 
 .stat-card .stat-value {
@@ -205,7 +184,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .program-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -403,7 +382,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .survey-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -703,7 +682,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultation-date {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: #5a3e2b;
     margin-bottom: 8px;
@@ -717,7 +696,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultation-time {
-    font-size: 13px;
+    font-size: 11px;
     color: rgba(90, 62, 43, 0.8);
 }
 
@@ -1220,6 +1199,7 @@ $this->load->view('portal/includes/portal_header');
     width: 100%;
     justify-content: space-between;
     margin-bottom: 8px;
+    padding: 14px 16px; /* Hauteur augmentée */
 }
 
 /* Secondary grid for calories and activity */
@@ -1235,6 +1215,16 @@ $this->load->view('portal/includes/portal_header');
     flex-direction: column;
     text-align: center;
     padding: 12px 8px;
+    position: relative;
+}
+
+/* Indicateur cliquable pour calories et activité */
+.tracking-secondary-grid .daily-item::after {
+    content: '✏️ Cliquer pour saisir';
+    font-size: 7px;
+    color: #999;
+    margin-top: 4px;
+    opacity: 0.7;
 }
 
 .daily-item:hover {
@@ -1889,7 +1879,7 @@ body {
         <!-- Activité -->
         <div class="daily-item activity-item" onclick="openActivityModal()">
             <div class="daily-item-icon">
-                <i class="fa fa-running"></i>
+                <i class="fa fa-heartbeat"></i>
             </div>
             <span class="daily-item-label">Activité</span>
             <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
