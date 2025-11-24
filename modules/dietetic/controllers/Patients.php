@@ -92,43 +92,62 @@ class Patients extends AdminController
         }
 
         if ($this->input->post()) {
-            $data = $this->input->post();
+            // Wrap in try-catch to capture any errors
+            try {
+                $data = $this->input->post();
 
-            // Filter POST data to only include valid database columns
-            $data = $this->_filter_patient_data($data);
+                // Filter POST data to only include valid database columns
+                $data = $this->_filter_patient_data($data);
 
-            // Set dietitian - force to current user if not admin
-            if (!is_admin()) {
-                // Non-admins can only create patients for themselves
-                $data['dietitian_id'] = get_staff_user_id();
-            } elseif (!isset($data['dietitian_id'])) {
-                // Admins: default to themselves if not specified
-                $data['dietitian_id'] = get_staff_user_id();
-            }
+                // Set dietitian - force to current user if not admin
+                if (!is_admin()) {
+                    // Non-admins can only create patients for themselves
+                    $data['dietitian_id'] = get_staff_user_id();
+                } elseif (!isset($data['dietitian_id'])) {
+                    // Admins: default to themselves if not specified
+                    $data['dietitian_id'] = get_staff_user_id();
+                }
 
-            $patient_id = $this->dietetic_patients_model->add($data);
+                $patient_id = $this->dietetic_patients_model->add($data);
 
-            if ($patient_id) {
-                // Handle document uploads if any
-                $this->_handle_document_uploads($patient_id);
+                if ($patient_id) {
+                    // Handle document uploads if any
+                    $this->_handle_document_uploads($patient_id);
 
-                set_alert('success', _l('added_successfully'));
+                    set_alert('success', _l('added_successfully'));
+
+                    // Check if AJAX request
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => true, 'patient_id' => $patient_id]);
+                        return;
+                    }
+
+                    redirect(admin_url('dietetic/patients/view/' . $patient_id));
+                } else {
+                    set_alert('danger', _l('dietetic_error_patient_exists'));
+
+                    // Check if AJAX request
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(['success' => false, 'message' => _l('dietetic_error_patient_exists')]);
+                        return;
+                    }
+                }
+            } catch (Exception $e) {
+                // Log the error with full details
+                log_activity('Patient creation error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
+                // Show error to user
+                set_alert('danger', 'Erreur lors de la création du patient: ' . $e->getMessage());
 
                 // Check if AJAX request
                 if ($this->input->is_ajax_request()) {
-                    echo json_encode(['success' => true, 'patient_id' => $patient_id]);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage(), 'error' => true]);
                     return;
                 }
 
-                redirect(admin_url('dietetic/patients/view/' . $patient_id));
-            } else {
-                set_alert('danger', _l('dietetic_error_patient_exists'));
-
-                // Check if AJAX request
-                if ($this->input->is_ajax_request()) {
-                    echo json_encode(['success' => false, 'message' => _l('dietetic_error_patient_exists')]);
-                    return;
-                }
+                // Redirect back to form
+                redirect(admin_url('dietetic/patients/create'));
+                return;
             }
         }
 
