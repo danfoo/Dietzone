@@ -415,6 +415,284 @@ html {
                     </div>
                 </div>
 
+                <!-- Anamnèse Complète (Nouvelles Données) -->
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 style="border-bottom: 3px solid #9b59b6; padding-bottom: 10px; margin-bottom: 20px;">
+                            <i class="fa fa-file-text-o" style="color: #9b59b6;"></i> Anamnèse Complète
+                        </h4>
+
+                        <!-- Nav Tabs -->
+                        <ul class="nav nav-tabs" role="tablist" style="border-bottom: 2px solid #e9ecef;">
+                            <li role="presentation" class="active">
+                                <a href="#tab-anthropometrics" aria-controls="tab-anthropometrics" role="tab" data-toggle="tab">
+                                    <i class="fa fa-user"></i> Mesures
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#tab-lifestyle" aria-controls="tab-lifestyle" role="tab" data-toggle="tab">
+                                    <i class="fa fa-heart"></i> Mode de Vie
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#tab-nutrition" aria-controls="tab-nutrition" role="tab" data-toggle="tab">
+                                    <i class="fa fa-cutlery"></i> Nutrition
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#tab-health" aria-controls="tab-health" role="tab" data-toggle="tab">
+                                    <i class="fa fa-medkit"></i> Santé
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#tab-personal" aria-controls="tab-personal" role="tab" data-toggle="tab">
+                                    <i class="fa fa-info-circle"></i> Informations
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" style="padding-top: 20px;">
+                            <!-- Mesures Anthropométriques -->
+                            <div role="tabpanel" class="tab-pane active" id="tab-anthropometrics">
+                                <div class="row">
+                                    <?php
+                                    $anthropometric_fields = [
+                                        ['field' => 'waist_circumference', 'label' => 'Tour de taille', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'hip_circumference', 'label' => 'Tour de hanches', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'chest_circumference', 'label' => 'Tour de poitrine', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'arm_circumference', 'label' => 'Tour de bras', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'thigh_circumference', 'label' => 'Tour de cuisse', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'calf_circumference', 'label' => 'Tour de mollet', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                        ['field' => 'neck_circumference', 'label' => 'Tour de cou', 'icon' => 'arrows-h', 'unit' => 'cm'],
+                                    ];
+
+                                    $has_data = false;
+                                    foreach ($anthropometric_fields as $field_info) {
+                                        if (!empty($patient->{$field_info['field']})) {
+                                            $has_data = true;
+                                            echo '<div class="col-md-4 col-sm-6">';
+                                            echo '<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #9b59b6; border-radius: 5px;">';
+                                            echo '<label style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">';
+                                            echo '<i class="fa fa-' . $field_info['icon'] . '"></i> ' . $field_info['label'];
+                                            echo '</label>';
+                                            echo '<div class="value" style="font-size: 16px; font-weight: 600; color: #2c3e50;">';
+                                            echo htmlspecialchars($patient->{$field_info['field']}) . ' ' . $field_info['unit'];
+                                            echo '</div>';
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+
+                                    if (!$has_data) {
+                                        echo '<div class="col-md-12">';
+                                        echo '<div class="alert alert-info"><i class="fa fa-info-circle"></i> Aucune mesure anthropométrique renseignée.</div>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+
+                            <!-- Mode de Vie & Santé -->
+                            <div role="tabpanel" class="tab-pane" id="tab-lifestyle">
+                                <div class="row">
+                                    <?php
+                                    $lifestyle_fields = [
+                                        ['field' => 'smoking', 'label' => 'Tabagisme', 'icon' => 'smoking'],
+                                        ['field' => 'alcohol_per_week', 'label' => 'Alcool par semaine', 'icon' => 'glass'],
+                                        ['field' => 'sleep_hours', 'label' => 'Heures de sommeil', 'icon' => 'bed', 'unit' => 'h'],
+                                        ['field' => 'sleep_quality', 'label' => 'Qualité du sommeil', 'icon' => 'moon-o'],
+                                        ['field' => 'stress_level', 'label' => 'Niveau de stress', 'icon' => 'exclamation-triangle'],
+                                        ['field' => 'work_type', 'label' => 'Type de travail', 'icon' => 'briefcase'],
+                                        ['field' => 'physical_activity_details', 'label' => 'Détails activité physique', 'icon' => 'running', 'type' => 'textarea'],
+                                        ['field' => 'mental_health', 'label' => 'Santé mentale', 'icon' => 'brain', 'type' => 'textarea'],
+                                    ];
+
+                                    $has_data = false;
+                                    foreach ($lifestyle_fields as $field_info) {
+                                        if (!empty($patient->{$field_info['field']})) {
+                                            $has_data = true;
+                                            $col_size = isset($field_info['type']) && $field_info['type'] == 'textarea' ? '12' : '6';
+                                            echo '<div class="col-md-' . $col_size . '">';
+                                            echo '<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #e74c3c; border-radius: 5px;">';
+                                            echo '<label style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">';
+                                            echo '<i class="fa fa-' . $field_info['icon'] . '"></i> ' . $field_info['label'];
+                                            echo '</label>';
+                                            echo '<div class="value" style="font-size: 14px; font-weight: 500; color: #2c3e50;">';
+                                            echo nl2br(htmlspecialchars($patient->{$field_info['field']}));
+                                            if (isset($field_info['unit'])) echo ' ' . $field_info['unit'];
+                                            echo '</div>';
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+
+                                    if (!$has_data) {
+                                        echo '<div class="col-md-12">';
+                                        echo '<div class="alert alert-info"><i class="fa fa-info-circle"></i> Aucune information sur le mode de vie renseignée.</div>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+
+                            <!-- Nutrition & Habitudes Alimentaires -->
+                            <div role="tabpanel" class="tab-pane" id="tab-nutrition">
+                                <div class="row">
+                                    <?php
+                                    $nutrition_fields = [
+                                        ['field' => 'meals_per_day', 'label' => 'Repas par jour', 'icon' => 'cutlery'],
+                                        ['field' => 'snacks_per_day', 'label' => 'Collations par jour', 'icon' => 'apple'],
+                                        ['field' => 'breakfast_time', 'label' => 'Heure petit déjeuner', 'icon' => 'clock-o'],
+                                        ['field' => 'dinner_time', 'label' => 'Heure dîner', 'icon' => 'clock-o'],
+                                        ['field' => 'eating_speed', 'label' => 'Vitesse de repas', 'icon' => 'tachometer'],
+                                        ['field' => 'eating_environment', 'label' => 'Environnement repas', 'icon' => 'home'],
+                                        ['field' => 'water_intake', 'label' => 'Hydratation', 'icon' => 'tint'],
+                                        ['field' => 'coffee_per_day', 'label' => 'Café par jour', 'icon' => 'coffee'],
+                                        ['field' => 'tea_per_day', 'label' => 'Thé par jour', 'icon' => 'coffee'],
+                                        ['field' => 'soda_per_week', 'label' => 'Sodas par semaine', 'icon' => 'glass'],
+                                        ['field' => 'salt_preference', 'label' => 'Préférence sel', 'icon' => 'certificate'],
+                                        ['field' => 'sweet_cravings', 'label' => 'Envies sucrées', 'icon' => 'birthday-cake'],
+                                        ['field' => 'favorite_foods', 'label' => 'Aliments préférés', 'icon' => 'heart', 'type' => 'textarea'],
+                                        ['field' => 'food_dislikes', 'label' => 'Aliments non aimés', 'icon' => 'times-circle', 'type' => 'textarea'],
+                                        ['field' => 'cultural_food_preferences', 'label' => 'Préférences culturelles', 'icon' => 'globe', 'type' => 'textarea'],
+                                        ['field' => 'typical_day_diet', 'label' => 'Journée alimentaire type', 'icon' => 'calendar', 'type' => 'textarea'],
+                                        ['field' => 'cooking_skills', 'label' => 'Compétences culinaires', 'icon' => 'fire'],
+                                        ['field' => 'time_for_cooking', 'label' => 'Temps pour cuisiner', 'icon' => 'clock-o'],
+                                        ['field' => 'meal_preparation', 'label' => 'Préparation repas', 'icon' => 'list-ul'],
+                                        ['field' => 'budget_level', 'label' => 'Budget alimentation', 'icon' => 'money'],
+                                    ];
+
+                                    $has_data = false;
+                                    foreach ($nutrition_fields as $field_info) {
+                                        if (!empty($patient->{$field_info['field']})) {
+                                            $has_data = true;
+                                            $col_size = isset($field_info['type']) && $field_info['type'] == 'textarea' ? '12' : '6';
+                                            echo '<div class="col-md-' . $col_size . '">';
+                                            echo '<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #27ae60; border-radius: 5px;">';
+                                            echo '<label style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">';
+                                            echo '<i class="fa fa-' . $field_info['icon'] . '"></i> ' . $field_info['label'];
+                                            echo '</label>';
+                                            echo '<div class="value" style="font-size: 14px; font-weight: 500; color: #2c3e50;">';
+                                            echo nl2br(htmlspecialchars($patient->{$field_info['field']}));
+                                            echo '</div>';
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+
+                                    if (!$has_data) {
+                                        echo '<div class="col-md-12">';
+                                        echo '<div class="alert alert-info"><i class="fa fa-info-circle"></i> Aucune habitude alimentaire renseignée.</div>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+
+                            <!-- Santé & Antécédents -->
+                            <div role="tabpanel" class="tab-pane" id="tab-health">
+                                <div class="row">
+                                    <?php
+                                    $health_fields = [
+                                        ['field' => 'medications', 'label' => 'Médicaments', 'icon' => 'medkit', 'type' => 'textarea'],
+                                        ['field' => 'supplements', 'label' => 'Compléments alimentaires', 'icon' => 'flask', 'type' => 'textarea'],
+                                        ['field' => 'surgeries', 'label' => 'Antécédents chirurgicaux', 'icon' => 'scissors', 'type' => 'textarea'],
+                                        ['field' => 'family_history', 'label' => 'Antécédents familiaux', 'icon' => 'users', 'type' => 'textarea'],
+                                        ['field' => 'digestive_issues', 'label' => 'Problèmes digestifs', 'icon' => 'heartbeat'],
+                                        ['field' => 'digestive_details', 'label' => 'Détails digestifs', 'icon' => 'list-alt', 'type' => 'textarea'],
+                                        ['field' => 'bowel_frequency', 'label' => 'Fréquence intestinale', 'icon' => 'refresh'],
+                                        ['field' => 'gluten_intolerance', 'label' => 'Intolérance gluten', 'icon' => 'ban'],
+                                        ['field' => 'lactose_intolerance', 'label' => 'Intolérance lactose', 'icon' => 'ban'],
+                                        ['field' => 'fructose_intolerance', 'label' => 'Intolérance fructose', 'icon' => 'ban'],
+                                        ['field' => 'fodmap_sensitivity', 'label' => 'Sensibilité FODMAP', 'icon' => 'ban'],
+                                        ['field' => 'histamine_intolerance', 'label' => 'Intolérance histamine', 'icon' => 'ban'],
+                                        ['field' => 'caffeine_sensitivity', 'label' => 'Sensibilité caféine', 'icon' => 'coffee'],
+                                        ['field' => 'eating_disorders_history', 'label' => 'Troubles alimentaires', 'icon' => 'exclamation-circle', 'type' => 'textarea'],
+                                        ['field' => 'recent_blood_work', 'label' => 'Bilan sanguin récent', 'icon' => 'tint', 'type' => 'textarea'],
+                                    ];
+
+                                    // Women's health
+                                    if ($patient->gender == 'female') {
+                                        $health_fields[] = ['field' => 'is_pregnant', 'label' => 'Enceinte', 'icon' => 'female'];
+                                        $health_fields[] = ['field' => 'pregnancy_months', 'label' => 'Mois de grossesse', 'icon' => 'calendar'];
+                                        $health_fields[] = ['field' => 'breastfeeding', 'label' => 'Allaitement', 'icon' => 'heart'];
+                                        $health_fields[] = ['field' => 'menstrual_cycle', 'label' => 'Cycle menstruel', 'icon' => 'venus'];
+                                    }
+
+                                    $has_data = false;
+                                    foreach ($health_fields as $field_info) {
+                                        if (!empty($patient->{$field_info['field']})) {
+                                            $has_data = true;
+                                            $col_size = isset($field_info['type']) && $field_info['type'] == 'textarea' ? '12' : '6';
+                                            echo '<div class="col-md-' . $col_size . '">';
+                                            echo '<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 5px;">';
+                                            echo '<label style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">';
+                                            echo '<i class="fa fa-' . $field_info['icon'] . '"></i> ' . $field_info['label'];
+                                            echo '</label>';
+                                            echo '<div class="value" style="font-size: 14px; font-weight: 500; color: #2c3e50;">';
+                                            echo nl2br(htmlspecialchars($patient->{$field_info['field']}));
+                                            echo '</div>';
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+
+                                    if (!$has_data) {
+                                        echo '<div class="col-md-12">';
+                                        echo '<div class="alert alert-info"><i class="fa fa-info-circle"></i> Aucun antécédent médical supplémentaire renseigné.</div>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+
+                            <!-- Informations Personnelles & Objectifs -->
+                            <div role="tabpanel" class="tab-pane" id="tab-personal">
+                                <div class="row">
+                                    <?php
+                                    $personal_fields = [
+                                        ['field' => 'title', 'label' => 'Civilité', 'icon' => 'user'],
+                                        ['field' => 'occupation', 'label' => 'Profession', 'icon' => 'briefcase'],
+                                        ['field' => 'address', 'label' => 'Adresse', 'icon' => 'map-marker', 'type' => 'textarea'],
+                                        ['field' => 'weight_history', 'label' => 'Historique de poids', 'icon' => 'history', 'type' => 'textarea'],
+                                        ['field' => 'weight_gain_triggers', 'label' => 'Déclencheurs prise de poids', 'icon' => 'bolt', 'type' => 'textarea'],
+                                        ['field' => 'previous_diets', 'label' => 'Régimes précédents', 'icon' => 'list', 'type' => 'textarea'],
+                                        ['field' => 'motivation_level', 'label' => 'Niveau de motivation', 'icon' => 'star'],
+                                        ['field' => 'barriers_to_change', 'label' => 'Obstacles au changement', 'icon' => 'warning', 'type' => 'textarea'],
+                                        ['field' => 'stress_eating', 'label' => 'Alimentation émotionnelle', 'icon' => 'frown-o'],
+                                    ];
+
+                                    $has_data = false;
+                                    foreach ($personal_fields as $field_info) {
+                                        if (!empty($patient->{$field_info['field']})) {
+                                            $has_data = true;
+                                            $col_size = isset($field_info['type']) && $field_info['type'] == 'textarea' ? '12' : '6';
+                                            echo '<div class="col-md-' . $col_size . '">';
+                                            echo '<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-left: 4px solid #f39c12; border-radius: 5px;">';
+                                            echo '<label style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">';
+                                            echo '<i class="fa fa-' . $field_info['icon'] . '"></i> ' . $field_info['label'];
+                                            echo '</label>';
+                                            echo '<div class="value" style="font-size: 14px; font-weight: 500; color: #2c3e50;">';
+                                            echo nl2br(htmlspecialchars($patient->{$field_info['field']}));
+                                            echo '</div>';
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+
+                                    if (!$has_data) {
+                                        echo '<div class="col-md-12">';
+                                        echo '<div class="alert alert-info"><i class="fa fa-info-circle"></i> Aucune information personnelle supplémentaire renseignée.</div>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Weight Evolution Chart -->
                 <div class="panel_s">
                     <div class="panel-body">
