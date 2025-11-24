@@ -19,7 +19,13 @@ class Portal extends App_Controller
             'dietetic/portal/save_fcm_token',
             'dietetic/portal/delete_fcm_token',
             'dietetic/portal/add_to_favorites',
-            'dietetic/portal/remove_from_favorites'
+            'dietetic/portal/remove_from_favorites',
+            // Daily tracking API endpoints
+            'dietetic/portal/api_get_daily_tracking',
+            'dietetic/portal/api_update_water',
+            'dietetic/portal/api_toggle_meal',
+            'dietetic/portal/api_update_activity',
+            'dietetic/portal/api_update_calories'
         ];
 
         $current_uri = uri_string();
@@ -36,6 +42,7 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_food_surveys_model');
+        $this->load->model('dietetic/dietetic_daily_tracking_model');
     }
 
     /**
@@ -114,7 +121,14 @@ class Portal extends App_Controller
             'update_emergency_contact',
             'upload_document',
             'upload_profile_photo',
-            'download_document'
+            'download_document',
+            // Daily tracking API methods
+            'api_get_daily_tracking',
+            'api_update_water',
+            'api_toggle_meal',
+            'api_update_activity',
+            'api_update_calories',
+            'api_get_streak'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -245,6 +259,39 @@ class Portal extends App_Controller
         } catch (Exception $e) {
             $data['active_survey'] = null;
             $data['survey_completion'] = 0;
+        }
+
+        // Get daily tracking data
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_daily_tracking')) {
+                $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                $data['tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+                $data['tracking_completion'] = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
+            } else {
+                // Table doesn't exist yet, set default values
+                $data['daily_tracking'] = (object)[
+                    'water_glasses' => 0,
+                    'breakfast_checked' => 0,
+                    'lunch_checked' => 0,
+                    'dinner_checked' => 0,
+                    'activity_minutes' => 0,
+                    'calories_consumed' => null
+                ];
+                $data['tracking_streak'] = 0;
+                $data['tracking_completion'] = 0;
+            }
+        } catch (Exception $e) {
+            log_activity('Error loading daily tracking: ' . $e->getMessage());
+            $data['daily_tracking'] = (object)[
+                'water_glasses' => 0,
+                'breakfast_checked' => 0,
+                'lunch_checked' => 0,
+                'dinner_checked' => 0,
+                'activity_minutes' => 0,
+                'calories_consumed' => null
+            ];
+            $data['tracking_streak'] = 0;
+            $data['tracking_completion'] = 0;
         }
 
         $this->load->view('portal_dashboard', $data);
@@ -4991,6 +5038,271 @@ class Portal extends App_Controller
         force_download($document->original_filename, file_get_contents($filepath));
 
         log_activity('Medical Document Downloaded [Patient ID: ' . $patient->id . ', Document ID: ' . $document_id . ', File: ' . $document->original_filename . ']');
+    }
+
+    // ============================================================
+    // DAILY TRACKING API METHODS
+    // ============================================================
+
+    /**
+     * API: Get today's tracking data
+     * Returns JSON with current water, meals, activity, etc.
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_get_daily_tracking()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        try {
+            $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+            $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+            $completion = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'tracking' => $tracking,
+                    'streak' => $streak,
+                    'completion' => $completion
+                ]
+            ]);
+        } catch (Exception $e) {
+            log_activity('Error getting daily tracking: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update water glasses count
+     * POST: {action: 'increment' | 'decrement'}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_water()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $action = $input['action'] ?? 'increment';
+        $amount = ($action === 'increment') ? 1 : -1;
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_water($patient->id, $amount);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'water_glasses' => $tracking->water_glasses
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating water: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Toggle meal check (breakfast, lunch, dinner)
+     * POST: {meal: 'breakfast' | 'lunch' | 'dinner', checked: true|false}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_toggle_meal()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $meal = $input['meal'] ?? '';
+        $checked = $input['checked'] ?? null;
+
+        if (!in_array($meal, ['breakfast', 'lunch', 'dinner'])) {
+            echo json_encode(['success' => false, 'error' => 'Invalid meal type']);
+            return;
+        }
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $meal, $checked);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                $field = $meal . '_checked';
+                echo json_encode([
+                    'success' => true,
+                    'checked' => (bool)$tracking->$field
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error toggling meal: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update activity minutes
+     * POST: {minutes: int, activity_type?: string}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_activity()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $minutes = (int)($input['minutes'] ?? 0);
+        $activity_type = $input['activity_type'] ?? null;
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_activity($patient->id, $minutes, $activity_type);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'activity_minutes' => $tracking->activity_minutes
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating activity: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update calories consumed
+     * POST: {calories: int}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_calories()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $calories = (int)($input['calories'] ?? 0);
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_calories($patient->id, $calories);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'calories_consumed' => $tracking->calories_consumed
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating calories: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Get current streak
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_get_streak()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        try {
+            $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+            echo json_encode([
+                'success' => true,
+                'streak' => $streak
+            ]);
+        } catch (Exception $e) {
+            log_activity('Error getting streak: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
     }
 }
 

@@ -1140,6 +1140,282 @@ $this->load->view('portal/includes/portal_header');
     cursor: help;
 }
 
+/* =====================================================
+   SECTION "MA JOURNÉE" (Daily Tracking)
+   ===================================================== */
+.my-day-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.my-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.my-day-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.my-day-title i {
+    color: #01807B;
+    font-size: 22px;
+}
+
+.my-day-streak {
+    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.daily-tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.daily-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.daily-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.daily-card:hover::before {
+    opacity: 1;
+}
+
+.daily-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.water-card {
+    border-top: 4px solid #4299e1;
+}
+
+.meals-card {
+    border-top: 4px solid #48bb78;
+}
+
+.calories-card {
+    border-top: 4px solid #ed8936;
+    cursor: pointer;
+}
+
+.activity-card {
+    border-top: 4px solid #9f7aea;
+    cursor: pointer;
+}
+
+.daily-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.water-card .daily-card-icon {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.meals-card .daily-card-icon {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.calories-card .daily-card-icon {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+}
+
+.activity-card .daily-card-icon {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.daily-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.daily-card-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.daily-card-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #2c3e50;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.daily-unit {
+    font-size: 18px;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.daily-card-sublabel {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.daily-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-daily-action {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #01807B;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-daily-action:hover:not(:disabled) {
+    background: #01807B;
+    color: white;
+    border-color: #01807B;
+    transform: scale(1.1);
+}
+
+.btn-daily-action:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.daily-card-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    width: 100%;
+}
+
+.meal-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.meal-checkbox-label:hover {
+    background: #e9ecef;
+}
+
+.meal-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.daily-card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: rgba(1, 128, 123, 0.1);
+    border-radius: 20px;
+    color: #01807B;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.daily-card:hover .daily-card-cta {
+    background: #01807B;
+    color: white;
+}
+
+.daily-motivation {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CD 100%);
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 14px;
+    color: #856404;
+    font-weight: 500;
+    border-left: 4px solid #FFC107;
+}
+
+.daily-motivation i {
+    color: #FFC107;
+    margin-right: 6px;
+}
+
+.daily-motivation strong {
+    font-weight: 700;
+    color: #795500;
+}
+
 /* Hide footer on dashboard page */
 .app-footer {
     display: none !important;
@@ -1502,6 +1778,140 @@ body {
 <!-- Welcome Message -->
 <div class="welcome-message">
     Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
+</div>
+
+<!-- =====================================================
+     SECTION: MA JOURNÉE (Daily Tracking)
+     ===================================================== -->
+<div class="my-day-section">
+    <div class="my-day-header">
+        <div class="my-day-title">
+            <i class="fa fa-calendar-check-o"></i>
+            Ma Journée
+        </div>
+        <?php if ($tracking_streak > 0) { ?>
+        <div class="my-day-streak">
+            🔥 <strong><?php echo $tracking_streak; ?></strong> <?php echo $tracking_streak > 1 ? 'jours' : 'jour'; ?>
+        </div>
+        <?php } ?>
+    </div>
+
+    <div class="daily-tracking-grid">
+        <!-- Carte 1: Hydratation -->
+        <div class="daily-card water-card">
+            <div class="daily-card-icon">
+                <i class="fa fa-tint"></i>
+            </div>
+            <div class="daily-card-content">
+                <div class="daily-card-label">Hydratation</div>
+                <div class="daily-card-value">
+                    <span id="water-count"><?php echo $daily_tracking->water_glasses; ?></span><span class="daily-unit">/8</span>
+                </div>
+                <div class="daily-card-sublabel">verres d'eau</div>
+            </div>
+            <div class="daily-card-actions">
+                <button class="btn-daily-action" onclick="updateWater('decrement')" <?php echo $daily_tracking->water_glasses == 0 ? 'disabled' : ''; ?>>
+                    <i class="fa fa-minus"></i>
+                </button>
+                <button class="btn-daily-action" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Carte 2: Repas -->
+        <div class="daily-card meals-card">
+            <div class="daily-card-icon">
+                <i class="fa fa-cutlery"></i>
+            </div>
+            <div class="daily-card-content">
+                <div class="daily-card-label">Repas</div>
+                <div class="daily-card-value">
+                    <span id="meals-count"><?php
+                        $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
+                                      ($daily_tracking->lunch_checked ? 1 : 0) +
+                                      ($daily_tracking->dinner_checked ? 1 : 0);
+                        echo $meals_count;
+                    ?></span><span class="daily-unit">/3</span>
+                </div>
+                <div class="daily-card-sublabel">validés</div>
+            </div>
+            <div class="daily-card-checklist">
+                <label class="meal-checkbox-label">
+                    <input type="checkbox" class="meal-checkbox" data-meal="breakfast"
+                           <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('breakfast', this.checked)">
+                    <span>Petit-déj</span>
+                </label>
+                <label class="meal-checkbox-label">
+                    <input type="checkbox" class="meal-checkbox" data-meal="lunch"
+                           <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('lunch', this.checked)">
+                    <span>Déjeuner</span>
+                </label>
+                <label class="meal-checkbox-label">
+                    <input type="checkbox" class="meal-checkbox" data-meal="dinner"
+                           <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('dinner', this.checked)">
+                    <span>Dîner</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Carte 3: Calories -->
+        <div class="daily-card calories-card" onclick="openCaloriesModal()">
+            <div class="daily-card-icon">
+                <i class="fa fa-fire"></i>
+            </div>
+            <div class="daily-card-content">
+                <div class="daily-card-label">Calories</div>
+                <div class="daily-card-value">
+                    <span id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
+                    <?php if ($active_program && $active_program->daily_calories) { ?>
+                    <span class="daily-unit">/<?php echo $active_program->daily_calories; ?></span>
+                    <?php } ?>
+                </div>
+                <div class="daily-card-sublabel">kcal</div>
+            </div>
+            <div class="daily-card-cta">
+                <i class="fa fa-edit"></i> <span>Saisir</span>
+            </div>
+        </div>
+
+        <!-- Carte 4: Activité -->
+        <div class="daily-card activity-card" onclick="openActivityModal()">
+            <div class="daily-card-icon">
+                <i class="fa fa-running"></i>
+            </div>
+            <div class="daily-card-content">
+                <div class="daily-card-label">Activité</div>
+                <div class="daily-card-value">
+                    <span id="activity-count"><?php echo $daily_tracking->activity_minutes; ?></span><span class="daily-unit">/30</span>
+                </div>
+                <div class="daily-card-sublabel">minutes</div>
+            </div>
+            <div class="daily-card-cta">
+                <i class="fa fa-plus-circle"></i> <span>Ajouter</span>
+            </div>
+        </div>
+    </div>
+
+    <?php if ($tracking_streak > 0) { ?>
+    <div class="daily-motivation">
+        <i class="fa fa-star"></i>
+        <?php
+        if ($tracking_streak == 1) {
+            echo "Excellent départ ! Continuez comme ça.";
+        } elseif ($tracking_streak < 7) {
+            echo "Vous êtes sur la bonne voie ! <strong>$tracking_streak jours d'affilée</strong>.";
+        } elseif ($tracking_streak < 30) {
+            echo "Incroyable série de <strong>$tracking_streak jours</strong> ! 🎯";
+        } else {
+            echo "🏆 Champion ! <strong>$tracking_streak jours consécutifs</strong> de suivi !";
+        }
+        ?>
+    </div>
+    <?php } ?>
 </div>
 
 <?php
