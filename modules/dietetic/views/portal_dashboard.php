@@ -1178,11 +1178,20 @@ $this->load->view('portal/includes/portal_header');
     font-weight: 600;
 }
 
-.daily-tracking-grid {
-    display: flex;
-    flex-wrap: wrap;
+/* Meals block container */
+.meals-block {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    margin-bottom: 8px;
+}
+
+.meals-block .daily-tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    align-items: center;
+    margin-bottom: 10px;
 }
 
 /* Compact horizontal item style */
@@ -1197,10 +1206,35 @@ $this->load->view('portal/includes/portal_header');
     transition: all 0.2s ease;
 }
 
+.meals-block .daily-item {
+    box-shadow: none;
+    border: 1px solid #e0e0e0;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 10px 8px;
+}
+
 /* Water item full width */
 .water-item {
     width: 100%;
     justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+/* Secondary grid for calories and activity */
+.tracking-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.tracking-secondary-grid .daily-item {
+    cursor: pointer;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 12px 8px;
 }
 
 .daily-item:hover {
@@ -1234,6 +1268,14 @@ $this->load->view('portal/includes/portal_header');
     color: #2196F3;
 }
 
+.calories-item .daily-item-icon {
+    color: #FF5722;
+}
+
+.activity-item .daily-item-icon {
+    color: #9C27B0;
+}
+
 .daily-item-label {
     font-size: 8px;
     color: #2c3e50;
@@ -1241,6 +1283,13 @@ $this->load->view('portal/includes/portal_header');
     text-transform: uppercase;
     letter-spacing: 0.3px;
     white-space: nowrap;
+}
+
+.daily-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #01807B;
+    margin-top: 4px;
 }
 
 /* Checkbox custom style */
@@ -1754,57 +1803,60 @@ body {
         <?php } ?>
     </div>
 
-    <div class="daily-tracking-grid">
-        <!-- Item 1: Petit déjeuner -->
-        <div class="daily-item breakfast-item">
-            <div class="daily-item-icon">
-                <i class="fa fa-coffee"></i>
+    <!-- Bloc Repas avec jauge -->
+    <div class="meals-block">
+        <div class="daily-tracking-grid">
+            <!-- Item 1: Petit déjeuner -->
+            <div class="daily-item breakfast-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-coffee"></i>
+                </div>
+                <span class="daily-item-label">Petit déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
+                       <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('breakfast', this.checked)">
             </div>
-            <span class="daily-item-label">Petit déjeuner</span>
-            <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
-                   <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
-                   onchange="toggleMeal('breakfast', this.checked)">
+
+            <!-- Item 2: Déjeuner -->
+            <div class="daily-item lunch-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-cutlery"></i>
+                </div>
+                <span class="daily-item-label">Déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="lunch"
+                       <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('lunch', this.checked)">
+            </div>
+
+            <!-- Item 3: Dîner -->
+            <div class="daily-item dinner-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-moon-o"></i>
+                </div>
+                <span class="daily-item-label">Dîner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="dinner"
+                       <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('dinner', this.checked)">
+            </div>
         </div>
 
-        <!-- Item 2: Déjeuner -->
-        <div class="daily-item lunch-item">
-            <div class="daily-item-icon">
-                <i class="fa fa-cutlery"></i>
+        <!-- Progress bar for meals -->
+        <div class="meals-progress-container">
+            <div class="meals-progress-bar">
+                <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
+                    $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
+                                  ($daily_tracking->lunch_checked ? 1 : 0) +
+                                  ($daily_tracking->dinner_checked ? 1 : 0);
+                    echo ($meals_count / 3 * 100);
+                ?>%;"></div>
             </div>
-            <span class="daily-item-label">Déjeuner</span>
-            <input type="checkbox" class="daily-checkbox" data-meal="lunch"
-                   <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
-                   onchange="toggleMeal('lunch', this.checked)">
-        </div>
-
-        <!-- Item 3: Dîner -->
-        <div class="daily-item dinner-item">
-            <div class="daily-item-icon">
-                <i class="fa fa-moon-o"></i>
+            <div class="meals-progress-text">
+                <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
             </div>
-            <span class="daily-item-label">Dîner</span>
-            <input type="checkbox" class="daily-checkbox" data-meal="dinner"
-                   <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
-                   onchange="toggleMeal('dinner', this.checked)">
         </div>
     </div>
 
-    <!-- Progress bar for meals -->
-    <div class="meals-progress-container">
-        <div class="meals-progress-bar">
-            <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
-                $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
-                              ($daily_tracking->lunch_checked ? 1 : 0) +
-                              ($daily_tracking->dinner_checked ? 1 : 0);
-                echo ($meals_count / 3 * 100);
-            ?>%;"></div>
-        </div>
-        <div class="meals-progress-text">
-            <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
-        </div>
-    </div>
-
-    <!-- Item 4: Hydratation (full width) -->
+    <!-- Hydratation (full width) -->
     <div class="daily-item water-item">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div class="daily-item-icon">
@@ -1820,6 +1872,27 @@ body {
             <button class="btn-water" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
                 <i class="fa fa-plus"></i>
             </button>
+        </div>
+    </div>
+
+    <!-- Grid pour Calories et Activité -->
+    <div class="tracking-secondary-grid">
+        <!-- Calories -->
+        <div class="daily-item calories-item" onclick="openCaloriesModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-fire"></i>
+            </div>
+            <span class="daily-item-label">Calories</span>
+            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
+        </div>
+
+        <!-- Activité -->
+        <div class="daily-item activity-item" onclick="openActivityModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-running"></i>
+            </div>
+            <span class="daily-item-label">Activité</span>
+            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
         </div>
     </div>
 
@@ -2581,6 +2654,100 @@ function updateMealsProgress() {
     if (progressText) {
         progressText.textContent = count + '/3 repas validés';
     }
+}
+
+/**
+ * Open modal to enter calories
+ */
+function openCaloriesModal() {
+    const currentCalories = document.getElementById('calories-count').textContent;
+    const calories = prompt('Entrez vos calories consommées aujourd\'hui:', currentCalories !== '-' ? currentCalories : '');
+
+    if (calories !== null && calories !== '') {
+        const caloriesNum = parseInt(calories);
+        if (isNaN(caloriesNum) || caloriesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateCalories(caloriesNum);
+    }
+}
+
+/**
+ * Update calories consumed
+ */
+function updateCalories(calories) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_calories'); ?>';
+
+    const formData = new FormData();
+    formData.append('calories', calories);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('calories-count').textContent = data.calories_consumed || '-';
+            showToast('🔥 Calories mises à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Open modal to add activity
+ */
+function openActivityModal() {
+    const currentActivity = document.getElementById('activity-count').textContent.replace(' min', '');
+    const minutes = prompt('Combien de minutes d\'activité physique aujourd\'hui ?', currentActivity || '0');
+
+    if (minutes !== null && minutes !== '') {
+        const minutesNum = parseInt(minutes);
+        if (isNaN(minutesNum) || minutesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateActivity(minutesNum);
+    }
+}
+
+/**
+ * Update activity minutes
+ */
+function updateActivity(minutes) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_activity'); ?>';
+
+    const formData = new FormData();
+    formData.append('minutes', minutes);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('activity-count').textContent = data.activity_minutes + ' min';
+            showToast('🏃 Activité mise à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
 }
 
 /**

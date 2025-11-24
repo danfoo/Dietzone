@@ -5192,7 +5192,12 @@ class Portal extends App_Controller
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
         $minutes = (int)($input['minutes'] ?? 0);
         $activity_type = $input['activity_type'] ?? null;
 
@@ -5237,7 +5242,12 @@ class Portal extends App_Controller
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
         $calories = (int)($input['calories'] ?? 0);
 
         try {
