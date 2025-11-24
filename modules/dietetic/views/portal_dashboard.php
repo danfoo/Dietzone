@@ -593,7 +593,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultations-title {
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
