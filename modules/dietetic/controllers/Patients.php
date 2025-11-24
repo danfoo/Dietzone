@@ -139,29 +139,24 @@ class Patients extends AdminController
             $data['clients'] = $this->clients_model->get();
         } else {
             // Other dietitians only see clients that:
-            // 1. Don't have a patient record yet, OR
-            // 2. Have a patient assigned to them
+            // 1. Don't have a patient record yet (available for new patient creation)
+            // Clients with existing patients are NOT shown to ensure dietitians only see their assigned patients
 
             $all_clients = $this->clients_model->get();
             $filtered_clients = [];
 
             foreach ($all_clients as $client) {
                 // Check if this client has a patient
-                $existing_patient = $this->dietetic_patients_model->get_by_client($client['userid']);
+                // Use direct query to bypass access check that get_by_client uses
+                $this->db->where('client_id', $client['userid']);
+                $existing_patient = $this->db->get(db_prefix() . 'dietic_patients')->row();
 
                 if (!$existing_patient) {
                     // Client has no patient yet - available for creation
                     $filtered_clients[] = $client;
-                } elseif ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-                    // Check if dietitian is assigned to this patient
-                    $this->load->model('dietetic/dietetic_patient_dietitians_model');
-                    if ($this->dietetic_patient_dietitians_model->has_access($existing_patient->id, $current_staff_id)) {
-                        $filtered_clients[] = $client;
-                    }
-                } elseif ($existing_patient->dietitian_id == $current_staff_id) {
-                    // Fallback: dietitian owns this patient
-                    $filtered_clients[] = $client;
                 }
+                // Note: We don't include clients that already have patients, even if assigned to this dietitian
+                // Those patients are accessible via the patient list page instead
             }
 
             $data['clients'] = $filtered_clients;
