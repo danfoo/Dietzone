@@ -762,7 +762,7 @@
                                                         <i class="fa fa-pencil"></i>
                                                     </a>
                                                 <?php } ?>
-                                                <?php if (dietetic_has_permission('delete')) { ?>
+                                                <?php if (dietetic_has_permission('delete') && dietetic_can_access_patient($patient->id)) { ?>
                                                     <a href="#"
                                                        onclick="deletePatient(<?php echo $patient->id; ?>); return false;"
                                                        class="action-btn delete"
