@@ -2472,22 +2472,19 @@ document.addEventListener('keydown', function(e) {
 // DAILY TRACKING JAVASCRIPT FUNCTIONS
 // ============================================================
 
-// CSRF Token for AJAX requests
-const csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
-const csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
-
 /**
  * Update water count (increment or decrement)
  */
 function updateWater(action) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>?' + csrf_token_name + '=' + csrf_hash;
+    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>';
+
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
 
     fetch(url, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ action: action })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
@@ -2518,17 +2515,16 @@ function updateWater(action) {
  * Toggle meal checkbox (breakfast, lunch, dinner)
  */
 function toggleMeal(mealType, checked) {
-    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>?' + csrf_token_name + '=' + csrf_hash;
+    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>';
+
+    const formData = new FormData();
+    formData.append('meal', mealType);
+    formData.append('checked', checked);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
 
     fetch(url, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            meal: mealType,
-            checked: checked
-        })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {

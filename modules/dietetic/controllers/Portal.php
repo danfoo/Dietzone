@@ -5086,7 +5086,12 @@ class Portal extends App_Controller
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
         $action = $input['action'] ?? 'increment';
         $amount = ($action === 'increment') ? 1 : -1;
 
@@ -5131,9 +5136,14 @@ class Portal extends App_Controller
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
         $meal = $input['meal'] ?? '';
-        $checked = $input['checked'] ?? null;
+        $checked = isset($input['checked']) ? filter_var($input['checked'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : null;
 
         if (!in_array($meal, ['breakfast', 'lunch', 'dinner'])) {
             echo json_encode(['success' => false, 'error' => 'Invalid meal type']);
