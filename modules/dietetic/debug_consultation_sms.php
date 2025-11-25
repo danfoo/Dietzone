@@ -6,33 +6,26 @@
  * IMPORTANT: Delete this file after debugging!
  */
 
-defined('BASEPATH') or define('BASEPATH', '../../application/');
-require_once(dirname(__FILE__) . '/../../application/config/database.php');
+// Bootstrap Perfex CRM
+define('ENVIRONMENT', 'development');
+require_once(__DIR__ . '/../../index.php');
 
-$db_config = $db['default'];
+// Get CodeIgniter instance
+$CI =& get_instance();
+$CI->load->database();
 
 try {
-    $pdo = new PDO(
-        "mysql:host={$db_config['hostname']};dbname={$db_config['database']}",
-        $db_config['username'],
-        $db_config['password']
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db = $CI->db;
 
     echo "<h1>Consultation SMS Notification Debug</h1>";
     echo "<p>Checking last 10 consultation notifications...</p>";
 
     // Get last consultation notifications
-    $stmt = $pdo->query("
-        SELECT id, patient_id, notification_type, channel, status, recipient,
-               error_message, created_at, sent_at
-        FROM tbldietic_notification_logs
-        WHERE notification_type = 'consultation_scheduled'
-        ORDER BY created_at DESC
-        LIMIT 10
-    ");
-
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $db->select('id, patient_id, notification_type, channel, status, recipient, error_message, created_at, sent_at');
+    $db->where('notification_type', 'consultation_scheduled');
+    $db->order_by('created_at', 'DESC');
+    $db->limit(10);
+    $results = $db->get(db_prefix() . 'dietic_notification_logs')->result_array();
 
     if (empty($results)) {
         echo "<p style='color: orange;'><strong>No consultation_scheduled notifications found in logs!</strong></p>";
@@ -62,10 +55,7 @@ try {
 
     // Check patient notification preferences
     echo "<hr><h2>Patient #9 Notification Preferences</h2>";
-    $stmt = $pdo->query("
-        SELECT * FROM tbldietic_notification_preferences WHERE patient_id = 9
-    ");
-    $prefs = $stmt->fetch(PDO::FETCH_ASSOC);
+    $prefs = $db->get_where(db_prefix() . 'dietic_notification_preferences', ['patient_id' => 9])->row_array();
 
     if ($prefs) {
         echo "<table border='1' cellpadding='5'>";
@@ -80,12 +70,9 @@ try {
 
     // Check LAM SMS configuration
     echo "<hr><h2>LAM SMS Configuration</h2>";
-    $stmt = $pdo->query("
-        SELECT setting_name, setting_value
-        FROM tbldietetic_settings
-        WHERE setting_name LIKE '%sms%' OR setting_name LIKE '%lam%'
-    ");
-    $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $db->like('setting_name', 'sms', 'both');
+    $db->or_like('setting_name', 'lam', 'both');
+    $settings = $db->get(db_prefix() . 'dietetic_settings')->result_array();
 
     if ($settings) {
         echo "<table border='1' cellpadding='5'>";
