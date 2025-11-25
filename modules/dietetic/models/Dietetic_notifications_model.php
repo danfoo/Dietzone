@@ -288,7 +288,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $patient->channel_email,
                 'sms' => $patient->channel_sms,
-                'whatsapp' => $patient->channel_whatsapp
+                'whatsapp' => $patient->channel_whatsapp,
+                'push' => $patient->channel_push ?? 1
             ]
         ]);
 
@@ -1188,7 +1189,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1227,7 +1229,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1265,7 +1268,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1449,6 +1453,9 @@ class Dietetic_notifications_model extends App_Model
         $message .= "📝 Type : {$consultation_type}\n\n";
         $message .= "Nous avons hâte de vous voir ! 😊";
 
+        // Debug logging
+        log_activity('Consultation notification - Patient ID: ' . $patient_id . ', Phone: ' . $contact_phone . ', SMS enabled: ' . ($preferences->channel_sms ? 'YES' : 'NO'));
+
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_scheduled',
@@ -1460,7 +1467,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1 // Fixed: Added missing push channel
             ]
         ]);
     }
@@ -1508,7 +1516,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1556,7 +1565,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1605,7 +1615,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
