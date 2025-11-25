@@ -5347,31 +5347,79 @@ class Portal extends App_Controller
                 return;
             }
 
-            // Handle file upload
-            $config['upload_path'] = FCPATH . 'uploads/dietetic/audio_notes/';
-            $config['allowed_types'] = 'webm|mp3|wav|ogg|m4a';
-            $config['max_size'] = 10240; // 10MB
-            $config['encrypt_name'] = TRUE;
+            // Check if file was uploaded
+            if (!isset($_FILES['audio']) || $_FILES['audio']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Aucun fichier audio reçu']);
+                return;
+            }
 
-            $this->load->library('upload', $config);
+            $file = $_FILES['audio'];
 
-            if (!$this->upload->do_upload('audio')) {
+            // Validate file type by extension and MIME
+            $allowed_extensions = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mpeg'];
+            $allowed_mimes = [
+                'audio/webm',
+                'video/webm',
+                'audio/mpeg',
+                'audio/mp3',
+                'audio/wav',
+                'audio/wave',
+                'audio/x-wav',
+                'audio/ogg',
+                'audio/mp4',
+                'audio/x-m4a',
+                'audio/m4a',
+                'application/octet-stream'
+            ];
+
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            // Get MIME type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            // Check extension first (more reliable for audio files)
+            if (!in_array($extension, $allowed_extensions)) {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Erreur upload: ' . $this->upload->display_errors('', '')
+                    'message' => 'Extension non autorisée. Extensions acceptées: ' . implode(', ', $allowed_extensions)
                 ]);
                 return;
             }
 
-            $upload_data = $this->upload->data();
+            // Validate file size (max 10MB)
+            $max_size = 10 * 1024 * 1024; // 10MB
+            if ($file['size'] > $max_size) {
+                echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+                return;
+            }
+
+            // Create upload directory if it doesn't exist
+            $upload_path = FCPATH . 'uploads/dietetic/audio_notes/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = 'audio_' . uniqid() . '_' . time() . '.' . $extension;
+            $destination = $upload_path . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement du fichier']);
+                return;
+            }
+
+            @chmod($destination, 0644);
 
             // Save to database
             $audio_data = [
                 'entry_id' => $entry_id,
                 'meal_type' => $meal_type,
-                'audio_file' => $upload_data['file_name'],
+                'audio_file' => $filename,
                 'duration' => $duration,
-                'file_size' => $upload_data['file_size'] * 1024,
+                'file_size' => $file['size'],
                 'created_at' => date('Y-m-d H:i:s')
             ];
 
@@ -5385,7 +5433,7 @@ class Portal extends App_Controller
 
         } catch (Exception $e) {
             log_activity('Error uploading audio note: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()]);
         }
     }
 
