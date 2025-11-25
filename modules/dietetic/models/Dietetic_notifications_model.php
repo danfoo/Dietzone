@@ -627,6 +627,13 @@ class Dietetic_notifications_model extends App_Model
     {
         $results = [];
 
+        // Debug logging
+        log_activity('[SEND_NOTIFICATION] Type: ' . ($params['type'] ?? 'unknown') .
+                    ', Patient: ' . ($params['patient_id'] ?? 'unknown') .
+                    ', Phone: ' . ($params['phone'] ?? 'empty') .
+                    ', SMS channel: ' . (isset($params['channels']['sms']) ? $params['channels']['sms'] : 'not set') .
+                    ', Email channel: ' . (isset($params['channels']['email']) ? $params['channels']['email'] : 'not set'));
+
         // Email
         if (!empty($params['channels']['email']) && !empty($params['email'])) {
             $results['email'] = $this->send_email_notification(
@@ -640,12 +647,17 @@ class Dietetic_notifications_model extends App_Model
 
         // SMS
         if (!empty($params['channels']['sms']) && !empty($params['phone'])) {
+            log_activity('[SEND_NOTIFICATION] SMS channel check passed, calling send_sms_notification()');
             $results['sms'] = $this->send_sms_notification(
                 $params['patient_id'],
                 $params['type'],
                 $params['phone'],
                 $params['message']
             );
+        } else {
+            log_activity('[SEND_NOTIFICATION] SMS channel check FAILED - SMS channel: ' .
+                        (isset($params['channels']['sms']) ? ($params['channels']['sms'] ? 'YES' : 'NO') : 'NOT SET') .
+                        ', Phone: ' . ($params['phone'] ?? 'EMPTY'));
         }
 
         // WhatsApp
