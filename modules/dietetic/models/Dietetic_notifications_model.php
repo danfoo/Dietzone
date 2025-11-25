@@ -645,14 +645,15 @@ class Dietetic_notifications_model extends App_Model
             );
         }
 
-        // SMS
+        // SMS (use short message if provided, otherwise use full message)
         if (!empty($params['channels']['sms']) && !empty($params['phone'])) {
+            $sms_message = $params['message_sms'] ?? $params['message'];
             log_activity('[SEND_NOTIFICATION] SMS channel check passed, calling send_sms_notification()');
             $results['sms'] = $this->send_sms_notification(
                 $params['patient_id'],
                 $params['type'],
                 $params['phone'],
-                $params['message']
+                $sms_message
             );
         } else {
             log_activity('[SEND_NOTIFICATION] SMS channel check FAILED - SMS channel: ' .
@@ -660,13 +661,14 @@ class Dietetic_notifications_model extends App_Model
                         ', Phone: ' . ($params['phone'] ?? 'EMPTY'));
         }
 
-        // WhatsApp
+        // WhatsApp (use short message if provided, otherwise use full message)
         if (!empty($params['channels']['whatsapp']) && !empty($params['phone'])) {
+            $whatsapp_message = $params['message_sms'] ?? $params['message'];
             $results['whatsapp'] = $this->send_whatsapp_notification(
                 $params['patient_id'],
                 $params['type'],
                 $params['phone'],
-                $params['message']
+                $whatsapp_message
             );
         }
 
@@ -1491,24 +1493,33 @@ class Dietetic_notifications_model extends App_Model
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : '';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "📅 Une nouvelle consultation a été planifiée :\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "📆 Date : {$formatted_date}\n";
+        // Full message for email and frontend
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "📅 Une nouvelle consultation a été planifiée :\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "📆 Date : {$formatted_date}\n";
         if ($formatted_time) {
-            $message .= "🕐 Heure : {$formatted_time}\n";
+            $message_full .= "🕐 Heure : {$formatted_time}\n";
         }
-        $message .= "📝 Type : {$consultation_type}\n\n";
-        $message .= "Nous avons hâte de vous voir ! 😊";
+        $message_full .= "📝 Type : {$consultation_type}\n\n";
+        $message_full .= "Nous avons hâte de vous voir ! 😊";
+
+        // Short SMS message (max 160 characters)
+        $message_sms = "Consultation prevue le {$formatted_date}";
+        if ($formatted_time) {
+            $message_sms .= " a {$formatted_time}";
+        }
+        $message_sms .= " avec {$dietitian_name}. A bientot !";
 
         // Debug logging
-        log_activity('Consultation notification - Patient ID: ' . $patient_id . ', Phone: ' . $contact_phone . ', SMS enabled: ' . ($preferences->channel_sms ? 'YES' : 'NO'));
+        log_activity('Consultation notification - Patient ID: ' . $patient_id . ', Phone: ' . $contact_phone . ', SMS enabled: ' . ($preferences->channel_sms ? 'YES' : 'NO') . ', SMS length: ' . strlen($message_sms));
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_scheduled',
             'subject' => '📅 Nouvelle Consultation Planifiée',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
@@ -1547,17 +1558,22 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'à confirmer';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "⏰ Rappel : Votre consultation est demain !\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "🕐 Heure : {$formatted_time}\n\n";
-        $message .= "N'oubliez pas votre rendez-vous ! 📋";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "⏰ Rappel : Votre consultation est demain !\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "🕐 Heure : {$formatted_time}\n\n";
+        $message_full .= "N'oubliez pas votre rendez-vous ! 📋";
+
+        // Short SMS message
+        $message_sms = "Rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_day',
             'subject' => '⏰ Rappel : Consultation Demain',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
@@ -1596,17 +1612,22 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'bientôt';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "⏰ Votre consultation commence dans 1 heure !\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "🕐 Heure : {$formatted_time}\n\n";
-        $message .= "À tout de suite ! 😊";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "⏰ Votre consultation commence dans 1 heure !\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "🕐 Heure : {$formatted_time}\n\n";
+        $message_full .= "À tout de suite ! 😊";
+
+        // Short SMS message
+        $message_sms = "Rappel : consultation dans 1h a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_hour',
             'subject' => '⏰ Consultation dans 1 heure',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
@@ -1645,18 +1666,26 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
         if ($reason) {
-            $message .= "Raison : {$reason}\n\n";
+            $message_full .= "Raison : {$reason}\n\n";
         }
-        $message .= "Veuillez contacter votre diététicien pour reprogrammer.";
+        $message_full .= "Veuillez contacter votre diététicien pour reprogrammer.";
+
+        // Short SMS message
+        $message_sms = "Consultation du {$formatted_date} annulee.";
+        if ($reason && strlen($reason) < 100) {
+            $message_sms .= " Raison: {$reason}";
+        }
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_cancelled',
             'subject' => '❌ Consultation Annulée',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
