@@ -34,8 +34,6 @@ class Portal extends App_Controller
      */
     public function _remap($method, $params = [])
     {
-        log_activity('[DIETETIC DEBUG] _remap called - Method: ' . $method . ', Params: ' . json_encode($params));
-
         // List of valid methods in this controller
         $valid_methods = [
             'index',
@@ -60,6 +58,10 @@ class Portal extends App_Controller
             'add_comment',
             'upload_photo',
             'delete_photo',
+            // Audio notes methods
+            'upload_audio_note',
+            'get_audio_notes',
+            'delete_audio_note',
             'notification_preferences',
             'save_notification_preferences',
             'save_fcm_token',
@@ -110,7 +112,6 @@ class Portal extends App_Controller
 
         // If method doesn't exist, treat it as index with the method name as a parameter
         if (!in_array($method, $valid_methods)) {
-            log_activity('[DIETETIC DEBUG] Method not found: ' . $method . ', redirecting to index');
             // Method not found, call index instead
             return call_user_func_array([$this, 'index'], array_merge([$method], $params));
         }

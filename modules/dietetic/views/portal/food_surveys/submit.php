@@ -1524,13 +1524,11 @@ $this->load->view('portal/includes/portal_header');
                     audioRecorderHTML = `
                         <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}">
                             <div class="audio-recorder-controls">
-                                <button type="button" class="audio-record-btn record" id="record-btn-${mealType}" onclick="toggleRecording('${mealType}', ${entryId})">
+                                <button type="button" class="audio-record-btn record" id="record-btn-${mealType}" onclick="toggleRecording('${mealType}', ${entryId})" title="Enregistrer une note vocale">
                                     <i class="fa fa-microphone"></i>
-                                    Enregistrer une note vocale
                                 </button>
-                                <button type="button" class="audio-record-btn stop" id="stop-btn-${mealType}" style="display: none;" onclick="toggleRecording('${mealType}', ${entryId})">
+                                <button type="button" class="audio-record-btn stop" id="stop-btn-${mealType}" style="display: none;" onclick="toggleRecording('${mealType}', ${entryId})" title="Arrêter l'enregistrement">
                                     <i class="fa fa-stop"></i>
-                                    Arrêter
                                 </button>
                                 <div class="audio-recording-indicator" id="recording-indicator-${mealType}" style="display: none;">
                                     <div class="audio-recording-pulse"></div>

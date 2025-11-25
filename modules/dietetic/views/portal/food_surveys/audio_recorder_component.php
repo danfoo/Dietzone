@@ -18,23 +18,31 @@
 .audio-record-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
     border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
+    border-radius: 50%;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.audio-record-btn i {
+    margin: 0;
 }
 
 .audio-record-btn.record {
-    background: #dc3545;
+    background: #F3911D;
     color: white;
 }
 
 .audio-record-btn.record:hover {
-    background: #c82333;
+    background: #e07d0f;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
 }
 
 .audio-record-btn.stop {
@@ -44,6 +52,7 @@
 
 .audio-record-btn.stop:hover {
     background: #5a6268;
+    transform: scale(1.05);
 }
 
 .audio-record-btn:disabled {
