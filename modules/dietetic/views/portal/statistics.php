@@ -400,7 +400,7 @@ body {
 
     <!-- Empty State -->
     <div id="emptyState" class="empty-state" style="display: none;">
-        <i class="fa fa-chart-line"></i>
+        <i class="fa fa-area-chart"></i>
         <h3>Aucune donnée disponible</h3>
         <p>Commencez à enregistrer vos mesures pour voir votre évolution</p>
         <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn">

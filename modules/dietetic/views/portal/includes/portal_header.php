@@ -913,7 +913,7 @@
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'statistics') ? 'active' : ''; ?>">
-                <i class="fa fa-chart-line"></i>
+                <i class="fa fa-area-chart"></i>
                 <span>Mes Statistiques</span>
             </a>
 

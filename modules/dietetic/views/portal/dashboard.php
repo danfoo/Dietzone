@@ -1030,7 +1030,7 @@ if (!$current_weight || !$target_weight) {
     <?php if ($weight_progress->weight_change !== null) { ?>
     <div class="stat-card progress">
         <div class="stat-icon">
-            <i class="fa fa-chart-line"></i>
+            <i class="fa fa-area-chart"></i>
         </div>
         <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
             <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
@@ -1146,7 +1146,7 @@ if (!$current_weight || !$target_weight) {
             <canvas id="portalWeightChart" height="200"></canvas>
             <div style="margin-top: 20px; text-align: center;">
                 <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="btn-flat btn-flat-primary">
-                    <i class="fa fa-chart-line"></i> Voir les statistiques détaillées
+                    <i class="fa fa-area-chart"></i> Voir les statistiques détaillées
                 </a>
             </div>
         </div>
