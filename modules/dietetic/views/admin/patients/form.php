@@ -435,8 +435,8 @@ textarea.form-control {
 
                                 <div class="col-md-3" id="pregnancy-months-group" style="display: none;">
                                     <div class="form-group">
-                                        <label for="pregnancy_months">Mois de grossesse <i class="fa fa-info-circle" title="1 à 9 mois"></i></label>
-                                        <input type="number" class="form-control" name="pregnancy_months" id="pregnancy_months" min="1" max="9" value="<?php echo isset($patient) ? $patient->pregnancy_months : ''; ?>" placeholder="1-9" />
+                                        <label for="pregnancy_months">Mois de grossesse <i class="fa fa-info-circle" title="0 à 9 mois"></i></label>
+                                        <input type="number" class="form-control" name="pregnancy_months" id="pregnancy_months" min="0" max="9" value="<?php echo isset($patient) ? $patient->pregnancy_months : '0'; ?>" placeholder="0-9" />
                                     </div>
                                 </div>
 
