@@ -474,14 +474,21 @@ async function loadStatistics(period) {
     }
 }
 
+// Helper function to safely format numbers
+function safeFixed(value, decimals = 1) {
+    if (value === null || value === undefined || value === '') return '0.0';
+    const num = parseFloat(value);
+    return isNaN(num) ? '0.0' : num.toFixed(decimals);
+}
+
 function renderStatsCards(data) {
     const container = document.getElementById('statsCards');
     const stats = data.stats;
     let html = '';
 
     // Weight Card
-    if (stats.weight) {
-        const change = stats.weight.change;
+    if (stats.weight && stats.weight.current) {
+        const change = parseFloat(stats.weight.change) || 0;
         const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
         const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
 
@@ -491,18 +498,18 @@ function renderStatsCards(data) {
                     <div class="stat-icon weight"><i class="fa fa-balance-scale"></i></div>
                     <div class="stat-label">Poids</div>
                 </div>
-                <div class="stat-value">${stats.weight.current} kg</div>
+                <div class="stat-value">${safeFixed(stats.weight.current, 1)} kg</div>
                 <div class="stat-change ${changeClass}">
                     <i class="fa ${changeIcon}"></i>
-                    ${Math.abs(change).toFixed(1)} kg depuis le début
+                    ${safeFixed(Math.abs(change), 1)} kg depuis le début
                 </div>
             </div>
         `;
     }
 
     // BMI Card
-    if (stats.bmi) {
-        const change = stats.bmi.change;
+    if (stats.bmi && stats.bmi.current) {
+        const change = parseFloat(stats.bmi.change) || 0;
         const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
         const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
 
@@ -512,18 +519,18 @@ function renderStatsCards(data) {
                     <div class="stat-icon bmi"><i class="fa fa-tachometer"></i></div>
                     <div class="stat-label">IMC</div>
                 </div>
-                <div class="stat-value">${stats.bmi.current.toFixed(1)}</div>
+                <div class="stat-value">${safeFixed(stats.bmi.current, 1)}</div>
                 <div class="stat-change ${changeClass}">
                     <i class="fa ${changeIcon}"></i>
-                    ${Math.abs(change).toFixed(1)} depuis le début
+                    ${safeFixed(Math.abs(change), 1)} depuis le début
                 </div>
             </div>
         `;
     }
 
     // Waist Card
-    if (stats.waist) {
-        const change = stats.waist.change;
+    if (stats.waist && stats.waist.current) {
+        const change = parseFloat(stats.waist.change) || 0;
         const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
         const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
 
@@ -533,33 +540,36 @@ function renderStatsCards(data) {
                     <div class="stat-icon waist"><i class="fa fa-expand"></i></div>
                     <div class="stat-label">Tour de taille</div>
                 </div>
-                <div class="stat-value">${stats.waist.current} cm</div>
+                <div class="stat-value">${safeFixed(stats.waist.current, 1)} cm</div>
                 <div class="stat-change ${changeClass}">
                     <i class="fa ${changeIcon}"></i>
-                    ${Math.abs(change).toFixed(1)} cm depuis le début
+                    ${safeFixed(Math.abs(change), 1)} cm depuis le début
                 </div>
             </div>
         `;
     }
 
     // Goal Progress Card
-    if (stats.goal_progress) {
+    if (stats.goal_progress && stats.goal_progress.percent !== undefined) {
+        const remaining = parseFloat(stats.goal_progress.remaining) || 0;
+        const percent = parseFloat(stats.goal_progress.percent) || 0;
+
         html += `
             <div class="stat-card">
                 <div class="stat-card-header">
                     <div class="stat-icon goal"><i class="fa fa-bullseye"></i></div>
                     <div class="stat-label">Progrès vers l'objectif</div>
                 </div>
-                <div class="stat-value">${stats.goal_progress.percent}%</div>
+                <div class="stat-value">${safeFixed(percent, 1)}%</div>
                 <div class="stat-change neutral">
                     <i class="fa fa-flag-checkered"></i>
-                    Encore ${stats.goal_progress.remaining.toFixed(1)} kg
+                    Encore ${safeFixed(remaining, 1)} kg
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar">
-                        <div class="progress-bar-fill" style="width: ${Math.min(stats.goal_progress.percent, 100)}%"></div>
+                        <div class="progress-bar-fill" style="width: ${Math.min(percent, 100)}%"></div>
                     </div>
-                    <div class="progress-text">${Math.min(stats.goal_progress.percent, 100)}% accompli</div>
+                    <div class="progress-text">${Math.min(percent, 100).toFixed(0)}% accompli</div>
                 </div>
             </div>
         `;
