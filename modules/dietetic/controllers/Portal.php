@@ -5854,7 +5854,6 @@ class Portal extends App_Controller
     public function api_get_evolution_data()
     {
         header('Content-Type: application/json');
-        @ini_set('display_errors', 0);
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -5901,14 +5900,20 @@ class Portal extends App_Controller
             $this->db->order_by('measurement_date', 'ASC');
             $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result_array();
 
-            // Get food survey compliance
-            $this->db->select('DATE(created_at) as date, COUNT(*) as count');
-            $this->db->join(db_prefix() . 'dietic_food_surveys s', 's.id = ' . db_prefix() . 'dietic_food_survey_entries.survey_id');
-            $this->db->where('s.patient_id', $patient->id);
-            $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) >=', $start_date);
-            $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) <=', $end_date);
-            $this->db->group_by('DATE(created_at)');
-            $compliance = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->result_array();
+            // Get food survey compliance (if table exists)
+            $compliance = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys') &&
+                $this->db->table_exists(db_prefix() . 'dietic_food_survey_entries')) {
+
+                $this->db->select('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) as date, COUNT(*) as count');
+                $this->db->from(db_prefix() . 'dietic_food_survey_entries');
+                $this->db->join(db_prefix() . 'dietic_food_surveys s', 's.id = ' . db_prefix() . 'dietic_food_survey_entries.survey_id');
+                $this->db->where('s.patient_id', $patient->id);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) >=', $start_date);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) <=', $end_date);
+                $this->db->group_by('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at)');
+                $compliance = $this->db->get()->result_array();
+            }
 
             // Calculate statistics
             $stats = [];
@@ -5978,7 +5983,11 @@ class Portal extends App_Controller
 
         } catch (Exception $e) {
             log_activity('Error getting evolution data: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'trace' => ENVIRONMENT === 'development' ? $e->getTraceAsString() : null
+            ]);
         }
     }
 }
