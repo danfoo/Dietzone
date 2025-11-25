@@ -1512,14 +1512,16 @@ $this->load->view('portal/includes/portal_header');
         const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
         const entryId = <?php echo $today_entry ? $today_entry->id : 'null'; ?>;
 
-        if (entryId) {
-            mealTypes.forEach(mealType => {
-                const notesField = document.getElementById(mealType + '_notes');
-                if (notesField && notesField.closest('.form-group')) {
-                    const formGroup = notesField.closest('.form-group');
+        mealTypes.forEach(mealType => {
+            const notesField = document.getElementById(mealType + '_notes');
+            if (notesField && notesField.closest('.form-group')) {
+                const formGroup = notesField.closest('.form-group');
 
-                    // Create audio recorder HTML
-                    const audioRecorderHTML = `
+                let audioRecorderHTML = '';
+
+                if (entryId) {
+                    // Entry exists - show audio recorder
+                    audioRecorderHTML = `
                         <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}">
                             <div class="audio-recorder-controls">
                                 <button type="button" class="audio-record-btn record" id="record-btn-${mealType}" onclick="toggleRecording('${mealType}', ${entryId})">
@@ -1540,15 +1542,27 @@ $this->load->view('portal/includes/portal_header');
                             </div>
                         </div>
                     `;
+                } else {
+                    // No entry yet - show info message
+                    audioRecorderHTML = `
+                        <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}" style="margin-top: 10px; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                            <p style="color: #6c757d; font-size: 14px; margin: 0;">
+                                <i class="fa fa-info-circle" style="color: #17a2b8;"></i>
+                                <strong>Note vocale :</strong> Vous pourrez ajouter des notes vocales après avoir soumis votre questionnaire alimentaire pour la première fois.
+                            </p>
+                        </div>
+                    `;
+                }
 
-                    // Insert after form-group
-                    formGroup.insertAdjacentHTML('afterend', audioRecorderHTML);
+                // Insert after form-group
+                formGroup.insertAdjacentHTML('afterend', audioRecorderHTML);
 
-                    // Load existing audio notes
+                // Load existing audio notes if entry exists
+                if (entryId) {
                     loadAudioNotes(mealType, entryId);
                 }
-            });
-        }
+            }
+        });
     });
     </script>
 
