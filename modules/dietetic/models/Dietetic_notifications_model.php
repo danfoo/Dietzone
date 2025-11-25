@@ -1504,8 +1504,11 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "📝 Type : {$consultation_type}\n\n";
         $message_full .= "Nous avons hâte de vous voir ! 😊";
 
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
         // Short SMS message (max 160 characters)
-        $message_sms = "Consultation prevue le {$formatted_date}";
+        $message_sms = "Bonjour {$firstname}, consultation prevue le {$formatted_date}";
         if ($formatted_time) {
             $message_sms .= " a {$formatted_time}";
         }
@@ -1565,8 +1568,11 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "🕐 Heure : {$formatted_time}\n\n";
         $message_full .= "N'oubliez pas votre rendez-vous ! 📋";
 
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
         // Short SMS message
-        $message_sms = "Rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
+        $message_sms = "Bonjour {$firstname}, rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
@@ -1619,8 +1625,11 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "🕐 Heure : {$formatted_time}\n\n";
         $message_full .= "À tout de suite ! 😊";
 
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
         // Short SMS message
-        $message_sms = "Rappel : consultation dans 1h a {$formatted_time} avec {$dietitian_name}.";
+        $message_sms = "Bonjour {$firstname}, rappel : consultation dans 1h a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
@@ -1674,9 +1683,12 @@ class Dietetic_notifications_model extends App_Model
         }
         $message_full .= "Veuillez contacter votre diététicien pour reprogrammer.";
 
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
         // Short SMS message
-        $message_sms = "Consultation du {$formatted_date} annulee.";
-        if ($reason && strlen($reason) < 100) {
+        $message_sms = "Bonjour {$firstname}, consultation du {$formatted_date} annulee.";
+        if ($reason && strlen($reason) < 80) {
             $message_sms .= " Raison: {$reason}";
         }
 
