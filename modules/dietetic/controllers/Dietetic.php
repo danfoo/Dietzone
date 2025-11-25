@@ -533,4 +533,189 @@ class Dietetic extends AdminController
 
         include $migration_path;
     }
+
+    /**
+     * Migrations manager - Display available migrations
+     */
+    public function migrations()
+    {
+        // Check admin permission
+        if (!is_admin()) {
+            access_denied('Migrations - Administrateur requis');
+            return;
+        }
+
+        $data['title'] = 'Migrations de base de données';
+
+        // Get all migration files
+        $migrations_dir = dirname(__DIR__) . '/migrations/';
+        $migration_files = [];
+
+        if (is_dir($migrations_dir)) {
+            $files = scandir($migrations_dir);
+            foreach ($files as $file) {
+                if (pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+                    $migration_files[] = $file;
+                }
+            }
+        }
+
+        // Check which migrations have been applied
+        $applied_migrations = $this->get_applied_migrations();
+
+        $data['migrations'] = [];
+        foreach ($migration_files as $file) {
+            $migration_name = pathinfo($file, PATHINFO_FILENAME);
+            $data['migrations'][] = [
+                'file' => $file,
+                'name' => $migration_name,
+                'title' => $this->format_migration_title($migration_name),
+                'applied' => in_array($migration_name, $applied_migrations),
+                'date_applied' => $this->get_migration_date($migration_name)
+            ];
+        }
+
+        $this->load->view('admin/migrations/list', $data);
+    }
+
+    /**
+     * Apply a specific migration
+     */
+    public function apply_migration()
+    {
+        // Check admin permission
+        if (!is_admin()) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        $migration_file = $this->input->post('migration_file');
+
+        if (!$migration_file) {
+            echo json_encode(['success' => false, 'message' => 'Migration non spécifiée']);
+            return;
+        }
+
+        // Security check - only allow php files
+        if (pathinfo($migration_file, PATHINFO_EXTENSION) !== 'php') {
+            echo json_encode(['success' => false, 'message' => 'Type de fichier invalide']);
+            return;
+        }
+
+        $migration_path = dirname(__DIR__) . '/migrations/' . $migration_file;
+
+        if (!file_exists($migration_path)) {
+            echo json_encode(['success' => false, 'message' => 'Fichier de migration non trouvé']);
+            return;
+        }
+
+        try {
+            // Include and execute migration
+            require_once($migration_path);
+
+            // Get class name from file
+            $migration_name = pathinfo($migration_file, PATHINFO_FILENAME);
+            $class_name = 'Migration_' . $migration_name;
+
+            if (!class_exists($class_name)) {
+                echo json_encode(['success' => false, 'message' => 'Classe de migration non trouvée: ' . $class_name]);
+                return;
+            }
+
+            $migration = new $class_name();
+            $migration->up();
+
+            // Record migration as applied
+            $this->record_migration($migration_name);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration appliquée avec succès'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Migration error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get list of applied migrations
+     */
+    private function get_applied_migrations()
+    {
+        // Create migrations table if it doesn't exist
+        $this->create_migrations_table();
+
+        $this->db->select('migration_name');
+        $query = $this->db->get(db_prefix() . 'dietetic_migrations');
+
+        $migrations = [];
+        foreach ($query->result() as $row) {
+            $migrations[] = $row->migration_name;
+        }
+
+        return $migrations;
+    }
+
+    /**
+     * Get migration application date
+     */
+    private function get_migration_date($migration_name)
+    {
+        $this->db->where('migration_name', $migration_name);
+        $query = $this->db->get(db_prefix() . 'dietetic_migrations');
+
+        if ($query->num_rows() > 0) {
+            return $query->row()->applied_at;
+        }
+
+        return null;
+    }
+
+    /**
+     * Record migration as applied
+     */
+    private function record_migration($migration_name)
+    {
+        $this->db->insert(db_prefix() . 'dietetic_migrations', [
+            'migration_name' => $migration_name,
+            'applied_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+
+    /**
+     * Create migrations tracking table
+     */
+    private function create_migrations_table()
+    {
+        $table_name = db_prefix() . 'dietetic_migrations';
+
+        if (!$this->db->table_exists($table_name)) {
+            $this->db->query("
+                CREATE TABLE `{$table_name}` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `migration_name` varchar(255) NOT NULL,
+                    `applied_at` datetime NOT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `migration_name` (`migration_name`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+            ");
+        }
+    }
+
+    /**
+     * Format migration name for display
+     */
+    private function format_migration_title($name)
+    {
+        // Convert snake_case to Title Case
+        $name = str_replace('_', ' ', $name);
+        return ucwords($name);
+    }
 }
