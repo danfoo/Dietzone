@@ -1472,6 +1472,30 @@
                                     <div class="recommendation-content">
                                         <?php echo nl2br(htmlspecialchars($rec->recommendation_text)); ?>
                                     </div>
+
+                                    <!-- Audio Notes Section -->
+                                    <div class="rec-audio-recorder-wrapper" id="rec-audio-recorder-<?php echo $rec->id; ?>">
+                                        <div class="rec-audio-recorder-controls">
+                                            <button type="button" class="rec-audio-record-btn record" id="rec-record-btn-<?php echo $rec->id; ?>"
+                                                    onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                    title="Enregistrer une note vocale">
+                                                <i class="fa fa-microphone"></i>
+                                            </button>
+                                            <button type="button" class="rec-audio-record-btn stop" id="rec-stop-btn-<?php echo $rec->id; ?>" style="display: none;"
+                                                    onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                    title="Arrêter l'enregistrement">
+                                                <i class="fa fa-stop"></i>
+                                            </button>
+                                            <div class="rec-audio-recording-indicator" id="rec-recording-indicator-<?php echo $rec->id; ?>" style="display: none;">
+                                                <div class="rec-audio-recording-pulse"></div>
+                                                Enregistrement en cours...
+                                            </div>
+                                        </div>
+                                        <div class="rec-audio-player-list" id="rec-audio-list-<?php echo $rec->id; ?>">
+                                            <p style="color: #6c757d; font-size: 12px; margin: 0;">Chargement...</p>
+                                        </div>
+                                    </div>
+
                                     <div class="recommendation-meta">
                                         <div class="recommendation-info">
                                             <span>
@@ -1733,6 +1757,20 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Load audio notes for each recommendation
+    <?php if (!empty($recommendations_by_meal)): ?>
+        <?php foreach ($recommendations_by_meal as $meal_type => $recommendations): ?>
+            <?php if (!empty($recommendations)): ?>
+                <?php foreach ($recommendations as $rec): ?>
+                    loadRecommendationAudios(<?php echo $rec->id; ?>, false);
+                <?php endforeach; ?>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 });
 </script>
+
+<!-- Include Recommendation Audio Recorder Component -->
+<?php $this->load->view('components/recommendation_audio_recorder'); ?>
 
