@@ -53,6 +53,21 @@ class Dietetic_notifications_model extends App_Model
      */
     public function create_default_preferences($patient_id)
     {
+        // Check if SMS is configured to enable it by default
+        $sms_configured = false;
+        $account_id = $this->get_setting('sms_lam_account_id');
+        $password = $this->get_setting('sms_lam_password');
+        if (!empty($account_id) && !empty($password)) {
+            $sms_configured = true;
+        }
+
+        // Check if WhatsApp is configured
+        $whatsapp_configured = false;
+        $whatsapp_api_key = $this->get_setting('whatsapp_api_key');
+        if (!empty($whatsapp_api_key)) {
+            $whatsapp_configured = true;
+        }
+
         $data = [
             'patient_id' => $patient_id,
             'reminder_weight' => 1,
@@ -66,8 +81,8 @@ class Dietetic_notifications_model extends App_Model
             'notify_program' => 1,
             'notify_food_entry' => 1,
             'channel_email' => 1,
-            'channel_sms' => 0,
-            'channel_whatsapp' => 0,
+            'channel_sms' => $sms_configured ? 1 : 0, // Enable SMS if configured
+            'channel_whatsapp' => $whatsapp_configured ? 1 : 0, // Enable WhatsApp if configured
             'channel_push' => 1,
             'created_at' => date('Y-m-d H:i:s')
         ];
@@ -149,6 +164,75 @@ class Dietetic_notifications_model extends App_Model
 
         log_activity('❌ [MODEL] update_preferences FAILED');
         return false;
+    }
+
+    /**
+     * Check if SMS is configured
+     *
+     * @return bool
+     */
+    public function is_sms_configured()
+    {
+        $account_id = $this->get_setting('sms_lam_account_id');
+        $password = $this->get_setting('sms_lam_password');
+        return !empty($account_id) && !empty($password);
+    }
+
+    /**
+     * Check if WhatsApp is configured
+     *
+     * @return bool
+     */
+    public function is_whatsapp_configured()
+    {
+        $api_key = $this->get_setting('whatsapp_api_key');
+        return !empty($api_key);
+    }
+
+    /**
+     * Enable SMS notifications for all existing patients
+     * Only call this after configuring LAM SMS credentials
+     *
+     * @return int Number of patients updated
+     */
+    public function enable_sms_for_all_patients()
+    {
+        // Check if SMS is configured
+        if (!$this->is_sms_configured()) {
+            log_activity('SMS not configured - cannot enable for all patients');
+            return 0;
+        }
+
+        $this->db->where('channel_sms', 0);
+        $this->db->update(db_prefix() . $this->table_preferences, ['channel_sms' => 1]);
+
+        $affected = $this->db->affected_rows();
+        log_activity("SMS enabled for {$affected} existing patient(s)");
+
+        return $affected;
+    }
+
+    /**
+     * Enable WhatsApp notifications for all existing patients
+     * Only call this after configuring WhatsApp API credentials
+     *
+     * @return int Number of patients updated
+     */
+    public function enable_whatsapp_for_all_patients()
+    {
+        // Check if WhatsApp is configured
+        if (!$this->is_whatsapp_configured()) {
+            log_activity('WhatsApp not configured - cannot enable for all patients');
+            return 0;
+        }
+
+        $this->db->where('channel_whatsapp', 0);
+        $this->db->update(db_prefix() . $this->table_preferences, ['channel_whatsapp' => 1]);
+
+        $affected = $this->db->affected_rows();
+        log_activity("WhatsApp enabled for {$affected} existing patient(s)");
+
+        return $affected;
     }
 
     // ==================== WEIGHT REMINDER ====================

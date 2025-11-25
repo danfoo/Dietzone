@@ -258,6 +258,58 @@ class Notifications extends AdminController
     }
 
     /**
+     * Enable SMS for all existing patients (AJAX)
+     * URL: /admin/dietetic/notifications/enable_sms_all
+     */
+    public function enable_sms_all()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $affected = $this->dietetic_notifications_model->enable_sms_for_all_patients();
+
+        echo json_encode([
+            'success' => $affected >= 0,
+            'message' => "SMS activé pour {$affected} patient(s)",
+            'affected' => $affected
+        ]);
+    }
+
+    /**
+     * Enable WhatsApp for all existing patients (AJAX)
+     * URL: /admin/dietetic/notifications/enable_whatsapp_all
+     */
+    public function enable_whatsapp_all()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $affected = $this->dietetic_notifications_model->enable_whatsapp_for_all_patients();
+
+        echo json_encode([
+            'success' => $affected >= 0,
+            'message' => "WhatsApp activé pour {$affected} patient(s)",
+            'affected' => $affected
+        ]);
+    }
+
+    /**
      * Run migration to create notification tables
      * URL: /admin/dietetic/notifications/run_migration
      */
