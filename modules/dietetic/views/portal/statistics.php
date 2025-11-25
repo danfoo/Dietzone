@@ -587,7 +587,7 @@ function renderWeightChart(measurements, stats) {
     }
 
     const labels = measurements.map(m => {
-        const date = new Date(m.measured_at);
+        const date = new Date(m.measurement_date);
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
     });
 
@@ -685,7 +685,7 @@ function renderBMIChart(measurements) {
     }
 
     const labels = measurements.map(m => {
-        const date = new Date(m.measured_at);
+        const date = new Date(m.measurement_date);
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
     });
 
@@ -769,7 +769,7 @@ function renderMeasurementsChart(measurements) {
     }
 
     const labels = measurements.map(m => {
-        const date = new Date(m.measured_at);
+        const date = new Date(m.measurement_date);
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
     });
 
