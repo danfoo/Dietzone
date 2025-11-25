@@ -62,6 +62,10 @@ class Portal extends App_Controller
             'upload_audio_note',
             'get_audio_notes',
             'delete_audio_note',
+            // Recommendation audio notes methods
+            'upload_recommendation_audio_response',
+            'get_recommendation_audio_notes',
+            'delete_recommendation_audio_response',
             'notification_preferences',
             'save_notification_preferences',
             'save_fcm_token',
@@ -5558,7 +5562,11 @@ class Portal extends App_Controller
      */
     public function upload_recommendation_audio_response()
     {
+        // Set JSON header first
         header('Content-Type: application/json');
+
+        // Disable error display to prevent HTML output
+        @ini_set('display_errors', 0);
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -5582,22 +5590,28 @@ class Portal extends App_Controller
                 return;
             }
 
-            // Verify recommendation belongs to patient
-            $recommendation = $this->dietetic_food_surveys_model->get_recommendation($recommendation_id);
+            // Verify recommendation exists (simple query)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
             if (!$recommendation) {
                 echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
                 return;
             }
 
-            // Verify patient owns this recommendation's entry
-            $entry = $this->dietetic_food_surveys_model->get_entry($recommendation->entry_id);
+            // Verify patient owns this recommendation's entry (simple queries)
+            $this->db->where('id', $recommendation->entry_id);
+            $entry = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->row();
+
             if (!$entry) {
                 echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
                 return;
             }
 
-            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
-            if ($survey->patient_id != $patient->id) {
+            $this->db->where('id', $entry->survey_id);
+            $survey = $this->db->get(db_prefix() . 'dietic_food_surveys')->row();
+
+            if (!$survey || $survey->patient_id != $patient->id) {
                 echo json_encode(['success' => false, 'message' => 'Accès refusé']);
                 return;
             }
@@ -5678,6 +5692,7 @@ class Portal extends App_Controller
     public function get_recommendation_audio_notes($recommendation_id)
     {
         header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -5693,21 +5708,27 @@ class Portal extends App_Controller
         }
 
         try {
-            // Verify recommendation belongs to patient
-            $recommendation = $this->dietetic_food_surveys_model->get_recommendation($recommendation_id);
+            // Verify recommendation belongs to patient (simple queries)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
             if (!$recommendation) {
                 echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
                 return;
             }
 
-            $entry = $this->dietetic_food_surveys_model->get_entry($recommendation->entry_id);
+            $this->db->where('id', $recommendation->entry_id);
+            $entry = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->row();
+
             if (!$entry) {
                 echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
                 return;
             }
 
-            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
-            if ($survey->patient_id != $patient->id) {
+            $this->db->where('id', $entry->survey_id);
+            $survey = $this->db->get(db_prefix() . 'dietic_food_surveys')->row();
+
+            if (!$survey || $survey->patient_id != $patient->id) {
                 echo json_encode(['success' => false, 'message' => 'Accès refusé']);
                 return;
             }
@@ -5747,6 +5768,7 @@ class Portal extends App_Controller
     public function delete_recommendation_audio_response()
     {
         header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
