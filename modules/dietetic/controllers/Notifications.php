@@ -115,6 +115,14 @@ class Notifications extends AdminController
 
                 // WhatsApp settings
                 'whatsapp_provider' => $this->input->post('whatsapp_provider'),
+
+                // LAM WhatsApp API credentials
+                'whatsapp_lam_account_id' => $this->input->post('whatsapp_lam_account_id'),
+                'whatsapp_lam_password' => $this->input->post('whatsapp_lam_password'),
+                'whatsapp_lam_sender_number' => $this->input->post('whatsapp_lam_sender_number'),
+                'whatsapp_lam_ret_url' => $this->input->post('whatsapp_lam_ret_url'),
+
+                // Other WhatsApp providers (Twilio, Meta, etc.)
                 'whatsapp_api_key' => $this->input->post('whatsapp_api_key'),
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
 
@@ -138,6 +146,12 @@ class Notifications extends AdminController
             if (isset($safe_settings['sms_lam_password'])) {
                 $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
             }
+            if (isset($safe_settings['whatsapp_lam_password'])) {
+                $safe_settings['whatsapp_lam_password'] = $settings['whatsapp_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['whatsapp_api_key'])) {
+                $safe_settings['whatsapp_api_key'] = $settings['whatsapp_api_key'] ? '***SET***' : '***EMPTY***';
+            }
             if (isset($safe_settings['firebase_service_account_json'])) {
                 $safe_settings['firebase_service_account_json'] = $settings['firebase_service_account_json'] ? '***JSON_SET***' : '***EMPTY***';
             }
@@ -154,12 +168,10 @@ class Notifications extends AdminController
                 try {
                     // Log each setting before saving (hide sensitive data)
                     $display_value = $value;
-                    if ($key === 'sms_lam_password' && $value) {
+                    if (in_array($key, ['sms_lam_password', 'whatsapp_lam_password', 'whatsapp_api_key', 'firebase_server_key']) && $value) {
                         $display_value = '***SET***';
                     } elseif ($key === 'firebase_service_account_json' && $value) {
                         $display_value = '***JSON_SET***';
-                    } elseif ($key === 'firebase_server_key' && $value) {
-                        $display_value = '***SET***';
                     }
                     log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
 
