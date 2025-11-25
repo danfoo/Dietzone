@@ -730,6 +730,8 @@ class Dietetic_notifications_model extends App_Model
      */
     private function send_sms_notification($patient_id, $type, $phone, $message)
     {
+        log_activity('[SMS_NOTIFICATION] Starting - Patient: ' . $patient_id . ', Type: ' . $type . ', Phone: ' . $phone);
+
         $log_data = [
             'patient_id' => $patient_id,
             'notification_type' => $type,
@@ -742,16 +744,23 @@ class Dietetic_notifications_model extends App_Model
 
         try {
             // Get LAM SMS settings
+            log_activity('[SMS_NOTIFICATION] Getting LAM SMS settings...');
             $account_id = $this->get_setting('sms_lam_account_id');
             $password = $this->get_setting('sms_lam_password');
             $sender_id = $this->get_setting('sms_lam_sender_id') ?: 'API_LAMSMS';
+
+            log_activity('[SMS_NOTIFICATION] Settings retrieved - Account ID: ' . ($account_id ? 'SET' : 'EMPTY') .
+                        ', Password: ' . ($password ? 'SET' : 'EMPTY') .
+                        ', Sender ID: ' . $sender_id);
 
             if (empty($account_id) || empty($password)) {
                 throw new Exception('LAM SMS credentials not configured (account_id and password required)');
             }
 
             // LAM SMS API integration
+            log_activity('[SMS_NOTIFICATION] Calling send_lam_sms()...');
             $result = $this->send_lam_sms($phone, $message, $account_id, $password, $sender_id);
+            log_activity('[SMS_NOTIFICATION] send_lam_sms() returned - Success: ' . ($result['success'] ? 'YES' : 'NO'));
 
             if ($result['success']) {
                 $log_data['status'] = 'sent';
@@ -761,11 +770,18 @@ class Dietetic_notifications_model extends App_Model
                 $log_data['error_message'] = $result['error'] ?? 'SMS sending failed';
             }
         } catch (Exception $e) {
+            log_activity('[SMS_NOTIFICATION] EXCEPTION: ' . $e->getMessage());
             $log_data['status'] = 'failed';
             $log_data['error_message'] = $e->getMessage();
         }
 
+        log_activity('[SMS_NOTIFICATION] Inserting into notification logs - Status: ' . $log_data['status']);
         $this->db->insert(db_prefix() . $this->table_logs, $log_data);
+
+        $insert_success = $this->db->affected_rows() > 0;
+        log_activity('[SMS_NOTIFICATION] DB insert result: ' . ($insert_success ? 'SUCCESS' : 'FAILED') .
+                    ' - Returning: ' . ($log_data['status'] === 'sent' ? 'true' : 'false'));
+
         return $log_data['status'] === 'sent';
     }
 
