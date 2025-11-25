@@ -314,6 +314,19 @@ class Food_surveys extends AdminController
         $data['survey'] = $this->dietetic_food_surveys_model->get($data['entry']->survey_id);
         $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($entry_id);
 
+        // Get audio notes for this entry
+        $data['audio_notes'] = [];
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_survey_audio_notes')) {
+            $this->db->where('entry_id', $entry_id);
+            $this->db->order_by('created_at', 'ASC');
+            $audio_results = $this->db->get(db_prefix() . 'dietic_food_survey_audio_notes')->result();
+
+            // Group by meal type
+            foreach ($audio_results as $audio) {
+                $data['audio_notes'][$audio->meal_type][] = $audio;
+            }
+        }
+
         // Get recommendations grouped by meal type
         $recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry_id);
 

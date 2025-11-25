@@ -1,17 +1,17 @@
 <!-- Audio Recorder Component -->
 <style>
 .audio-recorder-wrapper {
-    margin-top: 10px;
-    padding: 15px;
+    margin-top: 8px;
+    padding: 8px 10px;
     background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px dashed #dee2e6;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
 }
 
 .audio-recorder-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -19,15 +19,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     border: none;
     border-radius: 50%;
-    font-size: 18px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .audio-record-btn i {
@@ -41,8 +41,8 @@
 
 .audio-record-btn.record:hover {
     background: #e07d0f;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(243, 145, 29, 0.3);
 }
 
 .audio-record-btn.stop {
@@ -52,7 +52,7 @@
 
 .audio-record-btn.stop:hover {
     background: #5a6268;
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 .audio-record-btn:disabled {
@@ -63,18 +63,18 @@
 .audio-recording-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 4px 10px;
     background: #fff3cd;
     border: 1px solid #ffc107;
-    border-radius: 6px;
+    border-radius: 4px;
     color: #856404;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .audio-recording-pulse {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: #dc3545;
     border-radius: 50%;
     animation: pulse 1.5s ease-in-out infinite;
@@ -86,33 +86,35 @@
 }
 
 .audio-player-list {
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 .audio-player-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
+    gap: 8px;
+    padding: 6px 8px;
     background: white;
     border: 1px solid #dee2e6;
-    border-radius: 6px;
-    margin-bottom: 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
 }
 
 .audio-player-item audio {
     flex: 1;
-    max-width: 300px;
+    max-width: 100%;
+    height: 32px;
 }
 
 .audio-delete-btn {
-    padding: 6px 12px;
+    padding: 4px 8px;
     background: #dc3545;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .audio-delete-btn:hover {
