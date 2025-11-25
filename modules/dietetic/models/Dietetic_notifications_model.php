@@ -791,6 +791,8 @@ class Dietetic_notifications_model extends App_Model
      */
     private function send_lam_sms($phone, $message, $account_id, $password, $sender_id = 'API_LAMSMS')
     {
+        log_activity('[LAM_SMS] Starting - Phone: ' . $phone . ', Message length: ' . strlen($message));
+
         // LAM SMS API endpoint
         $url = 'https://lamsms.lafricamobile.com/api';
 
@@ -804,6 +806,8 @@ class Dietetic_notifications_model extends App_Model
         if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
             $phone = '221' . $phone;
         }
+
+        log_activity('[LAM_SMS] Phone formatted: ' . $phone);
 
         // Prepare LAM API request
         $data = [
@@ -821,7 +825,19 @@ class Dietetic_notifications_model extends App_Model
             ]
         ];
 
+        log_activity('[LAM_SMS] Data prepared, encoding JSON...');
+
+        $json_data = json_encode($data);
+        if ($json_data === false) {
+            log_activity('[LAM_SMS] JSON encoding FAILED: ' . json_last_error_msg());
+            return ['success' => false, 'error' => 'JSON encoding failed: ' . json_last_error_msg()];
+        }
+
+        log_activity('[LAM_SMS] JSON encoded successfully, length: ' . strlen($json_data));
+
         $ch = curl_init($url);
+        log_activity('[LAM_SMS] cURL initialized');
+
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -831,16 +847,20 @@ class Dietetic_notifications_model extends App_Model
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_POSTFIELDS => $json_data,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json'
             ]
         ]);
 
+        log_activity('[LAM_SMS] cURL options set, executing request...');
+
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curl_error = curl_error($ch);
         curl_close($ch);
+
+        log_activity('[LAM_SMS] cURL executed - HTTP Code: ' . $http_code . ', Error: ' . ($curl_error ?: 'none'));
 
         // Log the request for debugging
         log_activity('LAM SMS sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
