@@ -1144,6 +1144,11 @@ if (!$current_weight || !$target_weight) {
         <div class="chart-card">
             <h4><i class="fa fa-chart-area"></i> Évolution du poids</h4>
             <canvas id="portalWeightChart" height="200"></canvas>
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="btn-flat btn-flat-primary">
+                    <i class="fa fa-chart-line"></i> Voir les statistiques détaillées
+                </a>
+            </div>
         </div>
     </div>
 
