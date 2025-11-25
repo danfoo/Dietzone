@@ -5301,5 +5301,207 @@ class Portal extends App_Controller
             echo json_encode(['success' => false, 'error' => 'Server error']);
         }
     }
+
+    /**
+     * Upload audio note for food survey entry
+     * API endpoint for voice notes recording
+     */
+    public function upload_audio_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $entry_id = $this->input->post('entry_id');
+            $meal_type = $this->input->post('meal_type');
+            $duration = $this->input->post('duration');
+
+            if (!$entry_id || !$meal_type) {
+                echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
+                return;
+            }
+
+            // Verify entry belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($entry_id);
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Handle file upload
+            $config['upload_path'] = FCPATH . 'uploads/dietetic/audio_notes/';
+            $config['allowed_types'] = 'webm|mp3|wav|ogg|m4a';
+            $config['max_size'] = 10240; // 10MB
+            $config['encrypt_name'] = TRUE;
+
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('audio')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur upload: ' . $this->upload->display_errors('', '')
+                ]);
+                return;
+            }
+
+            $upload_data = $this->upload->data();
+
+            // Save to database
+            $audio_data = [
+                'entry_id' => $entry_id,
+                'meal_type' => $meal_type,
+                'audio_file' => $upload_data['file_name'],
+                'duration' => $duration,
+                'file_size' => $upload_data['file_size'] * 1024,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_food_survey_audio_notes', $audio_data);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale enregistrée',
+                'audio_id' => $this->db->insert_id()
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error uploading audio note: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Get audio notes for a specific entry and meal type
+     */
+    public function get_audio_notes($entry_id, $meal_type)
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Verify entry belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($entry_id);
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Get audio notes
+            $this->db->where('entry_id', $entry_id);
+            $this->db->where('meal_type', $meal_type);
+            $this->db->order_by('created_at', 'DESC');
+            $audios = $this->db->get(db_prefix() . 'dietic_food_survey_audio_notes')->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'audios' => $audios
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting audio notes: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Delete audio note
+     */
+    public function delete_audio_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $audio_id = $this->input->post('audio_id');
+
+            if (!$audio_id) {
+                echo json_encode(['success' => false, 'message' => 'ID manquant']);
+                return;
+            }
+
+            // Get audio note
+            $audio = $this->db->get_where(db_prefix() . 'dietic_food_survey_audio_notes', ['id' => $audio_id])->row();
+
+            if (!$audio) {
+                echo json_encode(['success' => false, 'message' => 'Note vocale non trouvée']);
+                return;
+            }
+
+            // Verify it belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($audio->entry_id);
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Delete file
+            $file_path = FCPATH . 'uploads/dietetic/audio_notes/' . $audio->audio_file;
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
+
+            // Delete from database
+            $this->db->delete(db_prefix() . 'dietic_food_survey_audio_notes', ['id' => $audio_id]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale supprimée'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error deleting audio note: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
 }
 

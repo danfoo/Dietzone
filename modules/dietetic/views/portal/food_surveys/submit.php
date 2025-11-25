@@ -1503,4 +1503,53 @@ $this->load->view('portal/includes/portal_header');
 
     </script>
 
+    <!-- Include Audio Recorder Component -->
+    <?php $this->load->view('portal/food_surveys/audio_recorder_component'); ?>
+
+    <script>
+    // Add audio recorders to each meal notes section
+    document.addEventListener('DOMContentLoaded', function() {
+        const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+        const entryId = <?php echo $today_entry ? $today_entry->id : 'null'; ?>;
+
+        if (entryId) {
+            mealTypes.forEach(mealType => {
+                const notesField = document.getElementById(mealType + '_notes');
+                if (notesField && notesField.closest('.form-group')) {
+                    const formGroup = notesField.closest('.form-group');
+
+                    // Create audio recorder HTML
+                    const audioRecorderHTML = `
+                        <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}">
+                            <div class="audio-recorder-controls">
+                                <button type="button" class="audio-record-btn record" id="record-btn-${mealType}" onclick="toggleRecording('${mealType}', ${entryId})">
+                                    <i class="fa fa-microphone"></i>
+                                    Enregistrer une note vocale
+                                </button>
+                                <button type="button" class="audio-record-btn stop" id="stop-btn-${mealType}" style="display: none;" onclick="toggleRecording('${mealType}', ${entryId})">
+                                    <i class="fa fa-stop"></i>
+                                    Arrêter
+                                </button>
+                                <div class="audio-recording-indicator" id="recording-indicator-${mealType}" style="display: none;">
+                                    <div class="audio-recording-pulse"></div>
+                                    Enregistrement en cours...
+                                </div>
+                            </div>
+                            <div class="audio-player-list" id="audio-list-${mealType}">
+                                <p style="color: #6c757d; font-size: 13px; margin: 10px 0;">Chargement...</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Insert after form-group
+                    formGroup.insertAdjacentHTML('afterend', audioRecorderHTML);
+
+                    // Load existing audio notes
+                    loadAudioNotes(mealType, entryId);
+                }
+            });
+        }
+    });
+    </script>
+
 <?php $this->load->view("portal/includes/portal_footer"); ?>
