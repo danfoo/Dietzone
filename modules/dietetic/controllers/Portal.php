@@ -5896,10 +5896,10 @@ class Portal extends App_Controller
             // Get measurements
             $this->db->select('*');
             $this->db->where('patient_id', $patient->id);
-            $this->db->where('measured_at >=', $start_date);
-            $this->db->where('measured_at <=', $end_date);
-            $this->db->order_by('measured_at', 'ASC');
-            $measurements = $this->db->get(db_prefix() . 'dietic_patient_measurements')->result_array();
+            $this->db->where('measurement_date >=', $start_date);
+            $this->db->where('measurement_date <=', $end_date);
+            $this->db->order_by('measurement_date', 'ASC');
+            $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result_array();
 
             // Get food survey compliance
             $this->db->select('DATE(created_at) as date, COUNT(*) as count');

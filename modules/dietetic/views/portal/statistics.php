@@ -57,39 +57,48 @@ body {
     padding: 16px;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
 }
 
 .period-filter label {
+    display: block;
     font-weight: 600;
     color: #495057;
-    margin-right: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
 }
 
-.period-btn {
-    padding: 8px 16px;
+.period-filter label i {
+    color: #01807B;
+    margin-right: 6px;
+}
+
+.period-select {
+    width: 100%;
+    padding: 12px 16px;
     border: 2px solid #e9ecef;
     background: white;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: 10px;
+    font-size: 15px;
     font-weight: 600;
     color: #495057;
     cursor: pointer;
     transition: all 0.3s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2301807B' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 44px;
 }
 
-.period-btn:hover {
+.period-select:hover {
     border-color: #01807B;
-    color: #01807B;
+    box-shadow: 0 2px 8px rgba(1, 128, 123, 0.15);
 }
 
-.period-btn.active {
-    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+.period-select:focus {
+    outline: none;
     border-color: #01807B;
-    color: white;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
 }
 
 /* Stats Cards Grid */
@@ -301,16 +310,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .period-filter {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .period-btn {
-        width: 100%;
-        text-align: center;
-    }
-
     .chart-container {
         height: 250px;
     }
@@ -333,12 +332,14 @@ body {
 
     <!-- Period Filter -->
     <div class="period-filter">
-        <label><i class="fa fa-calendar"></i> Période :</label>
-        <button class="period-btn" data-period="1month">1 mois</button>
-        <button class="period-btn" data-period="3months">3 mois</button>
-        <button class="period-btn active" data-period="6months">6 mois</button>
-        <button class="period-btn" data-period="1year">1 an</button>
-        <button class="period-btn" data-period="all">Tout</button>
+        <label for="periodSelect"><i class="fa fa-calendar"></i> Période</label>
+        <select id="periodSelect" class="period-select">
+            <option value="1month">1 mois</option>
+            <option value="3months">3 mois</option>
+            <option value="6months" selected>6 mois</option>
+            <option value="1year">1 an</option>
+            <option value="all">Toute la période</option>
+        </select>
     </div>
 
     <!-- Loading State -->
@@ -423,15 +424,14 @@ Chart.defaults.plugins.tooltip.cornerRadius = 8;
 document.addEventListener('DOMContentLoaded', function() {
     loadStatistics(currentPeriod);
 
-    // Period filter buttons
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentPeriod = this.dataset.period;
+    // Period filter select
+    const periodSelect = document.getElementById('periodSelect');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', function() {
+            currentPeriod = this.value;
             loadStatistics(currentPeriod);
         });
-    });
+    }
 });
 
 async function loadStatistics(period) {
