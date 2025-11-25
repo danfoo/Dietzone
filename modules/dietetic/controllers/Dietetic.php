@@ -545,6 +545,64 @@ class Dietetic extends AdminController
             return;
         }
 
+        // Handle POST - Apply migration
+        if ($this->input->server('REQUEST_METHOD') === 'POST') {
+            $migration_file = $this->input->post('migration_file');
+
+            if (!$migration_file) {
+                set_alert('danger', 'Migration non spécifiée');
+                redirect(admin_url('dietetic/migrations'));
+                return;
+            }
+
+            // Security check - only allow php files
+            if (pathinfo($migration_file, PATHINFO_EXTENSION) !== 'php') {
+                set_alert('danger', 'Type de fichier invalide');
+                redirect(admin_url('dietetic/migrations'));
+                return;
+            }
+
+            $migration_path = dirname(__DIR__) . '/migrations/' . $migration_file;
+
+            if (!file_exists($migration_path)) {
+                set_alert('danger', 'Fichier de migration non trouvé');
+                redirect(admin_url('dietetic/migrations'));
+                return;
+            }
+
+            try {
+                // Include and execute migration
+                require_once($migration_path);
+
+                // Get class name from file
+                $migration_name = pathinfo($migration_file, PATHINFO_FILENAME);
+                $class_name = 'Migration_' . $migration_name;
+
+                if (!class_exists($class_name)) {
+                    set_alert('danger', 'Classe de migration non trouvée: ' . $class_name);
+                    redirect(admin_url('dietetic/migrations'));
+                    return;
+                }
+
+                $migration = new $class_name();
+                $migration->up();
+
+                // Record migration as applied
+                $this->record_migration($migration_name);
+
+                set_alert('success', 'Migration appliquée avec succès: ' . $migration_file);
+                log_activity('Migration appliquée: ' . $migration_file);
+
+            } catch (Exception $e) {
+                log_activity('Migration error: ' . $e->getMessage());
+                set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
+            }
+
+            redirect(admin_url('dietetic/migrations'));
+            return;
+        }
+
+        // GET request - Display migrations list
         $data['title'] = 'Migrations de base de données';
 
         // Get all migration files
