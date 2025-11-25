@@ -111,7 +111,10 @@ class Portal extends App_Controller
             'api_toggle_meal',
             'api_update_activity',
             'api_update_calories',
-            'api_get_streak'
+            'api_get_streak',
+            // Statistics and evolution
+            'statistics',
+            'api_get_evolution_data'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -5811,6 +5814,170 @@ class Portal extends App_Controller
 
         } catch (Exception $e) {
             log_activity('Error deleting recommendation audio response: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Statistics page - Evolution charts
+     */
+    public function statistics()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Statistiques';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        $this->load->view('portal/statistics', $data);
+    }
+
+    /**
+     * API: Get evolution data for charts
+     */
+    public function api_get_evolution_data()
+    {
+        header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $period = $this->input->get('period') ?: '6months'; // 1month, 3months, 6months, 1year, all
+
+            // Calculate date range
+            $end_date = date('Y-m-d');
+            switch ($period) {
+                case '1month':
+                    $start_date = date('Y-m-d', strtotime('-1 month'));
+                    break;
+                case '3months':
+                    $start_date = date('Y-m-d', strtotime('-3 months'));
+                    break;
+                case '1year':
+                    $start_date = date('Y-m-d', strtotime('-1 year'));
+                    break;
+                case 'all':
+                    $start_date = '2000-01-01';
+                    break;
+                case '6months':
+                default:
+                    $start_date = date('Y-m-d', strtotime('-6 months'));
+                    break;
+            }
+
+            // Get measurements
+            $this->db->select('*');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('measured_at >=', $start_date);
+            $this->db->where('measured_at <=', $end_date);
+            $this->db->order_by('measured_at', 'ASC');
+            $measurements = $this->db->get(db_prefix() . 'dietic_patient_measurements')->result_array();
+
+            // Get food survey compliance
+            $this->db->select('DATE(created_at) as date, COUNT(*) as count');
+            $this->db->join(db_prefix() . 'dietic_food_surveys s', 's.id = ' . db_prefix() . 'dietic_food_survey_entries.survey_id');
+            $this->db->where('s.patient_id', $patient->id);
+            $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) >=', $start_date);
+            $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) <=', $end_date);
+            $this->db->group_by('DATE(created_at)');
+            $compliance = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->result_array();
+
+            // Calculate statistics
+            $stats = [];
+            if (!empty($measurements)) {
+                $first = $measurements[0];
+                $last = $measurements[count($measurements) - 1];
+
+                $stats['weight'] = [
+                    'initial' => $first['weight'],
+                    'current' => $last['weight'],
+                    'change' => $last['weight'] - $first['weight'],
+                    'target' => $patient->target_weight
+                ];
+
+                $stats['bmi'] = [
+                    'initial' => $first['bmi'],
+                    'current' => $last['bmi'],
+                    'change' => $last['bmi'] - $first['bmi']
+                ];
+
+                if ($first['waist_circumference'] && $last['waist_circumference']) {
+                    $stats['waist'] = [
+                        'initial' => $first['waist_circumference'],
+                        'current' => $last['waist_circumference'],
+                        'change' => $last['waist_circumference'] - $first['waist_circumference']
+                    ];
+                }
+
+                if ($first['hip_circumference'] && $last['hip_circumference']) {
+                    $stats['hip'] = [
+                        'initial' => $first['hip_circumference'],
+                        'current' => $last['hip_circumference'],
+                        'change' => $last['hip_circumference'] - $first['hip_circumference']
+                    ];
+                }
+            }
+
+            // Calculate progress towards goal
+            if ($patient->target_weight && !empty($measurements)) {
+                $initial_weight = $measurements[0]['weight'];
+                $current_weight = $measurements[count($measurements) - 1]['weight'];
+                $target_weight = $patient->target_weight;
+
+                $total_to_lose = abs($initial_weight - $target_weight);
+                $already_lost = abs($initial_weight - $current_weight);
+                $progress_percent = $total_to_lose > 0 ? ($already_lost / $total_to_lose) * 100 : 0;
+
+                $stats['goal_progress'] = [
+                    'percent' => round($progress_percent, 1),
+                    'remaining' => abs($current_weight - $target_weight)
+                ];
+            }
+
+            // Calculate compliance rate (% of days with entries)
+            $total_days = (strtotime($end_date) - strtotime($start_date)) / 86400;
+            $days_with_entries = count($compliance);
+            $compliance_rate = $total_days > 0 ? ($days_with_entries / $total_days) * 100 : 0;
+
+            echo json_encode([
+                'success' => true,
+                'measurements' => $measurements,
+                'compliance' => $compliance,
+                'stats' => $stats,
+                'compliance_rate' => round($compliance_rate, 1),
+                'period' => $period
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting evolution data: ' . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
         }
     }
