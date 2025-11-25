@@ -1473,26 +1473,34 @@
                                         <?php echo nl2br(htmlspecialchars($rec->recommendation_text)); ?>
                                     </div>
 
-                                    <!-- Audio Notes Section -->
-                                    <div class="rec-audio-recorder-wrapper" id="rec-audio-recorder-<?php echo $rec->id; ?>">
-                                        <div class="rec-audio-recorder-controls">
-                                            <button type="button" class="rec-audio-record-btn record" id="rec-record-btn-<?php echo $rec->id; ?>"
-                                                    onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
-                                                    title="Enregistrer une note vocale">
-                                                <i class="fa fa-microphone"></i>
-                                            </button>
-                                            <button type="button" class="rec-audio-record-btn stop" id="rec-stop-btn-<?php echo $rec->id; ?>" style="display: none;"
-                                                    onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
-                                                    title="Arrêter l'enregistrement">
-                                                <i class="fa fa-stop"></i>
-                                            </button>
-                                            <div class="rec-audio-recording-indicator" id="rec-recording-indicator-<?php echo $rec->id; ?>" style="display: none;">
-                                                <div class="rec-audio-recording-pulse"></div>
-                                                Enregistrement en cours...
+                                    <!-- Communication Section (always visible) -->
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-top: 16px;">
+                                        <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: #495057;">
+                                            <i class="fa fa-comments"></i> Échange avec le patient
+                                        </h4>
+
+                                        <!-- Audio Notes Section -->
+                                        <div class="rec-audio-recorder-wrapper" id="rec-audio-recorder-<?php echo $rec->id; ?>" style="margin-top: 0; background: transparent; padding: 0; border: none;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                                <button type="button" class="rec-audio-record-btn record" id="rec-record-btn-<?php echo $rec->id; ?>"
+                                                        onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                        title="Enregistrer une note vocale">
+                                                    <i class="fa fa-microphone"></i>
+                                                </button>
+                                                <button type="button" class="rec-audio-record-btn stop" id="rec-stop-btn-<?php echo $rec->id; ?>" style="display: none;"
+                                                        onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                        title="Arrêter l'enregistrement">
+                                                    <i class="fa fa-stop"></i>
+                                                </button>
+                                                <div class="rec-audio-recording-indicator" id="rec-recording-indicator-<?php echo $rec->id; ?>" style="display: none;">
+                                                    <div class="rec-audio-recording-pulse"></div>
+                                                    Enregistrement en cours...
+                                                </div>
+                                                <span style="font-size: 13px; color: #6c757d;">Envoyer une note vocale</span>
                                             </div>
-                                        </div>
-                                        <div class="rec-audio-player-list" id="rec-audio-list-<?php echo $rec->id; ?>">
-                                            <p style="color: #6c757d; font-size: 12px; margin: 0;">Chargement...</p>
+                                            <div class="rec-audio-player-list" id="rec-audio-list-<?php echo $rec->id; ?>">
+                                                <p style="color: #6c757d; font-size: 12px; margin: 0;">Chargement...</p>
+                                            </div>
                                         </div>
                                     </div>
 

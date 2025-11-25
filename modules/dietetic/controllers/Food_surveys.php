@@ -777,7 +777,11 @@ class Food_surveys extends AdminController
      */
     public function upload_recommendation_audio()
     {
+        // Set JSON header first
         header('Content-Type: application/json');
+
+        // Disable error display to prevent HTML output
+        @ini_set('display_errors', 0);
 
         if (!is_staff_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -793,8 +797,10 @@ class Food_surveys extends AdminController
                 return;
             }
 
-            // Verify recommendation exists
-            $recommendation = $this->dietetic_food_surveys_model->get_recommendation($recommendation_id);
+            // Verify recommendation exists (simple query to avoid model issues)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
             if (!$recommendation) {
                 echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
                 return;
@@ -876,6 +882,7 @@ class Food_surveys extends AdminController
     public function get_recommendation_audios($recommendation_id)
     {
         header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
 
         try {
             if (!$this->db->table_exists(db_prefix() . 'dietic_recommendation_audio_notes')) {
@@ -912,6 +919,7 @@ class Food_surveys extends AdminController
     public function delete_recommendation_audio()
     {
         header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
 
         try {
             $audio_id = $this->input->post('audio_id');
