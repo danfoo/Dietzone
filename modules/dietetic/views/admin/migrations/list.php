@@ -99,54 +99,58 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    $('.apply-migration-btn').on('click', function() {
-        var btn = $(this);
-        var migrationFile = btn.data('migration-file');
-        var migrationName = btn.data('migration-name');
-        var row = $('#migration-row-' + migrationName);
+(function($) {
+    'use strict';
 
-        if (!confirm('Êtes-vous sûr de vouloir appliquer cette migration ?\n\n' + migrationFile + '\n\nCette action est irréversible.')) {
-            return;
-        }
+    $(document).ready(function() {
+        $('.apply-migration-btn').on('click', function() {
+            var btn = $(this);
+            var migrationFile = btn.data('migration-file');
+            var migrationName = btn.data('migration-name');
+            var row = $('#migration-row-' + migrationName);
 
-        // Disable button and show loading
-        btn.prop('disabled', true);
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Application...');
+            if (!confirm('Êtes-vous sûr de vouloir appliquer cette migration ?\n\n' + migrationFile + '\n\nCette action est irréversible.')) {
+                return;
+            }
 
-        // Send AJAX request
-        $.ajax({
-            url: '<?php echo admin_url('dietetic/apply_migration'); ?>',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                migration_file: migrationFile,
-                <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Update row to show success
-                    row.find('td:first').html('<span class="label label-success"><i class="fa fa-check"></i> Appliquée</span>');
-                    row.find('td:nth-child(4)').html('<?php echo date('d/m/Y H:i'); ?>');
-                    row.find('td:last').html('<span class="text-success"><i class="fa fa-check-circle"></i> Déjà appliquée</span>');
+            // Disable button and show loading
+            btn.prop('disabled', true);
+            btn.html('<i class="fa fa-spinner fa-spin"></i> Application...');
 
-                    // Show success alert
-                    alert_float('success', response.message || 'Migration appliquée avec succès');
-                } else {
-                    // Show error and re-enable button
-                    alert_float('danger', response.message || 'Erreur lors de l\'application de la migration');
+            // Send AJAX request
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/apply_migration'); ?>',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    migration_file: migrationFile,
+                    <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update row to show success
+                        row.find('td:first').html('<span class="label label-success"><i class="fa fa-check"></i> Appliquée</span>');
+                        row.find('td:nth-child(4)').html('<?php echo date('d/m/Y H:i'); ?>');
+                        row.find('td:last').html('<span class="text-success"><i class="fa fa-check-circle"></i> Déjà appliquée</span>');
+
+                        // Show success alert
+                        alert_float('success', response.message || 'Migration appliquée avec succès');
+                    } else {
+                        // Show error and re-enable button
+                        alert_float('danger', response.message || 'Erreur lors de l\'application de la migration');
+                        btn.prop('disabled', false);
+                        btn.html('<i class="fa fa-play"></i> Appliquer');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert_float('danger', 'Erreur serveur: ' + error);
                     btn.prop('disabled', false);
                     btn.html('<i class="fa fa-play"></i> Appliquer');
                 }
-            },
-            error: function(xhr, status, error) {
-                alert_float('danger', 'Erreur serveur: ' + error);
-                btn.prop('disabled', false);
-                btn.html('<i class="fa fa-play"></i> Appliquer');
-            }
+            });
         });
     });
-});
+})(jQuery);
 </script>
 
 <?php init_tail(); ?>
