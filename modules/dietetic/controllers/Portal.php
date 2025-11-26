@@ -114,7 +114,9 @@ class Portal extends App_Controller
             'api_get_streak',
             // Statistics and evolution
             'statistics',
-            'api_get_evolution_data'
+            'api_get_evolution_data',
+            'api_add_statistic_note',
+            'api_delete_statistic_note'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -6133,6 +6135,144 @@ class Portal extends App_Controller
                 'success' => false,
                 'message' => 'Erreur serveur: ' . $e->getMessage(),
                 'trace' => ENVIRONMENT === 'development' ? $e->getTraceAsString() : null
+            ]);
+        }
+    }
+
+    /**
+     * API: Add a statistic note
+     * POST: {note_date, note_text, note_type, icon, color}
+     */
+    public function api_add_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            // Get POST data
+            $note_date = $this->input->post('note_date');
+            $note_text = $this->input->post('note_text');
+            $note_type = $this->input->post('note_type') ?: 'general';
+            $icon = $this->input->post('icon') ?: 'fa-sticky-note';
+            $color = $this->input->post('color') ?: '#01807B';
+
+            if (empty($note_date) || empty($note_text)) {
+                echo json_encode(['success' => false, 'message' => 'Date et texte requis']);
+                return;
+            }
+
+            // Insert note
+            $data = [
+                'patient_id' => $patient->id,
+                'note_date' => $note_date,
+                'note_text' => $note_text,
+                'note_type' => $note_type,
+                'icon' => $icon,
+                'color' => $color,
+                'created_by' => $client_id,
+                'created_by_type' => 'patient',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_statistics_notes', $data);
+            $note_id = $this->db->insert_id();
+
+            if ($note_id) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note ajoutée avec succès',
+                    'note_id' => $note_id
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error adding statistic note: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Delete a statistic note
+     * POST: {note_id}
+     */
+    public function api_delete_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $note_id = $this->input->post('note_id');
+
+            if (empty($note_id)) {
+                echo json_encode(['success' => false, 'message' => 'ID de note requis']);
+                return;
+            }
+
+            // Verify note belongs to patient
+            $this->db->where('id', $note_id);
+            $this->db->where('patient_id', $patient->id);
+            $note = $this->db->get(db_prefix() . 'dietic_statistics_notes')->row();
+
+            if (!$note) {
+                echo json_encode(['success' => false, 'message' => 'Note non trouvée']);
+                return;
+            }
+
+            // Delete note
+            $this->db->where('id', $note_id);
+            $this->db->delete(db_prefix() . 'dietic_statistics_notes');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note supprimée avec succès'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error deleting statistic note: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
             ]);
         }
     }
