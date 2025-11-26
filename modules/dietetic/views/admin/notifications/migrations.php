@@ -763,10 +763,14 @@ function checkMigration(migrationId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification...';
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     $.ajax({
         url: admin_url + 'dietetic/notifications/check_migration',
         type: 'POST',
-        data: { migration: migrationId },
+        data: $.extend({ migration: migrationId }, csrfData),
         dataType: 'json',
         success: function(response) {
             updateMigrationStatus(migrationId, response.installed, response.message);
@@ -790,11 +794,15 @@ function checkAllMigrations() {
     let checked = 0;
     const total = Object.keys(migrations).length;
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     Object.keys(migrations).forEach(migrationId => {
         $.ajax({
             url: admin_url + 'dietetic/notifications/check_migration',
             type: 'POST',
-            data: { migration: migrationId },
+            data: $.extend({ migration: migrationId }, csrfData),
             dataType: 'json',
             success: function(response) {
                 updateMigrationStatus(migrationId, response.installed, response.message);
@@ -822,10 +830,14 @@ function runMigration(migrationId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Installation...';
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     $.ajax({
         url: admin_url + 'dietetic/notifications/execute_migration',
         type: 'POST',
-        data: { migration: migrationId },
+        data: $.extend({ migration: migrationId }, csrfData),
         dataType: 'json',
         success: function(response) {
             if (response.success) {
@@ -866,6 +878,10 @@ function runAllMigrations() {
     let completed = 0;
     let errors = 0;
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     function runNext(index) {
         if (index >= migrationIds.length) {
             // All done
@@ -891,7 +907,7 @@ function runAllMigrations() {
         $.ajax({
             url: admin_url + 'dietetic/notifications/execute_migration',
             type: 'POST',
-            data: { migration: migrationId },
+            data: $.extend({ migration: migrationId }, csrfData),
             dataType: 'json',
             success: function(response) {
                 if (response.success || response.already_exists) {

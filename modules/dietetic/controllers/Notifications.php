@@ -844,6 +844,9 @@ class Notifications extends AdminController
             return;
         }
 
+        // CSRF verification is automatic in Perfex CRM via hooks
+        // No manual check needed as it's done by the framework
+
         $migration = $this->input->post('migration');
 
         $installed = false;
@@ -967,6 +970,14 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'Manquant';
                 break;
 
+            case 'activity_tracking':
+                // Check if activity tracking tables exist
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_activities');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_patient_activities');
+                $installed = $table1 && $table2;
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -1009,7 +1020,8 @@ class Notifications extends AdminController
                 'permissions' => 'add_staff_permissions.sql',
                 'firebase_v1' => 'add_firebase_v1_api_support.sql',
                 'statistics_notes' => 'add_statistics_notes.php',
-                'hydration_tracking' => 'add_hydration_tracking.php'
+                'hydration_tracking' => 'add_hydration_tracking.php',
+                'activity_tracking' => 'add_activity_tracking.php'
             ];
 
             if (!isset($migration_files[$migration])) {
