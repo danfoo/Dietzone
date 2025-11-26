@@ -553,5 +553,531 @@ function safeFixed(value, decimals = 1) {
     return isNaN(num) ? '0.0' : num.toFixed(decimals);
 }
 
-// Render functions will be continued in next part...
+function renderAdminStatsCards(data) {
+    const container = document.getElementById('adminStatsCards');
+    const stats = data.stats;
+    let html = '';
+
+    // Weight Card
+    if (stats.weight && stats.weight.current) {
+        const change = parseFloat(stats.weight.change) || 0;
+        const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
+        const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
+
+        html += `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon weight"><i class="fa fa-balance-scale"></i></div>
+                    <div class="stat-label">Poids</div>
+                </div>
+                <div class="stat-value">${safeFixed(stats.weight.current, 1)} kg</div>
+                <div class="stat-change ${changeClass}">
+                    <i class="fa ${changeIcon}"></i>
+                    ${safeFixed(Math.abs(change), 1)} kg depuis le début
+                </div>
+            </div>
+        `;
+    }
+
+    // BMI Card
+    if (stats.bmi && stats.bmi.current) {
+        const change = parseFloat(stats.bmi.change) || 0;
+        const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
+        const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
+
+        html += `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon bmi"><i class="fa fa-tachometer"></i></div>
+                    <div class="stat-label">IMC</div>
+                </div>
+                <div class="stat-value">${safeFixed(stats.bmi.current, 1)}</div>
+                <div class="stat-change ${changeClass}">
+                    <i class="fa ${changeIcon}"></i>
+                    ${safeFixed(Math.abs(change), 1)} depuis le début
+                </div>
+            </div>
+        `;
+    }
+
+    // Waist Card
+    if (stats.waist && stats.waist.current) {
+        const change = parseFloat(stats.waist.change) || 0;
+        const changeClass = change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
+        const changeIcon = change < 0 ? 'fa-arrow-down' : change > 0 ? 'fa-arrow-up' : 'fa-minus';
+
+        html += `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon waist"><i class="fa fa-expand"></i></div>
+                    <div class="stat-label">Tour de taille</div>
+                </div>
+                <div class="stat-value">${safeFixed(stats.waist.current, 1)} cm</div>
+                <div class="stat-change ${changeClass}">
+                    <i class="fa ${changeIcon}"></i>
+                    ${safeFixed(Math.abs(change), 1)} cm depuis le début
+                </div>
+            </div>
+        `;
+    }
+
+    // Goal Progress Card
+    if (stats.goal_progress && stats.goal_progress.percent !== undefined) {
+        const remaining = parseFloat(stats.goal_progress.remaining) || 0;
+        const percent = parseFloat(stats.goal_progress.percent) || 0;
+
+        html += `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon goal"><i class="fa fa-bullseye"></i></div>
+                    <div class="stat-label">Progrès vers l'objectif</div>
+                </div>
+                <div class="stat-value">${safeFixed(percent, 1)}%</div>
+                <div class="stat-change neutral">
+                    <i class="fa fa-flag-checkered"></i>
+                    Encore ${safeFixed(remaining, 1)} kg
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: ${Math.min(percent, 100)}%"></div>
+                    </div>
+                    <div class="progress-text">${Math.min(percent, 100).toFixed(0)}% accompli</div>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+function renderAdminInsights(insights) {
+    const container = document.getElementById('adminInsightsContainer');
+
+    if (!insights || insights.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    let html = '<div class="insights-grid">';
+
+    insights.forEach(insight => {
+        html += `
+            <div class="insight-card ${insight.type}">
+                <div class="insight-icon">
+                    <i class="fa ${insight.icon}"></i>
+                </div>
+                <div class="insight-message">${insight.message}</div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+function renderAdminWeightChart(measurements, stats, trends) {
+    const ctx = document.getElementById('adminWeightChart');
+
+    // Destroy existing chart
+    if (adminCharts.weight) {
+        adminCharts.weight.destroy();
+    }
+
+    const labels = measurements.map(m => {
+        const date = new Date(m.measurement_date);
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    });
+
+    const weights = measurements.map(m => parseFloat(m.weight));
+    const target = stats.weight && stats.weight.target ? parseFloat(stats.weight.target) : null;
+
+    const datasets = [{
+        label: 'Poids (kg)',
+        data: weights,
+        borderColor: '#01807B',
+        backgroundColor: 'rgba(1, 128, 123, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#01807B',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+    }];
+
+    // Add target line if exists
+    if (target) {
+        datasets.push({
+            label: 'Objectif',
+            data: Array(weights.length).fill(target),
+            borderColor: '#48bb78',
+            backgroundColor: 'rgba(72, 187, 120, 0.05)',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            fill: false,
+            pointRadius: 0
+        });
+    }
+
+    // Add trend line if exists
+    if (trends && trends.trend_line && trends.trend_line.length > 0) {
+        const trendValues = trends.trend_line.map(t => t.value);
+        datasets.push({
+            label: 'Tendance',
+            data: trendValues,
+            borderColor: '#9f7aea',
+            backgroundColor: 'rgba(159, 122, 234, 0.05)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0,
+            tension: 0
+        });
+    }
+
+    adminCharts.weight = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' kg';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' kg';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAdminBMIChart(measurements) {
+    const ctx = document.getElementById('adminBMIChart');
+
+    if (adminCharts.bmi) {
+        adminCharts.bmi.destroy();
+    }
+
+    const labels = measurements.map(m => {
+        const date = new Date(m.measurement_date);
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    });
+
+    const bmis = measurements.map(m => parseFloat(m.bmi));
+
+    adminCharts.bmi = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'IMC',
+                data: bmis,
+                borderColor: '#F3911D',
+                backgroundColor: 'rgba(243, 145, 29, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#F3911D',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const bmi = context.parsed.y;
+                            let category = '';
+                            if (bmi < 18.5) category = ' (Insuffisance pondérale)';
+                            else if (bmi < 25) category = ' (Normal)';
+                            else if (bmi < 30) category = ' (Surpoids)';
+                            else category = ' (Obésité)';
+                            return 'IMC: ' + bmi.toFixed(1) + category;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    suggestedMin: 15,
+                    suggestedMax: 40,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAdminMeasurementsChart(measurements) {
+    // Check if we have waist or hip measurements
+    const hasWaist = measurements.some(m => m.waist_circumference);
+    const hasHip = measurements.some(m => m.hip_circumference);
+
+    if (!hasWaist && !hasHip) {
+        document.getElementById('adminMeasurementsChartCard').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('adminMeasurementsChartCard').style.display = 'block';
+
+    const ctx = document.getElementById('adminMeasurementsChart');
+
+    if (adminCharts.measurements) {
+        adminCharts.measurements.destroy();
+    }
+
+    const labels = measurements.map(m => {
+        const date = new Date(m.measurement_date);
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    });
+
+    const datasets = [];
+
+    if (hasWaist) {
+        datasets.push({
+            label: 'Tour de taille (cm)',
+            data: measurements.map(m => m.waist_circumference ? parseFloat(m.waist_circumference) : null),
+            borderColor: '#9f7aea',
+            backgroundColor: 'rgba(159, 122, 234, 0.1)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            spanGaps: true
+        });
+    }
+
+    if (hasHip) {
+        datasets.push({
+            label: 'Tour de hanches (cm)',
+            data: measurements.map(m => m.hip_circumference ? parseFloat(m.hip_circumference) : null),
+            borderColor: '#ed64a6',
+            backgroundColor: 'rgba(237, 100, 166, 0.1)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            spanGaps: true
+        });
+    }
+
+    adminCharts.measurements = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' cm';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAdminComplianceChart(compliance, rate) {
+    if (!compliance || compliance.length === 0) {
+        document.getElementById('adminComplianceChartCard').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('adminComplianceChartCard').style.display = 'block';
+
+    const ctx = document.getElementById('adminComplianceChart');
+
+    if (adminCharts.compliance) {
+        adminCharts.compliance.destroy();
+    }
+
+    // Group by week
+    const weeklyData = {};
+    compliance.forEach(item => {
+        const date = new Date(item.date);
+        const weekStart = new Date(date.setDate(date.getDate() - date.getDay()));
+        const weekKey = weekStart.toISOString().split('T')[0];
+
+        if (!weeklyData[weekKey]) {
+            weeklyData[weekKey] = 0;
+        }
+        weeklyData[weekKey] += parseInt(item.count);
+    });
+
+    const labels = Object.keys(weeklyData).map(date => {
+        const d = new Date(date);
+        return 'Sem ' + d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    });
+
+    const data = Object.values(weeklyData);
+
+    adminCharts.compliance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Entrées par semaine',
+                data: data,
+                backgroundColor: 'rgba(72, 187, 120, 0.8)',
+                borderColor: '#48bb78',
+                borderWidth: 2,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: `Taux de suivi: ${rate}%`,
+                    font: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    color: '#48bb78',
+                    padding: {
+                        bottom: 15
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAdminNotes(notes) {
+    const container = document.getElementById('adminNotesContainer');
+
+    if (!notes || notes.length === 0) {
+        container.innerHTML = '<div class="notes-empty"><i class="fa fa-sticky-note-o"></i><br>Aucune note pour cette période.</div>';
+        return;
+    }
+
+    let html = '';
+    notes.forEach(note => {
+        const date = new Date(note.note_date);
+        const formattedDate = date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const createdBy = note.created_by_type === 'staff' ? 'Diététicien' : 'Patient';
+
+        html += `
+            <div class="note-item">
+                <div class="note-item-icon">
+                    <i class="fa ${note.icon || 'fa-sticky-note'}"></i>
+                </div>
+                <div class="note-item-content">
+                    <div class="note-item-date">${formattedDate}</div>
+                    <div class="note-item-text">${note.note_text}</div>
+                    <div class="note-item-author">Par: ${createdBy}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
 </script>
