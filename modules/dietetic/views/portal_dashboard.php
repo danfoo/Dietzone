@@ -289,7 +289,7 @@ $this->load->view('portal/includes/portal_header');
     background: linear-gradient(180deg,
         rgba(79, 195, 247, 0.1) 0%,
         rgba(79, 195, 247, 0.2) 100%);
-    border: 3px solid rgba(79, 195, 247, 0.6);
+    border: 1.5px solid rgba(79, 195, 247, 0.5);
     border-top: none;
     border-radius: 0 0 20px 20px;
     overflow: hidden;
@@ -389,7 +389,7 @@ $this->load->view('portal/includes/portal_header');
     transform: translateY(-50%);
     width: 38px;
     height: 38px;
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
     color: white;
     border: none;
     border-radius: 6px;
@@ -400,12 +400,12 @@ $this->load->view('portal/includes/portal_header');
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(72, 187, 120, 0.3);
+    box-shadow: 0 2px 6px rgba(79, 195, 247, 0.3);
 }
 
 .add-custom-btn-inline:hover {
     transform: translateY(-50%) scale(1.05);
-    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+    box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
 }
 
 .add-custom-btn-inline:active {
@@ -2188,114 +2188,6 @@ body {
     Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
 </div>
 
-<!-- =====================================================
-     SECTION: MA JOURNÉE (Daily Tracking)
-     ===================================================== -->
-<div class="my-day-section">
-    <div class="my-day-header">
-        <div class="my-day-title">
-            <i class="fa fa-calendar-check-o"></i>
-            Ma Journée
-        </div>
-        <?php if ($tracking_streak > 0) { ?>
-        <div class="my-day-streak">
-            🔥 <strong><?php echo $tracking_streak; ?></strong> <?php echo $tracking_streak > 1 ? 'jours' : 'jour'; ?>
-        </div>
-        <?php } ?>
-    </div>
-
-    <!-- Bloc Repas avec jauge -->
-    <div class="meals-block">
-        <div class="daily-tracking-grid">
-            <!-- Item 1: Petit déjeuner -->
-            <div class="daily-item breakfast-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-coffee"></i>
-                </div>
-                <span class="daily-item-label">Petit déjeuner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
-                       <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('breakfast', this.checked)">
-            </div>
-
-            <!-- Item 2: Déjeuner -->
-            <div class="daily-item lunch-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-cutlery"></i>
-                </div>
-                <span class="daily-item-label">Déjeuner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="lunch"
-                       <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('lunch', this.checked)">
-            </div>
-
-            <!-- Item 3: Dîner -->
-            <div class="daily-item dinner-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-moon-o"></i>
-                </div>
-                <span class="daily-item-label">Dîner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="dinner"
-                       <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('dinner', this.checked)">
-            </div>
-        </div>
-
-        <!-- Progress bar for meals -->
-        <div class="meals-progress-container">
-            <div class="meals-progress-bar">
-                <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
-                    $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
-                                  ($daily_tracking->lunch_checked ? 1 : 0) +
-                                  ($daily_tracking->dinner_checked ? 1 : 0);
-                    echo ($meals_count / 3 * 100);
-                ?>%;"></div>
-            </div>
-            <div class="meals-progress-text">
-                <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Grid pour Calories et Activité -->
-    <div class="tracking-secondary-grid">
-        <!-- Calories -->
-        <div class="daily-item calories-item" onclick="openCaloriesModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-fire"></i>
-            </div>
-            <span class="daily-item-label">Calories</span>
-            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
-        </div>
-
-        <!-- Activité -->
-        <div class="daily-item activity-item" onclick="openActivityModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-heartbeat"></i>
-            </div>
-            <span class="daily-item-label">Activité</span>
-            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
-        </div>
-    </div>
-
-    <?php if ($tracking_streak > 0) { ?>
-    <div class="daily-motivation">
-        <i class="fa fa-star"></i>
-        <?php
-        if ($tracking_streak == 1) {
-            echo "Excellent départ ! Continuez comme ça.";
-        } elseif ($tracking_streak < 7) {
-            echo "Vous êtes sur la bonne voie ! <strong>$tracking_streak jours d'affilée</strong>.";
-        } elseif ($tracking_streak < 30) {
-            echo "Incroyable série de <strong>$tracking_streak jours</strong> ! 🎯";
-        } else {
-            echo "🏆 Champion ! <strong>$tracking_streak jours consécutifs</strong> de suivi !";
-        }
-        ?>
-    </div>
-    <?php } ?>
-</div>
-
 <?php
 // === Weight Goal Progress Calculation ===
 $current_weight = $patient->latest_measurement ? $patient->latest_measurement->weight : null;
@@ -2535,6 +2427,114 @@ if (!$current_weight || !$target_weight) {
             <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
         </div>
         <div class="stat-label">Progression</div>
+    </div>
+    <?php } ?>
+</div>
+
+<!-- =====================================================
+     SECTION: MA JOURNÉE (Daily Tracking)
+     ===================================================== -->
+<div class="my-day-section">
+    <div class="my-day-header">
+        <div class="my-day-title">
+            <i class="fa fa-calendar-check-o"></i>
+            Ma Journée
+        </div>
+        <?php if ($tracking_streak > 0) { ?>
+        <div class="my-day-streak">
+            🔥 <strong><?php echo $tracking_streak; ?></strong> <?php echo $tracking_streak > 1 ? 'jours' : 'jour'; ?>
+        </div>
+        <?php } ?>
+    </div>
+
+    <!-- Bloc Repas avec jauge -->
+    <div class="meals-block">
+        <div class="daily-tracking-grid">
+            <!-- Item 1: Petit déjeuner -->
+            <div class="daily-item breakfast-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-coffee"></i>
+                </div>
+                <span class="daily-item-label">Petit déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
+                       <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('breakfast', this.checked)">
+            </div>
+
+            <!-- Item 2: Déjeuner -->
+            <div class="daily-item lunch-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-cutlery"></i>
+                </div>
+                <span class="daily-item-label">Déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="lunch"
+                       <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('lunch', this.checked)">
+            </div>
+
+            <!-- Item 3: Dîner -->
+            <div class="daily-item dinner-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-moon-o"></i>
+                </div>
+                <span class="daily-item-label">Dîner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="dinner"
+                       <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('dinner', this.checked)">
+            </div>
+        </div>
+
+        <!-- Progress bar for meals -->
+        <div class="meals-progress-container">
+            <div class="meals-progress-bar">
+                <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
+                    $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
+                                  ($daily_tracking->lunch_checked ? 1 : 0) +
+                                  ($daily_tracking->dinner_checked ? 1 : 0);
+                    echo ($meals_count / 3 * 100);
+                ?>%;"></div>
+            </div>
+            <div class="meals-progress-text">
+                <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid pour Calories et Activité -->
+    <div class="tracking-secondary-grid">
+        <!-- Calories -->
+        <div class="daily-item calories-item" onclick="openCaloriesModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-fire"></i>
+            </div>
+            <span class="daily-item-label">Calories</span>
+            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
+        </div>
+
+        <!-- Activité -->
+        <div class="daily-item activity-item" onclick="openActivityModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-heartbeat"></i>
+            </div>
+            <span class="daily-item-label">Activité</span>
+            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
+        </div>
+    </div>
+
+    <?php if ($tracking_streak > 0) { ?>
+    <div class="daily-motivation">
+        <i class="fa fa-star"></i>
+        <?php
+        if ($tracking_streak == 1) {
+            echo "Excellent départ ! Continuez comme ça.";
+        } elseif ($tracking_streak < 7) {
+            echo "Vous êtes sur la bonne voie ! <strong>$tracking_streak jours d'affilée</strong>.";
+        } elseif ($tracking_streak < 30) {
+            echo "Incroyable série de <strong>$tracking_streak jours</strong> ! 🎯";
+        } else {
+            echo "🏆 Champion ! <strong>$tracking_streak jours consécutifs</strong> de suivi !";
+        }
+        ?>
     </div>
     <?php } ?>
 </div>
