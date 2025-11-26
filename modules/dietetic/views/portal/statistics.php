@@ -292,6 +292,89 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Insights */
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.insight-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s;
+}
+
+.insight-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.insight-card.positive {
+    border-left-color: #48bb78;
+    background: linear-gradient(90deg, rgba(72, 187, 120, 0.05) 0%, white 100%);
+}
+
+.insight-card.warning {
+    border-left-color: #F3911D;
+    background: linear-gradient(90deg, rgba(243, 145, 29, 0.05) 0%, white 100%);
+}
+
+.insight-card.info {
+    border-left-color: #4299e1;
+    background: linear-gradient(90deg, rgba(66, 153, 225, 0.05) 0%, white 100%);
+}
+
+.insight-card.neutral {
+    border-left-color: #6c757d;
+    background: linear-gradient(90deg, rgba(108, 117, 125, 0.05) 0%, white 100%);
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.insight-card.positive .insight-icon {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.insight-card.warning .insight-icon {
+    background: rgba(243, 145, 29, 0.1);
+    color: #F3911D;
+}
+
+.insight-card.info .insight-icon {
+    background: rgba(66, 153, 225, 0.1);
+    color: #4299e1;
+}
+
+.insight-card.neutral .insight-icon {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.insight-message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    line-height: 1.5;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .stats-container {
@@ -352,6 +435,9 @@ body {
     <div id="statsContent" style="display: none;">
         <!-- Stats Cards -->
         <div class="stats-grid" id="statsCards"></div>
+
+        <!-- Insights -->
+        <div id="insightsContainer" style="display: none; margin-bottom: 24px;"></div>
 
         <!-- Weight Chart -->
         <div class="chart-card">
@@ -462,8 +548,11 @@ async function loadStatistics(period) {
         // Render stats cards
         renderStatsCards(data);
 
+        // Render insights
+        renderInsights(data.insights || []);
+
         // Render charts
-        renderWeightChart(data.measurements, data.stats);
+        renderWeightChart(data.measurements, data.stats, data.trends || {});
         renderBMIChart(data.measurements);
         renderMeasurementsChart(data.measurements);
         renderComplianceChart(data.compliance, data.compliance_rate);
@@ -578,7 +667,33 @@ function renderStatsCards(data) {
     container.innerHTML = html;
 }
 
-function renderWeightChart(measurements, stats) {
+function renderInsights(insights) {
+    const container = document.getElementById('insightsContainer');
+
+    if (!insights || insights.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    let html = '<div class="insights-grid">';
+
+    insights.forEach(insight => {
+        html += `
+            <div class="insight-card ${insight.type}">
+                <div class="insight-icon">
+                    <i class="fa ${insight.icon}"></i>
+                </div>
+                <div class="insight-message">${insight.message}</div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+function renderWeightChart(measurements, stats, trends) {
     const ctx = document.getElementById('weightChart');
 
     // Destroy existing chart
@@ -620,6 +735,22 @@ function renderWeightChart(measurements, stats) {
             borderDash: [10, 5],
             fill: false,
             pointRadius: 0
+        });
+    }
+
+    // Add trend line if exists
+    if (trends && trends.trend_line && trends.trend_line.length > 0) {
+        const trendValues = trends.trend_line.map(t => t.value);
+        datasets.push({
+            label: 'Tendance',
+            data: trendValues,
+            borderColor: '#9f7aea',
+            backgroundColor: 'rgba(159, 122, 234, 0.05)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0,
+            tension: 0
         });
     }
 
