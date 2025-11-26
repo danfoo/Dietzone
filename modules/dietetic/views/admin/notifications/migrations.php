@@ -668,16 +668,16 @@ var csrf_hash_name = '<?php echo $this->security->get_csrf_hash(); ?>';
                     </div>
                     <div class="migration-card-body">
                         <div class="migration-description">
-                            Système complet de suivi des activités sportives. Base de données avec 26+ activités pré-configurées (course, vélo, natation, etc.), calcul automatique des calories selon la durée personnalisable par le patient.
+                            Système complet de suivi des activités sportives. Base de données avec <strong>86 activités</strong> pré-configurées (marche, course, vélo, natation, football, arts martiaux, danse, etc.), calcul automatique des calories selon la durée personnalisable par le patient.
                         </div>
                         <div class="migration-tables">
                             <h4>Tables créées :</h4>
                             <ul>
                                 <li><code>tbldietic_activities</code> - Base de données des activités (nom, kcal/min, catégorie)</li>
                                 <li><code>tbldietic_patient_activities</code> - Suivi des activités des patients</li>
-                                <li>26 activités par défaut avec valeurs kcal/minute précises</li>
+                                <li><strong>86 activités</strong> par défaut avec valeurs kcal/minute précises</li>
                                 <li>Calcul automatique des calories brûlées selon durée</li>
-                                <li>Catégories: Cardio, Musculation, Sports collectifs, Yoga, Autres</li>
+                                <li><strong>Catégories:</strong> Cardio (marche, course, vélo, natation), Musculation (pompes, squats, burpees), Sports collectifs (football, basketball, tennis), Arts martiaux (boxe, karaté, judo, MMA), Danse (zumba, salsa, hip-hop), Yoga/Étirements</li>
                             </ul>
                         </div>
                         <div class="alert alert-info" style="margin-top: 15px; background: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px;">

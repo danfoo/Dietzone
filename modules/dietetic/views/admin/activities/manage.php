@@ -85,6 +85,8 @@
                                     <option value="Cardio">Cardio</option>
                                     <option value="Musculation">Musculation</option>
                                     <option value="Sports collectifs">Sports collectifs</option>
+                                    <option value="Arts martiaux">Arts martiaux</option>
+                                    <option value="Danse">Danse</option>
                                     <option value="Yoga/Étirements">Yoga/Étirements</option>
                                     <option value="Autres">Autres</option>
                                 </select>
