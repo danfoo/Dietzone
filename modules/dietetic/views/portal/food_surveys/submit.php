@@ -349,21 +349,22 @@ $this->load->view('portal/includes/portal_header');
         box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
     }
 
-    /* Meal card */
+    /* Meal card - Accordion Style */
     .meal-card {
         border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 28px;
-        margin-bottom: 24px;
+        border-radius: 12px;
+        padding: 0;
+        margin-bottom: 16px;
         transition: var(--transition);
-        background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+        background: white;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .meal-card:hover {
-        box-shadow: var(--shadow-md);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: var(--primary-color);
     }
 
     .meal-card:last-child {
@@ -373,37 +374,103 @@ $this->load->view('portal/includes/portal_header');
     .meal-card.has-photo {
         border-color: var(--success-color);
         border-width: 2px;
-        background: linear-gradient(135deg, rgba(72, 187, 120, 0.03) 0%, rgba(72, 187, 120, 0.08) 100%);
-        box-shadow: 0 4px 16px rgba(72, 187, 120, 0.15);
+        box-shadow: 0 2px 12px rgba(72, 187, 120, 0.2);
     }
 
     .meal-card.has-photo:hover {
-        box-shadow: 0 8px 24px rgba(72, 187, 120, 0.25);
+        box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+    }
+
+    .meal-card.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 16px rgba(1, 128, 123, 0.2);
+    }
+
+    .meal-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        cursor: pointer;
+        background: linear-gradient(135deg, #fafbfc 0%, #f5f7f9 100%);
+        border-bottom: 1px solid var(--border-light);
+        transition: var(--transition);
+    }
+
+    .meal-card.active .meal-card-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #019B95 100%);
+    }
+
+    .meal-card-header:hover {
+        background: linear-gradient(135deg, #f0f4f7 0%, #e8ecf0 100%);
+    }
+
+    .meal-card.active .meal-card-header:hover {
+        background: linear-gradient(135deg, #019B95 0%, var(--primary-color) 100%);
     }
 
     .meal-card-title {
-        font-size: 19px;
+        font-size: 15px;
         font-weight: 700;
         color: var(--text-dark);
-        margin-bottom: 24px;
+        margin: 0;
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid var(--border-light);
+        gap: 10px;
+        transition: var(--transition);
+    }
+
+    .meal-card.active .meal-card-title {
+        color: white;
     }
 
     .meal-card-title i {
         color: var(--secondary-color);
-        background: rgba(243, 145, 29, 0.1);
-        padding: 10px;
-        border-radius: 10px;
-        font-size: 18px;
-        transition: var(--transition-bounce);
+        background: rgba(243, 145, 29, 0.15);
+        padding: 8px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: var(--transition);
     }
 
-    .meal-card:hover .meal-card-title i {
-        transform: scale(1.1) rotate(5deg);
+    .meal-card.active .meal-card-title i {
+        color: white;
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .meal-card-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-light);
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .meal-card.active .meal-card-toggle {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .meal-card-toggle i {
+        font-size: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .meal-card.active .meal-card-toggle i {
+        transform: rotate(180deg);
+    }
+
+    .meal-card-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s ease;
+        padding: 0 20px;
+    }
+
+    .meal-card.active .meal-card-body {
+        max-height: 2000px;
+        padding: 20px;
     }
 
     /* Photo upload */
@@ -472,19 +539,28 @@ $this->load->view('portal/includes/portal_header');
 
     .photo-upload-text {
         color: var(--text-dark);
-        font-size: 17px;
+        font-size: 14px;
         font-weight: 700;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .photo-upload-hint {
         color: var(--text-light);
-        font-size: 14px;
+        font-size: 8px;
         font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .photo-upload-hint i {
         margin-right: 5px;
+    }
+
+    .time-hint {
+        font-size: 8px !important;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     input[type="file"] {
@@ -931,6 +1007,56 @@ $this->load->view('portal/includes/portal_header');
         color: var(--info-color);
     }
 
+    /* Custom Audio Player Styling */
+    audio {
+        width: 100%;
+        height: 36px;
+        border-radius: 20px;
+        outline: none;
+    }
+
+    audio::-webkit-media-controls-panel {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #019B95 100%);
+        border-radius: 20px;
+    }
+
+    audio::-webkit-media-controls-play-button,
+    audio::-webkit-media-controls-mute-button {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+    }
+
+    audio::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display {
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    audio::-webkit-media-controls-timeline {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        margin: 0 8px;
+    }
+
+    audio::-webkit-media-controls-volume-slider {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    /* Firefox */
+    audio::-moz-range-track {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    audio::-moz-range-thumb {
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .form-section {
@@ -939,6 +1065,14 @@ $this->load->view('portal/includes/portal_header');
 
         .beverage-item {
             grid-template-columns: 1fr;
+        }
+
+        .meal-card-title {
+            font-size: 14px;
+        }
+
+        .meal-card-toggle {
+            font-size: 11px;
         }
     }
     </style>
@@ -996,13 +1130,20 @@ $this->load->view('portal/includes/portal_header');
                 </div>
 
                 <!-- Breakfast -->
-                <div class="meal-card <?php echo ($today_entry && $today_entry->breakfast_photo) ? 'has-photo' : ''; ?>" id="breakfastCard">
-                    <div class="meal-card-title">
-                        <i class="fa fa-coffee"></i>
-                        Petit-déjeuner
+                <div class="meal-card active <?php echo ($today_entry && $today_entry->breakfast_photo) ? 'has-photo' : ''; ?>" id="breakfastCard">
+                    <div class="meal-card-header">
+                        <div class="meal-card-title">
+                            <i class="fa fa-coffee"></i>
+                            Petit-déjeuner
+                        </div>
+                        <div class="meal-card-toggle">
+                            <span>Cliquez pour <?php echo ($today_entry && $today_entry->breakfast_photo) ? 'voir' : 'ajouter'; ?></span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
                     </div>
 
-                    <div class="photo-upload-area" data-meal="breakfast" style="<?php echo ($today_entry && $today_entry->breakfast_photo) ? 'display: none;' : ''; ?>">
+                    <div class="meal-card-body">
+                        <div class="photo-upload-area" data-meal="breakfast" style="<?php echo ($today_entry && $today_entry->breakfast_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="breakfastPhoto" accept="image/*" data-meal="breakfast">
                         <input type="hidden" name="breakfast_photo" id="breakfast_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->breakfast_photo) : ''; ?>">
                         <div class="photo-upload-icon">
@@ -1034,16 +1175,24 @@ $this->load->view('portal/includes/portal_header');
                         <textarea class="form-control" name="breakfast_notes" id="breakfast_notes"
                                   placeholder="Décrivez ce que vous avez mangé..."><?php echo $today_entry ? htmlspecialchars($today_entry->breakfast_notes) : ''; ?></textarea>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Lunch -->
                 <div class="meal-card <?php echo ($today_entry && $today_entry->lunch_photo) ? 'has-photo' : ''; ?>" id="lunchCard">
-                    <div class="meal-card-title">
-                        <i class="fa fa-sun-o"></i>
-                        Déjeuner
+                    <div class="meal-card-header">
+                        <div class="meal-card-title">
+                            <i class="fa fa-sun-o"></i>
+                            Déjeuner
+                        </div>
+                        <div class="meal-card-toggle">
+                            <span>Cliquez pour <?php echo ($today_entry && $today_entry->lunch_photo) ? 'voir' : 'ajouter'; ?></span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
                     </div>
 
-                    <div class="photo-upload-area" data-meal="lunch" style="<?php echo ($today_entry && $today_entry->lunch_photo) ? 'display: none;' : ''; ?>">
+                    <div class="meal-card-body">
+                        <div class="photo-upload-area" data-meal="lunch" style="<?php echo ($today_entry && $today_entry->lunch_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="lunchPhoto" accept="image/*" data-meal="lunch">
                         <input type="hidden" name="lunch_photo" id="lunch_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->lunch_photo) : ''; ?>">
                         <div class="photo-upload-icon">
@@ -1075,16 +1224,24 @@ $this->load->view('portal/includes/portal_header');
                         <textarea class="form-control" name="lunch_notes" id="lunch_notes"
                                   placeholder="Décrivez ce que vous avez mangé..."><?php echo $today_entry ? htmlspecialchars($today_entry->lunch_notes) : ''; ?></textarea>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Dinner -->
                 <div class="meal-card <?php echo ($today_entry && $today_entry->dinner_photo) ? 'has-photo' : ''; ?>" id="dinnerCard">
-                    <div class="meal-card-title">
-                        <i class="fa fa-moon-o"></i>
-                        Dîner
+                    <div class="meal-card-header">
+                        <div class="meal-card-title">
+                            <i class="fa fa-moon-o"></i>
+                            Dîner
+                        </div>
+                        <div class="meal-card-toggle">
+                            <span>Cliquez pour <?php echo ($today_entry && $today_entry->dinner_photo) ? 'voir' : 'ajouter'; ?></span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
                     </div>
 
-                    <div class="photo-upload-area" data-meal="dinner" style="<?php echo ($today_entry && $today_entry->dinner_photo) ? 'display: none;' : ''; ?>">
+                    <div class="meal-card-body">
+                        <div class="photo-upload-area" data-meal="dinner" style="<?php echo ($today_entry && $today_entry->dinner_photo) ? 'display: none;' : ''; ?>">
                         <input type="file" id="dinnerPhoto" accept="image/*" data-meal="dinner">
                         <input type="hidden" name="dinner_photo" id="dinner_photo_value" value="<?php echo $today_entry ? htmlspecialchars($today_entry->dinner_photo) : ''; ?>">
                         <div class="photo-upload-icon">
@@ -1116,16 +1273,24 @@ $this->load->view('portal/includes/portal_header');
                         <textarea class="form-control" name="dinner_notes" id="dinner_notes"
                                   placeholder="Décrivez ce que vous avez mangé..."><?php echo $today_entry ? htmlspecialchars($today_entry->dinner_notes) : ''; ?></textarea>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Snack / Collation -->
                 <div class="meal-card <?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'has-photo' : ''; ?>" id="snackCard">
-                    <div class="meal-card-title">
-                        <i class="fa fa-apple"></i>
-                        Collation
+                    <div class="meal-card-header">
+                        <div class="meal-card-title">
+                            <i class="fa fa-apple"></i>
+                            Collation
+                        </div>
+                        <div class="meal-card-toggle">
+                            <span>Cliquez pour <?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'voir' : 'ajouter'; ?></span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
                     </div>
 
-                    <div class="photo-upload-area" data-meal="snack" style="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'display: none;' : ''; ?>">
+                    <div class="meal-card-body">
+                        <div class="photo-upload-area" data-meal="snack" style="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? 'display: none;' : ''; ?>">
                         <input type="file" id="snackPhoto" accept="image/*" data-meal="snack">
                         <input type="hidden" name="snack_photo" id="snack_photo_value" value="<?php echo ($today_entry && !empty($today_entry->snack_photo)) ? htmlspecialchars($today_entry->snack_photo) : ''; ?>">
                         <div class="photo-upload-icon">
@@ -1156,6 +1321,7 @@ $this->load->view('portal/includes/portal_header');
                         <label class="form-label" for="snack_notes">Notes (optionnel)</label>
                         <textarea class="form-control" name="snack_notes" id="snack_notes"
                                   placeholder="Décrivez votre collation..."><?php echo ($today_entry && !empty($today_entry->snack_notes)) ? htmlspecialchars($today_entry->snack_notes) : ''; ?></textarea>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -1501,6 +1667,90 @@ $this->load->view('portal/includes/portal_header');
         }, 5000);
     }
 
+    </script>
+
+    <script>
+    // Accordion functionality for meal cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const mealCards = document.querySelectorAll('.meal-card');
+
+        mealCards.forEach(card => {
+            const header = card.querySelector('.meal-card-header');
+
+            header.addEventListener('click', function(e) {
+                // Prevent click if clicking on form elements inside
+                if (e.target.closest('input, textarea, button:not(.meal-card-header)')) {
+                    return;
+                }
+
+                // Toggle active class
+                card.classList.toggle('active');
+            });
+        });
+
+        // Open first accordion by default (already has active class in HTML)
+    });
+    </script>
+
+    <!-- Include Audio Recorder Component -->
+    <?php $this->load->view('portal/food_surveys/audio_recorder_component'); ?>
+
+    <script>
+    // Add audio recorders to each meal notes section
+    document.addEventListener('DOMContentLoaded', function() {
+        const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+        const entryId = <?php echo $today_entry ? $today_entry->id : 'null'; ?>;
+
+        mealTypes.forEach(mealType => {
+            const notesField = document.getElementById(mealType + '_notes');
+            if (notesField && notesField.closest('.form-group')) {
+                const formGroup = notesField.closest('.form-group');
+
+                let audioRecorderHTML = '';
+
+                if (entryId) {
+                    // Entry exists - show audio recorder
+                    audioRecorderHTML = `
+                        <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}">
+                            <div class="audio-recorder-controls">
+                                <button type="button" class="audio-record-btn record" id="record-btn-${mealType}" onclick="toggleRecording('${mealType}', ${entryId})" title="Enregistrer une note vocale">
+                                    <i class="fa fa-microphone"></i>
+                                </button>
+                                <button type="button" class="audio-record-btn stop" id="stop-btn-${mealType}" style="display: none;" onclick="toggleRecording('${mealType}', ${entryId})" title="Arrêter l'enregistrement">
+                                    <i class="fa fa-stop"></i>
+                                </button>
+                                <div class="audio-recording-indicator" id="recording-indicator-${mealType}" style="display: none;">
+                                    <div class="audio-recording-pulse"></div>
+                                    Enregistrement en cours...
+                                </div>
+                            </div>
+                            <div class="audio-player-list" id="audio-list-${mealType}">
+                                <p style="color: #6c757d; font-size: 13px; margin: 10px 0;">Chargement...</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // No entry yet - show info message
+                    audioRecorderHTML = `
+                        <div class="audio-recorder-wrapper" id="audio-recorder-${mealType}" style="margin-top: 10px; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                            <p style="color: #6c757d; font-size: 14px; margin: 0;">
+                                <i class="fa fa-info-circle" style="color: #17a2b8;"></i>
+                                <strong>Note vocale :</strong> Vous pourrez ajouter des notes vocales après avoir soumis votre questionnaire alimentaire pour la première fois.
+                            </p>
+                        </div>
+                    `;
+                }
+
+                // Insert after form-group
+                formGroup.insertAdjacentHTML('afterend', audioRecorderHTML);
+
+                // Load existing audio notes if entry exists
+                if (entryId) {
+                    loadAudioNotes(mealType, entryId);
+                }
+            }
+        });
+    });
     </script>
 
 <?php $this->load->view("portal/includes/portal_footer"); ?>

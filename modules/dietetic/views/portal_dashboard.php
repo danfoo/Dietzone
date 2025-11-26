@@ -38,98 +38,68 @@ $this->load->view('portal/includes/portal_header');
 
 .stat-card {
     background: white;
-    border-radius: 16px;
-    padding: 24px 20px;
+    border-radius: 12px;
+    padding: 12px 10px;
     text-align: center;
     border: none;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    min-height: 160px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    min-height: 100px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.4s;
-}
-
-.stat-card:hover::before {
-    opacity: 1;
-}
-
 .stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card .stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    margin: 0 auto 16px;
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 18px;
     position: relative;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
 }
 
 .stat-card.weight {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    background: white;
 }
 
 .stat-card.weight .stat-icon {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(66, 153, 225, 0.3);
+    color: #4299e1;
 }
 
 .stat-card.target {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    background: white;
 }
 
 .stat-card.target .stat-icon {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+    color: #48bb78;
 }
 
 .stat-card.bmi {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    background: white;
 }
 
 .stat-card.bmi .stat-icon {
-    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(237, 137, 54, 0.3);
+    color: #FF5722;
 }
 
 .stat-card.progress {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    background: white;
 }
 
 .stat-card.progress .stat-icon {
-    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-    color: white;
-    box-shadow: 0 8px 16px rgba(159, 122, 234, 0.3);
+    color: #4CAF50;
 }
 
 .stat-card .stat-value {
@@ -157,6 +127,363 @@ $this->load->view('portal/includes/portal_header');
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+/* Hydration Section */
+.hydration-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.hydration-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.hydration-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hydration-title i {
+    color: #0288d1;
+}
+
+.hydration-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.water-stats {
+    text-align: center;
+    padding: 20px;
+}
+
+.water-remaining {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.water-remaining .unit {
+    font-size: 20px;
+    font-weight: 500;
+    color: #666;
+}
+
+.water-consumed {
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 16px;
+}
+
+.water-goal-text {
+    font-size: 14px;
+    color: #666;
+}
+
+.hydration-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.quick-add-section {
+    padding: 0;
+}
+
+.quick-add-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.quick-add-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Water Cup Buttons */
+.quick-add-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.3s;
+}
+
+.quick-add-btn:hover {
+    transform: translateY(-5px);
+}
+
+.quick-add-btn:active {
+    transform: translateY(-2px);
+}
+
+.water-cup {
+    position: relative;
+    background: linear-gradient(180deg,
+        rgba(79, 195, 247, 0.15) 0%,
+        rgba(79, 195, 247, 0.25) 100%);
+    border: 3px solid rgba(79, 195, 247, 0.6);
+    border-top: none;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Small Cup - 250ml */
+.quick-add-btn:nth-child(1) .water-cup {
+    width: 70px;
+    height: 90px;
+    border-radius: 0 0 20px 20px;
+}
+
+/* Medium Cup - 500ml */
+.quick-add-btn:nth-child(2) .water-cup {
+    width: 85px;
+    height: 110px;
+    border-radius: 0 0 24px 24px;
+}
+
+/* Large Cup - 750ml */
+.quick-add-btn:nth-child(3) .water-cup {
+    width: 100px;
+    height: 130px;
+    border-radius: 0 0 28px 28px;
+}
+
+.water-cup-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
+    border-radius: 0 0 inherit inherit;
+}
+
+.water-cup-amount {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    z-index: 2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.water-cup-add {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 3;
+}
+
+.water-cup-add i {
+    font-size: 18px;
+    color: #0288d1;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .hydration-card {
+        padding: 20px 16px;
+    }
+
+    .hydration-title {
+        font-size: 20px;
+    }
+
+    .water-remaining {
+        font-size: 40px;
+    }
+
+    .quick-add-buttons {
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .quick-add-btn:nth-child(1) .water-cup {
+        width: 60px;
+        height: 80px;
+    }
+
+    .quick-add-btn:nth-child(2) .water-cup {
+        width: 75px;
+        height: 100px;
+    }
+
+    .quick-add-btn:nth-child(3) .water-cup {
+        width: 90px;
+        height: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-add-buttons {
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .quick-add-btn:nth-child(1) .water-cup {
+        width: 55px;
+        height: 70px;
+    }
+
+    .quick-add-btn:nth-child(2) .water-cup {
+        width: 65px;
+        height: 85px;
+    }
+
+    .quick-add-btn:nth-child(3) .water-cup {
+        width: 80px;
+        height: 105px;
+    }
+
+    .water-cup-amount {
+        font-size: 12px;
+    }
+
+    .water-cup-add {
+        width: 32px;
+        height: 32px;
+    }
+
+    .water-cup-add i {
+        font-size: 16px;
+    }
+}
+
+.custom-add-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-add-form {
+    display: flex;
+    gap: 12px;
+}
+
+.custom-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #90caf9;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #01579b;
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: #0288d1;
+    box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
+}
+
+.add-custom-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-custom-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.3);
+}
+
+.hydration-history {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #01579b;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.history-bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.history-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.history-bar-fill {
+    width: 100%;
+    height: 80px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.history-bar-value {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
+    border-radius: 6px;
+    transition: height 0.5s ease;
+}
+
+.history-day {
+    font-size: 11px;
+    font-weight: 600;
+    color: #01579b;
+    text-transform: uppercase;
 }
 
 /* Program Card - Modern Design with Progress Ring */
@@ -205,7 +532,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .program-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -403,7 +730,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .survey-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -623,7 +950,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultations-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 16px 0;
@@ -703,7 +1030,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultation-date {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: #5a3e2b;
     margin-bottom: 8px;
@@ -717,7 +1044,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .consultation-time {
-    font-size: 13px;
+    font-size: 11px;
     color: rgba(90, 62, 43, 0.8);
 }
 
@@ -1140,13 +1467,280 @@ $this->load->view('portal/includes/portal_header');
     cursor: help;
 }
 
+/* =====================================================
+   SECTION "MA JOURNÉE" (Daily Tracking) - Horizontal Compact
+   ===================================================== */
+.my-day-section {
+    background: transparent;
+    margin-bottom: 20px;
+}
+
+.my-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.my-day-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.my-day-title i {
+    color: #01807B;
+    font-size: 18px;
+}
+
+.my-day-streak {
+    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A52 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Meals block container */
+.meals-block {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    margin-bottom: 8px;
+}
+
+.meals-block .daily-tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Compact horizontal item style */
+.daily-item {
+    background: white;
+    border-radius: 12px;
+    padding: 8px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.meals-block .daily-item {
+    box-shadow: none;
+    border: 1px solid #e0e0e0;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 10px 8px;
+}
+
+/* Water item full width */
+.water-item {
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 14px 16px; /* Hauteur augmentée */
+}
+
+/* Secondary grid for calories and activity */
+.tracking-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.tracking-secondary-grid .daily-item {
+    cursor: pointer;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 12px 8px;
+    position: relative;
+}
+
+/* Indicateur cliquable pour calories et activité */
+.tracking-secondary-grid .daily-item::after {
+    content: '✏️ Cliquer pour saisir';
+    font-size: 7px;
+    color: #999;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+.daily-item:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.daily-item-icon {
+    font-size: 16px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.breakfast-item .daily-item-icon {
+    color: #FF9800;
+}
+
+.lunch-item .daily-item-icon {
+    color: #4CAF50;
+}
+
+.dinner-item .daily-item-icon {
+    color: #3F51B5;
+}
+
+.water-item .daily-item-icon {
+    color: #2196F3;
+}
+
+.calories-item .daily-item-icon {
+    color: #FF5722;
+}
+
+.activity-item .daily-item-icon {
+    color: #9C27B0;
+}
+
+.daily-item-label {
+    font-size: 8px;
+    color: #2c3e50;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.daily-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #01807B;
+    margin-top: 4px;
+}
+
+/* Checkbox custom style */
+.daily-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #01807B;
+}
+
+/* Progress bar for meals */
+.meals-progress-container {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.meals-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.meals-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.meals-progress-text {
+    font-size: 10px;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+/* Water counter buttons */
+.water-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.water-count-display {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2c3e50;
+    min-width: 18px;
+    text-align: center;
+}
+
+.btn-water {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #e0e0e0;
+    background: white;
+    color: #01807B;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.btn-water:hover:not(:disabled) {
+    background: #01807B;
+    color: white;
+    border-color: #01807B;
+}
+
+.btn-water:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.daily-motivation {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CD 100%);
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #856404;
+    font-weight: 500;
+    border-left: 3px solid #FFC107;
+    margin-top: 10px;
+}
+
+.daily-motivation i {
+    color: #FFC107;
+    margin-right: 4px;
+}
+
+.daily-motivation strong {
+    font-weight: 700;
+    color: #795500;
+}
+
 /* Hide footer on dashboard page */
 .app-footer {
     display: none !important;
 }
 
 body {
-    padding-bottom: 20px !important;
+    padding-bottom: 50px !important;
 }
 
 @media (max-width: 768px) {
@@ -1188,14 +1782,41 @@ body {
         transform: rotate(90deg);
         margin: 8px 0;
     }
+
+    /* Responsive Ma Journée */
+    .daily-tracking-grid {
+        gap: 6px;
+    }
+
+    .daily-item {
+        padding: 6px 10px;
+        font-size: 7px;
+    }
+
+    .daily-item-icon {
+        font-size: 14px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .btn-water {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+    }
+
+    .water-count-display {
+        font-size: 10px;
+        min-width: 16px;
+    }
 }
 
 /* Weight Goal Card - Program Style Design */
 .weight-goal-card {
     background: #BAE2E1;
     border-radius: 24px;
-    padding: 24px 20px;
-    margin-bottom: 30px;
+    padding: 16px 14px;
+    margin-bottom: 20px;
     color: #2c3e50;
     position: relative;
     overflow: hidden;
@@ -1219,7 +1840,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
 }
@@ -1275,7 +1896,7 @@ body {
 }
 
 .weight-values-compact {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
     margin-left: -4px;
@@ -1290,7 +1911,7 @@ body {
 .weight-value-compact {
     background: white;
     border-radius: 12px;
-    padding: 10px 16px;
+    padding: 8px 12px;
     text-align: center;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1298,7 +1919,7 @@ body {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    min-height: 75px;
+    min-height: 65px;
     transition: all 0.3s ease;
     gap: 6px;
 }
@@ -1360,8 +1981,8 @@ body {
 
 .weight-remaining-simple {
     text-align: center;
-    margin-bottom: 12px;
-    padding: 16px 12px;
+    margin-bottom: 8px;
+    padding: 12px 10px;
     background: #F3911D;
     border-radius: 12px;
     position: relative;
@@ -1385,8 +2006,8 @@ body {
 }
 
 .progress-gauge-container {
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 8px;
+    padding: 10px 8px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
     backdrop-filter: blur(10px);
@@ -1502,6 +2123,133 @@ body {
 <!-- Welcome Message -->
 <div class="welcome-message">
     Bonjour <span class="patient-name"><?php echo htmlspecialchars($client->company); ?></span>
+</div>
+
+<!-- =====================================================
+     SECTION: MA JOURNÉE (Daily Tracking)
+     ===================================================== -->
+<div class="my-day-section">
+    <div class="my-day-header">
+        <div class="my-day-title">
+            <i class="fa fa-calendar-check-o"></i>
+            Ma Journée
+        </div>
+        <?php if ($tracking_streak > 0) { ?>
+        <div class="my-day-streak">
+            🔥 <strong><?php echo $tracking_streak; ?></strong> <?php echo $tracking_streak > 1 ? 'jours' : 'jour'; ?>
+        </div>
+        <?php } ?>
+    </div>
+
+    <!-- Bloc Repas avec jauge -->
+    <div class="meals-block">
+        <div class="daily-tracking-grid">
+            <!-- Item 1: Petit déjeuner -->
+            <div class="daily-item breakfast-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-coffee"></i>
+                </div>
+                <span class="daily-item-label">Petit déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
+                       <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('breakfast', this.checked)">
+            </div>
+
+            <!-- Item 2: Déjeuner -->
+            <div class="daily-item lunch-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-cutlery"></i>
+                </div>
+                <span class="daily-item-label">Déjeuner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="lunch"
+                       <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('lunch', this.checked)">
+            </div>
+
+            <!-- Item 3: Dîner -->
+            <div class="daily-item dinner-item">
+                <div class="daily-item-icon">
+                    <i class="fa fa-moon-o"></i>
+                </div>
+                <span class="daily-item-label">Dîner</span>
+                <input type="checkbox" class="daily-checkbox" data-meal="dinner"
+                       <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
+                       onchange="toggleMeal('dinner', this.checked)">
+            </div>
+        </div>
+
+        <!-- Progress bar for meals -->
+        <div class="meals-progress-container">
+            <div class="meals-progress-bar">
+                <div class="meals-progress-fill" id="meals-progress-fill" style="width: <?php
+                    $meals_count = ($daily_tracking->breakfast_checked ? 1 : 0) +
+                                  ($daily_tracking->lunch_checked ? 1 : 0) +
+                                  ($daily_tracking->dinner_checked ? 1 : 0);
+                    echo ($meals_count / 3 * 100);
+                ?>%;"></div>
+            </div>
+            <div class="meals-progress-text">
+                <span id="meals-progress-text"><?php echo $meals_count; ?>/3 repas validés</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hydratation (full width) -->
+    <div class="daily-item water-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="daily-item-icon">
+                <i class="fa fa-tint"></i>
+            </div>
+            <span class="daily-item-label">Hydratation</span>
+        </div>
+        <div class="water-actions">
+            <button class="btn-water" onclick="updateWater('decrement')" <?php echo $daily_tracking->water_glasses == 0 ? 'disabled' : ''; ?>>
+                <i class="fa fa-minus"></i>
+            </button>
+            <span class="water-count-display" id="water-count"><?php echo $daily_tracking->water_glasses; ?></span>
+            <button class="btn-water" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid pour Calories et Activité -->
+    <div class="tracking-secondary-grid">
+        <!-- Calories -->
+        <div class="daily-item calories-item" onclick="openCaloriesModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-fire"></i>
+            </div>
+            <span class="daily-item-label">Calories</span>
+            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
+        </div>
+
+        <!-- Activité -->
+        <div class="daily-item activity-item" onclick="openActivityModal()">
+            <div class="daily-item-icon">
+                <i class="fa fa-heartbeat"></i>
+            </div>
+            <span class="daily-item-label">Activité</span>
+            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
+        </div>
+    </div>
+
+    <?php if ($tracking_streak > 0) { ?>
+    <div class="daily-motivation">
+        <i class="fa fa-star"></i>
+        <?php
+        if ($tracking_streak == 1) {
+            echo "Excellent départ ! Continuez comme ça.";
+        } elseif ($tracking_streak < 7) {
+            echo "Vous êtes sur la bonne voie ! <strong>$tracking_streak jours d'affilée</strong>.";
+        } elseif ($tracking_streak < 30) {
+            echo "Incroyable série de <strong>$tracking_streak jours</strong> ! 🎯";
+        } else {
+            echo "🏆 Champion ! <strong>$tracking_streak jours consécutifs</strong> de suivi !";
+        }
+        ?>
+    </div>
+    <?php } ?>
 </div>
 
 <?php
@@ -1745,6 +2493,92 @@ if (!$current_weight || !$target_weight) {
         <div class="stat-label">Progression</div>
     </div>
     <?php } ?>
+</div>
+
+<!-- Hydration Card -->
+<div class="hydration-card">
+    <div class="hydration-header">
+        <div class="hydration-title">
+            <i class="fa fa-tint"></i>
+            Eau
+        </div>
+    </div>
+
+    <div class="hydration-content">
+        <!-- Water Stats Display -->
+        <div class="water-stats">
+            <div class="water-remaining" id="waterRemainingText">
+                <span id="waterRemainingAmount">2000</span> <span class="unit">ml</span>
+                <div style="font-size: 16px; font-weight: 500; color: #666;">resté</div>
+            </div>
+            <div class="water-consumed" id="waterConsumedText">
+                <span id="waterConsumedAmount">0</span> ml consommé
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="hydration-actions">
+            <!-- Quick Add Buttons -->
+            <div class="quick-add-section">
+                <div class="quick-add-title">Ajouter une capacité</div>
+                <div class="quick-add-buttons">
+                    <button class="quick-add-btn" onclick="addWater(250)">
+                        <div class="water-cup">
+                            <div class="water-cup-fill"></div>
+                            <div class="water-cup-amount">250ml</div>
+                            <div class="water-cup-add">
+                                <i class="fa fa-plus"></i>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="quick-add-btn" onclick="addWater(500)">
+                        <div class="water-cup">
+                            <div class="water-cup-fill"></div>
+                            <div class="water-cup-amount">500ml</div>
+                            <div class="water-cup-add">
+                                <i class="fa fa-plus"></i>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="quick-add-btn" onclick="addWater(750)">
+                        <div class="water-cup">
+                            <div class="water-cup-fill"></div>
+                            <div class="water-cup-amount">750ml</div>
+                            <div class="water-cup-add">
+                                <i class="fa fa-plus"></i>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom Amount -->
+            <div class="custom-add-section">
+                <div class="quick-add-title">Quantité personnalisée</div>
+                <div class="custom-add-form">
+                    <input type="number"
+                           id="customWaterAmount"
+                           class="custom-input"
+                           placeholder="Ex: 350"
+                           min="1"
+                           max="2000"
+                           step="50">
+                    <button class="add-custom-btn" onclick="addCustomWater()">
+                        <i class="fa fa-plus"></i>
+                        Ajouter
+                    </button>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="hydration-history">
+                <div class="history-title">7 derniers jours</div>
+                <div class="history-bars" id="hydrationHistory">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Weight Evolution Chart -->
@@ -2130,6 +2964,479 @@ document.addEventListener('keydown', function(e) {
         closeFabModal();
     }
 });
+
+// ============================================================
+// DAILY TRACKING JAVASCRIPT FUNCTIONS
+// ============================================================
+
+/**
+ * Update water count (increment or decrement)
+ */
+function updateWater(action) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_water'); ?>';
+
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update counter
+            document.getElementById('water-count').textContent = data.water_glasses;
+
+            // Update buttons disabled state
+            const decrementBtn = document.querySelector('[onclick="updateWater(\'decrement\')"]');
+            const incrementBtn = document.querySelector('[onclick="updateWater(\'increment\')"]');
+
+            decrementBtn.disabled = data.water_glasses == 0;
+            incrementBtn.disabled = data.water_glasses >= 20;
+
+            // Visual feedback
+            showToast('💧 Hydratation mise à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Toggle meal checkbox (breakfast, lunch, dinner)
+ */
+function toggleMeal(mealType, checked) {
+    const url = '<?php echo site_url('dietetic/portal/api_toggle_meal'); ?>';
+
+    const formData = new FormData();
+    formData.append('meal', mealType);
+    formData.append('checked', checked);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update progress bar
+            updateMealsProgress();
+
+            // Visual feedback
+            const mealNames = {
+                breakfast: 'Petit-déjeuner',
+                lunch: 'Déjeuner',
+                dinner: 'Dîner'
+            };
+            const icon = checked ? '✅' : '🔲';
+            showToast(icon + ' ' + mealNames[mealType] + ' ' + (checked ? 'validé' : 'non validé'), 'success');
+        } else {
+            // Revert checkbox on error
+            const checkbox = document.querySelector(`.daily-checkbox[data-meal="${mealType}"]`);
+            if (checkbox) {
+                checkbox.checked = !checked;
+            }
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert checkbox on error
+        const checkbox = document.querySelector(`.daily-checkbox[data-meal="${mealType}"]`);
+        if (checkbox) {
+            checkbox.checked = !checked;
+        }
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Update meals progress bar
+ */
+function updateMealsProgress() {
+    const checkboxes = document.querySelectorAll('.daily-checkbox');
+    let count = 0;
+    checkboxes.forEach(cb => {
+        if (cb.checked) count++;
+    });
+
+    const percentage = (count / 3 * 100);
+    const progressFill = document.getElementById('meals-progress-fill');
+    const progressText = document.getElementById('meals-progress-text');
+
+    if (progressFill) {
+        progressFill.style.width = percentage + '%';
+    }
+
+    if (progressText) {
+        progressText.textContent = count + '/3 repas validés';
+    }
+}
+
+/**
+ * Open modal to enter calories
+ */
+function openCaloriesModal() {
+    const currentCalories = document.getElementById('calories-count').textContent;
+    const calories = prompt('Entrez vos calories consommées aujourd\'hui:', currentCalories !== '-' ? currentCalories : '');
+
+    if (calories !== null && calories !== '') {
+        const caloriesNum = parseInt(calories);
+        if (isNaN(caloriesNum) || caloriesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateCalories(caloriesNum);
+    }
+}
+
+/**
+ * Update calories consumed
+ */
+function updateCalories(calories) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_calories'); ?>';
+
+    const formData = new FormData();
+    formData.append('calories', calories);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('calories-count').textContent = data.calories_consumed || '-';
+            showToast('🔥 Calories mises à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Open modal to add activity
+ */
+function openActivityModal() {
+    const currentActivity = document.getElementById('activity-count').textContent.replace(' min', '');
+    const minutes = prompt('Combien de minutes d\'activité physique aujourd\'hui ?', currentActivity || '0');
+
+    if (minutes !== null && minutes !== '') {
+        const minutesNum = parseInt(minutes);
+        if (isNaN(minutesNum) || minutesNum < 0) {
+            showToast('❌ Veuillez entrer un nombre valide', 'error');
+            return;
+        }
+
+        updateActivity(minutesNum);
+    }
+}
+
+/**
+ * Update activity minutes
+ */
+function updateActivity(minutes) {
+    const url = '<?php echo site_url('dietetic/portal/api_update_activity'); ?>';
+
+    const formData = new FormData();
+    formData.append('minutes', minutes);
+    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('activity-count').textContent = data.activity_minutes + ' min';
+            showToast('🏃 Activité mise à jour !', 'success');
+        } else {
+            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Erreur de connexion', 'error');
+    });
+}
+
+/**
+ * Simple toast notification
+ */
+function showToast(message, type = 'info') {
+    // Check if toast container exists, if not create it
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; bottom: 100px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColors = {
+        success: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+        error: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
+        info: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)'
+    };
+
+    toast.style.cssText = `
+        background: ${bgColors[type] || bgColors.info};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 250px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    toast.textContent = message;
+
+    // Add CSS animation
+    if (!document.getElementById('toast-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animation-style';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    toastContainer.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Hydration tracking variables
+let hydrationData = {
+    today_total: 0,
+    daily_goal: 2000,
+    percentage: 0,
+    history: []
+};
+
+// Load hydration data
+async function loadHydrationData() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_get_hydration_data'); ?>');
+        const data = await response.json();
+
+        if (data.success) {
+            hydrationData = data;
+            updateHydrationDisplay();
+        }
+    } catch (error) {
+        console.error('Error loading hydration data:', error);
+    }
+}
+
+// Update water level display
+function updateHydrationDisplay() {
+    const waterRemainingAmount = document.getElementById('waterRemainingAmount');
+    const waterConsumedAmount = document.getElementById('waterConsumedAmount');
+
+    // Calculate remaining
+    const remaining = Math.max(0, hydrationData.daily_goal - hydrationData.today_total);
+
+    // Update amounts
+    waterRemainingAmount.textContent = remaining;
+    waterConsumedAmount.textContent = hydrationData.today_total;
+
+    // Update history
+    updateHydrationHistory();
+}
+
+// Update history bars
+function updateHydrationHistory() {
+    const historyContainer = document.getElementById('hydrationHistory');
+
+    if (!hydrationData.history || hydrationData.history.length === 0) {
+        historyContainer.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Aucun historique</div>';
+        return;
+    }
+
+    let html = '';
+    hydrationData.history.forEach(day => {
+        html += `
+            <div class="history-bar">
+                <div class="history-bar-fill">
+                    <div class="history-bar-value" style="height: ${day.percentage}%"></div>
+                </div>
+                <div class="history-day">${day.day_name}</div>
+            </div>
+        `;
+    });
+
+    historyContainer.innerHTML = html;
+}
+
+// Add water (quick buttons)
+async function addWater(amount) {
+    const btn = event.target.closest('.quick-add-btn');
+    const waterCup = btn.querySelector('.water-cup');
+    const addIcon = btn.querySelector('.water-cup-add i');
+    const originalIconClass = addIcon.className;
+
+    // Disable button and show loading
+    btn.disabled = true;
+    addIcon.className = 'fa fa-spinner fa-spin';
+
+    try {
+        const formData = new FormData();
+        formData.append('quantity_ml', amount);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_add_hydration'); ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update local data
+            hydrationData.today_total = data.new_total;
+            hydrationData.percentage = data.percentage;
+
+            // Animate update
+            updateHydrationDisplay();
+
+            // Show success feedback
+            addIcon.className = 'fa fa-check';
+            waterCup.style.transform = 'scale(1.1)';
+            waterCup.style.transition = 'transform 0.3s';
+
+            setTimeout(() => {
+                waterCup.style.transform = 'scale(1)';
+                addIcon.className = originalIconClass;
+                btn.disabled = false;
+            }, 1500);
+
+            // Reload full data after short delay
+            setTimeout(() => {
+                loadHydrationData();
+            }, 2000);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter'));
+            addIcon.className = originalIconClass;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error adding water:', error);
+        alert('Erreur lors de l\'ajout');
+        addIcon.className = originalIconClass;
+        btn.disabled = false;
+    }
+}
+
+// Add custom amount
+async function addCustomWater() {
+    const input = document.getElementById('customWaterAmount');
+    const amount = parseInt(input.value);
+
+    if (!amount || amount <= 0 || amount > 2000) {
+        alert('Veuillez entrer une quantité valide (1-2000ml)');
+        return;
+    }
+
+    const btn = event.target.closest('.add-custom-btn');
+    const originalHtml = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
+    try {
+        const formData = new FormData();
+        formData.append('quantity_ml', amount);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_add_hydration'); ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update local data
+            hydrationData.today_total = data.new_total;
+            hydrationData.percentage = data.percentage;
+
+            // Animate update
+            updateHydrationDisplay();
+
+            // Reset input
+            input.value = '';
+
+            // Show success feedback
+            btn.innerHTML = '<i class="fa fa-check"></i> Ajouté!';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }, 1500);
+
+            // Reload full data
+            setTimeout(() => {
+                loadHydrationData();
+            }, 2000);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter'));
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error adding custom water:', error);
+        alert('Erreur lors de l\'ajout');
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+}
+
+// Load hydration data on page load
+loadHydrationData();
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

@@ -10,23 +10,6 @@ class Portal extends App_Controller
     {
         parent::__construct();
 
-        // Disable CSRF protection for AJAX notification methods
-        $csrf_exclude_uris = [
-            'dietetic/portal/get_notifications',
-            'dietetic/portal/mark_notification_read',
-            'dietetic/portal/delete_notification',
-            'dietetic/portal/mark_all_notifications_read',
-            'dietetic/portal/save_fcm_token',
-            'dietetic/portal/delete_fcm_token',
-            'dietetic/portal/add_to_favorites',
-            'dietetic/portal/remove_from_favorites'
-        ];
-
-        $current_uri = uri_string();
-        if (in_array($current_uri, $csrf_exclude_uris)) {
-            $this->config->set_item('csrf_protection', FALSE);
-        }
-
         // Load helper functions
         $this->load->helper('dietetic/dietetic');
 
@@ -36,6 +19,7 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_programs_model');
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_food_surveys_model');
+        $this->load->model('dietetic/dietetic_daily_tracking_model');
     }
 
     /**
@@ -50,8 +34,6 @@ class Portal extends App_Controller
      */
     public function _remap($method, $params = [])
     {
-        log_activity('[DIETETIC DEBUG] _remap called - Method: ' . $method . ', Params: ' . json_encode($params));
-
         // List of valid methods in this controller
         $valid_methods = [
             'index',
@@ -76,6 +58,14 @@ class Portal extends App_Controller
             'add_comment',
             'upload_photo',
             'delete_photo',
+            // Audio notes methods
+            'upload_audio_note',
+            'get_audio_notes',
+            'delete_audio_note',
+            // Recommendation audio notes methods
+            'upload_recommendation_audio_response',
+            'get_recommendation_audio_notes',
+            'delete_recommendation_audio_response',
             'notification_preferences',
             'save_notification_preferences',
             'save_fcm_token',
@@ -114,12 +104,23 @@ class Portal extends App_Controller
             'update_emergency_contact',
             'upload_document',
             'upload_profile_photo',
-            'download_document'
+            'download_document',
+            // Daily tracking API methods
+            'api_get_daily_tracking',
+            'api_update_water',
+            'api_toggle_meal',
+            'api_update_activity',
+            'api_update_calories',
+            'api_get_streak',
+            // Statistics and evolution
+            'statistics',
+            'api_get_evolution_data',
+            'api_add_statistic_note',
+            'api_delete_statistic_note'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
         if (!in_array($method, $valid_methods)) {
-            log_activity('[DIETETIC DEBUG] Method not found: ' . $method . ', redirecting to index');
             // Method not found, call index instead
             return call_user_func_array([$this, 'index'], array_merge([$method], $params));
         }
@@ -245,6 +246,39 @@ class Portal extends App_Controller
         } catch (Exception $e) {
             $data['active_survey'] = null;
             $data['survey_completion'] = 0;
+        }
+
+        // Get daily tracking data
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_daily_tracking')) {
+                $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                $data['tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+                $data['tracking_completion'] = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
+            } else {
+                // Table doesn't exist yet, set default values
+                $data['daily_tracking'] = (object)[
+                    'water_glasses' => 0,
+                    'breakfast_checked' => 0,
+                    'lunch_checked' => 0,
+                    'dinner_checked' => 0,
+                    'activity_minutes' => 0,
+                    'calories_consumed' => null
+                ];
+                $data['tracking_streak'] = 0;
+                $data['tracking_completion'] = 0;
+            }
+        } catch (Exception $e) {
+            log_activity('Error loading daily tracking: ' . $e->getMessage());
+            $data['daily_tracking'] = (object)[
+                'water_glasses' => 0,
+                'breakfast_checked' => 0,
+                'lunch_checked' => 0,
+                'dinner_checked' => 0,
+                'activity_minutes' => 0,
+                'calories_consumed' => null
+            ];
+            $data['tracking_streak'] = 0;
+            $data['tracking_completion'] = 0;
         }
 
         $this->load->view('portal_dashboard', $data);
@@ -4991,6 +5025,1513 @@ class Portal extends App_Controller
         force_download($document->original_filename, file_get_contents($filepath));
 
         log_activity('Medical Document Downloaded [Patient ID: ' . $patient->id . ', Document ID: ' . $document_id . ', File: ' . $document->original_filename . ']');
+    }
+
+    // ============================================================
+    // DAILY TRACKING API METHODS
+    // ============================================================
+
+    /**
+     * API: Get today's tracking data
+     * Returns JSON with current water, meals, activity, etc.
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_get_daily_tracking()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        try {
+            $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+            $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+            $completion = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'tracking' => $tracking,
+                    'streak' => $streak,
+                    'completion' => $completion
+                ]
+            ]);
+        } catch (Exception $e) {
+            log_activity('Error getting daily tracking: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update water glasses count
+     * POST: {action: 'increment' | 'decrement'}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_water()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
+        $action = $input['action'] ?? 'increment';
+        $amount = ($action === 'increment') ? 1 : -1;
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_water($patient->id, $amount);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'water_glasses' => $tracking->water_glasses
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating water: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Toggle meal check (breakfast, lunch, dinner)
+     * POST: {meal: 'breakfast' | 'lunch' | 'dinner', checked: true|false}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_toggle_meal()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
+        $meal = $input['meal'] ?? '';
+        $checked = isset($input['checked']) ? filter_var($input['checked'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : null;
+
+        if (!in_array($meal, ['breakfast', 'lunch', 'dinner'])) {
+            echo json_encode(['success' => false, 'error' => 'Invalid meal type']);
+            return;
+        }
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $meal, $checked);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                $field = $meal . '_checked';
+                echo json_encode([
+                    'success' => true,
+                    'checked' => (bool)$tracking->$field
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error toggling meal: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update activity minutes
+     * POST: {minutes: int, activity_type?: string}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_activity()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
+        $minutes = (int)($input['minutes'] ?? 0);
+        $activity_type = $input['activity_type'] ?? null;
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_activity($patient->id, $minutes, $activity_type);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'activity_minutes' => $tracking->activity_minutes
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating activity: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Update calories consumed
+     * POST: {calories: int}
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_update_calories()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        // Support both JSON and FormData
+        $input = $_POST;
+        if (empty($input)) {
+            $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        }
+
+        $calories = (int)($input['calories'] ?? 0);
+
+        try {
+            $success = $this->dietetic_daily_tracking_model->update_calories($patient->id, $calories);
+
+            if ($success) {
+                $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
+                echo json_encode([
+                    'success' => true,
+                    'calories_consumed' => $tracking->calories_consumed
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Update failed']);
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating calories: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * API: Get current streak
+     *
+     * @return void (outputs JSON)
+     */
+    public function api_get_streak()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'error' => 'Patient not found']);
+            return;
+        }
+
+        try {
+            $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
+            echo json_encode([
+                'success' => true,
+                'streak' => $streak
+            ]);
+        } catch (Exception $e) {
+            log_activity('Error getting streak: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error']);
+        }
+    }
+
+    /**
+     * Upload audio note for food survey entry
+     * API endpoint for voice notes recording
+     */
+    public function upload_audio_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $entry_id = $this->input->post('entry_id');
+            $meal_type = $this->input->post('meal_type');
+            $duration = $this->input->post('duration');
+
+            if (!$entry_id || !$meal_type) {
+                echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
+                return;
+            }
+
+            // Verify entry belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($entry_id);
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Check if file was uploaded
+            if (!isset($_FILES['audio']) || $_FILES['audio']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Aucun fichier audio reçu']);
+                return;
+            }
+
+            $file = $_FILES['audio'];
+
+            // Validate file type by extension and MIME
+            $allowed_extensions = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mpeg'];
+            $allowed_mimes = [
+                'audio/webm',
+                'video/webm',
+                'audio/mpeg',
+                'audio/mp3',
+                'audio/wav',
+                'audio/wave',
+                'audio/x-wav',
+                'audio/ogg',
+                'audio/mp4',
+                'audio/x-m4a',
+                'audio/m4a',
+                'application/octet-stream'
+            ];
+
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            // Get MIME type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            // Check extension first (more reliable for audio files)
+            if (!in_array($extension, $allowed_extensions)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Extension non autorisée. Extensions acceptées: ' . implode(', ', $allowed_extensions)
+                ]);
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            $max_size = 10 * 1024 * 1024; // 10MB
+            if ($file['size'] > $max_size) {
+                echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+                return;
+            }
+
+            // Create upload directory if it doesn't exist
+            $upload_path = FCPATH . 'uploads/dietetic/audio_notes/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = 'audio_' . uniqid() . '_' . time() . '.' . $extension;
+            $destination = $upload_path . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement du fichier']);
+                return;
+            }
+
+            @chmod($destination, 0644);
+
+            // Save to database
+            $audio_data = [
+                'entry_id' => $entry_id,
+                'meal_type' => $meal_type,
+                'audio_file' => $filename,
+                'duration' => $duration,
+                'file_size' => $file['size'],
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_food_survey_audio_notes', $audio_data);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale enregistrée',
+                'audio_id' => $this->db->insert_id()
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error uploading audio note: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get audio notes for a specific entry and meal type
+     */
+    public function get_audio_notes($entry_id, $meal_type)
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Verify entry belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($entry_id);
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Get audio notes
+            $this->db->where('entry_id', $entry_id);
+            $this->db->where('meal_type', $meal_type);
+            $this->db->order_by('created_at', 'DESC');
+            $audios = $this->db->get(db_prefix() . 'dietic_food_survey_audio_notes')->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'audios' => $audios
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting audio notes: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Delete audio note
+     */
+    public function delete_audio_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $audio_id = $this->input->post('audio_id');
+
+            if (!$audio_id) {
+                echo json_encode(['success' => false, 'message' => 'ID manquant']);
+                return;
+            }
+
+            // Get audio note
+            $audio = $this->db->get_where(db_prefix() . 'dietic_food_survey_audio_notes', ['id' => $audio_id])->row();
+
+            if (!$audio) {
+                echo json_encode(['success' => false, 'message' => 'Note vocale non trouvée']);
+                return;
+            }
+
+            // Verify it belongs to patient
+            $entry = $this->dietetic_food_surveys_model->get_entry($audio->entry_id);
+            $survey = $this->dietetic_food_surveys_model->get($entry->survey_id);
+
+            if ($survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Delete file
+            $file_path = FCPATH . 'uploads/dietetic/audio_notes/' . $audio->audio_file;
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
+
+            // Delete from database
+            $this->db->delete(db_prefix() . 'dietic_food_survey_audio_notes', ['id' => $audio_id]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale supprimée'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error deleting audio note: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Upload audio note for recommendation (Patient response)
+     */
+    public function upload_recommendation_audio_response()
+    {
+        // Set JSON header first
+        header('Content-Type: application/json');
+
+        // Disable error display to prevent HTML output
+        @ini_set('display_errors', 0);
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $recommendation_id = $this->input->post('recommendation_id');
+            $duration = $this->input->post('duration');
+
+            if (!$recommendation_id) {
+                echo json_encode(['success' => false, 'message' => 'ID de recommandation manquant']);
+                return;
+            }
+
+            // Verify recommendation exists (simple query)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
+            if (!$recommendation) {
+                echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
+                return;
+            }
+
+            // Verify patient owns this recommendation's entry (simple queries)
+            $this->db->where('id', $recommendation->entry_id);
+            $entry = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->row();
+
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $this->db->where('id', $entry->survey_id);
+            $survey = $this->db->get(db_prefix() . 'dietic_food_surveys')->row();
+
+            if (!$survey || $survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Check if file was uploaded
+            if (!isset($_FILES['audio']) || $_FILES['audio']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Aucun fichier audio reçu']);
+                return;
+            }
+
+            $file = $_FILES['audio'];
+
+            // Validate file type by extension
+            $allowed_extensions = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mpeg'];
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $allowed_extensions)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Extension non autorisée'
+                ]);
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            $max_size = 10 * 1024 * 1024;
+            if ($file['size'] > $max_size) {
+                echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+                return;
+            }
+
+            // Create upload directory if it doesn't exist
+            $upload_path = FCPATH . 'uploads/dietetic/recommendation_audio/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = 'rec_audio_patient_' . uniqid() . '_' . time() . '.' . $extension;
+            $destination = $upload_path . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement du fichier']);
+                return;
+            }
+
+            @chmod($destination, 0644);
+
+            // Save to database
+            $audio_data = [
+                'recommendation_id' => $recommendation_id,
+                'sender_type' => 'patient',
+                'sender_id' => $client_id,
+                'audio_file' => $filename,
+                'duration' => $duration,
+                'file_size' => $file['size'],
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_recommendation_audio_notes', $audio_data);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale enregistrée',
+                'audio_id' => $this->db->insert_id()
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error uploading recommendation audio response: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get audio notes for a recommendation (Patient view)
+     */
+    public function get_recommendation_audio_notes($recommendation_id)
+    {
+        header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Verify recommendation belongs to patient (simple queries)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
+            if (!$recommendation) {
+                echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
+                return;
+            }
+
+            $this->db->where('id', $recommendation->entry_id);
+            $entry = $this->db->get(db_prefix() . 'dietic_food_survey_entries')->row();
+
+            if (!$entry) {
+                echo json_encode(['success' => false, 'message' => 'Entrée non trouvée']);
+                return;
+            }
+
+            $this->db->where('id', $entry->survey_id);
+            $survey = $this->db->get(db_prefix() . 'dietic_food_surveys')->row();
+
+            if (!$survey || $survey->patient_id != $patient->id) {
+                echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+                return;
+            }
+
+            // Get audio notes
+            if (!$this->db->table_exists(db_prefix() . 'dietic_recommendation_audio_notes')) {
+                echo json_encode(['success' => true, 'audios' => []]);
+                return;
+            }
+
+            $this->db->where('recommendation_id', $recommendation_id);
+            $this->db->order_by('created_at', 'ASC');
+            $audios = $this->db->get(db_prefix() . 'dietic_recommendation_audio_notes')->result_array();
+
+            // Add sender names
+            foreach ($audios as &$audio) {
+                if ($audio['sender_type'] === 'dietitian') {
+                    $staff = $this->db->get_where('staff', ['staffid' => $audio['sender_id']])->row();
+                    $audio['sender_name'] = $staff ? ($staff->firstname . ' ' . $staff->lastname) : 'Diététicien';
+                } else {
+                    $contact = $this->db->get_where(db_prefix() . 'contacts', ['id' => $audio['sender_id']])->row();
+                    $audio['sender_name'] = $contact ? ($contact->firstname . ' ' . $contact->lastname) : 'Patient';
+                }
+            }
+
+            echo json_encode(['success' => true, 'audios' => $audios]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting recommendation audio notes: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Delete recommendation audio note (Patient)
+     */
+    public function delete_recommendation_audio_response()
+    {
+        header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        try {
+            $audio_id = $this->input->post('audio_id');
+
+            if (!$audio_id) {
+                echo json_encode(['success' => false, 'message' => 'ID audio manquant']);
+                return;
+            }
+
+            // Get audio info
+            $audio = $this->db->get_where(db_prefix() . 'dietic_recommendation_audio_notes', ['id' => $audio_id])->row();
+
+            if (!$audio) {
+                echo json_encode(['success' => false, 'message' => 'Audio non trouvé']);
+                return;
+            }
+
+            // Verify ownership (patient can only delete their own audios)
+            if ($audio->sender_type === 'patient' && $audio->sender_id == $client_id) {
+                // Delete file
+                $file_path = FCPATH . 'uploads/dietetic/recommendation_audio/' . $audio->audio_file;
+                if (file_exists($file_path)) {
+                    unlink($file_path);
+                }
+
+                // Delete from database
+                $this->db->delete(db_prefix() . 'dietic_recommendation_audio_notes', ['id' => $audio_id]);
+
+                echo json_encode(['success' => true, 'message' => 'Note vocale supprimée']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Non autorisé']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error deleting recommendation audio response: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Statistics page - Evolution charts
+     */
+    public function statistics()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Statistiques';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        $data['client'] = $client;
+
+        $this->load->view('portal/statistics', $data);
+    }
+
+    /**
+     * API: Get evolution data for charts
+     */
+    public function api_get_evolution_data()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            $period = $this->input->get('period') ?: '6months'; // 1month, 3months, 6months, 1year, all
+
+            // Calculate date range
+            $end_date = date('Y-m-d');
+            switch ($period) {
+                case '1month':
+                    $start_date = date('Y-m-d', strtotime('-1 month'));
+                    break;
+                case '3months':
+                    $start_date = date('Y-m-d', strtotime('-3 months'));
+                    break;
+                case '1year':
+                    $start_date = date('Y-m-d', strtotime('-1 year'));
+                    break;
+                case 'all':
+                    $start_date = '2000-01-01';
+                    break;
+                case '6months':
+                default:
+                    $start_date = date('Y-m-d', strtotime('-6 months'));
+                    break;
+            }
+
+            // Get measurements
+            $this->db->select('*');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('measurement_date >=', $start_date);
+            $this->db->where('measurement_date <=', $end_date);
+            $this->db->order_by('measurement_date', 'ASC');
+            $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result_array();
+
+            // Get food survey compliance (if table exists)
+            $compliance = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys') &&
+                $this->db->table_exists(db_prefix() . 'dietic_food_survey_entries')) {
+
+                $this->db->select('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) as date, COUNT(*) as count');
+                $this->db->from(db_prefix() . 'dietic_food_survey_entries');
+                $this->db->join(db_prefix() . 'dietic_food_surveys s', 's.id = ' . db_prefix() . 'dietic_food_survey_entries.survey_id');
+                $this->db->where('s.patient_id', $patient->id);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) >=', $start_date);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) <=', $end_date);
+                $this->db->group_by('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at)');
+                $compliance = $this->db->get()->result_array();
+            }
+
+            // Calculate statistics
+            $stats = [];
+            if (!empty($measurements)) {
+                $first = $measurements[0];
+                $last = $measurements[count($measurements) - 1];
+
+                $stats['weight'] = [
+                    'initial' => $first['weight'],
+                    'current' => $last['weight'],
+                    'change' => $last['weight'] - $first['weight'],
+                    'target' => $patient->target_weight
+                ];
+
+                $stats['bmi'] = [
+                    'initial' => $first['bmi'],
+                    'current' => $last['bmi'],
+                    'change' => $last['bmi'] - $first['bmi']
+                ];
+
+                if ($first['waist_circumference'] && $last['waist_circumference']) {
+                    $stats['waist'] = [
+                        'initial' => $first['waist_circumference'],
+                        'current' => $last['waist_circumference'],
+                        'change' => $last['waist_circumference'] - $first['waist_circumference']
+                    ];
+                }
+
+                if ($first['hip_circumference'] && $last['hip_circumference']) {
+                    $stats['hip'] = [
+                        'initial' => $first['hip_circumference'],
+                        'current' => $last['hip_circumference'],
+                        'change' => $last['hip_circumference'] - $first['hip_circumference']
+                    ];
+                }
+            }
+
+            // Calculate progress towards goal
+            if ($patient->target_weight && !empty($measurements)) {
+                $initial_weight = $measurements[0]['weight'];
+                $current_weight = $measurements[count($measurements) - 1]['weight'];
+                $target_weight = $patient->target_weight;
+
+                $total_to_lose = abs($initial_weight - $target_weight);
+                $already_lost = abs($initial_weight - $current_weight);
+                $progress_percent = $total_to_lose > 0 ? ($already_lost / $total_to_lose) * 100 : 0;
+
+                $stats['goal_progress'] = [
+                    'percent' => round($progress_percent, 1),
+                    'remaining' => abs($current_weight - $target_weight)
+                ];
+            }
+
+            // Calculate compliance rate (% of days with entries)
+            $total_days = (strtotime($end_date) - strtotime($start_date)) / 86400;
+            $days_with_entries = count($compliance);
+            $compliance_rate = $total_days > 0 ? ($days_with_entries / $total_days) * 100 : 0;
+
+            // Calculate trends and predictions
+            $trends = [];
+            $insights = [];
+
+            if (!empty($measurements) && count($measurements) >= 2) {
+                $first_measurement = $measurements[0];
+                $last_measurement = $measurements[count($measurements) - 1];
+
+                // Calculate time span in weeks
+                $first_date = strtotime($first_measurement['measurement_date']);
+                $last_date = strtotime($last_measurement['measurement_date']);
+                $weeks = max(1, ($last_date - $first_date) / (7 * 86400));
+
+                // Weight loss rate (kg/week)
+                $weight_change = $first_measurement['weight'] - $last_measurement['weight'];
+                $rate_per_week = $weeks > 0 ? $weight_change / $weeks : 0;
+
+                $trends['rate_per_week'] = round($rate_per_week, 2);
+                $trends['total_weeks'] = round($weeks, 1);
+
+                // Linear regression for trend line
+                $n = count($measurements);
+                $sum_x = 0;
+                $sum_y = 0;
+                $sum_xy = 0;
+                $sum_x2 = 0;
+
+                foreach ($measurements as $i => $m) {
+                    $x = $i; // Index as x
+                    $y = floatval($m['weight']);
+                    $sum_x += $x;
+                    $sum_y += $y;
+                    $sum_xy += $x * $y;
+                    $sum_x2 += $x * $x;
+                }
+
+                $slope = ($n * $sum_xy - $sum_x * $sum_y) / ($n * $sum_x2 - $sum_x * $sum_x);
+                $intercept = ($sum_y - $slope * $sum_x) / $n;
+
+                // Generate trend line points
+                $trend_line = [];
+                foreach ($measurements as $i => $m) {
+                    $trend_line[] = [
+                        'date' => $m['measurement_date'],
+                        'value' => round($slope * $i + $intercept, 2)
+                    ];
+                }
+
+                $trends['trend_line'] = $trend_line;
+                $trends['slope'] = round($slope, 3);
+
+                // Prediction: when will target be reached?
+                if ($patient->target_weight && $rate_per_week > 0.1) {
+                    $remaining_kg = abs($last_measurement['weight'] - $patient->target_weight);
+                    $weeks_to_goal = $remaining_kg / $rate_per_week;
+                    $estimated_date = date('Y-m-d', strtotime("+$weeks_to_goal weeks"));
+
+                    $trends['estimated_goal_date'] = $estimated_date;
+                    $trends['weeks_to_goal'] = round($weeks_to_goal, 1);
+                }
+
+                // Generate insights
+                if (abs($rate_per_week) >= 0.5) {
+                    if ($rate_per_week > 0) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-thumbs-up',
+                            'message' => sprintf('Excellent ! Vous perdez en moyenne %.1f kg par semaine', $rate_per_week)
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-info-circle',
+                            'message' => sprintf('Attention : vous avez pris %.1f kg par semaine', abs($rate_per_week))
+                        ];
+                    }
+                } elseif (abs($rate_per_week) > 0) {
+                    $insights[] = [
+                        'type' => 'neutral',
+                        'icon' => 'fa-balance-scale',
+                        'message' => sprintf('Votre poids reste stable (%.1f kg par semaine)', abs($rate_per_week))
+                    ];
+                }
+
+                // BMI insight
+                if (isset($stats['bmi']['current'])) {
+                    $bmi = $stats['bmi']['current'];
+                    if ($bmi < 18.5) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-tachometer',
+                            'message' => 'Votre IMC est en dessous de la normale (insuffisance pondérale)'
+                        ];
+                    } elseif ($bmi >= 18.5 && $bmi < 25) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-check-circle',
+                            'message' => 'Votre IMC est dans la fourchette normale'
+                        ];
+                    } elseif ($bmi >= 25 && $bmi < 30) {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'Votre IMC indique un surpoids'
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'Votre IMC indique une obésité'
+                        ];
+                    }
+                }
+
+                // Goal achievement prediction insight
+                if (isset($trends['weeks_to_goal'])) {
+                    $weeks = $trends['weeks_to_goal'];
+                    if ($weeks <= 4) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-flag-checkered',
+                            'message' => sprintf('À ce rythme, vous atteindrez votre objectif dans environ %.0f semaines !', $weeks)
+                        ];
+                    } elseif ($weeks <= 12) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-calendar',
+                            'message' => sprintf('Vous devriez atteindre votre objectif dans environ %.0f semaines', $weeks)
+                        ];
+                    }
+                }
+            }
+
+            // Get notes for this period
+            $notes = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('note_date >=', $start_date);
+                $this->db->where('note_date <=', $end_date);
+                $this->db->order_by('note_date', 'ASC');
+                $notes = $this->db->get(db_prefix() . 'dietic_statistics_notes')->result_array();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'measurements' => $measurements,
+                'compliance' => $compliance,
+                'stats' => $stats,
+                'compliance_rate' => round($compliance_rate, 1),
+                'period' => $period,
+                'trends' => $trends,
+                'insights' => $insights,
+                'notes' => $notes
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting evolution data: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'trace' => ENVIRONMENT === 'development' ? $e->getTraceAsString() : null
+            ]);
+        }
+    }
+
+    /**
+     * API: Add a statistic note
+     * POST: {note_date, note_text, note_type, icon, color}
+     */
+    public function api_add_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            // Get POST data
+            $note_date = $this->input->post('note_date');
+            $note_text = $this->input->post('note_text');
+            $note_type = $this->input->post('note_type') ?: 'general';
+            $icon = $this->input->post('icon') ?: 'fa-sticky-note';
+            $color = $this->input->post('color') ?: '#01807B';
+
+            if (empty($note_date) || empty($note_text)) {
+                echo json_encode(['success' => false, 'message' => 'Date et texte requis']);
+                return;
+            }
+
+            // Insert note
+            $data = [
+                'patient_id' => $patient->id,
+                'note_date' => $note_date,
+                'note_text' => $note_text,
+                'note_type' => $note_type,
+                'icon' => $icon,
+                'color' => $color,
+                'created_by' => $client_id,
+                'created_by_type' => 'patient',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_statistics_notes', $data);
+            $note_id = $this->db->insert_id();
+
+            if ($note_id) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note ajoutée avec succès',
+                    'note_id' => $note_id
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error adding statistic note: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Delete a statistic note
+     * POST: {note_id}
+     */
+    public function api_delete_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $note_id = $this->input->post('note_id');
+
+            if (empty($note_id)) {
+                echo json_encode(['success' => false, 'message' => 'ID de note requis']);
+                return;
+            }
+
+            // Verify note belongs to patient
+            $this->db->where('id', $note_id);
+            $this->db->where('patient_id', $patient->id);
+            $note = $this->db->get(db_prefix() . 'dietic_statistics_notes')->row();
+
+            if (!$note) {
+                echo json_encode(['success' => false, 'message' => 'Note non trouvée']);
+                return;
+            }
+
+            // Delete note
+            $this->db->where('id', $note_id);
+            $this->db->delete(db_prefix() . 'dietic_statistics_notes');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note supprimée avec succès'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error deleting statistic note: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Get today's hydration data
+     * Returns: today's total consumption, goal, and history
+     */
+    public function api_get_hydration_data()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if tables exist
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Fonctionnalité non disponible'
+                ]);
+                return;
+            }
+
+            $today = date('Y-m-d');
+
+            // Get today's total
+            $this->db->select_sum('quantity_ml');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('tracking_date', $today);
+            $result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+            $today_total = $result->quantity_ml ? intval($result->quantity_ml) : 0;
+
+            // Get or create goal
+            $this->db->where('patient_id', $patient->id);
+            $goal_row = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+
+            if (!$goal_row) {
+                // Create default goal
+                $this->db->insert(db_prefix() . 'dietic_hydration_goals', [
+                    'patient_id' => $patient->id,
+                    'daily_goal_ml' => 2000,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+                $daily_goal = 2000;
+            } else {
+                $daily_goal = intval($goal_row->daily_goal_ml);
+            }
+
+            // Get today's entries with time
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('tracking_date', $today);
+            $this->db->order_by('tracking_time', 'ASC');
+            $today_entries = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->result_array();
+
+            // Get last 7 days history
+            $history = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-$i days"));
+
+                $this->db->select_sum('quantity_ml');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('tracking_date', $date);
+                $day_result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+
+                $history[] = [
+                    'date' => $date,
+                    'date_formatted' => date('d/m', strtotime($date)),
+                    'day_name' => date('D', strtotime($date)),
+                    'total_ml' => $day_result->quantity_ml ? intval($day_result->quantity_ml) : 0,
+                    'percentage' => $day_result->quantity_ml ? min(100, round(($day_result->quantity_ml / $daily_goal) * 100)) : 0
+                ];
+            }
+
+            // Calculate percentage
+            $percentage = min(100, round(($today_total / $daily_goal) * 100));
+
+            echo json_encode([
+                'success' => true,
+                'today_total' => $today_total,
+                'daily_goal' => $daily_goal,
+                'percentage' => $percentage,
+                'entries' => $today_entries,
+                'history' => $history
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting hydration data: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Add hydration entry
+     * POST: {quantity_ml}
+     */
+    public function api_add_hydration()
+    {
+        // Clear any previous output
+        ob_clean();
+
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            exit;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            exit;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                exit;
+            }
+
+            $quantity_ml = intval($this->input->post('quantity_ml'));
+
+            if ($quantity_ml <= 0 || $quantity_ml > 2000) {
+                echo json_encode(['success' => false, 'message' => 'Quantité invalide (1-2000ml)']);
+                exit;
+            }
+
+            // Insert entry
+            $data = [
+                'patient_id' => $patient->id,
+                'quantity_ml' => $quantity_ml,
+                'tracking_date' => date('Y-m-d'),
+                'tracking_time' => date('H:i:s'),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_hydration_tracking', $data);
+            $entry_id = $this->db->insert_id();
+
+            if ($entry_id) {
+                // Get new total
+                $this->db->select_sum('quantity_ml');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('tracking_date', date('Y-m-d'));
+                $result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+                $new_total = $result->quantity_ml ? intval($result->quantity_ml) : 0;
+
+                // Get goal
+                $this->db->where('patient_id', $patient->id);
+                $goal_row = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+                $daily_goal = $goal_row ? intval($goal_row->daily_goal_ml) : 2000;
+
+                $percentage = min(100, round(($new_total / $daily_goal) * 100));
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Hydratation enregistrée',
+                    'entry_id' => $entry_id,
+                    'new_total' => $new_total,
+                    'percentage' => $percentage
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error adding hydration: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * API: Update hydration goal
+     * POST: {daily_goal_ml}
+     */
+    public function api_update_hydration_goal()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_goals')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $daily_goal_ml = intval($this->input->post('daily_goal_ml'));
+
+            if ($daily_goal_ml < 500 || $daily_goal_ml > 5000) {
+                echo json_encode(['success' => false, 'message' => 'Objectif invalide (500-5000ml)']);
+                return;
+            }
+
+            // Check if goal exists
+            $this->db->where('patient_id', $patient->id);
+            $existing = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+
+            if ($existing) {
+                // Update
+                $this->db->where('patient_id', $patient->id);
+                $this->db->update(db_prefix() . 'dietic_hydration_goals', [
+                    'daily_goal_ml' => $daily_goal_ml,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            } else {
+                // Insert
+                $this->db->insert(db_prefix() . 'dietic_hydration_goals', [
+                    'patient_id' => $patient->id,
+                    'daily_goal_ml' => $daily_goal_ml,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Objectif mis à jour',
+                'daily_goal_ml' => $daily_goal_ml
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error updating hydration goal: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
     }
 }
 

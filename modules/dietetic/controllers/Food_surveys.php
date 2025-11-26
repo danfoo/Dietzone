@@ -314,6 +314,19 @@ class Food_surveys extends AdminController
         $data['survey'] = $this->dietetic_food_surveys_model->get($data['entry']->survey_id);
         $data['beverages'] = $this->dietetic_food_surveys_model->get_beverages($entry_id);
 
+        // Get audio notes for this entry
+        $data['audio_notes'] = [];
+        if ($this->db->table_exists(db_prefix() . 'dietic_food_survey_audio_notes')) {
+            $this->db->where('entry_id', $entry_id);
+            $this->db->order_by('created_at', 'ASC');
+            $audio_results = $this->db->get(db_prefix() . 'dietic_food_survey_audio_notes')->result();
+
+            // Group by meal type
+            foreach ($audio_results as $audio) {
+                $data['audio_notes'][$audio->meal_type][] = $audio;
+            }
+        }
+
         // Get recommendations grouped by meal type
         $recommendations_by_meal = $this->dietetic_food_surveys_model->get_recommendations_by_meal($entry_id);
 
@@ -757,5 +770,192 @@ class Food_surveys extends AdminController
         // Show confirmation page
         $data['title'] = 'Ajouter Collation aux Enquêtes Alimentaires';
         $this->load->view('admin/food_surveys/add_snack_confirmation', $data);
+    }
+
+    /**
+     * Upload audio note for recommendation (Admin/Dietitian)
+     */
+    public function upload_recommendation_audio()
+    {
+        // Set JSON header first
+        header('Content-Type: application/json');
+
+        // Disable error display to prevent HTML output
+        @ini_set('display_errors', 0);
+
+        if (!is_staff_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        try {
+            $recommendation_id = $this->input->post('recommendation_id');
+            $duration = $this->input->post('duration');
+
+            if (!$recommendation_id) {
+                echo json_encode(['success' => false, 'message' => 'ID de recommandation manquant']);
+                return;
+            }
+
+            // Verify recommendation exists (simple query to avoid model issues)
+            $this->db->where('id', $recommendation_id);
+            $recommendation = $this->db->get(db_prefix() . 'dietic_food_survey_recommendations')->row();
+
+            if (!$recommendation) {
+                echo json_encode(['success' => false, 'message' => 'Recommandation non trouvée']);
+                return;
+            }
+
+            // Check if file was uploaded
+            if (!isset($_FILES['audio']) || $_FILES['audio']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Aucun fichier audio reçu']);
+                return;
+            }
+
+            $file = $_FILES['audio'];
+
+            // Validate file type by extension
+            $allowed_extensions = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mpeg'];
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $allowed_extensions)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Extension non autorisée'
+                ]);
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            $max_size = 10 * 1024 * 1024;
+            if ($file['size'] > $max_size) {
+                echo json_encode(['success' => false, 'message' => 'Fichier trop volumineux (max 10MB)']);
+                return;
+            }
+
+            // Create upload directory if it doesn't exist
+            $upload_path = FCPATH . 'uploads/dietetic/recommendation_audio/';
+            if (!is_dir($upload_path)) {
+                mkdir($upload_path, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = 'rec_audio_' . uniqid() . '_' . time() . '.' . $extension;
+            $destination = $upload_path . $filename;
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement du fichier']);
+                return;
+            }
+
+            @chmod($destination, 0644);
+
+            // Save to database
+            $audio_data = [
+                'recommendation_id' => $recommendation_id,
+                'sender_type' => 'dietitian',
+                'sender_id' => get_staff_user_id(),
+                'audio_file' => $filename,
+                'duration' => $duration,
+                'file_size' => $file['size'],
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_recommendation_audio_notes', $audio_data);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note vocale enregistrée',
+                'audio_id' => $this->db->insert_id()
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error uploading recommendation audio: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get audio notes for a recommendation
+     */
+    public function get_recommendation_audios($recommendation_id)
+    {
+        header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
+
+        try {
+            if (!$this->db->table_exists(db_prefix() . 'dietic_recommendation_audio_notes')) {
+                echo json_encode(['success' => true, 'audios' => []]);
+                return;
+            }
+
+            $this->db->where('recommendation_id', $recommendation_id);
+            $this->db->order_by('created_at', 'ASC');
+            $audios = $this->db->get(db_prefix() . 'dietic_recommendation_audio_notes')->result_array();
+
+            // Add sender names
+            foreach ($audios as &$audio) {
+                if ($audio['sender_type'] === 'dietitian') {
+                    $staff = $this->db->get_where('staff', ['staffid' => $audio['sender_id']])->row();
+                    $audio['sender_name'] = $staff ? ($staff->firstname . ' ' . $staff->lastname) : 'Diététicien';
+                } else {
+                    $contact = $this->db->get_where(db_prefix() . 'contacts', ['id' => $audio['sender_id']])->row();
+                    $audio['sender_name'] = $contact ? ($contact->firstname . ' ' . $contact->lastname) : 'Patient';
+                }
+            }
+
+            echo json_encode(['success' => true, 'audios' => $audios]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting recommendation audios: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
+    }
+
+    /**
+     * Delete recommendation audio note
+     */
+    public function delete_recommendation_audio()
+    {
+        header('Content-Type: application/json');
+        @ini_set('display_errors', 0);
+
+        try {
+            $audio_id = $this->input->post('audio_id');
+
+            if (!$audio_id) {
+                echo json_encode(['success' => false, 'message' => 'ID audio manquant']);
+                return;
+            }
+
+            // Get audio info
+            $audio = $this->db->get_where(db_prefix() . 'dietic_recommendation_audio_notes', ['id' => $audio_id])->row();
+
+            if (!$audio) {
+                echo json_encode(['success' => false, 'message' => 'Audio non trouvé']);
+                return;
+            }
+
+            // Verify ownership (staff can delete their own audios)
+            if (is_staff_logged_in() && $audio->sender_type === 'dietitian' && $audio->sender_id == get_staff_user_id()) {
+                // Delete file
+                $file_path = FCPATH . 'uploads/dietetic/recommendation_audio/' . $audio->audio_file;
+                if (file_exists($file_path)) {
+                    unlink($file_path);
+                }
+
+                // Delete from database
+                $this->db->delete(db_prefix() . 'dietic_recommendation_audio_notes', ['id' => $audio_id]);
+
+                echo json_encode(['success' => true, 'message' => 'Note vocale supprimée']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Non autorisé']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error deleting recommendation audio: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        }
     }
 }

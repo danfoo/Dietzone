@@ -1094,7 +1094,25 @@
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->breakfast_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
-                            <?php if (!$entry->breakfast_photo && !$entry->breakfast_notes): ?>
+                            <?php if (isset($audio_notes['breakfast']) && count($audio_notes['breakfast']) > 0): ?>
+                                <div class="meal-notes" style="margin-top: 10px;">
+                                    <div class="meal-notes-label"><i class="fa fa-microphone"></i> Notes vocales</div>
+                                    <?php foreach ($audio_notes['breakfast'] as $audio): ?>
+                                        <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                            <audio controls style="width: 100%; max-width: 400px; height: 32px;">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/webm">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/mpeg">
+                                                Votre navigateur ne supporte pas la lecture audio.
+                                            </audio>
+                                            <small style="color: #6c757d; margin-left: 8px;">
+                                                <?php echo $audio->duration ? floor($audio->duration / 60) . ':' . str_pad($audio->duration % 60, 2, '0', STR_PAD_LEFT) : ''; ?>
+                                                - <?php echo date('d/m/Y H:i', strtotime($audio->created_at)); ?>
+                                            </small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!$entry->breakfast_photo && !$entry->breakfast_notes && (!isset($audio_notes['breakfast']) || count($audio_notes['breakfast']) == 0)): ?>
                                 <div class="no-data">
                                     <i class="fa fa-info-circle"></i>
                                     <p>Aucune donnée enregistrée</p>
@@ -1143,7 +1161,25 @@
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->lunch_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
-                            <?php if (!$entry->lunch_photo && !$entry->lunch_notes): ?>
+                            <?php if (isset($audio_notes['lunch']) && count($audio_notes['lunch']) > 0): ?>
+                                <div class="meal-notes" style="margin-top: 10px;">
+                                    <div class="meal-notes-label"><i class="fa fa-microphone"></i> Notes vocales</div>
+                                    <?php foreach ($audio_notes['lunch'] as $audio): ?>
+                                        <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                            <audio controls style="width: 100%; max-width: 400px; height: 32px;">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/webm">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/mpeg">
+                                                Votre navigateur ne supporte pas la lecture audio.
+                                            </audio>
+                                            <small style="color: #6c757d; margin-left: 8px;">
+                                                <?php echo $audio->duration ? floor($audio->duration / 60) . ':' . str_pad($audio->duration % 60, 2, '0', STR_PAD_LEFT) : ''; ?>
+                                                - <?php echo date('d/m/Y H:i', strtotime($audio->created_at)); ?>
+                                            </small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!$entry->lunch_photo && !$entry->lunch_notes && (!isset($audio_notes['lunch']) || count($audio_notes['lunch']) == 0)): ?>
                                 <div class="no-data">
                                     <i class="fa fa-info-circle"></i>
                                     <p>Aucune donnée enregistrée</p>
@@ -1192,7 +1228,25 @@
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->dinner_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
-                            <?php if (!$entry->dinner_photo && !$entry->dinner_notes): ?>
+                            <?php if (isset($audio_notes['dinner']) && count($audio_notes['dinner']) > 0): ?>
+                                <div class="meal-notes" style="margin-top: 10px;">
+                                    <div class="meal-notes-label"><i class="fa fa-microphone"></i> Notes vocales</div>
+                                    <?php foreach ($audio_notes['dinner'] as $audio): ?>
+                                        <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                            <audio controls style="width: 100%; max-width: 400px; height: 32px;">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/webm">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/mpeg">
+                                                Votre navigateur ne supporte pas la lecture audio.
+                                            </audio>
+                                            <small style="color: #6c757d; margin-left: 8px;">
+                                                <?php echo $audio->duration ? floor($audio->duration / 60) . ':' . str_pad($audio->duration % 60, 2, '0', STR_PAD_LEFT) : ''; ?>
+                                                - <?php echo date('d/m/Y H:i', strtotime($audio->created_at)); ?>
+                                            </small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!$entry->dinner_photo && !$entry->dinner_notes && (!isset($audio_notes['dinner']) || count($audio_notes['dinner']) == 0)): ?>
                                 <div class="no-data">
                                     <i class="fa fa-info-circle"></i>
                                     <p>Aucune donnée enregistrée</p>
@@ -1241,7 +1295,25 @@
                                     <div class="meal-notes-text"><?php echo nl2br(htmlspecialchars($entry->snack_notes)); ?></div>
                                 </div>
                             <?php endif; ?>
-                            <?php if (empty($entry->snack_photo) && empty($entry->snack_notes)): ?>
+                            <?php if (isset($audio_notes['snack']) && count($audio_notes['snack']) > 0): ?>
+                                <div class="meal-notes" style="margin-top: 10px;">
+                                    <div class="meal-notes-label"><i class="fa fa-microphone"></i> Notes vocales</div>
+                                    <?php foreach ($audio_notes['snack'] as $audio): ?>
+                                        <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                            <audio controls style="width: 100%; max-width: 400px; height: 32px;">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/webm">
+                                                <source src="<?php echo base_url('uploads/dietetic/audio_notes/' . $audio->audio_file); ?>" type="audio/mpeg">
+                                                Votre navigateur ne supporte pas la lecture audio.
+                                            </audio>
+                                            <small style="color: #6c757d; margin-left: 8px;">
+                                                <?php echo $audio->duration ? floor($audio->duration / 60) . ':' . str_pad($audio->duration % 60, 2, '0', STR_PAD_LEFT) : ''; ?>
+                                                - <?php echo date('d/m/Y H:i', strtotime($audio->created_at)); ?>
+                                            </small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (empty($entry->snack_photo) && empty($entry->snack_notes) && (!isset($audio_notes['snack']) || count($audio_notes['snack']) == 0)): ?>
                                 <div class="no-data">
                                     <i class="fa fa-info-circle"></i>
                                     <p>Aucune donnée enregistrée</p>
@@ -1400,6 +1472,38 @@
                                     <div class="recommendation-content">
                                         <?php echo nl2br(htmlspecialchars($rec->recommendation_text)); ?>
                                     </div>
+
+                                    <!-- Communication Section (always visible) -->
+                                    <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-top: 16px;">
+                                        <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: #495057;">
+                                            <i class="fa fa-comments"></i> Échange avec le patient
+                                        </h4>
+
+                                        <!-- Audio Notes Section -->
+                                        <div class="rec-audio-recorder-wrapper" id="rec-audio-recorder-<?php echo $rec->id; ?>" style="margin-top: 0; background: transparent; padding: 0; border: none;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                                <button type="button" class="rec-audio-record-btn record" id="rec-record-btn-<?php echo $rec->id; ?>"
+                                                        onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                        title="Enregistrer une note vocale">
+                                                    <i class="fa fa-microphone"></i>
+                                                </button>
+                                                <button type="button" class="rec-audio-record-btn stop" id="rec-stop-btn-<?php echo $rec->id; ?>" style="display: none;"
+                                                        onclick="toggleRecommendationRecording(<?php echo $rec->id; ?>, '<?php echo admin_url('dietetic/food_surveys/upload_recommendation_audio'); ?>', '<?php echo admin_url('dietetic/food_surveys/delete_recommendation_audio'); ?>', false)"
+                                                        title="Arrêter l'enregistrement">
+                                                    <i class="fa fa-stop"></i>
+                                                </button>
+                                                <div class="rec-audio-recording-indicator" id="rec-recording-indicator-<?php echo $rec->id; ?>" style="display: none;">
+                                                    <div class="rec-audio-recording-pulse"></div>
+                                                    Enregistrement en cours...
+                                                </div>
+                                                <span style="font-size: 13px; color: #6c757d;">Envoyer une note vocale</span>
+                                            </div>
+                                            <div class="rec-audio-player-list" id="rec-audio-list-<?php echo $rec->id; ?>">
+                                                <p style="color: #6c757d; font-size: 12px; margin: 0;">Chargement...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="recommendation-meta">
                                         <div class="recommendation-info">
                                             <span>
@@ -1661,6 +1765,20 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Load audio notes for each recommendation
+    <?php if (!empty($recommendations_by_meal)): ?>
+        <?php foreach ($recommendations_by_meal as $meal_type => $recommendations): ?>
+            <?php if (!empty($recommendations)): ?>
+                <?php foreach ($recommendations as $rec): ?>
+                    loadRecommendationAudios(<?php echo $rec->id; ?>, false);
+                <?php endforeach; ?>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 });
 </script>
+
+<!-- Include Recommendation Audio Recorder Component -->
+<?php $this->load->view('components/recommendation_audio_recorder'); ?>
 

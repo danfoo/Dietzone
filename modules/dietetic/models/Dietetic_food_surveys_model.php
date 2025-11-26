@@ -116,6 +116,31 @@ class Dietetic_food_surveys_model extends App_Model
         if ($this->db->insert($this->table_surveys, $data)) {
             $survey_id = $this->db->insert_id();
             log_activity('New Food Survey Created [ID: ' . $survey_id . ']');
+
+            // Send notification to patient
+            if (isset($data['patient_id']) && isset($data['name'])) {
+                try {
+                    $this->load->model('dietetic/dietetic_notifications_model');
+
+                    // Get dietitian name
+                    $dietitian_id = isset($data['dietitian_id']) ? $data['dietitian_id'] : get_staff_user_id();
+                    $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                    $this->db->where('staffid', $dietitian_id);
+                    $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+                    $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
+
+                    $this->dietetic_notifications_model->notify_food_survey_assigned(
+                        $data['patient_id'],
+                        $data['name'],
+                        $data['start_date'] ?? date('Y-m-d'),
+                        $data['duration_days'] ?? 7,
+                        $dietitian_name
+                    );
+                } catch (Exception $e) {
+                    log_activity('Food survey notification failed [ID: ' . $survey_id . ']: ' . $e->getMessage());
+                }
+            }
+
             return $survey_id;
         }
 

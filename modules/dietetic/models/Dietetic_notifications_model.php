@@ -53,6 +53,21 @@ class Dietetic_notifications_model extends App_Model
      */
     public function create_default_preferences($patient_id)
     {
+        // Check if SMS is configured to enable it by default
+        $sms_configured = false;
+        $account_id = $this->get_setting('sms_lam_account_id');
+        $password = $this->get_setting('sms_lam_password');
+        if (!empty($account_id) && !empty($password)) {
+            $sms_configured = true;
+        }
+
+        // Check if WhatsApp is configured
+        $whatsapp_configured = false;
+        $whatsapp_api_key = $this->get_setting('whatsapp_api_key');
+        if (!empty($whatsapp_api_key)) {
+            $whatsapp_configured = true;
+        }
+
         $data = [
             'patient_id' => $patient_id,
             'reminder_weight' => 1,
@@ -66,8 +81,8 @@ class Dietetic_notifications_model extends App_Model
             'notify_program' => 1,
             'notify_food_entry' => 1,
             'channel_email' => 1,
-            'channel_sms' => 0,
-            'channel_whatsapp' => 0,
+            'channel_sms' => $sms_configured ? 1 : 0, // Enable SMS if configured
+            'channel_whatsapp' => $whatsapp_configured ? 1 : 0, // Enable WhatsApp if configured
             'channel_push' => 1,
             'created_at' => date('Y-m-d H:i:s')
         ];
@@ -151,6 +166,85 @@ class Dietetic_notifications_model extends App_Model
         return false;
     }
 
+    /**
+     * Check if SMS is configured
+     *
+     * @return bool
+     */
+    public function is_sms_configured()
+    {
+        $account_id = $this->get_setting('sms_lam_account_id');
+        $password = $this->get_setting('sms_lam_password');
+        return !empty($account_id) && !empty($password);
+    }
+
+    /**
+     * Check if WhatsApp is configured
+     *
+     * @return bool
+     */
+    public function is_whatsapp_configured()
+    {
+        $provider = $this->get_setting('whatsapp_provider') ?: 'lam';
+
+        if ($provider == 'lam') {
+            // LAM WhatsApp configuration
+            $account_id = $this->get_setting('whatsapp_lam_account_id');
+            $password = $this->get_setting('whatsapp_lam_password');
+            return !empty($account_id) && !empty($password);
+        } else {
+            // Other providers
+            $api_key = $this->get_setting('whatsapp_api_key');
+            return !empty($api_key);
+        }
+    }
+
+    /**
+     * Enable SMS notifications for all existing patients
+     * Only call this after configuring LAM SMS credentials
+     *
+     * @return int Number of patients updated
+     */
+    public function enable_sms_for_all_patients()
+    {
+        // Check if SMS is configured
+        if (!$this->is_sms_configured()) {
+            log_activity('SMS not configured - cannot enable for all patients');
+            return 0;
+        }
+
+        $this->db->where('channel_sms', 0);
+        $this->db->update(db_prefix() . $this->table_preferences, ['channel_sms' => 1]);
+
+        $affected = $this->db->affected_rows();
+        log_activity("SMS enabled for {$affected} existing patient(s)");
+
+        return $affected;
+    }
+
+    /**
+     * Enable WhatsApp notifications for all existing patients
+     * Only call this after configuring WhatsApp API credentials
+     *
+     * @return int Number of patients updated
+     */
+    public function enable_whatsapp_for_all_patients()
+    {
+        // Check if WhatsApp is configured
+        if (!$this->is_whatsapp_configured()) {
+            log_activity('WhatsApp not configured - cannot enable for all patients');
+            return 0;
+        }
+
+        $this->db->where('channel_whatsapp', 0);
+        $this->db->update(db_prefix() . $this->table_preferences, ['channel_whatsapp' => 1]);
+
+        $affected = $this->db->affected_rows();
+        log_activity("WhatsApp enabled for {$affected} existing patient(s)");
+
+        return $affected;
+    }
+
     // ==================== WEIGHT REMINDER ====================
 
     /**
@@ -194,7 +288,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $patient->channel_email,
                 'sms' => $patient->channel_sms,
-                'whatsapp' => $patient->channel_whatsapp
+                'whatsapp' => $patient->channel_whatsapp,
+                'push' => $patient->channel_push ?? 1
             ]
         ]);
 
@@ -436,6 +531,93 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    // ==================== WELCOME NOTIFICATION ====================
+
+    /**
+     * Send welcome notification to new patient
+     * Sends Push, SMS, and WhatsApp notifications when a patient account is created
+     *
+     * @param int $patient_id
+     * @return array Results of notification sending
+     */
+    public function send_welcome_notification($patient_id)
+    {
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+
+        // Get patient data
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient || !$patient->client) {
+            log_activity('send_welcome_notification: Patient or client not found [ID: ' . $patient_id . ']');
+            return ['success' => false, 'error' => 'Patient not found'];
+        }
+
+        // Get or create notification preferences
+        $prefs = $this->get_preferences($patient_id);
+        if (!$prefs) {
+            $this->create_default_preferences($patient_id);
+            $prefs = $this->get_preferences($patient_id);
+        }
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $email = $contact ? $contact->email : $patient->client->email ?? null;
+        $phone = $contact ? $contact->phonenumber : $patient->client->phonenumber ?? null;
+
+        // Get client name
+        $firstname = $patient->client->company; // In Perfex, company name is often used for individual clients
+        if ($contact && !empty($contact->firstname)) {
+            $firstname = $contact->firstname;
+        }
+
+        // Build welcome message
+        $subject = "🎉 Bienvenue dans votre espace DietSénégal !";
+
+        $message = "Bonjour {$firstname},\n\n";
+        $message .= "Bienvenue dans votre espace personnel DietSénégal ! 🎉\n\n";
+        $message .= "Votre compte a été créé avec succès. Vous pouvez maintenant accéder à votre portail patient pour :\n\n";
+        $message .= "✅ Suivre votre évolution de poids\n";
+        $message .= "✅ Enregistrer vos mesures\n";
+        $message .= "✅ Suivre vos repas et hydratation quotidienne\n";
+        $message .= "✅ Consulter vos programmes nutritionnels\n";
+        $message .= "✅ Gérer vos rendez-vous\n\n";
+        $message .= "🔗 Accédez à votre portail :\n";
+        $message .= site_url('dietetic/portal') . "\n\n";
+
+        // Add credentials info if available
+        if (!empty($patient->client->password)) {
+            $message .= "📧 Email : {$email}\n";
+            $message .= "🔑 Mot de passe : (envoyé séparément par email)\n\n";
+        }
+
+        $message .= "💪 Nous sommes ravis de vous accompagner dans votre parcours vers une meilleure santé !\n\n";
+        $message .= "L'équipe DietSénégal";
+
+        // Send notification through all enabled channels
+        $result = $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'welcome',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $email,
+            'phone' => $phone,
+            'channels' => [
+                'email' => $prefs->channel_email ?? 1,
+                'sms' => $prefs->channel_sms ?? 0,
+                'whatsapp' => $prefs->channel_whatsapp ?? 0,
+                'push' => $prefs->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/dashboard'),
+                'action' => 'welcome'
+            ]
+        ]);
+
+        log_activity('Welcome notification sent to patient [ID: ' . $patient_id . ']');
+
+        return $result;
+    }
+
     // ==================== GENERAL NOTIFICATIONS ====================
 
     /**
@@ -444,6 +626,13 @@ class Dietetic_notifications_model extends App_Model
     public function send_notification($params)
     {
         $results = [];
+
+        // Debug logging
+        log_activity('[SEND_NOTIFICATION] Type: ' . ($params['type'] ?? 'unknown') .
+                    ', Patient: ' . ($params['patient_id'] ?? 'unknown') .
+                    ', Phone: ' . ($params['phone'] ?? 'empty') .
+                    ', SMS channel: ' . (isset($params['channels']['sms']) ? $params['channels']['sms'] : 'not set') .
+                    ', Email channel: ' . (isset($params['channels']['email']) ? $params['channels']['email'] : 'not set'));
 
         // Email
         if (!empty($params['channels']['email']) && !empty($params['email'])) {
@@ -456,23 +645,30 @@ class Dietetic_notifications_model extends App_Model
             );
         }
 
-        // SMS
+        // SMS (use short message if provided, otherwise use full message)
         if (!empty($params['channels']['sms']) && !empty($params['phone'])) {
+            $sms_message = $params['message_sms'] ?? $params['message'];
+            log_activity('[SEND_NOTIFICATION] SMS channel check passed, calling send_sms_notification()');
             $results['sms'] = $this->send_sms_notification(
                 $params['patient_id'],
                 $params['type'],
                 $params['phone'],
-                $params['message']
+                $sms_message
             );
+        } else {
+            log_activity('[SEND_NOTIFICATION] SMS channel check FAILED - SMS channel: ' .
+                        (isset($params['channels']['sms']) ? ($params['channels']['sms'] ? 'YES' : 'NO') : 'NOT SET') .
+                        ', Phone: ' . ($params['phone'] ?? 'EMPTY'));
         }
 
-        // WhatsApp
+        // WhatsApp (use short message if provided, otherwise use full message)
         if (!empty($params['channels']['whatsapp']) && !empty($params['phone'])) {
+            $whatsapp_message = $params['message_sms'] ?? $params['message'];
             $results['whatsapp'] = $this->send_whatsapp_notification(
                 $params['patient_id'],
                 $params['type'],
                 $params['phone'],
-                $params['message']
+                $whatsapp_message
             );
         }
 
@@ -536,6 +732,8 @@ class Dietetic_notifications_model extends App_Model
      */
     private function send_sms_notification($patient_id, $type, $phone, $message)
     {
+        log_activity('[SMS_NOTIFICATION] Starting - Patient: ' . $patient_id . ', Type: ' . $type . ', Phone: ' . $phone);
+
         $log_data = [
             'patient_id' => $patient_id,
             'notification_type' => $type,
@@ -548,16 +746,23 @@ class Dietetic_notifications_model extends App_Model
 
         try {
             // Get LAM SMS settings
+            log_activity('[SMS_NOTIFICATION] Getting LAM SMS settings...');
             $account_id = $this->get_setting('sms_lam_account_id');
             $password = $this->get_setting('sms_lam_password');
             $sender_id = $this->get_setting('sms_lam_sender_id') ?: 'API_LAMSMS';
+
+            log_activity('[SMS_NOTIFICATION] Settings retrieved - Account ID: ' . ($account_id ? 'SET' : 'EMPTY') .
+                        ', Password: ' . ($password ? 'SET' : 'EMPTY') .
+                        ', Sender ID: ' . $sender_id);
 
             if (empty($account_id) || empty($password)) {
                 throw new Exception('LAM SMS credentials not configured (account_id and password required)');
             }
 
             // LAM SMS API integration
+            log_activity('[SMS_NOTIFICATION] Calling send_lam_sms()...');
             $result = $this->send_lam_sms($phone, $message, $account_id, $password, $sender_id);
+            log_activity('[SMS_NOTIFICATION] send_lam_sms() returned - Success: ' . ($result['success'] ? 'YES' : 'NO'));
 
             if ($result['success']) {
                 $log_data['status'] = 'sent';
@@ -567,11 +772,18 @@ class Dietetic_notifications_model extends App_Model
                 $log_data['error_message'] = $result['error'] ?? 'SMS sending failed';
             }
         } catch (Exception $e) {
+            log_activity('[SMS_NOTIFICATION] EXCEPTION: ' . $e->getMessage());
             $log_data['status'] = 'failed';
             $log_data['error_message'] = $e->getMessage();
         }
 
+        log_activity('[SMS_NOTIFICATION] Inserting into notification logs - Status: ' . $log_data['status']);
         $this->db->insert(db_prefix() . $this->table_logs, $log_data);
+
+        $insert_success = $this->db->affected_rows() > 0;
+        log_activity('[SMS_NOTIFICATION] DB insert result: ' . ($insert_success ? 'SUCCESS' : 'FAILED') .
+                    ' - Returning: ' . ($log_data['status'] === 'sent' ? 'true' : 'false'));
+
         return $log_data['status'] === 'sent';
     }
 
@@ -581,6 +793,8 @@ class Dietetic_notifications_model extends App_Model
      */
     private function send_lam_sms($phone, $message, $account_id, $password, $sender_id = 'API_LAMSMS')
     {
+        log_activity('[LAM_SMS] Starting - Phone: ' . $phone . ', Message length: ' . strlen($message));
+
         // LAM SMS API endpoint
         $url = 'https://lamsms.lafricamobile.com/api';
 
@@ -594,6 +808,8 @@ class Dietetic_notifications_model extends App_Model
         if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
             $phone = '221' . $phone;
         }
+
+        log_activity('[LAM_SMS] Phone formatted: ' . $phone);
 
         // Prepare LAM API request
         $data = [
@@ -611,7 +827,19 @@ class Dietetic_notifications_model extends App_Model
             ]
         ];
 
+        log_activity('[LAM_SMS] Data prepared, encoding JSON...');
+
+        $json_data = json_encode($data);
+        if ($json_data === false) {
+            log_activity('[LAM_SMS] JSON encoding FAILED: ' . json_last_error_msg());
+            return ['success' => false, 'error' => 'JSON encoding failed: ' . json_last_error_msg()];
+        }
+
+        log_activity('[LAM_SMS] JSON encoded successfully, length: ' . strlen($json_data));
+
         $ch = curl_init($url);
+        log_activity('[LAM_SMS] cURL initialized');
+
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -621,16 +849,20 @@ class Dietetic_notifications_model extends App_Model
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_POSTFIELDS => $json_data,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json'
             ]
         ]);
 
+        log_activity('[LAM_SMS] cURL options set, executing request...');
+
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curl_error = curl_error($ch);
         curl_close($ch);
+
+        log_activity('[LAM_SMS] cURL executed - HTTP Code: ' . $http_code . ', Error: ' . ($curl_error ?: 'none'));
 
         // Log the request for debugging
         log_activity('LAM SMS sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
@@ -661,15 +893,27 @@ class Dietetic_notifications_model extends App_Model
 
         try {
             // Get WhatsApp settings
-            $api_key = $this->get_setting('whatsapp_api_key');
-            $provider = $this->get_setting('whatsapp_provider');
+            $provider = $this->get_setting('whatsapp_provider') ?: 'lam';
 
-            if (empty($api_key)) {
-                throw new Exception('WhatsApp API key not configured');
+            if ($provider == 'lam') {
+                // LAM WhatsApp API
+                $account_id = $this->get_setting('whatsapp_lam_account_id');
+                $password = $this->get_setting('whatsapp_lam_password');
+                $sender_number = $this->get_setting('whatsapp_lam_sender_number');
+
+                if (empty($account_id) || empty($password)) {
+                    throw new Exception('LAM WhatsApp credentials not configured (account_id and password required)');
+                }
+
+                $result = $this->send_lam_whatsapp($phone, $message, $account_id, $password, $sender_number);
+            } else {
+                // Other providers (Twilio, Meta, etc.)
+                $api_key = $this->get_setting('whatsapp_api_key');
+                if (empty($api_key)) {
+                    throw new Exception('WhatsApp API key not configured');
+                }
+                $result = $this->send_whatsapp_api($phone, $message, $provider, $api_key);
             }
-
-            // WhatsApp API integration (Twilio, Meta, etc.)
-            $result = $this->send_whatsapp_api($phone, $message, $provider, $api_key);
 
             if ($result['success']) {
                 $log_data['status'] = 'sent';
@@ -688,13 +932,99 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
-     * WhatsApp API call (placeholder - implement based on provider)
+     * LAM WhatsApp API call
+     * Documentation: https://developers.lafricamobile.com/docs/whatsapp
+     */
+    private function send_lam_whatsapp($phone, $message, $account_id, $password, $sender_number = null)
+    {
+        // LAM WhatsApp API endpoint
+        $url = 'https://lamwhatsapp.lafricamobile.com/api';
+
+        // Get additional settings
+        $ret_url = $this->get_setting('whatsapp_lam_ret_url') ?: site_url('dietetic/whatsapp_callback');
+
+        // Format phone number for LAM API
+        // Ensure phone starts with country code (e.g., 221 for Senegal)
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
+            $phone = '221' . $phone;
+        }
+
+        // Add + prefix for WhatsApp format
+        if (!preg_match('/^\+/', $phone)) {
+            $phone = '+' . $phone;
+        }
+
+        // Prepare LAM WhatsApp API request
+        $data = [
+            'accountid' => $account_id,
+            'password' => $password,
+            'ret_id' => 'dietetic_wa_' . time(),
+            'ret_url' => $ret_url,
+            'text' => $message,
+            'to' => [
+                [
+                    'ret_id_1' => $phone
+                ]
+            ]
+        ];
+
+        // Add sender number if provided
+        if ($sender_number) {
+            $data['sender'] = $sender_number;
+        }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ]
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        // Log the request for debugging
+        log_activity('LAM WhatsApp sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
+
+        if ($http_code == 200 || $http_code == 201) {
+            $response_data = json_decode($response, true);
+            return ['success' => true, 'response' => $response_data];
+        } else {
+            $error_msg = $curl_error ?: $response;
+            return ['success' => false, 'error' => $error_msg];
+        }
+    }
+
+    /**
+     * WhatsApp API call for other providers (Twilio, Meta Business API, etc.)
      */
     private function send_whatsapp_api($phone, $message, $provider, $api_key)
     {
-        // À implémenter selon le provider (Twilio, Meta Business API, etc.)
-        // Pour l'instant, retourne un placeholder
-        return ['success' => false, 'error' => 'WhatsApp provider not fully configured'];
+        // Placeholder for other providers
+        // Can be implemented based on specific provider requirements
+
+        if ($provider == 'twilio') {
+            // Twilio WhatsApp implementation
+            return ['success' => false, 'error' => 'Twilio WhatsApp not yet implemented'];
+        } elseif ($provider == 'meta') {
+            // Meta Business API implementation
+            return ['success' => false, 'error' => 'Meta WhatsApp not yet implemented'];
+        } else {
+            return ['success' => false, 'error' => 'Unknown WhatsApp provider: ' . $provider];
+        }
     }
 
     /**
@@ -909,7 +1239,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -948,7 +1279,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -986,7 +1318,8 @@ class Dietetic_notifications_model extends App_Model
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1160,28 +1493,44 @@ class Dietetic_notifications_model extends App_Model
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : '';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "📅 Une nouvelle consultation a été planifiée :\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "📆 Date : {$formatted_date}\n";
+        // Full message for email and frontend
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "📅 Une nouvelle consultation a été planifiée :\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "📆 Date : {$formatted_date}\n";
         if ($formatted_time) {
-            $message .= "🕐 Heure : {$formatted_time}\n";
+            $message_full .= "🕐 Heure : {$formatted_time}\n";
         }
-        $message .= "📝 Type : {$consultation_type}\n\n";
-        $message .= "Nous avons hâte de vous voir ! 😊";
+        $message_full .= "📝 Type : {$consultation_type}\n\n";
+        $message_full .= "Nous avons hâte de vous voir ! 😊";
+
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
+        // Short SMS message (max 160 characters)
+        $message_sms = "Bonjour {$firstname}, consultation prevue le {$formatted_date}";
+        if ($formatted_time) {
+            $message_sms .= " a {$formatted_time}";
+        }
+        $message_sms .= " avec {$dietitian_name}. A bientot !";
+
+        // Debug logging
+        log_activity('Consultation notification - Patient ID: ' . $patient_id . ', Phone: ' . $contact_phone . ', SMS enabled: ' . ($preferences->channel_sms ? 'YES' : 'NO') . ', SMS length: ' . strlen($message_sms));
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_scheduled',
             'subject' => '📅 Nouvelle Consultation Planifiée',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1 // Fixed: Added missing push channel
             ]
         ]);
     }
@@ -1212,24 +1561,33 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'à confirmer';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "⏰ Rappel : Votre consultation est demain !\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "🕐 Heure : {$formatted_time}\n\n";
-        $message .= "N'oubliez pas votre rendez-vous ! 📋";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "⏰ Rappel : Votre consultation est demain !\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "🕐 Heure : {$formatted_time}\n\n";
+        $message_full .= "N'oubliez pas votre rendez-vous ! 📋";
+
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
+        // Short SMS message
+        $message_sms = "Bonjour {$firstname}, rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_day',
             'subject' => '⏰ Rappel : Consultation Demain',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1260,24 +1618,33 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_time = $consultation_time ? date('H:i', strtotime($consultation_time)) : 'bientôt';
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "⏰ Votre consultation commence dans 1 heure !\n\n";
-        $message .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message .= "🕐 Heure : {$formatted_time}\n\n";
-        $message .= "À tout de suite ! 😊";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "⏰ Votre consultation commence dans 1 heure !\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "🕐 Heure : {$formatted_time}\n\n";
+        $message_full .= "À tout de suite ! 😊";
+
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
+        // Short SMS message
+        $message_sms = "Bonjour {$firstname}, rappel : consultation dans 1h a {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_reminder_hour',
             'subject' => '⏰ Consultation dans 1 heure',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -1308,25 +1675,37 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_date = date('d/m/Y', strtotime($consultation_date));
 
-        $message = "Bonjour {$contact_name},\n\n";
-        $message .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
         if ($reason) {
-            $message .= "Raison : {$reason}\n\n";
+            $message_full .= "Raison : {$reason}\n\n";
         }
-        $message .= "Veuillez contacter votre diététicien pour reprogrammer.";
+        $message_full .= "Veuillez contacter votre diététicien pour reprogrammer.";
+
+        // Extract first name for SMS personalization
+        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
+
+        // Short SMS message
+        $message_sms = "Bonjour {$firstname}, consultation du {$formatted_date} annulee.";
+        if ($reason && strlen($reason) < 80) {
+            $message_sms .= " Raison: {$reason}";
+        }
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_cancelled',
             'subject' => '❌ Consultation Annulée',
-            'message' => $message,
+            'message' => $message_full,
+            'message_sms' => $message_sms,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
             'channels' => [
                 'email' => $preferences->channel_email,
                 'sms' => $preferences->channel_sms,
-                'whatsapp' => $preferences->channel_whatsapp
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
             ]
         ]);
     }
@@ -2210,6 +2589,138 @@ class Dietetic_notifications_model extends App_Model
             ]
         ]);
     }
+
+    // ==================== FOOD SURVEY NOTIFICATIONS ====================
+
+    /**
+     * Notify patient when a new food survey is assigned
+     *
+     * @param int $patient_id
+     * @param string $survey_name
+     * @param string $start_date
+     * @param int $duration_days
+     * @param string $dietitian_name
+     * @return array|false
+     */
+    public function notify_food_survey_assigned($patient_id, $survey_name, $start_date, $duration_days, $dietitian_name)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_food_entry) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? ($contact->firstname ?: $client->company) : $client->company;
+
+        $formatted_date = date('d/m/Y', strtotime($start_date));
+        $end_date = date('d/m/Y', strtotime($start_date . ' + ' . $duration_days . ' days'));
+
+        $subject = '📋 Nouvelle Enquête Alimentaire';
+
+        $message = "Bonjour {$contact_name},\n\n";
+        $message .= "Votre diététicien {$dietitian_name} vous a assigné une nouvelle enquête alimentaire :\n\n";
+        $message .= "📝 {$survey_name}\n";
+        $message .= "📅 Du {$formatted_date} au {$end_date}\n";
+        $message .= "⏱️ Durée : {$duration_days} jour" . ($duration_days > 1 ? 's' : '') . "\n\n";
+        $message .= "Cette enquête nous aidera à mieux comprendre vos habitudes alimentaires et à adapter votre programme.\n\n";
+        $message .= "🔗 Accédez à votre enquête :\n";
+        $message .= site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Merci de votre collaboration ! 💪\n\n";
+        $message .= "L'équipe DietSénégal";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'food_survey_assigned',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/food_surveys'),
+                'survey_name' => $survey_name,
+                'start_date' => $start_date
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when a food survey is about to expire
+     *
+     * @param int $patient_id
+     * @param string $survey_name
+     * @param string $end_date
+     * @return array|false
+     */
+    public function notify_food_survey_reminder($patient_id, $survey_name, $end_date)
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_food_entry) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? ($contact->firstname ?: $client->company) : $client->company;
+
+        $formatted_date = date('d/m/Y', strtotime($end_date));
+
+        $subject = '⏰ Rappel : Enquête Alimentaire';
+
+        $message = "Bonjour {$contact_name},\n\n";
+        $message .= "Votre enquête alimentaire \"{$survey_name}\" se termine bientôt !\n\n";
+        $message .= "📅 Date de fin : {$formatted_date}\n\n";
+        $message .= "N'oubliez pas de compléter vos entrées pour nous aider à mieux vous accompagner.\n\n";
+        $message .= "🔗 " . site_url('dietetic/portal/food_surveys') . "\n\n";
+        $message .= "Merci ! 😊";
+
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'food_survey_reminder',
+            'subject' => $subject,
+            'message' => $message,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/food_surveys'),
+                'survey_name' => $survey_name
+            ]
+        ]);
+    }
+
+    // ==================== GENERIC NOTIFICATIONS ====================
 
     /**
      * Send generic push notification

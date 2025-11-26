@@ -912,6 +912,11 @@
                 <span>Mon plan</span>
             </a>
 
+            <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'statistics') ? 'active' : ''; ?>">
+                <i class="fa fa-area-chart"></i>
+                <span>Mes Statistiques</span>
+            </a>
+
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'consultations') ? 'active' : ''; ?>">

@@ -1,58 +1,39 @@
-# Migrations de la Base de Données - Module Diététique
+# 🗄️ Migration des Champs d'Anamnèse - Module Diététique
 
-Ce dossier contient les scripts de migration SQL pour mettre à jour la structure de la base de données.
+## 📝 Description
 
-## Comment Appliquer les Migrations
+Cette migration ajoute **60+ nouveaux champs** à la table `dietic_patients` pour permettre un suivi d'anamnèse complet et professionnel des patients.
 
-### Option 1: Via phpMyAdmin ou Interface SQL
+## 🎯 Champs Ajoutés
 
-1. Connectez-vous à votre base de données via phpMyAdmin
-2. Sélectionnez votre base de données
-3. Allez dans l'onglet "SQL"
-4. Copiez-collez le contenu du fichier de migration
-5. Cliquez sur "Exécuter"
+### Section 1: Informations Personnelles (4 champs)
+- `title` - Civilité (M./Mme/Mlle)
+- `occupation` - Profession  
+- `work_type` - Type de travail (sédentaire → très physique)
+- `address` - Adresse complète
 
-### Option 2: Via Ligne de Commande
+### Section 1.5: Informations Spécifiques Femmes (4 champs)
+- `is_pregnant` - Grossesse en cours (yes/no)
+- `pregnancy_months` - Mois de grossesse (1-9)
+- `breastfeeding` - Allaitement (yes/no)
+- `menstrual_cycle` - Cycle menstruel
 
-```bash
-mysql -u votre_utilisateur -p votre_base_de_donnees < add_communication_channels.sql
-```
+## 🚀 Comment Appliquer la Migration
 
-## Migrations Disponibles
+### Étape 1: Vérifier l'état actuel
+Accédez à: `https://votredomaine.com/admin/dietetic/check_anamnesis_fields`
 
-### add_communication_channels.sql (2025-01-22)
+### Étape 2: Appliquer la migration
+Accédez à: `https://votredomaine.com/admin/dietetic/apply_anamnesis_migration`
 
-**Description**: Ajoute les champs pour les canaux de communication en ligne dans la table consultations.
+⚠️ **Attention:** Cette opération nécessite les droits administrateur.
 
-**Nouveaux Champs**:
-- `consultation_mode`: VARCHAR(20) - Mode de consultation (in_person ou online)
-- `online_platform`: VARCHAR(50) - Plateforme utilisée (zoom, google_meet, teams, whatsapp, skype, other)
-- `meeting_link`: VARCHAR(500) - Lien de la réunion en ligne
+## ✅ Vérification Post-Migration
 
-**Impact**: Permet de gérer les consultations en ligne via Zoom, Google Meet, Microsoft Teams, WhatsApp, Skype, etc.
+1. ✅ Tous les champs présents dans la base de données
+2. ✅ Le formulaire patient s'affiche correctement
+3. ✅ Les calculs automatiques fonctionnent
+4. ✅ Les champs conditionnels s'affichent correctement
+5. ✅ La sauvegarde des données fonctionne
 
-**Compatible avec**: Toutes les versions existantes du module
-
-**Rollback**: Si nécessaire, vous pouvez supprimer les colonnes avec:
-```sql
-ALTER TABLE \`tbldietic_consultations\` DROP COLUMN \`consultation_mode\`;
-ALTER TABLE \`tbldietic_consultations\` DROP COLUMN \`online_platform\`;
-ALTER TABLE \`tbldietic_consultations\` DROP COLUMN \`meeting_link\`;
-```
-
-## Vérification
-
-Après avoir appliqué la migration, vous pouvez vérifier que les colonnes ont bien été ajoutées:
-
-```sql
-DESCRIBE tbldietic_consultations;
-```
-
-Vous devriez voir les 3 nouvelles colonnes dans la structure de la table.
-
-## Notes Importantes
-
-- ⚠️ **Sauvegardez toujours votre base de données avant d'appliquer une migration**
-- Les migrations sont conçues pour être appliquées dans l'ordre chronologique
-- Si une migration échoue, vérifiez les messages d'erreur et assurez-vous que votre version MySQL/MariaDB est compatible
-- Les migrations sont idempotentes autant que possible (utilisation de IF NOT EXISTS, etc.)
+Bon travail ! 🎉

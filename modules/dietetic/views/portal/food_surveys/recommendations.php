@@ -621,6 +621,37 @@ $this->load->view('portal/includes/portal_header');
                                 <?php echo nl2br(htmlspecialchars($recommendation->recommendation_text)); ?>
                             </div>
 
+                            <!-- Communication Section (always visible) -->
+                            <div style="background: #f8f9fa; padding: 14px; border-radius: 12px; margin-top: 16px;">
+                                <h4 style="font-size: 13px; font-weight: 600; margin: 0 0 10px 0; color: #495057;">
+                                    <i class="fa fa-comments"></i> Répondre à votre diététicien
+                                </h4>
+
+                                <!-- Audio Notes Section -->
+                                <div class="rec-audio-recorder-wrapper" id="rec-audio-recorder-<?php echo $recommendation->id; ?>" style="margin-top: 0; background: transparent; padding: 0; border: none;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                        <button type="button" class="rec-audio-record-btn record" id="rec-record-btn-<?php echo $recommendation->id; ?>"
+                                                onclick="toggleRecommendationRecording(<?php echo $recommendation->id; ?>, '<?php echo site_url('dietetic/portal/upload_recommendation_audio_response'); ?>', '<?php echo site_url('dietetic/portal/delete_recommendation_audio_response'); ?>', true)"
+                                                title="Répondre par note vocale">
+                                            <i class="fa fa-microphone"></i>
+                                        </button>
+                                        <button type="button" class="rec-audio-record-btn stop" id="rec-stop-btn-<?php echo $recommendation->id; ?>" style="display: none;"
+                                                onclick="toggleRecommendationRecording(<?php echo $recommendation->id; ?>, '<?php echo site_url('dietetic/portal/upload_recommendation_audio_response'); ?>', '<?php echo site_url('dietetic/portal/delete_recommendation_audio_response'); ?>', true)"
+                                                title="Arrêter l'enregistrement">
+                                            <i class="fa fa-stop"></i>
+                                        </button>
+                                        <div class="rec-audio-recording-indicator" id="rec-recording-indicator-<?php echo $recommendation->id; ?>" style="display: none;">
+                                            <div class="rec-audio-recording-pulse"></div>
+                                            Enregistrement en cours...
+                                        </div>
+                                        <span style="font-size: 12px; color: #6c757d;">Envoyer une note vocale</span>
+                                    </div>
+                                    <div class="rec-audio-player-list" id="rec-audio-list-<?php echo $recommendation->id; ?>">
+                                        <p style="color: #6c757d; font-size: 12px; margin: 0;">Chargement...</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="comments-section">
                                 <div class="comments-header">
                                     <i class="fa fa-comment"></i>
@@ -757,7 +788,23 @@ $this->load->view('portal/includes/portal_header');
                 };
                 return text.replace(/[&<>"']/g, function(m) { return map[m]; });
             }
+
+            // Load audio notes for each recommendation
+            <?php if (!empty($entries)): ?>
+                <?php foreach ($entries as $entry): ?>
+                    <?php if (isset($entry->recommendations_by_meal)): ?>
+                        <?php foreach ($entry->recommendations_by_meal as $meal_type => $recommendations): ?>
+                            <?php foreach ($recommendations as $recommendation): ?>
+                                loadRecommendationAudios(<?php echo $recommendation->id; ?>, true);
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         });
     </script>
+
+    <!-- Include Recommendation Audio Recorder Component -->
+    <?php $this->load->view('components/recommendation_audio_recorder'); ?>
 
 <?php $this->load->view("portal/includes/portal_footer"); ?>

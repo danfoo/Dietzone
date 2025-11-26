@@ -115,6 +115,14 @@ class Notifications extends AdminController
 
                 // WhatsApp settings
                 'whatsapp_provider' => $this->input->post('whatsapp_provider'),
+
+                // LAM WhatsApp API credentials
+                'whatsapp_lam_account_id' => $this->input->post('whatsapp_lam_account_id'),
+                'whatsapp_lam_password' => $this->input->post('whatsapp_lam_password'),
+                'whatsapp_lam_sender_number' => $this->input->post('whatsapp_lam_sender_number'),
+                'whatsapp_lam_ret_url' => $this->input->post('whatsapp_lam_ret_url'),
+
+                // Other WhatsApp providers (Twilio, Meta, etc.)
                 'whatsapp_api_key' => $this->input->post('whatsapp_api_key'),
                 'whatsapp_phone_number' => $this->input->post('whatsapp_phone_number'),
 
@@ -138,6 +146,12 @@ class Notifications extends AdminController
             if (isset($safe_settings['sms_lam_password'])) {
                 $safe_settings['sms_lam_password'] = $settings['sms_lam_password'] ? '***SET***' : '***EMPTY***';
             }
+            if (isset($safe_settings['whatsapp_lam_password'])) {
+                $safe_settings['whatsapp_lam_password'] = $settings['whatsapp_lam_password'] ? '***SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['whatsapp_api_key'])) {
+                $safe_settings['whatsapp_api_key'] = $settings['whatsapp_api_key'] ? '***SET***' : '***EMPTY***';
+            }
             if (isset($safe_settings['firebase_service_account_json'])) {
                 $safe_settings['firebase_service_account_json'] = $settings['firebase_service_account_json'] ? '***JSON_SET***' : '***EMPTY***';
             }
@@ -154,12 +168,10 @@ class Notifications extends AdminController
                 try {
                     // Log each setting before saving (hide sensitive data)
                     $display_value = $value;
-                    if ($key === 'sms_lam_password' && $value) {
+                    if (in_array($key, ['sms_lam_password', 'whatsapp_lam_password', 'whatsapp_api_key', 'firebase_server_key']) && $value) {
                         $display_value = '***SET***';
                     } elseif ($key === 'firebase_service_account_json' && $value) {
                         $display_value = '***JSON_SET***';
-                    } elseif ($key === 'firebase_server_key' && $value) {
-                        $display_value = '***SET***';
                     }
                     log_activity("🔍 [DEBUG] Processing setting: {$key} = " . var_export($display_value, true));
 
@@ -255,6 +267,58 @@ class Notifications extends AdminController
                 'details' => $result
             ]);
         }
+    }
+
+    /**
+     * Enable SMS for all existing patients (AJAX)
+     * URL: /admin/dietetic/notifications/enable_sms_all
+     */
+    public function enable_sms_all()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $affected = $this->dietetic_notifications_model->enable_sms_for_all_patients();
+
+        echo json_encode([
+            'success' => $affected >= 0,
+            'message' => "SMS activé pour {$affected} patient(s)",
+            'affected' => $affected
+        ]);
+    }
+
+    /**
+     * Enable WhatsApp for all existing patients (AJAX)
+     * URL: /admin/dietetic/notifications/enable_whatsapp_all
+     */
+    public function enable_whatsapp_all()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        // Load notifications model if not already loaded
+        if (!isset($this->dietetic_notifications_model)) {
+            $this->load->model('dietetic/dietetic_notifications_model');
+        }
+
+        $affected = $this->dietetic_notifications_model->enable_whatsapp_for_all_patients();
+
+        echo json_encode([
+            'success' => $affected >= 0,
+            'message' => "WhatsApp activé pour {$affected} patient(s)",
+            'affected' => $affected
+        ]);
     }
 
     /**
@@ -716,11 +780,25 @@ class Notifications extends AdminController
 
         // Load existing templates from database
         $template_keys = [
-            // Email templates
+            // Welcome
+            'welcome',
+            // Programs
+            'program_assigned', 'program_updated',
+            // Consultations
+            'consultation_scheduled', 'consultation_reminder', 'consultation_cancelled',
+            // Food Surveys
+            'food_survey_assigned', 'food_survey_reminder',
+            // Measurements & Weight
+            'weight_reminder', 'milestone',
+            // Hydration
+            'water_reminder',
+            // Messages
+            'new_message',
+            // Email templates (legacy)
             'email_recommendation', 'email_consultation', 'email_milestone',
-            // SMS templates
+            // SMS templates (legacy)
             'sms_hydration', 'sms_weight_reminder', 'sms_consultation_reminder',
-            // WhatsApp templates
+            // WhatsApp templates (legacy)
             'whatsapp_program_assigned', 'whatsapp_food_entry_reminder'
         ];
 
@@ -875,6 +953,20 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'À installer';
                 break;
 
+            case 'statistics_notes':
+                // Check if statistics notes table exists
+                $installed = $this->db->table_exists(db_prefix() . 'dietic_statistics_notes');
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
+            case 'hydration_tracking':
+                // Check if hydration tracking tables exist
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_hydration_tracking');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_hydration_goals');
+                $installed = $table1 && $table2;
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -908,30 +1000,40 @@ class Notifications extends AdminController
         try {
             $migration = $this->input->post('migration');
 
-            // Determine which SQL file to use
-            $sql_files = [
+            // Determine which migration file to use (SQL or PHP)
+            $migration_files = [
                 'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
                 'optimizations' => 'optimize_notifications_performance.sql',
                 'permissions' => 'add_staff_permissions.sql',
-                'firebase_v1' => 'add_firebase_v1_api_support.sql'
+                'firebase_v1' => 'add_firebase_v1_api_support.sql',
+                'statistics_notes' => 'add_statistics_notes.php',
+                'hydration_tracking' => 'add_hydration_tracking.php'
             ];
 
-            if (!isset($sql_files[$migration])) {
+            if (!isset($migration_files[$migration])) {
                 // Fallback to old behavior for backward compatibility
-                $sql_file = module_dir_path('dietetic', 'migrations/add_notifications_system.sql');
+                $migration_file = module_dir_path('dietetic', 'migrations/add_notifications_system.sql');
             } else {
-                $sql_file = module_dir_path('dietetic', 'migrations/' . $sql_files[$migration]);
+                $migration_file = module_dir_path('dietetic', 'migrations/' . $migration_files[$migration]);
             }
 
-            if (!file_exists($sql_file)) {
+            if (!file_exists($migration_file)) {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Fichier de migration introuvable: ' . basename($sql_file)
+                    'message' => 'Fichier de migration introuvable: ' . basename($migration_file)
                 ]);
                 return;
             }
+
+            // Check if it's a PHP migration (new format)
+            if (pathinfo($migration_file, PATHINFO_EXTENSION) === 'php') {
+                return $this->execute_php_migration($migration_file, $migration);
+            }
+
+            // Otherwise, it's a SQL file (old format)
+            $sql_file = $migration_file;
 
             // Check if already installed (for base notifications only)
             if ($migration === 'notifications') {
@@ -1155,6 +1257,82 @@ class Notifications extends AdminController
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur lors du nettoyage: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Execute PHP-based migration (CodeIgniter migration format)
+     */
+    private function execute_php_migration($migration_file, $migration_name)
+    {
+        try {
+            // Check if already installed based on migration name
+            if ($migration_name === 'statistics_notes') {
+                if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                    echo json_encode([
+                        'success' => true,
+                        'already_exists' => true,
+                        'message' => 'Cette migration a déjà été exécutée'
+                    ]);
+                    return;
+                }
+            }
+
+            if ($migration_name === 'hydration_tracking') {
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_hydration_tracking');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_hydration_goals');
+                if ($table1 && $table2) {
+                    echo json_encode([
+                        'success' => true,
+                        'already_exists' => true,
+                        'message' => 'Cette migration a déjà été exécutée'
+                    ]);
+                    return;
+                }
+            }
+
+            // Load the migration file
+            require_once $migration_file;
+
+            // Get the migration class name from filename
+            $filename = basename($migration_file, '.php');
+            $class_name = 'Migration_' . str_replace(' ', '_', ucwords(str_replace('_', ' ', $filename)));
+
+            if (!class_exists($class_name)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Classe de migration introuvable: ' . $class_name
+                ]);
+                return;
+            }
+
+            // Instantiate and run the migration
+            $migration = new $class_name();
+
+            if (!method_exists($migration, 'up')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Méthode "up" introuvable dans la migration'
+                ]);
+                return;
+            }
+
+            // Execute the migration
+            $migration->up();
+
+            log_activity('Migration PHP exécutée: ' . $migration_name);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration installée avec succès!'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('PHP Migration Error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'exécution: ' . $e->getMessage()
             ]);
         }
     }
