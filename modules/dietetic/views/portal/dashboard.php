@@ -239,289 +239,191 @@ $this->load->view('portal/includes/portal_header');
     font-weight: 700;
 }
 
-/* Hydration Section */
-.hydration-card {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    border-radius: 16px;
-    padding: 28px 32px;
-    border: 2px solid #90caf9;
+/* Hydration Section - Compact Version */
+.hydration-card-compact {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 2px solid #e3f2fd;
     margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+    transition: all 0.3s;
 }
 
-.hydration-card::before {
-    content: '';
-    position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 150px;
-    height: 150px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
+.hydration-card-compact:hover {
+    border-color: #4fc3f7;
+    box-shadow: 0 4px 12px rgba(79, 195, 247, 0.15);
 }
 
-.hydration-header {
+.hydration-header-compact {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
-.hydration-title {
-    font-size: 20px;
+.hydration-title-compact {
+    font-size: 16px;
     font-weight: 700;
     color: #01579b;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
-.hydration-title i {
+.hydration-title-compact i {
+    color: #0288d1;
+    font-size: 18px;
+}
+
+.hydration-goal-display {
+    font-size: 18px;
+    font-weight: 700;
     color: #0288d1;
 }
 
-.hydration-content {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 32px;
-    align-items: center;
+.hydration-goal-display span {
+    color: #01579b;
 }
 
-.water-container {
-    position: relative;
-    width: 200px;
-    height: 300px;
-    margin: 0 auto;
-}
-
-.water-glass {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 0 0 30px 30px;
-    box-shadow:
-        inset 0 0 30px rgba(0, 0, 0, 0.1),
-        0 8px 20px rgba(0, 0, 0, 0.2);
+.hydration-progress-bar {
+    height: 12px;
+    background: #e3f2fd;
+    border-radius: 6px;
     overflow: hidden;
+    margin-bottom: 16px;
+    position: relative;
 }
 
-.water-level {
+.hydration-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4fc3f7 0%, #0288d1 100%);
+    border-radius: 6px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.hydration-progress-fill::after {
+    content: '';
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
-    width: 100%;
-    height: 0%;
-    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
-    transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0 0 30px 30px;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
 }
 
-.water-wave {
-    position: absolute;
-    top: -10px;
-    left: -50%;
-    width: 200%;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    animation: wave 3s linear infinite;
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
-@keyframes wave {
-    0%, 100% {
-        transform: translateX(0) translateY(0);
-    }
-    25% {
-        transform: translateX(-25%) translateY(-5px);
-    }
-    50% {
-        transform: translateX(-50%) translateY(0);
-    }
-    75% {
-        transform: translateX(-25%) translateY(-5px);
-    }
-}
-
-.water-level-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 32px;
-    font-weight: 700;
-    color: #01579b;
-    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
-    z-index: 10;
-}
-
-.water-goal-text {
-    text-align: center;
-    margin-top: 12px;
-    font-size: 14px;
-    color: #01579b;
-    font-weight: 600;
-}
-
-.hydration-actions {
+.hydration-actions-compact {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
 }
 
-.quick-add-section {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.hydration-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: flex-end;
 }
 
-.quick-add-title {
-    font-size: 14px;
+.custom-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.compact-label {
+    font-size: 10px;
     font-weight: 600;
-    color: #01579b;
-    margin-bottom: 12px;
+    color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 0;
 }
 
-.quick-add-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-.quick-add-btn {
-    padding: 16px;
-    background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 8px rgba(2, 136, 209, 0.3);
-}
-
-.quick-add-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(2, 136, 209, 0.4);
-}
-
-.quick-add-btn:active {
-    transform: translateY(-1px);
-}
-
-.quick-add-btn i {
-    font-size: 24px;
-}
-
-.custom-add-section {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.custom-add-form {
-    display: flex;
-    gap: 12px;
-}
-
-.custom-input {
-    flex: 1;
-    padding: 12px 16px;
+.compact-input {
+    width: 100%;
+    padding: 10px 14px;
     border: 2px solid #90caf9;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 15px;
     font-weight: 600;
     color: #01579b;
+    transition: all 0.3s;
 }
 
-.custom-input:focus {
+.compact-input:focus {
     outline: none;
     border-color: #0288d1;
     box-shadow: 0 0 0 3px rgba(2, 136, 209, 0.1);
 }
 
-.add-custom-btn {
-    padding: 12px 24px;
+.quick-buttons-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.quick-btn-compact {
+    padding: 10px 16px;
     background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     font-weight: 700;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.add-custom-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.3);
-}
-
-.hydration-history {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.history-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #01579b;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.history-bars {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-}
-
-.history-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 6px;
+    box-shadow: 0 2px 6px rgba(2, 136, 209, 0.3);
+    white-space: nowrap;
 }
 
-.history-bar-fill {
-    width: 100%;
-    height: 80px;
-    background: #e3f2fd;
-    border-radius: 6px;
-    position: relative;
-    overflow: hidden;
+.quick-btn-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.4);
 }
 
-.history-bar-value {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
-    border-radius: 6px;
-    transition: height 0.5s ease;
+.quick-btn-compact:active {
+    transform: translateY(0);
 }
 
-.history-day {
-    font-size: 11px;
-    font-weight: 600;
-    color: #01579b;
-    text-transform: uppercase;
+.quick-btn-compact i {
+    font-size: 16px;
+}
+
+.add-custom-btn-compact {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(72, 187, 120, 0.3);
+    min-width: 44px;
+}
+
+.add-custom-btn-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.add-custom-btn-compact:active {
+    transform: translateY(0);
 }
 
 /* Other Stats Cards */
@@ -975,6 +877,31 @@ $this->load->view('portal/includes/portal_header');
         width: 100%;
         justify-content: center;
     }
+
+    /* Hydration compact responsive */
+    .hydration-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .quick-buttons-inline {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .quick-btn-compact {
+        flex: 1;
+        min-width: calc(33.33% - 6px);
+        justify-content: center;
+    }
+
+    .add-custom-btn-compact {
+        width: 100%;
+    }
+
+    .hydration-goal-display {
+        font-size: 14px;
+    }
 }
 </style>
 
@@ -1325,73 +1252,49 @@ if (!$current_weight || !$target_weight) {
     <?php } ?>
 </div>
 
-<!-- Hydration Card -->
-<div class="hydration-card">
-    <div class="hydration-header">
-        <div class="hydration-title">
+<!-- Hydration Card - Compact Version -->
+<div class="hydration-card-compact">
+    <div class="hydration-header-compact">
+        <div class="hydration-title-compact">
             <i class="fa fa-tint"></i>
-            Hydratation du jour
+            Hydratation
+        </div>
+        <div class="hydration-goal-display">
+            <span id="waterLevelText">0 ml</span> / <span id="waterGoalText">2000 ml</span>
         </div>
     </div>
 
-    <div class="hydration-content">
-        <!-- Water Glass Visualization -->
-        <div class="water-container">
-            <div class="water-glass">
-                <div class="water-level" id="waterLevel">
-                    <div class="water-wave"></div>
-                    <div class="water-wave" style="animation-delay: -1.5s; opacity: 0.7;"></div>
-                </div>
-                <div class="water-level-text" id="waterLevelText">0 ml</div>
-            </div>
-            <div class="water-goal-text" id="waterGoalText">Objectif: 2000 ml</div>
-        </div>
+    <div class="hydration-progress-bar">
+        <div class="hydration-progress-fill" id="hydrationProgressBar" style="width: 0%"></div>
+    </div>
 
-        <!-- Actions -->
-        <div class="hydration-actions">
-            <!-- Quick Add Buttons -->
-            <div class="quick-add-section">
-                <div class="quick-add-title">Ajouter rapidement</div>
-                <div class="quick-add-buttons">
-                    <button class="quick-add-btn" onclick="addWater(250)">
-                        <i class="fa fa-glass"></i>
-                        250ml
-                    </button>
-                    <button class="quick-add-btn" onclick="addWater(500)">
-                        <i class="fa fa-glass"></i>
-                        500ml
-                    </button>
-                    <button class="quick-add-btn" onclick="addWater(750)">
-                        <i class="fa fa-glass"></i>
-                        750ml
-                    </button>
-                </div>
+    <div class="hydration-actions-compact">
+        <!-- Custom Amount Section with Quick Buttons -->
+        <div class="hydration-row">
+            <div class="custom-input-section">
+                <label class="compact-label">Quantité personnalisée</label>
+                <input type="number"
+                       id="customWaterAmount"
+                       class="compact-input"
+                       placeholder="Ex: 350"
+                       min="1"
+                       max="2000"
+                       step="50">
             </div>
 
-            <!-- Custom Amount -->
-            <div class="custom-add-section">
-                <div class="quick-add-title">Quantité personnalisée</div>
-                <div class="custom-add-form">
-                    <input type="number"
-                           id="customWaterAmount"
-                           class="custom-input"
-                           placeholder="Ex: 350"
-                           min="1"
-                           max="2000"
-                           step="50">
-                    <button class="add-custom-btn" onclick="addCustomWater()">
-                        <i class="fa fa-plus"></i>
-                        Ajouter
-                    </button>
-                </div>
-            </div>
-
-            <!-- History -->
-            <div class="hydration-history">
-                <div class="history-title">7 derniers jours</div>
-                <div class="history-bars" id="hydrationHistory">
-                    <!-- Will be filled by JavaScript -->
-                </div>
+            <div class="quick-buttons-inline">
+                <button class="quick-btn-compact" onclick="addWater(250)" title="250ml">
+                    <i class="fa fa-glass"></i> 250ml
+                </button>
+                <button class="quick-btn-compact" onclick="addWater(500)" title="500ml">
+                    <i class="fa fa-glass"></i> 500ml
+                </button>
+                <button class="quick-btn-compact" onclick="addWater(750)" title="750ml">
+                    <i class="fa fa-glass"></i> 750ml
+                </button>
+                <button class="add-custom-btn-compact" onclick="addCustomWater()" title="Ajouter quantité personnalisée">
+                    <i class="fa fa-plus"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -1593,51 +1496,34 @@ async function loadHydrationData() {
     }
 }
 
-// Update water level display
+// Update water level display (compact version)
 function updateHydrationDisplay() {
-    const waterLevel = document.getElementById('waterLevel');
     const waterLevelText = document.getElementById('waterLevelText');
     const waterGoalText = document.getElementById('waterGoalText');
+    const progressBar = document.getElementById('hydrationProgressBar');
 
-    // Update water level height (max 100%)
-    const heightPercentage = Math.min(100, hydrationData.percentage);
-    waterLevel.style.height = heightPercentage + '%';
-
-    // Update text
-    waterLevelText.textContent = hydrationData.today_total + ' ml';
-    waterGoalText.textContent = 'Objectif: ' + hydrationData.daily_goal + ' ml (' + hydrationData.percentage + '%)';
-
-    // Update history
-    updateHydrationHistory();
-}
-
-// Update history bars
-function updateHydrationHistory() {
-    const historyContainer = document.getElementById('hydrationHistory');
-
-    if (!hydrationData.history || hydrationData.history.length === 0) {
-        historyContainer.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Aucun historique</div>';
+    if (!waterLevelText || !waterGoalText || !progressBar) {
+        console.error('Hydration display elements not found');
         return;
     }
 
-    let html = '';
-    hydrationData.history.forEach(day => {
-        html += `
-            <div class="history-bar">
-                <div class="history-bar-fill">
-                    <div class="history-bar-value" style="height: ${day.percentage}%"></div>
-                </div>
-                <div class="history-day">${day.day_name}</div>
-            </div>
-        `;
-    });
+    // Update progress bar width (max 100%)
+    const widthPercentage = Math.min(100, hydrationData.percentage);
+    progressBar.style.width = widthPercentage + '%';
 
-    historyContainer.innerHTML = html;
+    // Update text
+    waterLevelText.textContent = hydrationData.today_total + ' ml';
+    waterGoalText.textContent = hydrationData.daily_goal + ' ml';
 }
 
 // Add water (quick buttons)
 async function addWater(amount) {
-    const btn = event.target.closest('.quick-add-btn');
+    const btn = event.target.closest('.quick-btn-compact');
+    if (!btn) {
+        console.error('Button not found');
+        return;
+    }
+
     const originalHtml = btn.innerHTML;
 
     // Disable button and show loading
@@ -1665,16 +1551,11 @@ async function addWater(amount) {
             updateHydrationDisplay();
 
             // Show success feedback
-            btn.innerHTML = '<i class="fa fa-check"></i> Ajouté!';
+            btn.innerHTML = '<i class="fa fa-check"></i> OK';
             setTimeout(() => {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }, 1500);
-
-            // Reload full data after short delay
-            setTimeout(() => {
-                loadHydrationData();
-            }, 2000);
         } else {
             alert('Erreur: ' + (data.message || 'Impossible d\'ajouter'));
             btn.innerHTML = originalHtml;
@@ -1698,7 +1579,12 @@ async function addCustomWater() {
         return;
     }
 
-    const btn = event.target.closest('.add-custom-btn');
+    const btn = event.target.closest('.add-custom-btn-compact');
+    if (!btn) {
+        console.error('Button not found');
+        return;
+    }
+
     const originalHtml = btn.innerHTML;
 
     btn.disabled = true;
@@ -1728,16 +1614,11 @@ async function addCustomWater() {
             input.value = '';
 
             // Show success feedback
-            btn.innerHTML = '<i class="fa fa-check"></i> Ajouté!';
+            btn.innerHTML = '<i class="fa fa-check"></i>';
             setTimeout(() => {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }, 1500);
-
-            // Reload full data
-            setTimeout(() => {
-                loadHydrationData();
-            }, 2000);
         } else {
             alert('Erreur: ' + (data.message || 'Impossible d\'ajouter'));
             btn.innerHTML = originalHtml;

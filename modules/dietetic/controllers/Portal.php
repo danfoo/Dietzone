@@ -116,7 +116,11 @@ class Portal extends App_Controller
             'statistics',
             'api_get_evolution_data',
             'api_add_statistic_note',
-            'api_delete_statistic_note'
+            'api_delete_statistic_note',
+            // Hydration tracking API methods
+            'api_get_hydration_data',
+            'api_add_hydration',
+            'api_update_hydration_goal'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
