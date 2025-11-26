@@ -1407,6 +1407,7 @@ async function saveNote() {
         formData.append('note_date', noteDate);
         formData.append('note_text', noteText.trim());
         formData.append('note_icon', noteIcon);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
 
         const response = await fetch('<?php echo site_url('dietetic/portal/api_add_statistic_note'); ?>', {
             method: 'POST',
@@ -1436,6 +1437,7 @@ async function deleteNote(noteId) {
     try {
         const formData = new FormData();
         formData.append('note_id', noteId);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
 
         const response = await fetch('<?php echo site_url('dietetic/portal/api_delete_statistic_note'); ?>', {
             method: 'POST',
