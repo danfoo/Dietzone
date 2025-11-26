@@ -5972,13 +5972,159 @@ class Portal extends App_Controller
             $days_with_entries = count($compliance);
             $compliance_rate = $total_days > 0 ? ($days_with_entries / $total_days) * 100 : 0;
 
+            // Calculate trends and predictions
+            $trends = [];
+            $insights = [];
+
+            if (!empty($measurements) && count($measurements) >= 2) {
+                $first_measurement = $measurements[0];
+                $last_measurement = $measurements[count($measurements) - 1];
+
+                // Calculate time span in weeks
+                $first_date = strtotime($first_measurement['measurement_date']);
+                $last_date = strtotime($last_measurement['measurement_date']);
+                $weeks = max(1, ($last_date - $first_date) / (7 * 86400));
+
+                // Weight loss rate (kg/week)
+                $weight_change = $first_measurement['weight'] - $last_measurement['weight'];
+                $rate_per_week = $weeks > 0 ? $weight_change / $weeks : 0;
+
+                $trends['rate_per_week'] = round($rate_per_week, 2);
+                $trends['total_weeks'] = round($weeks, 1);
+
+                // Linear regression for trend line
+                $n = count($measurements);
+                $sum_x = 0;
+                $sum_y = 0;
+                $sum_xy = 0;
+                $sum_x2 = 0;
+
+                foreach ($measurements as $i => $m) {
+                    $x = $i; // Index as x
+                    $y = floatval($m['weight']);
+                    $sum_x += $x;
+                    $sum_y += $y;
+                    $sum_xy += $x * $y;
+                    $sum_x2 += $x * $x;
+                }
+
+                $slope = ($n * $sum_xy - $sum_x * $sum_y) / ($n * $sum_x2 - $sum_x * $sum_x);
+                $intercept = ($sum_y - $slope * $sum_x) / $n;
+
+                // Generate trend line points
+                $trend_line = [];
+                foreach ($measurements as $i => $m) {
+                    $trend_line[] = [
+                        'date' => $m['measurement_date'],
+                        'value' => round($slope * $i + $intercept, 2)
+                    ];
+                }
+
+                $trends['trend_line'] = $trend_line;
+                $trends['slope'] = round($slope, 3);
+
+                // Prediction: when will target be reached?
+                if ($patient->target_weight && $rate_per_week > 0.1) {
+                    $remaining_kg = abs($last_measurement['weight'] - $patient->target_weight);
+                    $weeks_to_goal = $remaining_kg / $rate_per_week;
+                    $estimated_date = date('Y-m-d', strtotime("+$weeks_to_goal weeks"));
+
+                    $trends['estimated_goal_date'] = $estimated_date;
+                    $trends['weeks_to_goal'] = round($weeks_to_goal, 1);
+                }
+
+                // Generate insights
+                if (abs($rate_per_week) >= 0.5) {
+                    if ($rate_per_week > 0) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-thumbs-up',
+                            'message' => sprintf('Excellent ! Vous perdez en moyenne %.1f kg par semaine', $rate_per_week)
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-info-circle',
+                            'message' => sprintf('Attention : vous avez pris %.1f kg par semaine', abs($rate_per_week))
+                        ];
+                    }
+                } elseif (abs($rate_per_week) > 0) {
+                    $insights[] = [
+                        'type' => 'neutral',
+                        'icon' => 'fa-balance-scale',
+                        'message' => sprintf('Votre poids reste stable (%.1f kg par semaine)', abs($rate_per_week))
+                    ];
+                }
+
+                // BMI insight
+                if (isset($stats['bmi']['current'])) {
+                    $bmi = $stats['bmi']['current'];
+                    if ($bmi < 18.5) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-tachometer',
+                            'message' => 'Votre IMC est en dessous de la normale (insuffisance pondérale)'
+                        ];
+                    } elseif ($bmi >= 18.5 && $bmi < 25) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-check-circle',
+                            'message' => 'Votre IMC est dans la fourchette normale'
+                        ];
+                    } elseif ($bmi >= 25 && $bmi < 30) {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'Votre IMC indique un surpoids'
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'Votre IMC indique une obésité'
+                        ];
+                    }
+                }
+
+                // Goal achievement prediction insight
+                if (isset($trends['weeks_to_goal'])) {
+                    $weeks = $trends['weeks_to_goal'];
+                    if ($weeks <= 4) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-flag-checkered',
+                            'message' => sprintf('À ce rythme, vous atteindrez votre objectif dans environ %.0f semaines !', $weeks)
+                        ];
+                    } elseif ($weeks <= 12) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-calendar',
+                            'message' => sprintf('Vous devriez atteindre votre objectif dans environ %.0f semaines', $weeks)
+                        ];
+                    }
+                }
+            }
+
+            // Get notes for this period
+            $notes = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('note_date >=', $start_date);
+                $this->db->where('note_date <=', $end_date);
+                $this->db->order_by('note_date', 'ASC');
+                $notes = $this->db->get(db_prefix() . 'dietic_statistics_notes')->result_array();
+            }
+
             echo json_encode([
                 'success' => true,
                 'measurements' => $measurements,
                 'compliance' => $compliance,
                 'stats' => $stats,
                 'compliance_rate' => round($compliance_rate, 1),
-                'period' => $period
+                'period' => $period,
+                'trends' => $trends,
+                'insights' => $insights,
+                'notes' => $notes
             ]);
 
         } catch (Exception $e) {
