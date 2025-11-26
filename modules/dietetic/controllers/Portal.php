@@ -6385,11 +6385,14 @@ class Portal extends App_Controller
      */
     public function api_add_hydration()
     {
+        // Clear any previous output
+        ob_clean();
+
         header('Content-Type: application/json');
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-            return;
+            exit;
         }
 
         $client_id = get_client_user_id();
@@ -6397,21 +6400,21 @@ class Portal extends App_Controller
 
         if (!$patient) {
             echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
-            return;
+            exit;
         }
 
         try {
             // Check if table exists
             if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
                 echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
-                return;
+                exit;
             }
 
             $quantity_ml = intval($this->input->post('quantity_ml'));
 
             if ($quantity_ml <= 0 || $quantity_ml > 2000) {
                 echo json_encode(['success' => false, 'message' => 'Quantité invalide (1-2000ml)']);
-                return;
+                exit;
             }
 
             // Insert entry
@@ -6459,6 +6462,7 @@ class Portal extends App_Controller
                 'message' => 'Erreur serveur: ' . $e->getMessage()
             ]);
         }
+        exit;
     }
 
     /**
