@@ -953,6 +953,12 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'À installer';
                 break;
 
+            case 'statistics_notes':
+                // Check if statistics notes table exists
+                $installed = $this->db->table_exists(db_prefix() . 'dietic_statistics_notes');
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -986,30 +992,39 @@ class Notifications extends AdminController
         try {
             $migration = $this->input->post('migration');
 
-            // Determine which SQL file to use
-            $sql_files = [
+            // Determine which migration file to use (SQL or PHP)
+            $migration_files = [
                 'lam_update' => 'update_lam_sms_config.sql',
                 'notifications' => 'add_notifications_system.sql',
                 'firebase' => 'add_firebase_push_notifications.sql',
                 'optimizations' => 'optimize_notifications_performance.sql',
                 'permissions' => 'add_staff_permissions.sql',
-                'firebase_v1' => 'add_firebase_v1_api_support.sql'
+                'firebase_v1' => 'add_firebase_v1_api_support.sql',
+                'statistics_notes' => 'add_statistics_notes.php'
             ];
 
-            if (!isset($sql_files[$migration])) {
+            if (!isset($migration_files[$migration])) {
                 // Fallback to old behavior for backward compatibility
-                $sql_file = module_dir_path('dietetic', 'migrations/add_notifications_system.sql');
+                $migration_file = module_dir_path('dietetic', 'migrations/add_notifications_system.sql');
             } else {
-                $sql_file = module_dir_path('dietetic', 'migrations/' . $sql_files[$migration]);
+                $migration_file = module_dir_path('dietetic', 'migrations/' . $migration_files[$migration]);
             }
 
-            if (!file_exists($sql_file)) {
+            if (!file_exists($migration_file)) {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Fichier de migration introuvable: ' . basename($sql_file)
+                    'message' => 'Fichier de migration introuvable: ' . basename($migration_file)
                 ]);
                 return;
             }
+
+            // Check if it's a PHP migration (new format)
+            if (pathinfo($migration_file, PATHINFO_EXTENSION) === 'php') {
+                return $this->execute_php_migration($migration_file, $migration);
+            }
+
+            // Otherwise, it's a SQL file (old format)
+            $sql_file = $migration_file;
 
             // Check if already installed (for base notifications only)
             if ($migration === 'notifications') {
@@ -1233,6 +1248,69 @@ class Notifications extends AdminController
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur lors du nettoyage: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Execute PHP-based migration (CodeIgniter migration format)
+     */
+    private function execute_php_migration($migration_file, $migration_name)
+    {
+        try {
+            // Check if already installed based on migration name
+            if ($migration_name === 'statistics_notes') {
+                if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                    echo json_encode([
+                        'success' => true,
+                        'already_exists' => true,
+                        'message' => 'Cette migration a déjà été exécutée'
+                    ]);
+                    return;
+                }
+            }
+
+            // Load the migration file
+            require_once $migration_file;
+
+            // Get the migration class name from filename
+            $filename = basename($migration_file, '.php');
+            $class_name = 'Migration_' . str_replace(' ', '_', ucwords(str_replace('_', ' ', $filename)));
+
+            if (!class_exists($class_name)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Classe de migration introuvable: ' . $class_name
+                ]);
+                return;
+            }
+
+            // Instantiate and run the migration
+            $migration = new $class_name();
+
+            if (!method_exists($migration, 'up')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Méthode "up" introuvable dans la migration'
+                ]);
+                return;
+            }
+
+            // Execute the migration
+            $migration->up();
+
+            log_activity('Migration PHP exécutée: ' . $migration_name);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration installée avec succès!'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('PHP Migration Error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de l\'exécution: ' . $e->getMessage()
             ]);
         }
     }

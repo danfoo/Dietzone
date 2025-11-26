@@ -575,6 +575,43 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 6: Statistics Notes -->
+                <div class="migration-card" data-migration="statistics_notes">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-sticky-note"></i>
+                            Notes sur Statistiques
+                        </h3>
+                        <span class="migration-status pending" id="status-statistics_notes">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Ajout du système de notes personnelles pour les patients. Permet d'annoter les graphiques de statistiques avec des événements importants (exercice, vacances, changements alimentaires, etc.)
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_statistics_notes</code> - Notes des patients sur leurs graphiques</li>
+                                <li>Support des icônes personnalisées (exercice, alimentation, vacances, santé, milestones)</li>
+                                <li>Affichage contextuel par période sur les statistiques</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_statistics_notes.php
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('statistics_notes')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('statistics_notes')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -620,6 +657,11 @@ const migrations = {
         name: 'Firebase API v1',
         file: 'add_firebase_v1_api_support.sql',
         settings: ['firebase_use_v1_api', 'firebase_service_account_json']
+    },
+    statistics_notes: {
+        name: 'Notes sur Statistiques',
+        file: 'add_statistics_notes.php',
+        tables: ['dietic_statistics_notes']
     }
 };
 
