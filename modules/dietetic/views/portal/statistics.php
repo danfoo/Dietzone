@@ -114,12 +114,10 @@ body {
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 2px solid #f1f3f5;
     transition: all 0.3s;
 }
 
 .stat-card:hover {
-    border-color: #01807B;
     box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
 }
 
@@ -207,7 +205,6 @@ body {
     padding: 24px;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 2px solid #f1f3f5;
 }
 
 .chart-card-title {
@@ -375,6 +372,263 @@ body {
     line-height: 1.5;
 }
 
+/* Notes */
+.btn-add-note {
+    margin-left: auto;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-add-note:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
+}
+
+.notes-container {
+    min-height: 50px;
+}
+
+.note-item {
+    background: linear-gradient(90deg, rgba(1, 128, 123, 0.05) 0%, white 100%);
+    border-left: 4px solid #01807B;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+}
+
+.note-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.note-item-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(1, 128, 123, 0.1);
+    color: #01807B;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.note-item-content {
+    flex: 1;
+}
+
+.note-item-date {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.note-item-text {
+    font-size: 14px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.note-item-delete {
+    padding: 6px 12px;
+    background: transparent;
+    color: #dc3545;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.note-item:hover .note-item-delete {
+    opacity: 1;
+}
+
+.note-item-delete:hover {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.notes-empty {
+    text-align: center;
+    padding: 30px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+/* Note Modal */
+.note-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.note-modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.note-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.note-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.note-modal-header h3 i {
+    color: #01807B;
+}
+
+.note-modal-close {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6c757d;
+    transition: all 0.3s;
+}
+
+.note-modal-close:hover {
+    background: rgba(108, 117, 125, 0.1);
+    color: #2c3e50;
+}
+
+.note-modal-body {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #01807B;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.note-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-cancel {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-cancel:hover {
+    background: #dee2e6;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .stats-container {
@@ -482,6 +736,18 @@ body {
                 <canvas id="complianceChart"></canvas>
             </div>
         </div>
+
+        <!-- Notes Section -->
+        <div class="chart-card">
+            <div class="chart-card-title">
+                <i class="fa fa-sticky-note"></i>
+                Mes notes
+                <button id="addNoteBtn" class="btn-add-note">
+                    <i class="fa fa-plus"></i> Ajouter une note
+                </button>
+            </div>
+            <div id="notesContainer" class="notes-container"></div>
+        </div>
     </div>
 
     <!-- Empty State -->
@@ -492,6 +758,46 @@ body {
         <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="btn">
             <i class="fa fa-plus"></i> Ajouter une mesure
         </a>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div id="noteModal" class="note-modal" style="display: none;">
+    <div class="note-modal-content">
+        <div class="note-modal-header">
+            <h3><i class="fa fa-sticky-note"></i> Ajouter une note</h3>
+            <button class="note-modal-close" onclick="closeNoteModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="note-modal-body">
+            <div class="form-group">
+                <label for="noteDate">Date</label>
+                <input type="date" id="noteDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="noteText">Note</label>
+                <textarea id="noteText" class="form-control" rows="3" placeholder="Ex: Début exercice régulier, Vacances, Changement alimentation..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="noteIcon">Icône (optionnel)</label>
+                <select id="noteIcon" class="form-control">
+                    <option value="fa-sticky-note">📝 Note</option>
+                    <option value="fa-running">🏃 Exercice</option>
+                    <option value="fa-utensils">🍴 Alimentation</option>
+                    <option value="fa-plane">✈️ Vacances</option>
+                    <option value="fa-birthday-cake">🎂 Événement</option>
+                    <option value="fa-heart">❤️ Santé</option>
+                    <option value="fa-star">⭐ Milestone</option>
+                </select>
+            </div>
+        </div>
+        <div class="note-modal-footer">
+            <button class="btn btn-cancel" onclick="closeNoteModal()">Annuler</button>
+            <button class="btn btn-primary" onclick="saveNote()">
+                <i class="fa fa-save"></i> Enregistrer
+            </button>
+        </div>
     </div>
 </div>
 
@@ -517,6 +823,12 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPeriod = this.value;
             loadStatistics(currentPeriod);
         });
+    }
+
+    // Add note button
+    const addNoteBtn = document.getElementById('addNoteBtn');
+    if (addNoteBtn) {
+        addNoteBtn.addEventListener('click', openNoteModal);
     }
 });
 
@@ -556,6 +868,9 @@ async function loadStatistics(period) {
         renderBMIChart(data.measurements);
         renderMeasurementsChart(data.measurements);
         renderComplianceChart(data.compliance, data.compliance_rate);
+
+        // Render notes
+        renderNotes(data.notes || []);
 
     } catch (error) {
         console.error('Error loading statistics:', error);
@@ -1060,6 +1375,121 @@ function renderComplianceChart(compliance, rate) {
             }
         }
     });
+}
+
+// Note management functions
+function openNoteModal() {
+    document.getElementById('noteModal').style.display = 'flex';
+    // Set default date to today
+    document.getElementById('noteDate').valueAsDate = new Date();
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').style.display = 'none';
+    // Reset form
+    document.getElementById('noteDate').value = '';
+    document.getElementById('noteText').value = '';
+    document.getElementById('noteIcon').value = 'fa-sticky-note';
+}
+
+async function saveNote() {
+    const noteDate = document.getElementById('noteDate').value;
+    const noteText = document.getElementById('noteText').value;
+    const noteIcon = document.getElementById('noteIcon').value;
+
+    if (!noteDate || !noteText.trim()) {
+        alert('Veuillez remplir la date et le texte de la note');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('note_date', noteDate);
+        formData.append('note_text', noteText.trim());
+        formData.append('note_icon', noteIcon);
+
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_add_statistic_note'); ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeNoteModal();
+            // Reload statistics to show new note
+            loadStatistics(currentPeriod);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter la note'));
+        }
+    } catch (error) {
+        console.error('Error saving note:', error);
+        alert('Erreur lors de l\'enregistrement de la note');
+    }
+}
+
+async function deleteNote(noteId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette note ?')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('note_id', noteId);
+
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_delete_statistic_note'); ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload statistics to update notes
+            loadStatistics(currentPeriod);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible de supprimer la note'));
+        }
+    } catch (error) {
+        console.error('Error deleting note:', error);
+        alert('Erreur lors de la suppression de la note');
+    }
+}
+
+function renderNotes(notes) {
+    const container = document.getElementById('notesContainer');
+
+    if (!notes || notes.length === 0) {
+        container.innerHTML = '<div class="notes-empty"><i class="fa fa-sticky-note-o"></i><br>Aucune note pour cette période. Ajoutez des notes pour marquer des événements importants !</div>';
+        return;
+    }
+
+    let html = '';
+    notes.forEach(note => {
+        const date = new Date(note.note_date);
+        const formattedDate = date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        html += `
+            <div class="note-item">
+                <div class="note-item-icon">
+                    <i class="fa ${note.icon || 'fa-sticky-note'}"></i>
+                </div>
+                <div class="note-item-content">
+                    <div class="note-item-date">${formattedDate}</div>
+                    <div class="note-item-text">${note.note_text}</div>
+                </div>
+                <button class="note-item-delete" onclick="deleteNote(${note.id})">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 </script>
 
