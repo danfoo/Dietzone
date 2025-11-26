@@ -427,9 +427,11 @@ class Portal extends App_Controller
                     'muscle_mass' => !empty($muscle_mass) ? floatval($muscle_mass) : null,
                     'waist' => !empty($this->input->post('waist')) ? floatval($this->input->post('waist')) : null,
                     'hips' => !empty($this->input->post('hips')) ? floatval($this->input->post('hips')) : null,
+                    'neck' => !empty($this->input->post('neck')) ? floatval($this->input->post('neck')) : null,
                     'chest' => !empty($this->input->post('chest')) ? floatval($this->input->post('chest')) : null,
                     'arms' => !empty($this->input->post('arms')) ? floatval($this->input->post('arms')) : null,
                     'thighs' => !empty($this->input->post('thighs')) ? floatval($this->input->post('thighs')) : null,
+                    'calf' => !empty($this->input->post('calf')) ? floatval($this->input->post('calf')) : null,
                     'notes' => $this->input->post('notes'),
                     'added_by' => $client_id,
                     'added_by_type' => 'client'

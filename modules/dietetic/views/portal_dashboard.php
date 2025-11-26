@@ -3343,6 +3343,7 @@ function updateHydrationDisplay() {
 }
 
 // Update history bars with French days
+// Update history bars with French days
 function updateHydrationHistory() {
     const historyContainer = document.getElementById('hydrationHistory');
 
@@ -3366,8 +3367,24 @@ function updateHydrationHistory() {
         'Sun': 'Dim'
     };
 
+    // Day order for sorting (Monday = 1, Sunday = 7)
+    const dayOrder = {
+        'Mon': 1,
+        'Tue': 2,
+        'Wed': 3,
+        'Thu': 4,
+        'Fri': 5,
+        'Sat': 6,
+        'Sun': 7
+    };
+
+    // Sort history by day of week (Mon -> Sun)
+    const sortedHistory = [...hydrationData.history].sort((a, b) => {
+        return dayOrder[a.day_name] - dayOrder[b.day_name];
+    });
+
     let html = '';
-    hydrationData.history.forEach(day => {
+    sortedHistory.forEach(day => {
         const dayFr = frenchDays[day.day_name] || day.day_name;
         html += `
             <div class="history-bar-compact">

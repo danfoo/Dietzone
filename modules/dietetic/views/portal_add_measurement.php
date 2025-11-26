@@ -464,6 +464,24 @@ $this->load->view('portal/includes/portal_header');
 
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="neck">
+                            Tour de Cou
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="neck"
+                                   name="neck"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 35.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="chest">
                             Tour de Poitrine
                         </label>
@@ -480,7 +498,9 @@ $this->load->view('portal/includes/portal_header');
                             <span class="input-unit">cm</span>
                         </div>
                     </div>
+                </div>
 
+                <div class="form-row">
                     <div class="form-group">
                         <label for="arms">
                             Tour de Bras
@@ -498,21 +518,39 @@ $this->load->view('portal/includes/portal_header');
                             <span class="input-unit">cm</span>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="thighs">
+                            Tour de Cuisses
+                        </label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa fa-arrows-h"></i>
+                            <input type="number"
+                                   id="thighs"
+                                   name="thighs"
+                                   class="form-control"
+                                   step="0.1"
+                                   min="0"
+                                   placeholder="Ex: 55.0"
+                                   style="padding-right: 45px;">
+                            <span class="input-unit">cm</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="thighs">
-                        Tour de Cuisses
+                    <label for="calf">
+                        Tour de Mollets
                     </label>
                     <div class="input-icon-wrapper">
                         <i class="fa fa-arrows-h"></i>
                         <input type="number"
-                               id="thighs"
-                               name="thighs"
+                               id="calf"
+                               name="calf"
                                class="form-control"
                                step="0.1"
                                min="0"
-                               placeholder="Ex: 55.0"
+                               placeholder="Ex: 36.0"
                                style="padding-right: 45px;">
                         <span class="input-unit">cm</span>
                     </div>
