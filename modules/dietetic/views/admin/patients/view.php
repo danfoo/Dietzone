@@ -1020,9 +1020,13 @@ html {
                                                     <small class="text-muted"><?php echo strftime('%A', strtotime($day->tracking_date)); ?></small>
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge" style="background: #4facfe; font-size: 13px; padding: 5px 10px;">
-                                                        <?php echo $day->water_glasses; ?> <i class="fa fa-tint"></i>
-                                                    </span>
+                                                    <?php if (isset($day->hydration_ml) && $day->hydration_ml > 0) { ?>
+                                                        <span class="badge" style="background: #4facfe; font-size: 13px; padding: 5px 10px;">
+                                                            <?php echo $day->hydration_ml; ?> ml <i class="fa fa-tint"></i>
+                                                        </span>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
                                                 </td>
                                                 <td class="text-center">
                                                     <?php if ($day->breakfast_checked) { ?>

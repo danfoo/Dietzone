@@ -93,6 +93,22 @@ class Patients extends AdminController
 
             // Get current streak
             $data['daily_tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($id);
+
+            // Add hydration data to each tracking day (if hydration table exists)
+            if ($this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+                foreach ($data['daily_tracking'] as &$day) {
+                    $this->db->select_sum('quantity_ml');
+                    $this->db->where('patient_id', $id);
+                    $this->db->where('tracking_date', $day->tracking_date);
+                    $hydration_result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+                    $day->hydration_ml = $hydration_result->quantity_ml ? intval($hydration_result->quantity_ml) : 0;
+                }
+            } else {
+                // If hydration table doesn't exist, set to 0
+                foreach ($data['daily_tracking'] as &$day) {
+                    $day->hydration_ml = 0;
+                }
+            }
         }
 
         // Get hydration tracking data (if table exists)
