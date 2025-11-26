@@ -426,6 +426,60 @@ $this->load->view('portal/includes/portal_header');
     transform: translateY(0);
 }
 
+/* Hydration History - Compact */
+.hydration-history-compact {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e3f2fd;
+}
+
+.history-title-compact {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.history-bars-compact {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.history-bar-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.history-bar-fill-compact {
+    width: 100%;
+    height: 60px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.history-bar-value-compact {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
+    border-radius: 6px;
+    transition: height 0.5s ease;
+}
+
+.history-day-compact {
+    font-size: 10px;
+    font-weight: 600;
+    color: #01579b;
+}
+
 /* Other Stats Cards */
 .stats-grid {
     display: grid;
@@ -900,7 +954,19 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .hydration-goal-display {
+        font-size: 12px;
+    }
+
+    .hydration-title-compact {
         font-size: 14px;
+    }
+
+    .history-bars-compact {
+        gap: 4px;
+    }
+
+    .history-bar-fill-compact {
+        height: 50px;
     }
 }
 </style>
@@ -1260,7 +1326,7 @@ if (!$current_weight || !$target_weight) {
             Hydratation
         </div>
         <div class="hydration-goal-display">
-            <span id="waterLevelText">0 ml</span> / <span id="waterGoalText">2000 ml</span>
+            <span id="waterLevelText">0 ml</span> consommé / <span id="waterRemainingText">2000 ml</span> restant
         </div>
     </div>
 
@@ -1296,6 +1362,14 @@ if (!$current_weight || !$target_weight) {
                     <i class="fa fa-plus"></i>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- 7 derniers jours -->
+    <div class="hydration-history-compact">
+        <div class="history-title-compact">7 derniers jours</div>
+        <div class="history-bars-compact" id="hydrationHistory">
+            <!-- Will be filled by JavaScript -->
         </div>
     </div>
 </div>
@@ -1499,13 +1573,16 @@ async function loadHydrationData() {
 // Update water level display (compact version)
 function updateHydrationDisplay() {
     const waterLevelText = document.getElementById('waterLevelText');
-    const waterGoalText = document.getElementById('waterGoalText');
+    const waterRemainingText = document.getElementById('waterRemainingText');
     const progressBar = document.getElementById('hydrationProgressBar');
 
-    if (!waterLevelText || !waterGoalText || !progressBar) {
+    if (!waterLevelText || !waterRemainingText || !progressBar) {
         console.error('Hydration display elements not found');
         return;
     }
+
+    // Calculate remaining
+    const remaining = Math.max(0, hydrationData.daily_goal - hydrationData.today_total);
 
     // Update progress bar width (max 100%)
     const widthPercentage = Math.min(100, hydrationData.percentage);
@@ -1513,7 +1590,50 @@ function updateHydrationDisplay() {
 
     // Update text
     waterLevelText.textContent = hydrationData.today_total + ' ml';
-    waterGoalText.textContent = hydrationData.daily_goal + ' ml';
+    waterRemainingText.textContent = remaining + ' ml';
+
+    // Update history
+    updateHydrationHistory();
+}
+
+// Update history bars with French days
+function updateHydrationHistory() {
+    const historyContainer = document.getElementById('hydrationHistory');
+
+    if (!historyContainer) {
+        return;
+    }
+
+    if (!hydrationData.history || hydrationData.history.length === 0) {
+        historyContainer.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px; grid-column: 1 / -1;">Aucun historique</div>';
+        return;
+    }
+
+    // French day names mapping
+    const frenchDays = {
+        'Mon': 'Lun',
+        'Tue': 'Mar',
+        'Wed': 'Mer',
+        'Thu': 'Jeu',
+        'Fri': 'Ven',
+        'Sat': 'Sam',
+        'Sun': 'Dim'
+    };
+
+    let html = '';
+    hydrationData.history.forEach(day => {
+        const dayFr = frenchDays[day.day_name] || day.day_name;
+        html += `
+            <div class="history-bar-compact">
+                <div class="history-bar-fill-compact">
+                    <div class="history-bar-value-compact" style="height: ${day.percentage}%"></div>
+                </div>
+                <div class="history-day-compact">${dayFr}</div>
+            </div>
+        `;
+    });
+
+    historyContainer.innerHTML = html;
 }
 
 // Add water (quick buttons)
