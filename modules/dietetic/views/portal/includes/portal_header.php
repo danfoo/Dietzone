@@ -887,12 +887,6 @@
             </a>
             <?php } ?>
 
-            <!-- Activities - FORCÉ pour permettre l'accès avant migration -->
-            <a href="<?php echo site_url('dietetic/portal/activities'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'activities') ? 'active' : ''; ?>">
-                <i class="fa fa-heartbeat"></i>
-                <span>Activités Sportives</span>
-            </a>
-
             <?php
             // Check if recipes library is enabled
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_recipes')) {

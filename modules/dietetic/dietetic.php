@@ -90,6 +90,17 @@ function dietetic_force_recipes_menu_js()
 }
 
 /**
+ * Add JavaScript to force activities menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_activities_menu_js');
+
+function dietetic_force_activities_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Activités
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_activities_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Define module menu items
  */
 function dietetic_module_init_menu_items()
