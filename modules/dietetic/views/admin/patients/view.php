@@ -430,6 +430,11 @@ html {
                                 </a>
                             </li>
                             <li role="presentation">
+                                <a href="#tab-statistics" aria-controls="tab-statistics" role="tab" data-toggle="tab">
+                                    <i class="fa fa-area-chart"></i> Statistiques
+                                </a>
+                            </li>
+                            <li role="presentation">
                                 <a href="#tab-lifestyle" aria-controls="tab-lifestyle" role="tab" data-toggle="tab">
                                     <i class="fa fa-heart"></i> Mode de Vie
                                 </a>
@@ -491,6 +496,11 @@ html {
                                     }
                                     ?>
                                 </div>
+                            </div>
+
+                            <!-- Statistiques -->
+                            <div role="tabpanel" class="tab-pane" id="tab-statistics">
+                                <?php $this->load->view('admin/patients/statistics_tab', ['patient' => $patient]); ?>
                             </div>
 
                             <!-- Mode de Vie & Santé -->
