@@ -374,6 +374,207 @@
     color: #6c757d;
     font-size: 14px;
 }
+
+/* Add Note Button */
+.btn-add-note {
+    margin-left: auto;
+    padding: 8px 16px;
+    background: #01807B;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-add-note:hover {
+    background: #019B95;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(1, 128, 123, 0.2);
+}
+
+.btn-add-note i {
+    font-size: 12px;
+}
+
+/* Note Modal */
+.note-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.note-modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.note-modal-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.note-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.note-modal-header h3 i {
+    color: #01807B;
+}
+
+.note-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.note-modal-close:hover {
+    background: #f0f0f0;
+    color: #212529;
+}
+
+.note-modal-body {
+    padding: 24px;
+}
+
+.note-modal-body .form-group {
+    margin-bottom: 20px;
+}
+
+.note-modal-body label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.note-modal-body .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.note-modal-body .form-control:focus {
+    outline: none;
+    border-color: #01807B;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+.note-modal-body textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.note-modal-footer {
+    padding: 16px 24px;
+    border-top: 2px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.note-modal-footer .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.note-modal-footer .btn-cancel {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.note-modal-footer .btn-cancel:hover {
+    background: #dee2e6;
+}
+
+.note-modal-footer .btn-primary {
+    background: #01807B;
+    color: white;
+}
+
+.note-modal-footer .btn-primary:hover {
+    background: #019B95;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(1, 128, 123, 0.2);
+}
+
+.note-item-delete {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.note-item:hover .note-item-delete {
+    opacity: 1;
+}
+
+.note-item-delete:hover {
+    background: rgba(220, 53, 69, 0.1);
+}
 </style>
 
 <div class="admin-stats-container">
@@ -452,6 +653,9 @@
             <div class="chart-card-title">
                 <i class="fa fa-sticky-note"></i>
                 Notes du patient
+                <button id="adminAddNoteBtn" class="btn-add-note">
+                    <i class="fa fa-plus"></i> Ajouter une note
+                </button>
             </div>
             <div id="adminNotesContainer" class="notes-container"></div>
         </div>
@@ -462,6 +666,46 @@
         <i class="fa fa-area-chart"></i>
         <h3>Aucune donnée disponible</h3>
         <p>Le patient n'a pas encore de mesures enregistrées</p>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div id="adminNoteModal" class="note-modal" style="display: none;">
+    <div class="note-modal-content">
+        <div class="note-modal-header">
+            <h3><i class="fa fa-sticky-note"></i> Ajouter une note</h3>
+            <button class="note-modal-close" onclick="closeAdminNoteModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="note-modal-body">
+            <div class="form-group">
+                <label for="adminNoteDate">Date</label>
+                <input type="date" id="adminNoteDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="adminNoteText">Note</label>
+                <textarea id="adminNoteText" class="form-control" rows="3" placeholder="Ex: Patient très motivé, changement d'approche nutritionnelle, événement important..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="adminNoteIcon">Icône (optionnel)</label>
+                <select id="adminNoteIcon" class="form-control">
+                    <option value="fa-sticky-note">📝 Note</option>
+                    <option value="fa-check-circle">✓ Succès</option>
+                    <option value="fa-exclamation-triangle">⚠ Attention</option>
+                    <option value="fa-star">⭐ Milestone</option>
+                    <option value="fa-heart">❤️ Santé</option>
+                    <option value="fa-comments">💬 Consultation</option>
+                    <option value="fa-chart-line">📈 Progrès</option>
+                </select>
+            </div>
+        </div>
+        <div class="note-modal-footer">
+            <button class="btn btn-cancel" onclick="closeAdminNoteModal()">Annuler</button>
+            <button class="btn btn-primary" onclick="saveAdminNote()">
+                <i class="fa fa-save"></i> Enregistrer
+            </button>
+        </div>
     </div>
 </div>
 
@@ -489,7 +733,7 @@ $('a[href="#tab-statistics"]').on('shown.bs.tab', function () {
     }
 });
 
-// Period filter
+// Period filter and Add Note button
 document.addEventListener('DOMContentLoaded', function() {
     const periodSelect = document.getElementById('adminPeriodSelect');
     if (periodSelect) {
@@ -497,6 +741,12 @@ document.addEventListener('DOMContentLoaded', function() {
             adminCurrentPeriod = this.value;
             loadAdminStatistics(adminCurrentPeriod);
         });
+    }
+
+    // Add note button
+    const addNoteBtn = document.getElementById('adminAddNoteBtn');
+    if (addNoteBtn) {
+        addNoteBtn.addEventListener('click', openAdminNoteModal);
     }
 });
 
@@ -1074,10 +1324,96 @@ function renderAdminNotes(notes) {
                     <div class="note-item-text">${note.note_text}</div>
                     <div class="note-item-author">Par: ${createdBy}</div>
                 </div>
+                <button class="note-item-delete" onclick="deleteAdminNote(${note.id})">
+                    <i class="fa fa-trash"></i>
+                </button>
             </div>
         `;
     });
 
     container.innerHTML = html;
+}
+
+// Note Modal Functions
+function openAdminNoteModal() {
+    document.getElementById('adminNoteModal').style.display = 'flex';
+    // Set default date to today
+    document.getElementById('adminNoteDate').valueAsDate = new Date();
+}
+
+function closeAdminNoteModal() {
+    document.getElementById('adminNoteModal').style.display = 'none';
+    // Reset form
+    document.getElementById('adminNoteDate').value = '';
+    document.getElementById('adminNoteText').value = '';
+    document.getElementById('adminNoteIcon').value = 'fa-sticky-note';
+}
+
+async function saveAdminNote() {
+    const noteDate = document.getElementById('adminNoteDate').value;
+    const noteText = document.getElementById('adminNoteText').value;
+    const noteIcon = document.getElementById('adminNoteIcon').value;
+
+    if (!noteDate || !noteText.trim()) {
+        alert('Veuillez remplir la date et le texte de la note');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('patient_id', adminPatientId);
+        formData.append('note_date', noteDate);
+        formData.append('note_text', noteText.trim());
+        formData.append('note_icon', noteIcon);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+        const response = await fetch(admin_url + 'dietetic/patients/api_add_statistic_note', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeAdminNoteModal();
+            // Reload statistics to show new note
+            loadAdminStatistics(adminCurrentPeriod);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter la note'));
+        }
+    } catch (error) {
+        console.error('Error saving note:', error);
+        alert('Erreur lors de l\'enregistrement de la note');
+    }
+}
+
+async function deleteAdminNote(noteId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette note ?')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('note_id', noteId);
+        formData.append('patient_id', adminPatientId);
+        formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+
+        const response = await fetch(admin_url + 'dietetic/patients/api_delete_statistic_note', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload statistics to update notes
+            loadAdminStatistics(adminCurrentPeriod);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible de supprimer la note'));
+        }
+    } catch (error) {
+        console.error('Error deleting note:', error);
+        alert('Erreur lors de la suppression de la note');
+    }
 }
 </script>

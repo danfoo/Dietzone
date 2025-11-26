@@ -810,4 +810,453 @@ class Patients extends AdminController
 
         return $filtered_data;
     }
+
+    /**
+     * API: Get patient statistics for admin view
+     * GET /admin/dietetic/patients/api_get_patient_statistics/{patient_id}?period=6months
+     */
+    public function api_get_patient_statistics($patient_id)
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        try {
+            // Get patient
+            $patient = $this->dietetic_patients_model->get($patient_id);
+
+            if (!$patient) {
+                echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+                return;
+            }
+
+            $period = $this->input->get('period') ?: '6months';
+
+            // Calculate date range based on period
+            $end_date = date('Y-m-d');
+            switch ($period) {
+                case '1month':
+                    $start_date = date('Y-m-d', strtotime('-1 month'));
+                    break;
+                case '3months':
+                    $start_date = date('Y-m-d', strtotime('-3 months'));
+                    break;
+                case '6months':
+                    $start_date = date('Y-m-d', strtotime('-6 months'));
+                    break;
+                case '1year':
+                    $start_date = date('Y-m-d', strtotime('-1 year'));
+                    break;
+                case 'all':
+                    $start_date = '1900-01-01'; // Get all records
+                    break;
+                default:
+                    $start_date = date('Y-m-d', strtotime('-6 months'));
+            }
+
+            // Get measurements
+            $this->db->select('*');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('measurement_date >=', $start_date);
+            $this->db->where('measurement_date <=', $end_date);
+            $this->db->order_by('measurement_date', 'ASC');
+            $measurements = $this->db->get(db_prefix() . 'dietic_measurements')->result_array();
+
+            // Calculate statistics
+            $stats = [];
+
+            if (!empty($measurements)) {
+                $first = $measurements[0];
+                $last = $measurements[count($measurements) - 1];
+
+                // Weight stats
+                if (isset($first['weight']) && isset($last['weight'])) {
+                    $stats['weight'] = [
+                        'initial' => $first['weight'],
+                        'current' => $last['weight'],
+                        'change' => $last['weight'] - $first['weight'],
+                        'target' => $patient->target_weight
+                    ];
+                }
+
+                // BMI stats
+                if (isset($first['height']) && $first['height'] > 0) {
+                    $height_m = $first['height'] / 100;
+                    if (isset($first['weight'])) {
+                        $initial_bmi = $first['weight'] / ($height_m * $height_m);
+                    }
+                    if (isset($last['weight'])) {
+                        $current_bmi = $last['weight'] / ($height_m * $height_m);
+                    }
+
+                    if (isset($initial_bmi) && isset($current_bmi)) {
+                        $stats['bmi'] = [
+                            'initial' => $initial_bmi,
+                            'current' => $current_bmi,
+                            'change' => $current_bmi - $initial_bmi
+                        ];
+                    }
+                }
+
+                // Waist stats
+                if (isset($first['waist_circumference']) && isset($last['waist_circumference'])) {
+                    $stats['waist'] = [
+                        'initial' => $first['waist_circumference'],
+                        'current' => $last['waist_circumference'],
+                        'change' => $last['waist_circumference'] - $first['waist_circumference']
+                    ];
+                }
+
+                // Hip stats
+                if (isset($first['hip_circumference']) && isset($last['hip_circumference'])) {
+                    $stats['hip'] = [
+                        'initial' => $first['hip_circumference'],
+                        'current' => $last['hip_circumference'],
+                        'change' => $last['hip_circumference'] - $first['hip_circumference']
+                    ];
+                }
+            }
+
+            // Calculate progress towards goal
+            if ($patient->target_weight && !empty($measurements)) {
+                $initial_weight = $measurements[0]['weight'];
+                $current_weight = $measurements[count($measurements) - 1]['weight'];
+                $target_weight = $patient->target_weight;
+
+                $total_to_lose = abs($initial_weight - $target_weight);
+                $already_lost = abs($initial_weight - $current_weight);
+                $progress_percent = $total_to_lose > 0 ? ($already_lost / $total_to_lose) * 100 : 0;
+
+                $stats['goal_progress'] = [
+                    'percent' => round($progress_percent, 1),
+                    'remaining' => abs($current_weight - $target_weight)
+                ];
+            }
+
+            // Get food survey compliance (if table exists)
+            $compliance = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys') &&
+                $this->db->table_exists(db_prefix() . 'dietic_food_survey_entries')) {
+
+                $this->db->select('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) as date, COUNT(*) as count');
+                $this->db->from(db_prefix() . 'dietic_food_survey_entries');
+                $this->db->join(db_prefix() . 'dietic_food_surveys s', 's.id = ' . db_prefix() . 'dietic_food_survey_entries.survey_id');
+                $this->db->where('s.patient_id', $patient->id);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) >=', $start_date);
+                $this->db->where('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at) <=', $end_date);
+                $this->db->group_by('DATE(' . db_prefix() . 'dietic_food_survey_entries.created_at)');
+                $compliance = $this->db->get()->result_array();
+            }
+
+            // Calculate compliance rate (% of days with entries)
+            $total_days = (strtotime($end_date) - strtotime($start_date)) / 86400;
+            $days_with_entries = count($compliance);
+            $compliance_rate = $total_days > 0 ? ($days_with_entries / $total_days) * 100 : 0;
+
+            // Calculate trends and predictions (same as portal)
+            $trends = [];
+            $insights = [];
+
+            if (!empty($measurements) && count($measurements) >= 2) {
+                $first_measurement = $measurements[0];
+                $last_measurement = $measurements[count($measurements) - 1];
+
+                // Calculate time span in weeks
+                $first_date = strtotime($first_measurement['measurement_date']);
+                $last_date = strtotime($last_measurement['measurement_date']);
+                $weeks = max(1, ($last_date - $first_date) / (7 * 86400));
+
+                // Weight loss rate (kg/week)
+                $weight_change = $first_measurement['weight'] - $last_measurement['weight'];
+                $rate_per_week = $weeks > 0 ? $weight_change / $weeks : 0;
+
+                $trends['rate_per_week'] = round($rate_per_week, 2);
+                $trends['total_weeks'] = round($weeks, 1);
+
+                // Linear regression for trend line
+                $n = count($measurements);
+                $sum_x = 0;
+                $sum_y = 0;
+                $sum_xy = 0;
+                $sum_x2 = 0;
+
+                foreach ($measurements as $i => $m) {
+                    $x = $i;
+                    $y = floatval($m['weight']);
+                    $sum_x += $x;
+                    $sum_y += $y;
+                    $sum_xy += $x * $y;
+                    $sum_x2 += $x * $x;
+                }
+
+                $slope = ($n * $sum_xy - $sum_x * $sum_y) / ($n * $sum_x2 - $sum_x * $sum_x);
+                $intercept = ($sum_y - $slope * $sum_x) / $n;
+
+                // Generate trend line points
+                $trend_line = [];
+                foreach ($measurements as $i => $m) {
+                    $trend_line[] = [
+                        'date' => $m['measurement_date'],
+                        'value' => round($slope * $i + $intercept, 2)
+                    ];
+                }
+
+                $trends['trend_line'] = $trend_line;
+                $trends['slope'] = round($slope, 3);
+
+                // Prediction: when will target be reached?
+                if ($patient->target_weight && $rate_per_week > 0.1) {
+                    $remaining_kg = abs($last_measurement['weight'] - $patient->target_weight);
+                    $weeks_to_goal = $remaining_kg / $rate_per_week;
+                    $estimated_date = date('Y-m-d', strtotime("+$weeks_to_goal weeks"));
+
+                    $trends['estimated_goal_date'] = $estimated_date;
+                    $trends['weeks_to_goal'] = round($weeks_to_goal, 1);
+                }
+
+                // Generate insights
+                if (abs($rate_per_week) >= 0.5) {
+                    if ($rate_per_week > 0) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-thumbs-up',
+                            'message' => sprintf('Excellent ! Le patient perd en moyenne %.1f kg par semaine', $rate_per_week)
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-info-circle',
+                            'message' => sprintf('Attention : le patient a pris %.1f kg par semaine', abs($rate_per_week))
+                        ];
+                    }
+                } elseif (abs($rate_per_week) > 0) {
+                    $insights[] = [
+                        'type' => 'neutral',
+                        'icon' => 'fa-balance-scale',
+                        'message' => sprintf('Poids stable (%.1f kg par semaine)', abs($rate_per_week))
+                    ];
+                }
+
+                // BMI insight
+                if (isset($stats['bmi']['current'])) {
+                    $bmi = $stats['bmi']['current'];
+                    if ($bmi < 18.5) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-tachometer',
+                            'message' => 'IMC en dessous de la normale (insuffisance pondérale)'
+                        ];
+                    } elseif ($bmi >= 18.5 && $bmi < 25) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-check-circle',
+                            'message' => 'IMC dans la fourchette normale'
+                        ];
+                    } elseif ($bmi >= 25 && $bmi < 30) {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'IMC indique un surpoids'
+                        ];
+                    } else {
+                        $insights[] = [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'message' => 'IMC indique une obésité'
+                        ];
+                    }
+                }
+
+                // Goal achievement prediction insight
+                if (isset($trends['weeks_to_goal'])) {
+                    $weeks = $trends['weeks_to_goal'];
+                    if ($weeks <= 4) {
+                        $insights[] = [
+                            'type' => 'positive',
+                            'icon' => 'fa-flag-checkered',
+                            'message' => sprintf('À ce rythme, objectif atteint dans environ %.0f semaines !', $weeks)
+                        ];
+                    } elseif ($weeks <= 12) {
+                        $insights[] = [
+                            'type' => 'info',
+                            'icon' => 'fa-calendar',
+                            'message' => sprintf('Objectif attendu dans environ %.0f semaines', $weeks)
+                        ];
+                    }
+                }
+            }
+
+            // Get notes for this period
+            $notes = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('note_date >=', $start_date);
+                $this->db->where('note_date <=', $end_date);
+                $this->db->order_by('note_date', 'ASC');
+                $notes = $this->db->get(db_prefix() . 'dietic_statistics_notes')->result_array();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'measurements' => $measurements,
+                'compliance' => $compliance,
+                'stats' => $stats,
+                'compliance_rate' => round($compliance_rate, 1),
+                'period' => $period,
+                'trends' => $trends,
+                'insights' => $insights,
+                'notes' => $notes
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting patient statistics: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'trace' => ENVIRONMENT === 'development' ? $e->getTraceAsString() : null
+            ]);
+        }
+    }
+
+    /**
+     * API: Add a statistic note (Admin)
+     * POST: {patient_id, note_date, note_text, note_type, icon, color}
+     */
+    public function api_add_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        $patient_id = $this->input->post('patient_id');
+
+        if (empty($patient_id)) {
+            echo json_encode(['success' => false, 'message' => 'Patient ID requis']);
+            return;
+        }
+
+        // Verify patient exists
+        $patient = $this->dietetic_patients_model->get($patient_id);
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            // Get POST data
+            $note_date = $this->input->post('note_date');
+            $note_text = $this->input->post('note_text');
+            $note_type = $this->input->post('note_type') ?: 'general';
+            $icon = $this->input->post('note_icon') ?: 'fa-sticky-note';
+            $color = $this->input->post('color') ?: '#01807B';
+
+            if (empty($note_date) || empty($note_text)) {
+                echo json_encode(['success' => false, 'message' => 'Date et texte requis']);
+                return;
+            }
+
+            // Insert note
+            $data = [
+                'patient_id' => $patient_id,
+                'note_date' => $note_date,
+                'note_text' => $note_text,
+                'note_type' => $note_type,
+                'icon' => $icon,
+                'color' => $color,
+                'created_by' => get_staff_user_id(),
+                'created_by_type' => 'staff',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_statistics_notes', $data);
+            $note_id = $this->db->insert_id();
+
+            if ($note_id) {
+                log_activity('Dietetic: Note added to patient ' . $patient_id . ' statistics by staff');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note ajoutée avec succès',
+                    'note_id' => $note_id
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error adding statistic note (admin): ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Delete a statistic note (Admin)
+     * POST: {note_id, patient_id}
+     */
+    public function api_delete_statistic_note()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $note_id = $this->input->post('note_id');
+            $patient_id = $this->input->post('patient_id');
+
+            if (empty($note_id) || empty($patient_id)) {
+                echo json_encode(['success' => false, 'message' => 'ID de note et patient requis']);
+                return;
+            }
+
+            // Verify note belongs to patient
+            $this->db->where('id', $note_id);
+            $this->db->where('patient_id', $patient_id);
+            $note = $this->db->get(db_prefix() . 'dietic_statistics_notes')->row();
+
+            if (!$note) {
+                echo json_encode(['success' => false, 'message' => 'Note non trouvée']);
+                return;
+            }
+
+            // Delete note
+            $this->db->where('id', $note_id);
+            $this->db->delete(db_prefix() . 'dietic_statistics_notes');
+
+            log_activity('Dietetic: Note deleted from patient ' . $patient_id . ' statistics by staff');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note supprimée avec succès'
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error deleting statistic note (admin): ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
