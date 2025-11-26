@@ -255,39 +255,126 @@ $this->load->view('portal/includes/portal_header');
 
 .quick-buttons-inline {
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-end;
     justify-content: flex-start;
 }
 
-.quick-btn-compact {
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
-    color: white;
+/* Water Glass Buttons */
+.quick-btn-glass {
+    background: transparent;
     border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s;
+    padding: 0;
+    transition: transform 0.3s;
+}
+
+.quick-btn-glass:hover {
+    transform: translateY(-5px);
+}
+
+.quick-btn-glass:active {
+    transform: translateY(-2px);
+}
+
+.water-glass-small,
+.water-glass-medium,
+.water-glass-large {
+    position: relative;
+    background: linear-gradient(180deg,
+        rgba(79, 195, 247, 0.1) 0%,
+        rgba(79, 195, 247, 0.2) 100%);
+    border: 3px solid rgba(79, 195, 247, 0.6);
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 6px rgba(2, 136, 209, 0.3);
-    white-space: nowrap;
+    justify-content: center;
 }
 
-.quick-btn-compact:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.4);
+.water-glass-small {
+    width: 60px;
+    height: 80px;
 }
 
-.quick-btn-compact:active {
-    transform: translateY(0);
+.water-glass-medium {
+    width: 70px;
+    height: 95px;
 }
 
-.quick-btn-compact i {
+.water-glass-large {
+    width: 80px;
+    height: 110px;
+}
+
+.water-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65%;
+    background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
+    border-radius: 0 0 inherit inherit;
+}
+
+.water-wave {
+    position: absolute;
+    top: -10px;
+    left: -50%;
+    width: 200%;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 45%;
+    animation: wave 3s linear infinite;
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: translateX(0) translateY(0);
+    }
+    25% {
+        transform: translateX(-15%) translateY(-3px);
+    }
+    50% {
+        transform: translateX(-30%) translateY(0);
+    }
+    75% {
+        transform: translateX(-15%) translateY(-3px);
+    }
+}
+
+.water-cup-add {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 3;
+}
+
+.water-cup-add i {
     font-size: 16px;
+    color: #0288d1;
+}
+
+.water-amount {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    z-index: 2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .add-custom-btn-compact {
@@ -379,17 +466,41 @@ $this->load->view('portal/includes/portal_header');
 
     .quick-buttons-inline {
         flex-wrap: wrap;
-        justify-content: space-between;
+        justify-content: center;
+        gap: 10px;
     }
 
-    .quick-btn-compact {
-        flex: 1;
-        min-width: calc(33.33% - 6px);
-        justify-content: center;
+    .water-glass-small {
+        width: 55px;
+        height: 70px;
+    }
+
+    .water-glass-medium {
+        width: 65px;
+        height: 85px;
+    }
+
+    .water-glass-large {
+        width: 75px;
+        height: 100px;
+    }
+
+    .water-cup-add {
+        width: 28px;
+        height: 28px;
+    }
+
+    .water-cup-add i {
+        font-size: 14px;
+    }
+
+    .water-amount {
+        font-size: 11px;
     }
 
     .add-custom-btn-compact {
         width: 100%;
+        margin-top: 10px;
     }
 
     .hydration-goal-display {
@@ -2449,14 +2560,41 @@ if (!$current_weight || !$target_weight) {
             </div>
 
             <div class="quick-buttons-inline">
-                <button class="quick-btn-compact" onclick="addWater(250)" title="250ml">
-                    <i class="fa fa-glass"></i> 250ml
+                <button class="quick-btn-glass" onclick="addWater(250)" title="250ml">
+                    <div class="water-glass-small">
+                        <div class="water-fill">
+                            <div class="water-wave"></div>
+                            <div class="water-wave" style="animation-delay: -1s;"></div>
+                        </div>
+                        <div class="water-cup-add">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                        <div class="water-amount">250ml</div>
+                    </div>
                 </button>
-                <button class="quick-btn-compact" onclick="addWater(500)" title="500ml">
-                    <i class="fa fa-glass"></i> 500ml
+                <button class="quick-btn-glass" onclick="addWater(500)" title="500ml">
+                    <div class="water-glass-medium">
+                        <div class="water-fill">
+                            <div class="water-wave"></div>
+                            <div class="water-wave" style="animation-delay: -1s;"></div>
+                        </div>
+                        <div class="water-cup-add">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                        <div class="water-amount">500ml</div>
+                    </div>
                 </button>
-                <button class="quick-btn-compact" onclick="addWater(750)" title="750ml">
-                    <i class="fa fa-glass"></i> 750ml
+                <button class="quick-btn-glass" onclick="addWater(750)" title="750ml">
+                    <div class="water-glass-large">
+                        <div class="water-fill">
+                            <div class="water-wave"></div>
+                            <div class="water-wave" style="animation-delay: -1s;"></div>
+                        </div>
+                        <div class="water-cup-add">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                        <div class="water-amount">750ml</div>
+                    </div>
                 </button>
                 <button class="add-custom-btn-compact" onclick="addCustomWater()" title="Ajouter quantité personnalisée">
                     <i class="fa fa-plus"></i>
@@ -3234,17 +3372,19 @@ function updateHydrationHistory() {
 
 // Add water (quick buttons)
 async function addWater(amount) {
-    const btn = event.target.closest('.quick-btn-compact');
+    const btn = event.target.closest('.quick-btn-glass');
     if (!btn) {
         console.error('Button not found');
         return;
     }
 
-    const originalHtml = btn.innerHTML;
+    const waterGlass = btn.querySelector('[class^="water-glass-"]');
+    const addIcon = btn.querySelector('.water-cup-add i');
+    const originalIconClass = addIcon.className;
 
     // Disable button and show loading
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    addIcon.className = 'fa fa-spinner fa-spin';
 
     try {
         const formData = new FormData();
@@ -3266,21 +3406,25 @@ async function addWater(amount) {
             // Animate update
             updateHydrationDisplay();
 
-            // Show success feedback
-            btn.innerHTML = '<i class="fa fa-check"></i> OK';
+            // Show success feedback with animation
+            addIcon.className = 'fa fa-check';
+            waterGlass.style.transform = 'scale(1.1)';
+            waterGlass.style.transition = 'transform 0.3s';
+
             setTimeout(() => {
-                btn.innerHTML = originalHtml;
+                waterGlass.style.transform = 'scale(1)';
+                addIcon.className = originalIconClass;
                 btn.disabled = false;
             }, 1500);
         } else {
             alert('Erreur: ' + (data.message || 'Impossible d\'ajouter'));
-            btn.innerHTML = originalHtml;
+            addIcon.className = originalIconClass;
             btn.disabled = false;
         }
     } catch (error) {
         console.error('Error adding water:', error);
         alert('Erreur lors de l\'ajout');
-        btn.innerHTML = originalHtml;
+        addIcon.className = originalIconClass;
         btn.disabled = false;
     }
 }
