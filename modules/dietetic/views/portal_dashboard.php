@@ -134,14 +134,13 @@ $this->load->view('portal/includes/portal_header');
     background: white;
     border-radius: 12px;
     padding: 20px 24px;
-    border: 2px solid #e3f2fd;
     margin-bottom: 24px;
     transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .hydration-card-compact:hover {
-    border-color: #4fc3f7;
-    box-shadow: 0 4px 12px rgba(79, 195, 247, 0.15);
+    box-shadow: 0 4px 16px rgba(79, 195, 247, 0.15);
 }
 
 .hydration-header-compact {
@@ -236,9 +235,15 @@ $this->load->view('portal/includes/portal_header');
     margin: 0;
 }
 
+.input-with-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .compact-input {
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px 50px 10px 14px;
     border: 2px solid #90caf9;
     border-radius: 8px;
     font-size: 15px;
@@ -377,12 +382,17 @@ $this->load->view('portal/includes/portal_header');
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.add-custom-btn-compact {
-    padding: 10px 16px;
+.add-custom-btn-inline {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 700;
     font-size: 16px;
     cursor: pointer;
@@ -391,16 +401,15 @@ $this->load->view('portal/includes/portal_header');
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 6px rgba(72, 187, 120, 0.3);
-    min-width: 44px;
 }
 
-.add-custom-btn-compact:hover {
-    transform: translateY(-2px);
+.add-custom-btn-inline:hover {
+    transform: translateY(-50%) scale(1.05);
     box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
 }
 
-.add-custom-btn-compact:active {
-    transform: translateY(0);
+.add-custom-btn-inline:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 /* Hydration History - Compact */
@@ -449,6 +458,25 @@ $this->load->view('portal/includes/portal_header');
     background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
     border-radius: 6px;
     transition: height 0.5s ease;
+    overflow: hidden;
+}
+
+.history-bar-value-compact::before,
+.history-bar-value-compact::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -50%;
+    width: 200%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 45%;
+    animation: wave 3s linear infinite;
+}
+
+.history-bar-value-compact::after {
+    animation-delay: -1.5s;
+    opacity: 0.6;
 }
 
 .history-day-compact {
@@ -498,9 +526,10 @@ $this->load->view('portal/includes/portal_header');
         font-size: 11px;
     }
 
-    .add-custom-btn-compact {
-        width: 100%;
-        margin-top: 10px;
+    .add-custom-btn-inline {
+        width: 36px;
+        height: 36px;
+        right: 3px;
     }
 
     .hydration-goal-display {
@@ -2228,25 +2257,6 @@ body {
         </div>
     </div>
 
-    <!-- Hydratation (full width) -->
-    <div class="daily-item water-item">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="daily-item-icon">
-                <i class="fa fa-tint"></i>
-            </div>
-            <span class="daily-item-label">Hydratation</span>
-        </div>
-        <div class="water-actions">
-            <button class="btn-water" onclick="updateWater('decrement')" <?php echo $daily_tracking->water_glasses == 0 ? 'disabled' : ''; ?>>
-                <i class="fa fa-minus"></i>
-            </button>
-            <span class="water-count-display" id="water-count"><?php echo $daily_tracking->water_glasses; ?></span>
-            <button class="btn-water" onclick="updateWater('increment')" <?php echo $daily_tracking->water_glasses >= 20 ? 'disabled' : ''; ?>>
-                <i class="fa fa-plus"></i>
-            </button>
-        </div>
-    </div>
-
     <!-- Grid pour Calories et Activité -->
     <div class="tracking-secondary-grid">
         <!-- Calories -->
@@ -2550,13 +2560,18 @@ if (!$current_weight || !$target_weight) {
         <div class="hydration-row">
             <div class="custom-input-section">
                 <label class="compact-label">Quantité personnalisée</label>
-                <input type="number"
-                       id="customWaterAmount"
-                       class="compact-input"
-                       placeholder="Ex: 350"
-                       min="1"
-                       max="2000"
-                       step="50">
+                <div class="input-with-button">
+                    <input type="number"
+                           id="customWaterAmount"
+                           class="compact-input"
+                           placeholder="Ex: 350"
+                           min="1"
+                           max="2000"
+                           step="50">
+                    <button class="add-custom-btn-inline" onclick="addCustomWater()" title="Ajouter quantité personnalisée">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="quick-buttons-inline">
@@ -2595,9 +2610,6 @@ if (!$current_weight || !$target_weight) {
                         </div>
                         <div class="water-amount">750ml</div>
                     </div>
-                </button>
-                <button class="add-custom-btn-compact" onclick="addCustomWater()" title="Ajouter quantité personnalisée">
-                    <i class="fa fa-plus"></i>
                 </button>
             </div>
         </div>
