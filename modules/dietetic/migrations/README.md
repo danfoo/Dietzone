@@ -1,39 +1,104 @@
-# 🗄️ Migration des Champs d'Anamnèse - Module Diététique
+# 🗄️ Migrations - Module Diététique
 
-## 📝 Description
+## 📝 Vue d'ensemble
 
-Cette migration ajoute **60+ nouveaux champs** à la table `dietic_patients` pour permettre un suivi d'anamnèse complet et professionnel des patients.
+Ce dossier contient les migrations de base de données pour le module Dietetic. Les migrations permettent de modifier la structure de la base de données de manière contrôlée et traçable.
 
-## 🎯 Champs Ajoutés
+## 🔐 Accès et Sécurité
 
-### Section 1: Informations Personnelles (4 champs)
-- `title` - Civilité (M./Mme/Mlle)
-- `occupation` - Profession  
-- `work_type` - Type de travail (sédentaire → très physique)
-- `address` - Adresse complète
+### Accès à la page des migrations
 
-### Section 1.5: Informations Spécifiques Femmes (4 champs)
-- `is_pregnant` - Grossesse en cours (yes/no)
-- `pregnancy_months` - Mois de grossesse (1-9)
-- `breastfeeding` - Allaitement (yes/no)
-- `menstrual_cycle` - Cycle menstruel
+1. Connectez-vous en tant qu'**administrateur**
+2. Allez à : `Admin → Dietetic → Migrations` ou directement :
+   ```
+   https://votresite.com/admin/dietetic/migrations
+   ```
 
-## 🚀 Comment Appliquer la Migration
+### ✅ Protection CSRF
 
-### Étape 1: Vérifier l'état actuel
-Accédez à: `https://votredomaine.com/admin/dietetic/check_anamnesis_fields`
+**Toutes les migrations sont protégées par CSRF token** - Le système génère automatiquement un token pour chaque formulaire.
 
-### Étape 2: Appliquer la migration
-Accédez à: `https://votredomaine.com/admin/dietetic/apply_anamnesis_migration`
+## 📋 Migrations Disponibles
 
-⚠️ **Attention:** Cette opération nécessite les droits administrateur.
+### 1. Migration des Champs d'Anamnèse
+**Fichier:** `anamnesis_fields_migration.sql`
+**Description:** Ajoute **60+ nouveaux champs** à la table `dietic_patients` pour un suivi d'anamnèse complet.
+
+**Sections ajoutées:**
+- Informations personnelles (4 champs)
+- Informations spécifiques femmes (4 champs)
+- Mesures anthropométriques
+- Habitudes de vie et santé mentale
+- Historique médical et familial
+- Habitudes alimentaires et digestives
+
+**Application:**
+```
+https://votredomaine.com/admin/dietetic/apply_anamnesis_migration
+```
+
+### 2. Mesures Tour de Cou et Mollets
+**Fichier:** `add_neck_calf_measurements.php`
+**Date:** 2025-11-26
+**Description:** Ajoute les colonnes `neck` et `calf` à la table `tbldietic_measurements`.
+
+**Colonnes ajoutées:**
+- `neck` - decimal(5,2) - Tour de cou en cm
+- `calf` - decimal(5,2) - Tour de mollets en cm
+
+**Utilisation:** Complète les données anthropométriques pour un suivi plus précis des patients.
+
+## 🚀 Appliquer une Migration
+
+### Via l'interface web (Recommandé)
+
+1. Accédez à `Admin → Dietetic → Migrations`
+2. Localisez la migration à appliquer (statut "En attente")
+3. Cliquez sur le bouton **"Appliquer"**
+4. Confirmez l'action dans la boîte de dialogue
+5. La migration sera appliquée avec protection CSRF automatique
+
+### Sécurité
+
+- ✅ Seuls les **administrateurs** peuvent accéder
+- ✅ Chaque requête est **protégée par CSRF token**
+- ✅ Confirmation obligatoire avant application
+- ✅ Traçabilité via `log_activity()`
+- ✅ Vérification d'existence avant modification
+- ✅ Protection contre la double application
+
+## 📊 Traçabilité
+
+Chaque migration appliquée est enregistrée dans :
+- **Table:** `tbldietic_migrations`
+- **Champs:**
+  - `migration_name` - Nom du fichier
+  - `applied_at` - Date et heure d'application
 
 ## ✅ Vérification Post-Migration
 
-1. ✅ Tous les champs présents dans la base de données
-2. ✅ Le formulaire patient s'affiche correctement
-3. ✅ Les calculs automatiques fonctionnent
-4. ✅ Les champs conditionnels s'affichent correctement
-5. ✅ La sauvegarde des données fonctionne
+1. ✅ Migration marquée comme "Appliquée" dans l'interface
+2. ✅ Colonnes présentes dans la base de données
+3. ✅ Formulaires s'affichent correctement
+4. ✅ Sauvegarde des données fonctionne
+
+## ⚠️ Bonnes Pratiques
+
+1. **Toujours faire une sauvegarde** de la base de données avant
+2. **Tester les migrations** en développement d'abord
+3. **Ne jamais supprimer** les fichiers de migration appliqués
+4. **Vérifier les logs** après application
+
+## 🔧 Dépannage
+
+### La migration n'apparaît pas
+- Vérifiez l'extension `.php`
+- Vérifiez le format de la classe `Migration_nom`
+- Videz le cache du navigateur
+
+### Erreur lors de l'application
+- Consultez les logs dans Perfex
+- Vérifiez les permissions DB
+- Vérifiez que la table existe
 
 Bon travail ! 🎉
