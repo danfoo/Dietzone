@@ -6276,5 +6276,258 @@ class Portal extends App_Controller
             ]);
         }
     }
+
+    /**
+     * API: Get today's hydration data
+     * Returns: today's total consumption, goal, and history
+     */
+    public function api_get_hydration_data()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if tables exist
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Fonctionnalité non disponible'
+                ]);
+                return;
+            }
+
+            $today = date('Y-m-d');
+
+            // Get today's total
+            $this->db->select_sum('quantity_ml');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('tracking_date', $today);
+            $result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+            $today_total = $result->quantity_ml ? intval($result->quantity_ml) : 0;
+
+            // Get or create goal
+            $this->db->where('patient_id', $patient->id);
+            $goal_row = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+
+            if (!$goal_row) {
+                // Create default goal
+                $this->db->insert(db_prefix() . 'dietic_hydration_goals', [
+                    'patient_id' => $patient->id,
+                    'daily_goal_ml' => 2000,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+                $daily_goal = 2000;
+            } else {
+                $daily_goal = intval($goal_row->daily_goal_ml);
+            }
+
+            // Get today's entries with time
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('tracking_date', $today);
+            $this->db->order_by('tracking_time', 'ASC');
+            $today_entries = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->result_array();
+
+            // Get last 7 days history
+            $history = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-$i days"));
+
+                $this->db->select_sum('quantity_ml');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('tracking_date', $date);
+                $day_result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+
+                $history[] = [
+                    'date' => $date,
+                    'date_formatted' => date('d/m', strtotime($date)),
+                    'day_name' => date('D', strtotime($date)),
+                    'total_ml' => $day_result->quantity_ml ? intval($day_result->quantity_ml) : 0,
+                    'percentage' => $day_result->quantity_ml ? min(100, round(($day_result->quantity_ml / $daily_goal) * 100)) : 0
+                ];
+            }
+
+            // Calculate percentage
+            $percentage = min(100, round(($today_total / $daily_goal) * 100));
+
+            echo json_encode([
+                'success' => true,
+                'today_total' => $today_total,
+                'daily_goal' => $daily_goal,
+                'percentage' => $percentage,
+                'entries' => $today_entries,
+                'history' => $history
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting hydration data: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Add hydration entry
+     * POST: {quantity_ml}
+     */
+    public function api_add_hydration()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $quantity_ml = intval($this->input->post('quantity_ml'));
+
+            if ($quantity_ml <= 0 || $quantity_ml > 2000) {
+                echo json_encode(['success' => false, 'message' => 'Quantité invalide (1-2000ml)']);
+                return;
+            }
+
+            // Insert entry
+            $data = [
+                'patient_id' => $patient->id,
+                'quantity_ml' => $quantity_ml,
+                'tracking_date' => date('Y-m-d'),
+                'tracking_time' => date('H:i:s'),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert(db_prefix() . 'dietic_hydration_tracking', $data);
+            $entry_id = $this->db->insert_id();
+
+            if ($entry_id) {
+                // Get new total
+                $this->db->select_sum('quantity_ml');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('tracking_date', date('Y-m-d'));
+                $result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+                $new_total = $result->quantity_ml ? intval($result->quantity_ml) : 0;
+
+                // Get goal
+                $this->db->where('patient_id', $patient->id);
+                $goal_row = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+                $daily_goal = $goal_row ? intval($goal_row->daily_goal_ml) : 2000;
+
+                $percentage = min(100, round(($new_total / $daily_goal) * 100));
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Hydratation enregistrée',
+                    'entry_id' => $entry_id,
+                    'new_total' => $new_total,
+                    'percentage' => $percentage
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement']);
+            }
+
+        } catch (Exception $e) {
+            log_activity('Error adding hydration: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Update hydration goal
+     * POST: {daily_goal_ml}
+     */
+    public function api_update_hydration_goal()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        try {
+            if (!$this->db->table_exists(db_prefix() . 'dietic_hydration_goals')) {
+                echo json_encode(['success' => false, 'message' => 'Fonctionnalité non disponible']);
+                return;
+            }
+
+            $daily_goal_ml = intval($this->input->post('daily_goal_ml'));
+
+            if ($daily_goal_ml < 500 || $daily_goal_ml > 5000) {
+                echo json_encode(['success' => false, 'message' => 'Objectif invalide (500-5000ml)']);
+                return;
+            }
+
+            // Check if goal exists
+            $this->db->where('patient_id', $patient->id);
+            $existing = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+
+            if ($existing) {
+                // Update
+                $this->db->where('patient_id', $patient->id);
+                $this->db->update(db_prefix() . 'dietic_hydration_goals', [
+                    'daily_goal_ml' => $daily_goal_ml,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            } else {
+                // Insert
+                $this->db->insert(db_prefix() . 'dietic_hydration_goals', [
+                    'patient_id' => $patient->id,
+                    'daily_goal_ml' => $daily_goal_ml,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Objectif mis à jour',
+                'daily_goal_ml' => $daily_goal_ml
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error updating hydration goal: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
 

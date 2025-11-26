@@ -612,6 +612,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 7: Hydration Tracking -->
+                <div class="migration-card" data-migration="hydration_tracking">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-tint"></i>
+                            Suivi d'Hydratation
+                        </h3>
+                        <span class="migration-status pending" id="status-hydration_tracking">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Système de suivi d'hydratation quotidienne pour les patients. Interface interactive avec animation d'eau, boutons rapides (250ml, 500ml, 750ml) et objectifs personnalisables.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_hydration_tracking</code> - Enregistrement de la consommation d'eau</li>
+                                <li><code>tbldietic_hydration_goals</code> - Objectifs d'hydratation personnalisés (défaut: 2000ml)</li>
+                                <li>Historique journalier avec horodatage</li>
+                                <li>Animation visuelle de progression</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_hydration_tracking.php
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('hydration_tracking')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('hydration_tracking')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -662,6 +700,11 @@ const migrations = {
         name: 'Notes sur Statistiques',
         file: 'add_statistics_notes.php',
         tables: ['dietic_statistics_notes']
+    },
+    hydration_tracking: {
+        name: 'Suivi d\'Hydratation',
+        file: 'add_hydration_tracking.php',
+        tables: ['dietic_hydration_tracking', 'dietic_hydration_goals']
     }
 };
 

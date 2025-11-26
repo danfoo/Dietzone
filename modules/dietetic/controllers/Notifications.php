@@ -959,6 +959,14 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'Manquant';
                 break;
 
+            case 'hydration_tracking':
+                // Check if hydration tracking tables exist
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_hydration_tracking');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_hydration_goals');
+                $installed = $table1 && $table2;
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -1000,7 +1008,8 @@ class Notifications extends AdminController
                 'optimizations' => 'optimize_notifications_performance.sql',
                 'permissions' => 'add_staff_permissions.sql',
                 'firebase_v1' => 'add_firebase_v1_api_support.sql',
-                'statistics_notes' => 'add_statistics_notes.php'
+                'statistics_notes' => 'add_statistics_notes.php',
+                'hydration_tracking' => 'add_hydration_tracking.php'
             ];
 
             if (!isset($migration_files[$migration])) {
@@ -1261,6 +1270,19 @@ class Notifications extends AdminController
             // Check if already installed based on migration name
             if ($migration_name === 'statistics_notes') {
                 if ($this->db->table_exists(db_prefix() . 'dietic_statistics_notes')) {
+                    echo json_encode([
+                        'success' => true,
+                        'already_exists' => true,
+                        'message' => 'Cette migration a déjà été exécutée'
+                    ]);
+                    return;
+                }
+            }
+
+            if ($migration_name === 'hydration_tracking') {
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_hydration_tracking');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_hydration_goals');
+                if ($table1 && $table2) {
                     echo json_encode([
                         'success' => true,
                         'already_exists' => true,
