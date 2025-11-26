@@ -1,6 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<script>
+// Define CSRF tokens globally for JavaScript
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash_name = '<?php echo $this->security->get_csrf_hash(); ?>';
+</script>
+
 <style>
 .migrations-container {
     max-width: 1200px;

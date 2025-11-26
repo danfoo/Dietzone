@@ -157,6 +157,17 @@ function dietetic_module_init_menu_items()
             ]);
         }
 
+        // Activities - Show if table exists
+        if ($CI->db->table_exists(db_prefix() . 'dietic_activities')) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-activities',
+                'name'     => 'Activités Sportives',
+                'icon'     => 'fa fa-heartbeat',
+                'href'     => admin_url('dietetic/activities/manage'),
+                'position' => 5.3,
+            ]);
+        }
+
         // Notifications - Show if table exists and user is admin
         if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
