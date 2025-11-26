@@ -95,6 +95,50 @@ class Patients extends AdminController
             $data['daily_tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($id);
         }
 
+        // Get hydration tracking data (if table exists)
+        $data['hydration_data'] = null;
+        if ($this->db->table_exists(db_prefix() . 'dietic_hydration_tracking')) {
+            $today = date('Y-m-d');
+
+            // Get today's total
+            $this->db->select_sum('quantity_ml');
+            $this->db->where('patient_id', $id);
+            $this->db->where('tracking_date', $today);
+            $result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+            $today_total = $result->quantity_ml ? intval($result->quantity_ml) : 0;
+
+            // Get or create goal
+            $this->db->where('patient_id', $id);
+            $goal_row = $this->db->get(db_prefix() . 'dietic_hydration_goals')->row();
+            $daily_goal = $goal_row ? intval($goal_row->daily_goal_ml) : 2000;
+
+            // Get last 7 days history
+            $history = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-$i days"));
+
+                $this->db->select_sum('quantity_ml');
+                $this->db->where('patient_id', $id);
+                $this->db->where('tracking_date', $date);
+                $day_result = $this->db->get(db_prefix() . 'dietic_hydration_tracking')->row();
+
+                $history[] = [
+                    'date' => $date,
+                    'date_formatted' => date('d/m', strtotime($date)),
+                    'day_name' => date('D', strtotime($date)),
+                    'total_ml' => $day_result->quantity_ml ? intval($day_result->quantity_ml) : 0,
+                    'percentage' => $day_result->quantity_ml ? min(100, round(($day_result->quantity_ml / $daily_goal) * 100)) : 0
+                ];
+            }
+
+            $data['hydration_data'] = [
+                'today_total' => $today_total,
+                'daily_goal' => $daily_goal,
+                'percentage' => min(100, round(($today_total / $daily_goal) * 100)),
+                'history' => $history
+            ];
+        }
+
         $this->load->view('admin/patients/view', $data);
     }
 

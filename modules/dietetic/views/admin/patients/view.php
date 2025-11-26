@@ -724,7 +724,7 @@ html {
                         <!-- Summary Cards -->
                         <div class="row" style="margin-bottom: 20px;">
                             <!-- Streak Card -->
-                            <div class="col-md-3 col-sm-6">
+                            <div class="col-md-4 col-sm-6">
                                 <div class="info-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
                                     <i class="fa fa-fire" style="font-size: 32px; margin-bottom: 10px;"></i>
                                     <h3 style="margin: 10px 0; color: white;"><?php echo $daily_tracking_streak; ?> jours</h3>
@@ -732,19 +732,8 @@ html {
                                 </div>
                             </div>
 
-                            <!-- Weekly Water -->
-                            <div class="col-md-3 col-sm-6">
-                                <div class="info-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                                    <i class="fa fa-tint" style="font-size: 32px; margin-bottom: 10px;"></i>
-                                    <h3 style="margin: 10px 0; color: white;">
-                                        <?php echo $daily_tracking_weekly_summary ? round($daily_tracking_weekly_summary->avg_water, 1) : '0'; ?> verres
-                                    </h3>
-                                    <p style="margin: 0; opacity: 0.9;">Moy. hydratation/jour</p>
-                                </div>
-                            </div>
-
                             <!-- Weekly Meals -->
-                            <div class="col-md-3 col-sm-6">
+                            <div class="col-md-4 col-sm-6">
                                 <div class="info-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
                                     <i class="fa fa-cutlery" style="font-size: 32px; margin-bottom: 10px;"></i>
                                     <h3 style="margin: 10px 0; color: white;">
@@ -764,7 +753,7 @@ html {
                             </div>
 
                             <!-- Weekly Activity -->
-                            <div class="col-md-3 col-sm-6">
+                            <div class="col-md-4 col-sm-6">
                                 <div class="info-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
                                     <i class="fa fa-heartbeat" style="font-size: 32px; margin-bottom: 10px;"></i>
                                     <h3 style="margin: 10px 0; color: white;">
@@ -774,6 +763,216 @@ html {
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Hydration Tracking Section (New Compact Version) -->
+                        <?php if (!empty($hydration_data)) { ?>
+                        <style>
+                        /* Hydration Section - Compact Version for Admin */
+                        .hydration-card-compact-admin {
+                            background: white;
+                            border-radius: 12px;
+                            padding: 20px 24px;
+                            margin-bottom: 24px;
+                            transition: all 0.3s;
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                        }
+
+                        .hydration-card-compact-admin:hover {
+                            box-shadow: 0 4px 16px rgba(79, 195, 247, 0.15);
+                        }
+
+                        .hydration-header-compact-admin {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 16px;
+                            flex-wrap: wrap;
+                            gap: 12px;
+                        }
+
+                        .hydration-title-compact-admin {
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #01579b;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+
+                        .hydration-title-compact-admin i {
+                            color: #4fc3f7;
+                            font-size: 20px;
+                        }
+
+                        .hydration-goal-display-admin {
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #546e7a;
+                        }
+
+                        .hydration-goal-display-admin span {
+                            color: #0288d1;
+                            font-weight: 700;
+                            font-size: 16px;
+                        }
+
+                        .hydration-progress-bar-admin {
+                            height: 12px;
+                            background: #e3f2fd;
+                            border-radius: 8px;
+                            overflow: hidden;
+                            position: relative;
+                            margin-bottom: 16px;
+                        }
+
+                        .hydration-progress-fill-admin {
+                            height: 100%;
+                            background: linear-gradient(90deg, #4fc3f7 0%, #0288d1 100%);
+                            border-radius: 8px;
+                            transition: width 0.5s ease;
+                            position: relative;
+                        }
+
+                        .hydration-history-compact-admin {
+                            margin-top: 16px;
+                        }
+
+                        .history-title-compact-admin {
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #546e7a;
+                            margin-bottom: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .history-bars-compact-admin {
+                            display: grid;
+                            grid-template-columns: repeat(7, 1fr);
+                            gap: 8px;
+                        }
+
+                        .history-bar-compact-admin {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                        }
+
+                        .history-bar-fill-compact-admin {
+                            width: 100%;
+                            height: 80px;
+                            background: #f5f5f5;
+                            border-radius: 6px;
+                            position: relative;
+                            overflow: hidden;
+                        }
+
+                        .history-bar-value-compact-admin {
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            width: 100%;
+                            background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 100%);
+                            border-radius: 6px;
+                            transition: height 0.5s ease;
+                            overflow: hidden;
+                        }
+
+                        .history-bar-value-compact-admin::before,
+                        .history-bar-value-compact-admin::after {
+                            content: '';
+                            position: absolute;
+                            top: -8px;
+                            left: -50%;
+                            width: 200%;
+                            height: 12px;
+                            background: rgba(255, 255, 255, 0.4);
+                            border-radius: 45%;
+                            animation: wave 3s linear infinite;
+                        }
+
+                        .history-bar-value-compact-admin::after {
+                            animation-delay: -1.5s;
+                            opacity: 0.6;
+                        }
+
+                        @keyframes wave {
+                            0%, 100% { transform: translateX(0) translateY(0); }
+                            25% { transform: translateX(-15%) translateY(-3px); }
+                            50% { transform: translateX(-30%) translateY(0); }
+                            75% { transform: translateX(-15%) translateY(-3px); }
+                        }
+
+                        .history-day-compact-admin {
+                            margin-top: 6px;
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: #90a4ae;
+                            text-transform: uppercase;
+                        }
+
+                        @media (max-width: 768px) {
+                            .history-bars-compact-admin {
+                                gap: 6px;
+                            }
+
+                            .history-bar-fill-compact-admin {
+                                height: 60px;
+                            }
+                        }
+                        </style>
+
+                        <div class="hydration-card-compact-admin">
+                            <div class="hydration-header-compact-admin">
+                                <div class="hydration-title-compact-admin">
+                                    <i class="fa fa-tint"></i>
+                                    Hydratation
+                                </div>
+                                <div class="hydration-goal-display-admin">
+                                    <span id="waterLevelTextAdmin"><?php echo $hydration_data['today_total']; ?> ml</span> consommé / 
+                                    <span id="waterRemainingTextAdmin"><?php echo max(0, $hydration_data['daily_goal'] - $hydration_data['today_total']); ?> ml</span> restant
+                                </div>
+                            </div>
+
+                            <div class="hydration-progress-bar-admin">
+                                <div class="hydration-progress-fill-admin" id="hydrationProgressBarAdmin" style="width: <?php echo $hydration_data['percentage']; ?>%"></div>
+                            </div>
+
+                            <div class="hydration-history-compact-admin">
+                                <div class="history-title-compact-admin">7 derniers jours</div>
+                                <div class="history-bars-compact-admin" id="hydrationHistoryAdmin">
+                                    <?php
+                                    $frenchDays = [
+                                        'Mon' => 'Lun', 'Tue' => 'Mar', 'Wed' => 'Mer',
+                                        'Thu' => 'Jeu', 'Fri' => 'Ven', 'Sat' => 'Sam', 'Sun' => 'Dim'
+                                    ];
+                                    
+                                    // Day order for sorting
+                                    $dayOrder = [
+                                        'Mon' => 1, 'Tue' => 2, 'Wed' => 3, 'Thu' => 4,
+                                        'Fri' => 5, 'Sat' => 6, 'Sun' => 7
+                                    ];
+                                    
+                                    // Sort history by day of week
+                                    usort($hydration_data['history'], function($a, $b) use ($dayOrder) {
+                                        return $dayOrder[$a['day_name']] - $dayOrder[$b['day_name']];
+                                    });
+                                    
+                                    foreach ($hydration_data['history'] as $day) {
+                                        $dayFr = isset($frenchDays[$day['day_name']]) ? $frenchDays[$day['day_name']] : $day['day_name'];
+                                        ?>
+                                        <div class="history-bar-compact-admin">
+                                            <div class="history-bar-fill-compact-admin">
+                                                <div class="history-bar-value-compact-admin" style="height: <?php echo $day['percentage']; ?>%"></div>
+                                            </div>
+                                            <div class="history-day-compact-admin"><?php echo $dayFr; ?></div>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php } ?>
+
 
                         <!-- Detailed Tracking Table -->
                         <?php if (!empty($daily_tracking)) { ?>
