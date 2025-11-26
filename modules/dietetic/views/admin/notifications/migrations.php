@@ -650,6 +650,49 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 8: Activity Tracking -->
+                <div class="migration-card" data-migration="activity_tracking">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-heartbeat"></i>
+                            Suivi d'Activités Sportives
+                        </h3>
+                        <span class="migration-status pending" id="status-activity_tracking">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Système complet de suivi des activités sportives. Base de données avec 26+ activités pré-configurées (course, vélo, natation, etc.), calcul automatique des calories selon la durée personnalisable par le patient.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_activities</code> - Base de données des activités (nom, kcal/min, catégorie)</li>
+                                <li><code>tbldietic_patient_activities</code> - Suivi des activités des patients</li>
+                                <li>26 activités par défaut avec valeurs kcal/minute précises</li>
+                                <li>Calcul automatique des calories brûlées selon durée</li>
+                                <li>Catégories: Cardio, Musculation, Sports collectifs, Yoga, Autres</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info" style="margin-top: 15px; background: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Calcul par défaut :</strong> Chaque activité est calculée sur 30 minutes par défaut. Les patients peuvent personnaliser la durée et les calories sont recalculées automatiquement.
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_activity_tracking.php
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('activity_tracking')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('activity_tracking')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -705,6 +748,11 @@ const migrations = {
         name: 'Suivi d\'Hydratation',
         file: 'add_hydration_tracking.php',
         tables: ['dietic_hydration_tracking', 'dietic_hydration_goals']
+    },
+    activity_tracking: {
+        name: 'Suivi d\'Activités Sportives',
+        file: 'add_activity_tracking.php',
+        tables: ['dietic_activities', 'dietic_patient_activities']
     }
 };
 
