@@ -109,6 +109,40 @@ class Patients extends AdminController
                     $day->hydration_ml = 0;
                 }
             }
+
+            // Add sports activities data to each tracking day (if activities table exists)
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_activities')) {
+                $this->load->model('dietetic/dietetic_activities_model');
+                foreach ($data['daily_tracking'] as &$day) {
+                    // Get activities for this specific day
+                    $activities = $this->dietetic_activities_model->get_patient_activities_by_date_range(
+                        $id,
+                        $day->tracking_date,
+                        $day->tracking_date
+                    );
+
+                    // Calculate totals
+                    $total_minutes = 0;
+                    $total_kcal = 0;
+                    if (!empty($activities)) {
+                        foreach ($activities as $activity) {
+                            $total_minutes += $activity->duration_minutes;
+                            $total_kcal += $activity->kcal_burned;
+                        }
+                    }
+
+                    $day->activities_minutes = $total_minutes;
+                    $day->activities_kcal = $total_kcal;
+                    $day->activities_count = count($activities);
+                }
+            } else {
+                // If activities table doesn't exist, set defaults
+                foreach ($data['daily_tracking'] as &$day) {
+                    $day->activities_minutes = 0;
+                    $day->activities_kcal = 0;
+                    $day->activities_count = 0;
+                }
+            }
         }
 
         // Get hydration tracking data (if table exists)
