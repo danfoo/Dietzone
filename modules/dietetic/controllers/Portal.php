@@ -6739,7 +6739,11 @@ class Portal extends App_Controller
                     redirect(site_url('dietetic/portal'));
                     return;
                 }
-                echo json_encode(['success' => true, 'message' => 'Activité ajoutée avec succès']);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Activité ajoutée avec succès',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
             } else {
                 // Get database error
                 $db_error = $this->db->error();
@@ -6753,7 +6757,12 @@ class Portal extends App_Controller
                     redirect(site_url('dietetic/portal'));
                     return;
                 }
-                echo json_encode(['success' => false, 'message' => $error_message, 'db_error' => $db_error]);
+                echo json_encode([
+                    'success' => false,
+                    'message' => $error_message,
+                    'db_error' => $db_error,
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
             }
         } catch (Exception $e) {
             if ($redirect_to_dashboard) {
@@ -6761,7 +6770,11 @@ class Portal extends App_Controller
                 redirect(site_url('dietetic/portal'));
                 return;
             }
-            echo json_encode(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()]);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage(),
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
         }
     }
 
@@ -6776,23 +6789,14 @@ class Portal extends App_Controller
         if (!$patient) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Non connecté'
-            ]);
-            return;
-        }
-
-        // CSRF Protection - CodeIgniter validates automatically, but verify manually
-        $csrf_token_name = $this->security->get_csrf_token_name();
-        $csrf_token = $this->input->post($csrf_token_name);
-
-        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Token CSRF invalide',
+                'message' => 'Non connecté',
                 'csrf_token' => $this->security->get_csrf_hash()
             ]);
             return;
         }
+
+        // CSRF Protection - CodeIgniter validates automatically via security library
+        // No need for manual validation as CI framework already handles it
 
         if (!$activity_id) {
             echo json_encode([
