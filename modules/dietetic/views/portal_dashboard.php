@@ -2481,6 +2481,180 @@ body {
     transform: translateY(0);
 }
 
+/* Custom Select Dropdown */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.custom-select-trigger:hover {
+    border-color: #01807B;
+}
+
+.custom-select-trigger.active {
+    border-color: #01807B;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+.custom-select-trigger span {
+    flex: 1;
+    color: #2c3e50;
+}
+
+.custom-select-trigger i {
+    color: #7f8c8d;
+    font-size: 11px;
+    transition: transform 0.2s;
+}
+
+.custom-select-trigger.active i {
+    transform: rotate(180deg);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.custom-select-dropdown.active {
+    display: block;
+    animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-select-search {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 8px;
+    background: #fafafa;
+    border-radius: 10px 10px 0 0;
+}
+
+.custom-select-search i {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.custom-select-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    padding: 0;
+}
+
+.custom-select-search input::placeholder {
+    color: #adb5bd;
+}
+
+.custom-select-options {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.custom-select-option {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-select-option:hover {
+    background: #f0f9f8;
+}
+
+.custom-select-option.selected {
+    background: #01807B;
+    color: white;
+}
+
+.custom-select-option-name {
+    flex: 1;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.custom-select-option.selected .custom-select-option-name {
+    color: white;
+}
+
+.custom-select-option-kcal {
+    font-size: 10px;
+    color: #7f8c8d;
+    padding: 2px 6px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.custom-select-option.selected .custom-select-option-kcal {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.custom-select-category {
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #01807B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #f8f9fa;
+    margin-top: 4px;
+    border-radius: 4px;
+}
+
+.custom-select-category:first-child {
+    margin-top: 0;
+}
+
+.no-results {
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 11px;
+}
+
 @media (max-width: 768px) {
     .activity-modal-content {
         width: 95%;
@@ -2950,9 +3124,22 @@ if (!$current_weight || !$target_weight) {
 
                 <div class="form-group">
                     <label>Activité sportive</label>
-                    <select id="activitySelectModal" name="activity_id" class="searchable-select" required>
-                        <option value="">Rechercher et sélectionner...</option>
-                    </select>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select-trigger" id="customSelectTrigger">
+                            <span id="selectedActivityText">Rechercher et sélectionner...</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-select-dropdown" id="customSelectDropdown">
+                            <div class="custom-select-search">
+                                <i class="fa fa-search"></i>
+                                <input type="text" id="activitySearchInput" placeholder="Rechercher une activité..." autocomplete="off">
+                            </div>
+                            <div class="custom-select-options" id="customSelectOptions">
+                                <!-- Will be filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="activitySelectModal" name="activity_id" required>
                 </div>
 
                 <div class="form-group">
@@ -3869,10 +4056,10 @@ async function loadActivitiesList() {
     }
 }
 
-// Populate select with activities
+// Populate custom select with activities
 function populateActivitiesSelect() {
-    const select = document.getElementById('activitySelectModal');
-    select.innerHTML = '<option value="">Rechercher et sélectionner...</option>';
+    const optionsContainer = document.getElementById('customSelectOptions');
+    if (!optionsContainer) return;
 
     // Group by category
     const grouped = {};
@@ -3882,37 +4069,137 @@ function populateActivitiesSelect() {
         grouped[cat].push(activity);
     });
 
-    // Add options grouped by category
+    // Build HTML for custom select
+    let html = '';
     Object.keys(grouped).sort().forEach(category => {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = category;
-
+        html += `<div class="custom-select-category">${category}</div>`;
         grouped[category].forEach(activity => {
-            const option = document.createElement('option');
-            option.value = activity.id;
-            option.textContent = activity.name;
-            option.dataset.kcalPerMin = activity.kcal_per_minute;
-            optgroup.appendChild(option);
+            html += `
+                <div class="custom-select-option" data-id="${activity.id}" data-kcal="${activity.kcal_per_minute}" data-name="${activity.name}">
+                    <span class="custom-select-option-name">${activity.name}</span>
+                    <span class="custom-select-option-kcal">${activity.kcal_per_minute} kcal/min</span>
+                </div>
+            `;
         });
-
-        select.appendChild(optgroup);
     });
+
+    optionsContainer.innerHTML = html;
+    initializeCustomSelect();
 }
 
-// Handle activity selection
-document.addEventListener('DOMContentLoaded', function() {
-    const activitySelect = document.getElementById('activitySelectModal');
-    const durationInput = document.getElementById('durationInputModal');
+// Initialize custom select functionality
+function initializeCustomSelect() {
+    const trigger = document.getElementById('customSelectTrigger');
+    const dropdown = document.getElementById('customSelectDropdown');
+    const searchInput = document.getElementById('activitySearchInput');
+    const optionsContainer = document.getElementById('customSelectOptions');
+    const hiddenInput = document.getElementById('activitySelectModal');
+    const selectedText = document.getElementById('selectedActivityText');
 
-    if (activitySelect) {
-        activitySelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption && selectedOption.dataset.kcalPerMin) {
-                selectedActivityKcalPerMin = parseFloat(selectedOption.dataset.kcalPerMin);
-                updateCaloriesPreview();
+    // Toggle dropdown
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = dropdown.classList.contains('active');
+
+        if (isActive) {
+            closeCustomSelect();
+        } else {
+            dropdown.classList.add('active');
+            trigger.classList.add('active');
+            searchInput.focus();
+        }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+            closeCustomSelect();
+        }
+    });
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const options = optionsContainer.querySelectorAll('.custom-select-option');
+        const categories = optionsContainer.querySelectorAll('.custom-select-category');
+        let hasResults = false;
+
+        categories.forEach(category => {
+            let categoryHasVisibleOptions = false;
+            let currentCategory = category;
+            let sibling = category.nextElementSibling;
+
+            while (sibling && !sibling.classList.contains('custom-select-category')) {
+                if (sibling.classList.contains('custom-select-option')) {
+                    const name = sibling.dataset.name.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        sibling.style.display = 'flex';
+                        categoryHasVisibleOptions = true;
+                        hasResults = true;
+                    } else {
+                        sibling.style.display = 'none';
+                    }
+                }
+                sibling = sibling.nextElementSibling;
             }
+
+            currentCategory.style.display = categoryHasVisibleOptions ? 'block' : 'none';
         });
+
+        // Show "no results" message
+        const existingNoResults = optionsContainer.querySelector('.no-results');
+        if (existingNoResults) existingNoResults.remove();
+
+        if (!hasResults && searchTerm) {
+            optionsContainer.insertAdjacentHTML('beforeend', '<div class="no-results">Aucune activité trouvée</div>');
+        }
+    });
+
+    // Handle option selection
+    optionsContainer.addEventListener('click', function(e) {
+        const option = e.target.closest('.custom-select-option');
+        if (!option) return;
+
+        const activityId = option.dataset.id;
+        const activityName = option.dataset.name;
+        const kcalPerMin = option.dataset.kcal;
+
+        // Update hidden input
+        hiddenInput.value = activityId;
+
+        // Update selected text
+        selectedText.textContent = activityName;
+
+        // Update global variable for calorie calculation
+        selectedActivityKcalPerMin = parseFloat(kcalPerMin);
+        updateCaloriesPreview();
+
+        // Update UI
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+
+        // Close dropdown
+        closeCustomSelect();
+    });
+
+    function closeCustomSelect() {
+        dropdown.classList.remove('active');
+        trigger.classList.remove('active');
+        searchInput.value = '';
+        // Reset filter
+        optionsContainer.querySelectorAll('.custom-select-option, .custom-select-category').forEach(el => {
+            el.style.display = '';
+        });
+        const noResults = optionsContainer.querySelector('.no-results');
+        if (noResults) noResults.remove();
     }
+}
+
+// Handle duration input and form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const durationInput = document.getElementById('durationInputModal');
 
     if (durationInput) {
         durationInput.addEventListener('input', updateCaloriesPreview);
