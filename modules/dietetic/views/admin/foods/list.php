@@ -327,6 +327,97 @@
                             <h4 style="color: #7f8c8d;">Aucun aliment trouvé</h4>
                             <p style="color: #95a5a6;">Essayez de modifier votre recherche</p>
                         </div>
+
+                        <!-- Pagination -->
+                        <?php if (isset($total_pages) && $total_pages > 1): ?>
+                            <div class="row" style="margin-top: 20px;">
+                                <div class="col-md-6">
+                                    <p class="text-muted">
+                                        Affichage de <?php echo count($foods); ?> sur <?php echo $total_foods; ?> aliments
+                                        (Page <?php echo $current_page; ?> sur <?php echo $total_pages; ?>)
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <nav aria-label="Pagination des aliments">
+                                        <ul class="pagination pull-right">
+                                            <!-- Bouton Précédent -->
+                                            <?php if ($current_page > 1): ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/foods?page=' . ($current_page - 1)); ?>" aria-label="Précédent">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                </li>
+                                            <?php else: ?>
+                                                <li class="disabled">
+                                                    <span aria-hidden="true">&laquo;</span>
+                                                </li>
+                                            <?php endif; ?>
+
+                                            <?php
+                                            // Logique de pagination avec ellipsis
+                                            $show_pages = 5; // Nombre de pages à afficher
+                                            $half_show = floor($show_pages / 2);
+
+                                            $start_page = max(1, $current_page - $half_show);
+                                            $end_page = min($total_pages, $current_page + $half_show);
+
+                                            // Ajuster si on est trop près du début ou de la fin
+                                            if ($current_page <= $half_show) {
+                                                $end_page = min($total_pages, $show_pages);
+                                            }
+                                            if ($current_page > $total_pages - $half_show) {
+                                                $start_page = max(1, $total_pages - $show_pages + 1);
+                                            }
+
+                                            // Ellipsis au début
+                                            if ($start_page > 1):
+                                            ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/foods?page=1'); ?>">1</a>
+                                                </li>
+                                                <?php if ($start_page > 2): ?>
+                                                    <li class="disabled"><span>...</span></li>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+
+                                            <!-- Numéros de page -->
+                                            <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                                <li class="<?php echo ($i == $current_page) ? 'active' : ''; ?>">
+                                                    <a href="<?php echo admin_url('dietetic/foods?page=' . $i); ?>">
+                                                        <?php echo $i; ?>
+                                                    </a>
+                                                </li>
+                                            <?php endfor; ?>
+
+                                            <!-- Ellipsis à la fin -->
+                                            <?php if ($end_page < $total_pages): ?>
+                                                <?php if ($end_page < $total_pages - 1): ?>
+                                                    <li class="disabled"><span>...</span></li>
+                                                <?php endif; ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/foods?page=' . $total_pages); ?>">
+                                                        <?php echo $total_pages; ?>
+                                                    </a>
+                                                </li>
+                                            <?php endif; ?>
+
+                                            <!-- Bouton Suivant -->
+                                            <?php if ($current_page < $total_pages): ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/foods?page=' . ($current_page + 1)); ?>" aria-label="Suivant">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                </li>
+                                            <?php else: ?>
+                                                <li class="disabled">
+                                                    <span aria-hidden="true">&raquo;</span>
+                                                </li>
+                                            <?php endif; ?>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

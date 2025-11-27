@@ -27,15 +27,21 @@ class Dietetic_foods_model extends App_Model
      * Get all foods
      *
      * @param array $where
+     * @param int $limit
+     * @param int $offset
      * @return array
      */
-    public function get_all($where = [])
+    public function get_all($where = [], $limit = null, $offset = null)
     {
         if (!empty($where)) {
             $this->db->where($where);
         }
 
         $this->db->order_by('food_name', 'ASC');
+
+        if ($limit !== null) {
+            $this->db->limit($limit, $offset);
+        }
 
         return $this->db->get(db_prefix() . $this->table)->result();
     }
@@ -182,6 +188,21 @@ class Dietetic_foods_model extends App_Model
     public function get_total_count()
     {
         return $this->db->count_all(db_prefix() . $this->table);
+    }
+
+    /**
+     * Count all foods with optional filters
+     *
+     * @param array $where
+     * @return int
+     */
+    public function count_all($where = [])
+    {
+        if (!empty($where)) {
+            $this->db->where($where);
+        }
+
+        return $this->db->count_all_results(db_prefix() . $this->table);
     }
 
     /**
