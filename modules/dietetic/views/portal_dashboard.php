@@ -3872,8 +3872,11 @@ async function addCustomWater() {
 loadHydrationData();
 
 // ============================================
-// ACTIVITIES TRACKING - Dashboard Widget
+// ACTIVITIES TRACKING - Simple & Clean
 // ============================================
+
+let activitiesData = [];
+let selectedActivityKcalPerMin = 0;
 
 // Load today's activities on page load
 loadTodayActivities();
@@ -3892,47 +3895,29 @@ async function loadTodayActivities() {
 }
 
 function updateActivitiesDisplay(data) {
-    // Update stats
-    $('#todayActivitiesCount').text(data.count || 0);
-    $('#todayMinutes').text(data.total_minutes || 0);
-    $('#todayKcal').text(Math.round(data.total_kcal || 0));
+    // Update total calories
+    $('#totalCaloriesText').text(Math.round(data.total_kcal || 0));
 
     // Update activities list
     const listContainer = $('#todayActivitiesList');
 
     if (!data.activities || data.activities.length === 0) {
-        listContainer.html(`
-            <div class="no-activities-compact">
-                <i class="fa fa-heartbeat"></i>
-                Aucune activité enregistrée aujourd'hui
-            </div>
-        `);
+        listContainer.html('<div class="no-activities-text">Aucune activité aujourd\'hui</div>');
         return;
     }
 
-    // Display up to 3 most recent activities
-    const activitiesToShow = data.activities.slice(0, 3);
     let html = '';
-
-    activitiesToShow.forEach(activity => {
-        const icon = getActivityIcon(activity.category);
+    data.activities.forEach(activity => {
         html += `
-            <div class="activity-item-compact">
-                <div class="activity-item-left">
-                    <div class="activity-icon-compact">
-                        <i class="fa ${icon}"></i>
+            <div class="activity-item-simple">
+                <div class="activity-item-name">${activity.activity_name}</div>
+                <div class="activity-item-details">
+                    <div class="activity-item-minutes">
+                        <i class="fa fa-clock-o"></i> ${activity.duration_minutes} min
                     </div>
-                    <div class="activity-info-compact">
-                        <div class="activity-name-compact">${activity.activity_name}</div>
-                        <div class="activity-duration-compact">
-                            <i class="fa fa-clock-o"></i>
-                            ${activity.duration_minutes} min
-                        </div>
+                    <div class="activity-item-calories">
+                        <i class="fa fa-fire"></i> ${Math.round(activity.kcal_burned)} kcal
                     </div>
-                </div>
-                <div class="activity-kcal-compact">
-                    <i class="fa fa-fire"></i>
-                    ${Math.round(activity.kcal_burned)}
                 </div>
             </div>
         `;
@@ -3941,18 +3926,160 @@ function updateActivitiesDisplay(data) {
     listContainer.html(html);
 }
 
-function getActivityIcon(category) {
-    const icons = {
-        'Cardio': 'fa-running',
-        'Musculation': 'fa-thumbs-o-up',
-        'Sports collectifs': 'fa-futbol-o',
-        'Arts martiaux': 'fa-hand-rock-o',
-        'Yoga/Étirements': 'fa-child',
-        'Danse': 'fa-music',
-        'Autres': 'fa-heartbeat'
-    };
+// Open activity modal
+async function openActivityModal() {
+    const modal = document.getElementById('activityModal');
+    modal.classList.add('active');
 
-    return icons[category] || 'fa-heartbeat';
+    // Load activities if not already loaded
+    if (activitiesData.length === 0) {
+        await loadActivitiesList();
+    }
+}
+
+// Close activity modal
+function closeActivityModal() {
+    const modal = document.getElementById('activityModal');
+    modal.classList.remove('active');
+    document.getElementById('quickActivityForm').reset();
+    selectedActivityKcalPerMin = 0;
+    updateCaloriesPreview();
+}
+
+// Load activities list for dropdown
+async function loadActivitiesList() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/get_activities'); ?>');
+        const data = await response.json();
+
+        if (data.success && data.activities) {
+            activitiesData = data.activities;
+            populateActivitiesSelect();
+        }
+    } catch (error) {
+        console.error('Error loading activities list:', error);
+    }
+}
+
+// Populate select with activities
+function populateActivitiesSelect() {
+    const select = document.getElementById('activitySelectModal');
+    select.innerHTML = '<option value="">Rechercher et sélectionner...</option>';
+
+    // Group by category
+    const grouped = {};
+    activitiesData.forEach(activity => {
+        const cat = activity.category || 'Autres';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(activity);
+    });
+
+    // Add options grouped by category
+    Object.keys(grouped).sort().forEach(category => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = category;
+
+        grouped[category].forEach(activity => {
+            const option = document.createElement('option');
+            option.value = activity.id;
+            option.textContent = activity.name;
+            option.dataset.kcalPerMin = activity.kcal_per_minute;
+            optgroup.appendChild(option);
+        });
+
+        select.appendChild(optgroup);
+    });
+}
+
+// Handle activity selection
+document.addEventListener('DOMContentLoaded', function() {
+    const activitySelect = document.getElementById('activitySelectModal');
+    const durationInput = document.getElementById('durationInputModal');
+
+    if (activitySelect) {
+        activitySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.dataset.kcalPerMin) {
+                selectedActivityKcalPerMin = parseFloat(selectedOption.dataset.kcalPerMin);
+                updateCaloriesPreview();
+            }
+        });
+    }
+
+    if (durationInput) {
+        durationInput.addEventListener('input', updateCaloriesPreview);
+    }
+
+    // Handle form submission
+    const form = document.getElementById('quickActivityForm');
+    if (form) {
+        form.addEventListener('submit', handleActivitySubmit);
+    }
+
+    // Close modal when clicking outside
+    const modal = document.getElementById('activityModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeActivityModal();
+            }
+        });
+    }
+});
+
+// Update calories preview
+function updateCaloriesPreview() {
+    const duration = parseInt(document.getElementById('durationInputModal').value) || 0;
+    const calories = Math.round(selectedActivityKcalPerMin * duration);
+    document.getElementById('caloriesPreview').textContent = calories;
+}
+
+// Handle form submission
+async function handleActivitySubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('.btn-validate-activity');
+    const originalHtml = submitBtn.innerHTML;
+
+    // Calculate calories
+    const duration = parseInt(formData.get('duration_minutes'));
+    const kcalBurned = Math.round(selectedActivityKcalPerMin * duration);
+
+    formData.append('kcal_burned', kcalBurned);
+    formData.append('activity_date', new Date().toISOString().split('T')[0]);
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Ajout...';
+
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/add_activity'); ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            submitBtn.innerHTML = '<i class="fa fa-check"></i> Ajouté !';
+            setTimeout(() => {
+                closeActivityModal();
+                loadTodayActivities(); // Reload activities
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }, 1000);
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter l\'activité'));
+            submitBtn.innerHTML = originalHtml;
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error adding activity:', error);
+        alert('Erreur lors de l\'ajout de l\'activité');
+        submitBtn.innerHTML = originalHtml;
+        submitBtn.disabled = false;
+    }
 }
 </script>
 
