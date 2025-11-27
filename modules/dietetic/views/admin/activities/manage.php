@@ -25,7 +25,7 @@
                         <hr>
 
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered dt-table" id="activitiesTable" width="100%">
+                            <table class="table table-striped table-bordered" id="activitiesTable" width="100%">
                                 <thead>
                                     <tr>
                                         <th>Activité</th>
@@ -137,6 +137,11 @@ $(document).ready(function() {
 
 // Initialize DataTable with AJAX
 function initDataTable() {
+    // Check if table is already initialized and destroy it first
+    if ($.fn.DataTable.isDataTable('#activitiesTable')) {
+        $('#activitiesTable').DataTable().destroy();
+    }
+
     activitiesTable = $('#activitiesTable').DataTable({
         ajax: {
             url: admin_url + 'dietetic/activities/get_activities',

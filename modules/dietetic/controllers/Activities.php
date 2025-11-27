@@ -225,8 +225,9 @@ class Activities extends AdminController
             return;
         }
 
-        // CSRF Protection
-        $csrf_token = $this->input->post('csrf_token');
+        // CSRF Protection - Use dynamic token name
+        $csrf_token_name = $this->security->get_csrf_token_name();
+        $csrf_token = $this->input->post($csrf_token_name);
         if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
             echo json_encode([
                 'success' => false,
@@ -298,8 +299,9 @@ class Activities extends AdminController
             return;
         }
 
-        // CSRF Protection
-        $csrf_token = $this->input->post('csrf_token');
+        // CSRF Protection - Use dynamic token name
+        $csrf_token_name = $this->security->get_csrf_token_name();
+        $csrf_token = $this->input->post($csrf_token_name);
         if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
             echo json_encode([
                 'success' => false,
@@ -350,8 +352,9 @@ class Activities extends AdminController
             return;
         }
 
-        // CSRF Protection
-        $csrf_token = $this->input->post('csrf_token');
+        // CSRF Protection - Use dynamic token name
+        $csrf_token_name = $this->security->get_csrf_token_name();
+        $csrf_token = $this->input->post($csrf_token_name);
         if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
             echo json_encode([
                 'success' => false,
