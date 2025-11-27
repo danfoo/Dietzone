@@ -498,6 +498,37 @@ let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
 const csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
 
+// Custom notification function for portal (replacement for alert_float)
+function showNotification(message, type) {
+    // type: 'success' or 'danger'
+    const bgColor = type === 'success' ? '#48bb78' : '#e74c3c';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    const toast = $('<div>')
+        .css({
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: bgColor,
+            color: 'white',
+            padding: '14px 20px',
+            borderRadius: '10px',
+            zIndex: 10000,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            fontSize: '14px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            minWidth: '250px',
+            maxWidth: '400px'
+        })
+        .html('<i class="fa ' + icon + '"></i> ' + message)
+        .appendTo('body');
+
+    setTimeout(() => toast.fadeOut(300, () => toast.remove()), 3500);
+}
+
 $(document).ready(function() {
     loadActivitiesList();
     loadMyActivities();
@@ -651,7 +682,7 @@ $('#addActivityForm').on('submit', function(e) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Activité enregistrée !');
+                showNotification('Activité enregistrée !', 'success');
                 $('#addActivityForm')[0].reset();
                 if (response.csrf_token) {
                     $('#csrf_token_field').val(response.csrf_token);
@@ -659,7 +690,7 @@ $('#addActivityForm').on('submit', function(e) {
                 $('#kcalValue').text('0');
                 loadMyActivities();
             } else {
-                alert_float('danger', response.message || 'Erreur');
+                showNotification(response.message || 'Erreur', 'danger');
                 if (response.csrf_token) {
                     $('#csrf_token_field').val(response.csrf_token);
                 }
@@ -667,7 +698,7 @@ $('#addActivityForm').on('submit', function(e) {
         },
         error: function(xhr, status, error) {
             console.error('Error:', error);
-            alert_float('danger', 'Erreur lors de l\'ajout de l\'activité');
+            showNotification('Erreur lors de l\'ajout de l\'activité', 'danger');
         }
     });
 });
@@ -689,13 +720,13 @@ function deleteActivity(id) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Activité supprimée');
+                showNotification('Activité supprimée', 'success');
                 if (response.csrf_token) {
                     $('#csrf_token_field').val(response.csrf_token);
                 }
                 loadMyActivities();
             } else {
-                alert_float('danger', response.message || 'Erreur');
+                showNotification(response.message || 'Erreur', 'danger');
                 if (response.csrf_token) {
                     $('#csrf_token_field').val(response.csrf_token);
                 }
@@ -703,7 +734,7 @@ function deleteActivity(id) {
         },
         error: function(xhr, status, error) {
             console.error('Error:', error);
-            alert_float('danger', 'Erreur lors de la suppression');
+            showNotification('Erreur lors de la suppression', 'danger');
         }
     });
 }
