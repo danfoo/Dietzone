@@ -2183,12 +2183,12 @@ body {
 }
 
 /* ============================================
-   ACTIVITIES CARD - Compact & Fun
+   ACTIVITIES CARD - Simple & Clean
    ============================================ */
 .activities-card-compact {
     background: white;
     border-radius: 12px;
-    padding: 20px 24px;
+    padding: 18px 22px;
     border: 2px solid #f1f3f5;
     margin-bottom: 24px;
     transition: all 0.3s;
@@ -2196,212 +2196,279 @@ body {
 
 .activities-card-compact:hover {
     border-color: #F3911D;
-    box-shadow: 0 6px 16px rgba(243, 145, 29, 0.12);
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.1);
 }
 
-.activities-header-compact {
+.activities-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f8f9fa;
     margin-bottom: 16px;
 }
 
-.activities-title-compact {
+.total-calories-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 16px;
     font-weight: 700;
-    color: #212529;
+    color: #2c3e50;
+}
+
+.total-calories-display i {
+    color: #e74c3c;
+    font-size: 20px;
+}
+
+.total-calories-display span {
+    color: #e74c3c;
+    font-size: 22px;
+}
+
+.btn-add-activity-plus {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.4);
 }
 
-.activities-title-compact i {
-    color: #F3911D;
-    font-size: 18px;
+.btn-add-activity-plus:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(243, 145, 29, 0.5);
 }
 
-.activities-stats-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
+.btn-add-activity-plus:active {
+    transform: scale(0.95);
 }
 
-.activity-stat-item {
-    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
-    border-radius: 10px;
-    padding: 10px;
+.activities-simple-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.no-activities-text {
     text-align: center;
-    border-left: 3px solid #F3911D;
-    transition: all 0.2s;
+    padding: 24px;
+    color: #95a5a6;
+    font-size: 13px;
+    font-style: italic;
 }
 
-.activity-stat-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 10px rgba(243, 145, 29, 0.15);
-}
-
-.activity-stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #F3911D;
-    line-height: 1;
-    margin-bottom: 4px;
-}
-
-.activity-stat-label {
-    font-size: 10px;
-    color: #6c757d;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.activities-list-compact {
-    margin-bottom: 14px;
-}
-
-.activity-item-compact {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+.activity-item-simple {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f8f9fa;
+    border-radius: 6px;
     border-left: 3px solid #F3911D;
     transition: all 0.2s;
 }
 
-.activity-item-compact:hover {
+.activity-item-simple:hover {
     background: #fff5e6;
     transform: translateX(4px);
 }
 
-.activity-item-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-}
-
-.activity-icon-compact {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-}
-
-.activity-info-compact {
-    flex: 1;
-}
-
-.activity-name-compact {
+.activity-item-name {
     font-size: 13px;
     font-weight: 600;
-    color: #212529;
-    margin-bottom: 2px;
-}
-
-.activity-duration-compact {
-    font-size: 11px;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.activity-kcal-compact {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.no-activities-compact {
-    text-align: center;
-    padding: 20px 16px;
-    color: #6c757d;
-    font-size: 13px;
-}
-
-.no-activities-compact i {
-    font-size: 36px;
-    opacity: 0.3;
-    margin-bottom: 8px;
-    display: block;
-}
-
-.activities-actions-compact {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-add-activity-compact {
+    color: #2c3e50;
     flex: 1;
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
+}
+
+.activity-item-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: #7f8c8d;
+}
+
+.activity-item-minutes {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.activity-item-calories {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #e74c3c;
     font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.3s;
+}
+
+/* Modal */
+.activity-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    animation: fadeIn 0.3s;
+}
+
+.activity-modal.active {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    box-shadow: 0 2px 6px rgba(243, 145, 29, 0.3);
 }
 
-.btn-add-activity-compact:hover {
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.activity-modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.activity-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 2px solid #f1f3f5;
+}
+
+.activity-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: none;
+    color: #7f8c8d;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.activity-modal-body {
+    padding: 24px;
+}
+
+.activity-modal-body .form-group {
+    margin-bottom: 20px;
+}
+
+.activity-modal-body label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.activity-modal-body select,
+.activity-modal-body input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.activity-modal-body select:focus,
+.activity-modal-body input:focus {
+    border-color: #F3911D;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(243, 145, 29, 0.1);
+}
+
+.calories-preview {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+    margin: 20px 0;
+    border-left: 4px solid #e74c3c;
+}
+
+.calories-preview i {
+    color: #e74c3c;
+    font-size: 24px;
+    margin-right: 8px;
+}
+
+.calories-preview span {
+    font-size: 28px;
+    font-weight: 700;
+    color: #e74c3c;
+}
+
+.btn-validate-activity {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.btn-validate-activity:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.4);
+    box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
 }
 
-.btn-add-activity-compact:active {
+.btn-validate-activity:active {
     transform: translateY(0);
 }
 
-.btn-view-all-activities {
-    padding: 10px 16px;
-    background: white;
-    color: #F3911D;
-    border: 2px solid #F3911D;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.btn-view-all-activities:hover {
-    background: #F3911D;
-    color: white;
-    transform: translateY(-2px);
-}
-
 @media (max-width: 768px) {
-    .activities-stats-row {
-        grid-template-columns: 1fr;
-    }
-
-    .activities-actions-compact {
-        flex-direction: column;
+    .activity-modal-content {
+        width: 95%;
+        max-height: 85vh;
     }
 }
 </style>
@@ -2847,49 +2914,60 @@ if (!$current_weight || !$target_weight) {
     </div>
 </div>
 
-<!-- Activities Card - Compact & Fun -->
+<!-- Activities Card - Simple & Clean -->
 <div class="activities-card-compact">
-    <div class="activities-header-compact">
-        <div class="activities-title-compact">
-            <i class="fa fa-heartbeat"></i>
-            Activités Sportives
+    <!-- Header with total calories and add button -->
+    <div class="activities-header-row">
+        <div class="total-calories-display">
+            <i class="fa fa-fire"></i>
+            <span id="totalCaloriesText">0</span> kcal brûlées
         </div>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="activities-stats-row">
-        <div class="activity-stat-item">
-            <div class="activity-stat-value" id="todayActivitiesCount">0</div>
-            <div class="activity-stat-label">Activités</div>
-        </div>
-        <div class="activity-stat-item">
-            <div class="activity-stat-value" id="todayMinutes">0</div>
-            <div class="activity-stat-label">Minutes</div>
-        </div>
-        <div class="activity-stat-item">
-            <div class="activity-stat-value" id="todayKcal">0</div>
-            <div class="activity-stat-label">Kcal brûlées</div>
-        </div>
-    </div>
-
-    <!-- Today's Activities List -->
-    <div class="activities-list-compact" id="todayActivitiesList">
-        <div class="no-activities-compact">
-            <i class="fa fa-heartbeat"></i>
-            Aucune activité enregistrée aujourd'hui
-        </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="activities-actions-compact">
-        <button class="btn-add-activity-compact" onclick="window.location.href='<?php echo site_url('dietetic/portal/activities'); ?>#add-activity'">
+        <button class="btn-add-activity-plus" onclick="openActivityModal()" title="Ajouter une activité">
             <i class="fa fa-plus"></i>
-            Ajouter une activité
         </button>
-        <button class="btn-view-all-activities" onclick="window.location.href='<?php echo site_url('dietetic/portal/activities'); ?>'">
-            <i class="fa fa-list"></i>
-            Voir tout
-        </button>
+    </div>
+
+    <!-- Activities List -->
+    <div class="activities-simple-list" id="todayActivitiesList">
+        <div class="no-activities-text">Aucune activité aujourd'hui</div>
+    </div>
+</div>
+
+<!-- Activity Modal -->
+<div id="activityModal" class="activity-modal">
+    <div class="activity-modal-content">
+        <div class="activity-modal-header">
+            <h3>Ajouter une activité</h3>
+            <button class="modal-close" onclick="closeActivityModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="activity-modal-body">
+            <form id="quickActivityForm">
+                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                <div class="form-group">
+                    <label>Activité sportive</label>
+                    <select id="activitySelectModal" name="activity_id" class="searchable-select" required>
+                        <option value="">Rechercher et sélectionner...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Durée (minutes)</label>
+                    <input type="number" id="durationInputModal" name="duration_minutes" value="30" min="1" max="600" required>
+                </div>
+
+                <div class="calories-preview">
+                    <i class="fa fa-fire"></i>
+                    <span id="caloriesPreview">0</span> kcal
+                </div>
+
+                <button type="submit" class="btn-validate-activity">
+                    <i class="fa fa-check"></i> Valider
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
