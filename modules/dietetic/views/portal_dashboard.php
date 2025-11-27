@@ -2943,7 +2943,7 @@ if (!$current_weight || !$target_weight) {
             </button>
         </div>
         <div class="activity-modal-body">
-            <form id="quickActivityForm" method="POST" action="<?php echo site_url('dietetic/portal/test_activity_post'); ?>">
+            <form id="quickActivityForm" method="POST" action="<?php echo site_url('dietetic/portal/add_activity'); ?>">
                 <?php
                 $csrf_name = $this->security->get_csrf_token_name();
                 $csrf_hash = $this->security->get_csrf_hash();
@@ -3886,8 +3886,7 @@ let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
 
 // Load today's activities on page load
-// Temporarily disabled for debugging
-// loadTodayActivities();
+loadTodayActivities();
 
 async function loadTodayActivities() {
     try {

@@ -6741,12 +6741,19 @@ class Portal extends App_Controller
                 }
                 echo json_encode(['success' => true, 'message' => 'Activité ajoutée avec succès']);
             } else {
+                // Get database error
+                $db_error = $this->db->error();
+                $error_message = 'Erreur lors de l\'ajout de l\'activité';
+                if (!empty($db_error['message'])) {
+                    $error_message .= ': ' . $db_error['message'];
+                }
+
                 if ($redirect_to_dashboard) {
-                    set_alert('danger', 'Erreur lors de l\'ajout de l\'activité');
+                    set_alert('danger', $error_message);
                     redirect(site_url('dietetic/portal'));
                     return;
                 }
-                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout de l\'activité']);
+                echo json_encode(['success' => false, 'message' => $error_message, 'db_error' => $db_error]);
             }
         } catch (Exception $e) {
             if ($redirect_to_dashboard) {
