@@ -15,6 +15,7 @@ class Consultations extends AdminController
         // Load dietetic models
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_availability_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
@@ -91,6 +92,20 @@ class Consultations extends AdminController
                 $data['duration'] = dietetic_get_option('default_consultation_duration', 60);
             }
 
+            // Check availability before creating consultation
+            if (isset($data['consultation_date']) && isset($data['dietitian_id'])) {
+                $availability_check = $this->dietetic_availability_model->check_availability(
+                    $data['dietitian_id'],
+                    $data['consultation_date'],
+                    $data['duration']
+                );
+
+                if (!$availability_check['available']) {
+                    set_alert('warning', '⚠️ Attention : ' . $availability_check['reason']);
+                    // Continue anyway but warn the user
+                }
+            }
+
             $consultation_id = $this->dietetic_consultations_model->add($data);
 
             if ($consultation_id) {
@@ -135,6 +150,9 @@ class Consultations extends AdminController
         // Get staff members
         $data['staff'] = $this->staff_model->get();
 
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types();
+
         $this->load->view('admin/consultations/form', $data);
     }
 
@@ -160,6 +178,29 @@ class Consultations extends AdminController
 
             // Remove fields that don't exist in database
             unset($update_data['height_patient']); // Used only for BMI calculation in form
+
+            // Check availability if date/time changed
+            $date_changed = isset($update_data['consultation_date']) &&
+                          $update_data['consultation_date'] != $data['consultation']->consultation_date;
+            $dietitian_changed = isset($update_data['dietitian_id']) &&
+                               $update_data['dietitian_id'] != $data['consultation']->dietitian_id;
+
+            if (($date_changed || $dietitian_changed) && isset($update_data['consultation_date'])) {
+                $dietitian_id = $update_data['dietitian_id'] ?? $data['consultation']->dietitian_id;
+                $duration = $update_data['duration'] ?? $data['consultation']->duration;
+
+                $availability_check = $this->dietetic_availability_model->check_availability(
+                    $dietitian_id,
+                    $update_data['consultation_date'],
+                    $duration,
+                    $id // Exclude current consultation
+                );
+
+                if (!$availability_check['available']) {
+                    set_alert('warning', '⚠️ Attention : ' . $availability_check['reason']);
+                    // Continue anyway but warn the user
+                }
+            }
 
             // Check if consultation was cancelled
             $was_cancelled = (isset($update_data['status']) &&
@@ -220,6 +261,9 @@ class Consultations extends AdminController
 
         // Get staff members
         $data['staff'] = $this->staff_model->get();
+
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types();
 
         $this->load->view('admin/consultations/form', $data);
     }
@@ -305,5 +349,42 @@ class Consultations extends AdminController
         } else {
             echo json_encode(['success' => false, 'message' => _l('dietetic_error_update_failed')]);
         }
+    }
+
+    /**
+     * API: Check availability for a consultation
+     * Used for real-time validation in the consultation form
+     */
+    public function check_availability()
+    {
+        header('Content-Type: application/json');
+
+        $dietitian_id = $this->input->get('dietitian_id') ?? $this->input->post('dietitian_id');
+        $datetime = $this->input->get('datetime') ?? $this->input->post('datetime');
+        $duration = $this->input->get('duration') ?? $this->input->post('duration') ?? 60;
+        $consultation_id = $this->input->get('consultation_id') ?? $this->input->post('consultation_id');
+
+        if (!$dietitian_id || !$datetime) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Paramètres manquants'
+            ]);
+            return;
+        }
+
+        // Check availability
+        $result = $this->dietetic_availability_model->check_availability(
+            $dietitian_id,
+            $datetime,
+            $duration,
+            $consultation_id
+        );
+
+        echo json_encode([
+            'success' => true,
+            'available' => $result['available'],
+            'reason' => $result['reason'],
+            'conflicts' => $result['conflicts']
+        ]);
     }
 }

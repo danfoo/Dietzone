@@ -235,10 +235,9 @@
                     <i class="fa fa-pencil"></i> Modifier le créneau
                 </h4>
             </div>
-            <form id="editSlotForm" method="POST">
+            <form id="editSlotForm" method="POST" action="">
                 <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                 <input type="hidden" name="dietitian_id" id="edit_dietitian_id" value="<?php echo $dietitian_id; ?>">
-                <input type="hidden" id="edit_slot_id">
 
                 <div class="modal-body">
                     <div class="row">
@@ -344,8 +343,10 @@ function editSlot(slotId) {
         return;
     }
 
+    // Set form action URL
+    $('#editSlotForm').attr('action', '<?php echo admin_url('dietetic/availability/update/'); ?>' + slotId);
+
     // Populate modal fields
-    $('#edit_slot_id').val(slot.id);
     $('#edit_day_of_week').val(slot.day_of_week);
     $('#edit_start_time').val(slot.start_time);
     $('#edit_end_time').val(slot.end_time);
@@ -356,30 +357,6 @@ function editSlot(slotId) {
     // Show modal
     $('#editSlotModal').modal('show');
 }
-
-// Handle edit form submission
-$('#editSlotForm').on('submit', function(e) {
-    e.preventDefault();
-
-    let slotId = $('#edit_slot_id').val();
-    let formData = $(this).serialize();
-
-    $.ajax({
-        url: '<?php echo admin_url('dietetic/availability/update/'); ?>' + slotId,
-        type: 'POST',
-        data: formData,
-        success: function(response) {
-            $('#editSlotModal').modal('hide');
-            alert_float('success', 'Créneau mis à jour');
-            setTimeout(function() {
-                location.reload();
-            }, 1000);
-        },
-        error: function() {
-            alert_float('danger', 'Erreur lors de la mise à jour');
-        }
-    });
-});
 
 // Confirmation for delete
 $(document).on('click', '.btn-delete-slot', function(e) {
