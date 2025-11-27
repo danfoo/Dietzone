@@ -2319,9 +2319,10 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
-    animation: fadeIn 0.3s;
+    animation: fadeIn 0.2s;
+    backdrop-filter: blur(2px);
 }
 
 .activity-modal.active {
@@ -2337,17 +2338,18 @@ body {
 
 .activity-modal-content {
     background: white;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 480px;
-    max-height: 90vh;
+    border-radius: 20px;
+    width: 92%;
+    max-width: 420px;
+    max-height: 85vh;
     overflow-y: auto;
     animation: slideUp 0.3s;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideUp {
     from {
-        transform: translateY(50px);
+        transform: translateY(30px);
         opacity: 0;
     }
     to {
@@ -2360,99 +2362,113 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 2px solid #f1f3f5;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+    border-radius: 20px 20px 0 0;
 }
 
 .activity-modal-header h3 {
     margin: 0;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     color: #2c3e50;
 }
 
 .modal-close {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: #f8f9fa;
-    border: none;
+    background: white;
+    border: 1px solid #e0e0e0;
     color: #7f8c8d;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-close:hover {
     background: #e74c3c;
     color: white;
+    border-color: #e74c3c;
 }
 
 .activity-modal-body {
-    padding: 24px;
+    padding: 20px;
 }
 
 .activity-modal-body .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .activity-modal-body label {
     display: block;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     color: #2c3e50;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .activity-modal-body select,
 .activity-modal-body input {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: all 0.3s;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: all 0.2s;
+    background: white;
 }
 
 .activity-modal-body select:focus,
 .activity-modal-body input:focus {
-    border-color: #F3911D;
+    border-color: #01807B;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(243, 145, 29, 0.1);
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+.activity-modal-body select option {
+    font-size: 13px;
+    padding: 8px;
 }
 
 .calories-preview {
     background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
-    padding: 16px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 12px;
     text-align: center;
-    margin: 20px 0;
-    border-left: 4px solid #e74c3c;
+    margin: 16px 0;
+    border: 1px solid #ffe0b3;
 }
 
 .calories-preview i {
     color: #e74c3c;
-    font-size: 24px;
-    margin-right: 8px;
+    font-size: 20px;
+    margin-right: 6px;
 }
 
 .calories-preview span {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #e74c3c;
 }
 
 .btn-validate-activity {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
     box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
 }
 
