@@ -228,6 +228,8 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
+
 <script>
 $(document).ready(function() {
     // Check migration status on load
@@ -327,5 +329,3 @@ $(document).ready(function() {
     }
 });
 </script>
-
-<?php init_tail(); ?>
