@@ -126,8 +126,8 @@
                                                                 </button>
 
                                                                 <a href="<?php echo admin_url('dietetic/availability/delete/' . $slot->id); ?>"
-                                                                   class="btn btn-xs btn-danger"
-                                                                   onclick="return confirm('Supprimer ce créneau ?');">
+                                                                   class="btn btn-xs btn-danger btn-delete-slot"
+                                                                   title="Supprimer ce créneau">
                                                                     <i class="fa fa-trash"></i>
                                                                 </a>
                                                             </td>
@@ -225,26 +225,169 @@
     </div>
 </div>
 
+<!-- Edit Slot Modal -->
+<div class="modal fade" id="editSlotModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">
+                    <i class="fa fa-pencil"></i> Modifier le créneau
+                </h4>
+            </div>
+            <form id="editSlotForm" method="POST">
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                <input type="hidden" name="dietitian_id" id="edit_dietitian_id" value="<?php echo $dietitian_id; ?>">
+                <input type="hidden" id="edit_slot_id">
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Jour <span class="text-danger">*</span></label>
+                                <select name="day_of_week" id="edit_day_of_week" class="form-control" required>
+                                    <?php foreach ($days_of_week as $day_num => $day_name): ?>
+                                        <option value="<?php echo $day_num; ?>"><?php echo $day_name; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Heure de début <span class="text-danger">*</span></label>
+                                <input type="time" name="start_time" id="edit_start_time" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Heure de fin <span class="text-danger">*</span></label>
+                                <input type="time" name="end_time" id="edit_end_time" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Durée créneaux (min)</label>
+                                <input type="number" name="slot_duration" id="edit_slot_duration" class="form-control" min="15" step="15">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Lieu</label>
+                                <input type="text" name="location" id="edit_location" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea name="notes" id="edit_notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+// Store all slots data for easy access
+let slotsData = <?php echo json_encode($availability_slots); ?>;
+
 function toggleActive(slotId) {
+    if (!confirm('Changer le statut de ce créneau ?')) {
+        return;
+    }
+
     $.ajax({
         url: '<?php echo admin_url('dietetic/availability/toggle_active/'); ?>' + slotId,
         type: 'POST',
+        data: {
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+        },
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                alert_float('success', 'Statut mis à jour');
                 location.reload();
             } else {
-                alert('Erreur lors de la modification');
+                alert_float('danger', response.message || 'Erreur lors de la modification');
             }
+        },
+        error: function() {
+            alert_float('danger', 'Erreur de connexion');
         }
     });
 }
 
 function editSlot(slotId) {
-    // TODO: Open edit modal
-    alert('Fonctionnalité d\'édition à implémenter (modal)');
+    // Find slot data
+    let slot = slotsData.find(s => s.id == slotId);
+
+    if (!slot) {
+        alert_float('danger', 'Créneau introuvable');
+        return;
+    }
+
+    // Populate modal fields
+    $('#edit_slot_id').val(slot.id);
+    $('#edit_day_of_week').val(slot.day_of_week);
+    $('#edit_start_time').val(slot.start_time);
+    $('#edit_end_time').val(slot.end_time);
+    $('#edit_slot_duration').val(slot.slot_duration);
+    $('#edit_location').val(slot.location || '');
+    $('#edit_notes').val(slot.notes || '');
+
+    // Show modal
+    $('#editSlotModal').modal('show');
 }
+
+// Handle edit form submission
+$('#editSlotForm').on('submit', function(e) {
+    e.preventDefault();
+
+    let slotId = $('#edit_slot_id').val();
+    let formData = $(this).serialize();
+
+    $.ajax({
+        url: '<?php echo admin_url('dietetic/availability/update/'); ?>' + slotId,
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+            $('#editSlotModal').modal('hide');
+            alert_float('success', 'Créneau mis à jour');
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        },
+        error: function() {
+            alert_float('danger', 'Erreur lors de la mise à jour');
+        }
+    });
+});
+
+// Confirmation for delete
+$(document).on('click', '.btn-delete-slot', function(e) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce créneau ?\n\nCette action est irréversible.')) {
+        e.preventDefault();
+        return false;
+    }
+});
 </script>
 
 <?php init_tail(); ?>
