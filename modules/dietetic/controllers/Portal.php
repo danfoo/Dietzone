@@ -6635,6 +6635,33 @@ class Portal extends App_Controller
     }
 
     /**
+     * Test method to debug POST data
+     */
+    public function test_activity_post()
+    {
+        echo "<h1>POST Data Received:</h1>";
+        echo "<pre>";
+        print_r($_POST);
+        echo "</pre>";
+
+        echo "<h1>CSRF Token Info:</h1>";
+        echo "Token Name: " . $this->security->get_csrf_token_name() . "<br>";
+        echo "Expected Hash: " . $this->security->get_csrf_hash() . "<br>";
+        echo "Received Token: " . $this->input->post($this->security->get_csrf_token_name()) . "<br>";
+
+        echo "<h1>Patient Info:</h1>";
+        $patient = $this->get_logged_in_patient();
+        if ($patient) {
+            echo "Patient ID: " . $patient->id . "<br>";
+            echo "Patient Name: " . $patient->firstname . " " . $patient->lastname . "<br>";
+        } else {
+            echo "NO PATIENT FOUND!<br>";
+        }
+
+        die();
+    }
+
+    /**
      * Add patient activity - Supports both POST redirect and JSON response
      */
     public function add_activity()
