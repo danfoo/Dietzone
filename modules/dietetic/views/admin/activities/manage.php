@@ -20,12 +20,12 @@
                             Gestion des Activités Sportives
                         </h4>
                         <p class="text-muted">
-                            Base de données des activités sportives avec calcul automatique des calories
+                            Base de données des activités sportives avec calcul automatique des calories (<?php echo count($activities); ?> activités)
                         </p>
                         <hr>
 
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered" id="activitiesTable" width="100%">
+                            <table class="table table-striped table-bordered" id="activitiesTable">
                                 <thead>
                                     <tr>
                                         <th>Activité</th>
@@ -34,11 +34,53 @@
                                         <th>Kcal/30min</th>
                                         <th>Description</th>
                                         <th>Statut</th>
-                                        <th width="100">Actions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Data will be loaded via AJAX -->
+                                    <?php if (empty($activities)): ?>
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Aucune activité trouvée</td>
+                                        </tr>
+                                    <?php else: ?>
+                                        <?php foreach ($activities as $activity): ?>
+                                            <tr data-activity-id="<?php echo $activity['id']; ?>">
+                                                <td><strong><?php echo htmlspecialchars($activity['name']); ?></strong></td>
+                                                <td>
+                                                    <?php
+                                                    $colorClass = 'label-default';
+                                                    if ($activity['category'] === 'Cardio') $colorClass = 'label-primary';
+                                                    elseif ($activity['category'] === 'Musculation') $colorClass = 'label-danger';
+                                                    elseif ($activity['category'] === 'Sports collectifs') $colorClass = 'label-success';
+                                                    elseif ($activity['category'] === 'Arts martiaux') $colorClass = 'label-warning';
+                                                    elseif ($activity['category'] === 'Danse') $colorClass = 'label-info';
+                                                    elseif ($activity['category'] === 'Yoga/Étirements') $colorClass = 'label-purple';
+                                                    ?>
+                                                    <span class="label <?php echo $colorClass; ?>"><?php echo htmlspecialchars($activity['category']); ?></span>
+                                                </td>
+                                                <td class="text-center"><strong><?php echo number_format($activity['kcal_per_minute'], 1); ?></strong></td>
+                                                <td class="text-center"><strong class="text-success"><?php echo number_format($activity['kcal_per_minute'] * 30, 0); ?></strong></td>
+                                                <td><?php echo $activity['description'] ? htmlspecialchars($activity['description']) : '<span class="text-muted">-</span>'; ?></td>
+                                                <td class="text-center">
+                                                    <?php if ($activity['is_active'] == 1): ?>
+                                                        <span class="label label-success">Active</span>
+                                                    <?php else: ?>
+                                                        <span class="label label-default">Inactive</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-default btn-sm" onclick="editActivity(<?php echo $activity['id']; ?>)" title="Modifier">
+                                                            <i class="fa fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-sm" onclick="deleteActivity(<?php echo $activity['id']; ?>)" title="Supprimer">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -128,101 +170,14 @@
 var csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrfHash = '<?php echo $this->security->get_csrf_hash(); ?>';
 
-var activitiesTable;
+// Store activities data for editing
+var activitiesData = <?php echo json_encode($activities); ?>;
 
-// Initialize DataTable on page load
+// Initialize DataTable on page load (simple client-side)
 $(document).ready(function() {
-    initDataTable();
-});
-
-// Initialize DataTable with AJAX
-function initDataTable() {
-    // Check if table is already initialized and destroy it first
-    if ($.fn.DataTable.isDataTable('#activitiesTable')) {
-        $('#activitiesTable').DataTable().destroy();
-    }
-
-    activitiesTable = $('#activitiesTable').DataTable({
-        ajax: {
-            url: admin_url + 'dietetic/activities/get_activities',
-            type: 'GET',
-            dataSrc: function(response) {
-                if (response.success) {
-                    return response.activities;
-                }
-                return [];
-            }
-        },
-        columns: [
-            {
-                data: 'name',
-                render: function(data, type, row) {
-                    return '<strong>' + data + '</strong>';
-                }
-            },
-            {
-                data: 'category',
-                render: function(data, type, row) {
-                    var colorClass = 'label-default';
-                    if (data === 'Cardio') colorClass = 'label-primary';
-                    else if (data === 'Musculation') colorClass = 'label-danger';
-                    else if (data === 'Sports collectifs') colorClass = 'label-success';
-                    else if (data === 'Arts martiaux') colorClass = 'label-warning';
-                    else if (data === 'Danse') colorClass = 'label-info';
-                    else if (data === 'Yoga/Étirements') colorClass = 'label-purple';
-
-                    return '<span class="label ' + colorClass + '">' + data + '</span>';
-                }
-            },
-            {
-                data: 'kcal_per_minute',
-                className: 'text-center',
-                render: function(data, type, row) {
-                    return '<strong>' + parseFloat(data).toFixed(1) + '</strong>';
-                }
-            },
-            {
-                data: 'kcal_per_minute',
-                className: 'text-center',
-                render: function(data, type, row) {
-                    var kcal30 = (parseFloat(data) * 30).toFixed(0);
-                    return '<strong class="text-success">' + kcal30 + '</strong>';
-                }
-            },
-            {
-                data: 'description',
-                render: function(data, type, row) {
-                    return data || '<span class="text-muted">-</span>';
-                }
-            },
-            {
-                data: 'is_active',
-                className: 'text-center',
-                render: function(data, type, row) {
-                    if (data == 1) {
-                        return '<span class="label label-success">Active</span>';
-                    }
-                    return '<span class="label label-default">Inactive</span>';
-                }
-            },
-            {
-                data: 'id',
-                className: 'text-center',
-                orderable: false,
-                render: function(data, type, row) {
-                    return '<div class="btn-group">' +
-                        '<button class="btn btn-default btn-sm" onclick="editActivity(' + data + ')" title="Modifier">' +
-                        '<i class="fa fa-edit"></i>' +
-                        '</button>' +
-                        '<button class="btn btn-danger btn-sm" onclick="deleteActivity(' + data + ')" title="Supprimer">' +
-                        '<i class="fa fa-trash"></i>' +
-                        '</button>' +
-                        '</div>';
-                }
-            }
-        ],
-        order: [[1, 'asc'], [0, 'asc']], // Sort by category, then name
+    $('#activitiesTable').DataTable({
         pageLength: 25,
+        order: [[1, 'asc'], [0, 'asc']], // Sort by category, then name
         language: {
             search: 'Rechercher:',
             lengthMenu: 'Afficher _MENU_ activités',
@@ -241,7 +196,7 @@ function initDataTable() {
         responsive: true,
         stateSave: true
     });
-}
+});
 
 // Open modal to add new activity
 function openActivityModal() {
@@ -255,15 +210,7 @@ function openActivityModal() {
 
 // Edit activity
 function editActivity(id) {
-    var rowData = activitiesTable.rows().data();
-    var activity = null;
-
-    for (var i = 0; i < rowData.length; i++) {
-        if (rowData[i].id == id) {
-            activity = rowData[i];
-            break;
-        }
-    }
+    var activity = activitiesData.find(a => a.id == id);
 
     if (activity) {
         $('#activity_id').val(activity.id);
@@ -314,8 +261,10 @@ $('#activityForm').on('submit', function(e) {
                     $('#csrf_token').val(response.csrf_token);
                 }
 
-                // Reload table
-                activitiesTable.ajax.reload(null, false);
+                // Reload page to show updated data
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
             } else {
                 alert_float('danger', response.message || 'Erreur lors de l\'enregistrement');
 
@@ -355,8 +304,10 @@ function deleteActivity(id) {
                     csrfHash = response.csrf_token;
                 }
 
-                // Reload table
-                activitiesTable.ajax.reload(null, false);
+                // Reload page to show updated data
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
             } else {
                 alert_float('danger', response.message || 'Erreur lors de la suppression');
 

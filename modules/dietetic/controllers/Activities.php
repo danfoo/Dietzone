@@ -206,7 +206,9 @@ class Activities extends AdminController
             access_denied('dietetic');
         }
 
+        // Load activities directly
         $data['title'] = 'Gestion des Activités';
+        $data['activities'] = $this->dietetic_activities_model->get_all_activities();
         $this->load->view('admin/activities/manage', $data);
     }
 
