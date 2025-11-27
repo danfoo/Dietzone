@@ -6641,24 +6641,35 @@ class Portal extends App_Controller
      */
     public function test_activity_post()
     {
-        echo "<h1>POST Data Received:</h1>";
+        echo "<h1>Raw POST Data:</h1>";
         echo "<pre>";
         print_r($_POST);
         echo "</pre>";
 
         echo "<h1>CSRF Token Info:</h1>";
-        echo "Token Name: " . $this->security->get_csrf_token_name() . "<br>";
-        echo "Expected Hash: " . $this->security->get_csrf_hash() . "<br>";
-        echo "Received Token: " . $this->input->post($this->security->get_csrf_token_name()) . "<br>";
+        $csrf_name = $this->security->get_csrf_token_name();
+        $csrf_hash = $this->security->get_csrf_hash();
+
+        echo "Token Name: " . $csrf_name . "<br>";
+        echo "Expected Hash: " . $csrf_hash . "<br>";
+        echo "Received Token from input->post(): " . $this->input->post($csrf_name) . "<br>";
+        echo "Received Token from _POST: " . (isset($_POST[$csrf_name]) ? $_POST[$csrf_name] : 'NOT IN POST') . "<br>";
+
+        echo "<br><strong>Looking for field name:</strong> &lt;input name=\"" . $csrf_name . "\"&gt;<br>";
+        echo "<br><strong>CSRF Validation would expect to find:</strong> \$_POST['" . $csrf_name . "'] = '" . $csrf_hash . "'<br>";
 
         echo "<h1>Patient Info:</h1>";
         $patient = $this->get_logged_in_patient();
         if ($patient) {
             echo "Patient ID: " . $patient->id . "<br>";
-            echo "Patient Name: " . $patient->firstname . " " . $patient->lastname . "<br>";
+            echo "Patient Name: " . ($patient->firstname ?? '') . " " . ($patient->lastname ?? '') . "<br>";
         } else {
             echo "NO PATIENT FOUND!<br>";
         }
+
+        echo "<hr>";
+        echo "<h2>Next Step:</h2>";
+        echo "<p>Please check the page source (view source) and search for 'csrf_field' or 'csrf_token_name' to verify the hidden field exists in the form HTML.</p>";
 
         die();
     }
