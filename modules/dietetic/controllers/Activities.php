@@ -14,8 +14,8 @@ class Activities extends AdminController
         // Load models
         $this->load->model('dietetic_activities_model');
 
-        // Check permission
-        if (!dietetic_has_permission('view')) {
+        // Check permission - allow admins or staff with dietetic view permission
+        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
             access_denied('dietetic');
         }
     }
@@ -202,11 +202,13 @@ class Activities extends AdminController
      */
     public function manage()
     {
-        if (!dietetic_has_permission('manage')) {
+        // Simple permission check - admins or staff with view permission
+        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
             access_denied('dietetic');
         }
 
         // Handle POST actions
+        // Note: CSRF is automatically verified by CodeIgniter when using form_open()
         if ($this->input->post()) {
             $action = $this->input->post('action');
 
@@ -231,6 +233,9 @@ class Activities extends AdminController
 
     private function handle_add_activity()
     {
+        // CSRF is automatically verified by CodeIgniter via form_open()
+        // No manual verification needed
+
         // Get is_active value - checkbox sends '1' when checked, null when unchecked
         $is_active = ($this->input->post('is_active') == '1') ? 1 : 0;
 
@@ -243,14 +248,25 @@ class Activities extends AdminController
             'created_at' => date('Y-m-d H:i:s')
         ];
 
-        $this->db->insert(db_prefix() . 'dietic_activities', $data);
-
-        set_alert('success', 'Activité ajoutée avec succès');
+        try {
+            $this->db->insert(db_prefix() . 'dietic_activities', $data);
+            set_alert('success', 'Activité ajoutée avec succès');
+        } catch (Exception $e) {
+            log_activity('Error adding activity: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'ajout de l\'activité');
+        }
     }
 
     private function handle_edit_activity()
     {
+        // CSRF is automatically verified by CodeIgniter via form_open()
+
         $id = $this->input->post('activity_id');
+
+        if (!$id) {
+            set_alert('danger', 'ID d\'activité manquant');
+            return;
+        }
 
         // Get is_active value - checkbox sends '1' when checked, null when unchecked
         $is_active = ($this->input->post('is_active') == '1') ? 1 : 0;
@@ -264,22 +280,37 @@ class Activities extends AdminController
             'updated_at' => date('Y-m-d H:i:s')
         ];
 
-        $this->db->where('id', $id);
-        $this->db->update(db_prefix() . 'dietic_activities', $data);
-
-        set_alert('success', 'Activité mise à jour avec succès');
+        try {
+            $this->db->where('id', $id);
+            $this->db->update(db_prefix() . 'dietic_activities', $data);
+            set_alert('success', 'Activité mise à jour avec succès');
+        } catch (Exception $e) {
+            log_activity('Error updating activity: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de la mise à jour');
+        }
     }
 
     private function handle_delete_activity()
     {
+        // CSRF is automatically verified by CodeIgniter via form_open()
+
         $id = $this->input->post('activity_id');
 
-        $this->db->where('id', $id);
-        $this->db->update(db_prefix() . 'dietic_activities', [
-            'is_active' => 0
-        ]);
+        if (!$id) {
+            set_alert('danger', 'ID d\'activité manquant');
+            return;
+        }
 
-        set_alert('success', 'Activité supprimée avec succès');
+        try {
+            $this->db->where('id', $id);
+            $this->db->update(db_prefix() . 'dietic_activities', [
+                'is_active' => 0
+            ]);
+            set_alert('success', 'Activité supprimée avec succès');
+        } catch (Exception $e) {
+            log_activity('Error deleting activity: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de la suppression');
+        }
     }
 
     /**
