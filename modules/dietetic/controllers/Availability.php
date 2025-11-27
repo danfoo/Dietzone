@@ -109,17 +109,37 @@ class Availability extends AdminController
 
         if ($this->input->post()) {
             $data = $this->input->post();
+            $is_ajax = $this->input->is_ajax_request();
 
             // Validate times
             if (isset($data['start_time']) && isset($data['end_time'])) {
                 if ($data['start_time'] >= $data['end_time']) {
+                    if ($is_ajax) {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'L\'heure de fin doit être après l\'heure de début'
+                        ]);
+                        return;
+                    }
                     set_alert('danger', 'L\'heure de fin doit être après l\'heure de début');
                     redirect(admin_url('dietetic/availability?dietitian_id=' . $data['dietitian_id']));
                     return;
                 }
             }
 
-            if ($this->dietetic_availability_model->update($id, $data)) {
+            $success = $this->dietetic_availability_model->update($id, $data);
+
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => $success,
+                    'message' => $success ? 'Disponibilité mise à jour' : 'Erreur lors de la mise à jour'
+                ]);
+                return;
+            }
+
+            if ($success) {
                 set_alert('success', 'Disponibilité mise à jour');
             } else {
                 set_alert('danger', 'Erreur lors de la mise à jour');
