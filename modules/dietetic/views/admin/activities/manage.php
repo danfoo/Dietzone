@@ -7,43 +7,38 @@
             <div class="col-md-12">
                 <div class="panel_s">
                     <div class="panel-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h4 class="no-margin">
-                                    <i class="fa fa-heartbeat"></i>
-                                    Gestion des Activités Sportives
-                                </h4>
-                                <p class="text-muted">
-                                    Gérer la base de données des activités sportives et leurs valeurs caloriques
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-right">
-                                <button type="button" class="btn btn-info" onclick="openActivityModal()">
-                                    <i class="fa fa-plus"></i> Nouvelle Activité
-                                </button>
-                            </div>
+                        <div class="_buttons">
+                            <button type="button" class="btn btn-info pull-left" onclick="openActivityModal()">
+                                <i class="fa fa-plus"></i> Nouvelle Activité
+                            </button>
+                            <div class="clearfix"></div>
                         </div>
+                        <hr class="hr-panel-heading">
+
+                        <h4 class="no-margin">
+                            <i class="fa fa-heartbeat"></i>
+                            Gestion des Activités Sportives
+                        </h4>
+                        <p class="text-muted">
+                            Base de données des activités sportives avec calcul automatique des calories
+                        </p>
                         <hr>
 
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped" id="activitiesTable">
+                            <table class="table table-striped table-bordered dt-table" id="activitiesTable" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>Nom de l'activité</th>
+                                        <th>Activité</th>
                                         <th>Catégorie</th>
-                                        <th>Kcal/minute</th>
+                                        <th>Kcal/min</th>
                                         <th>Kcal/30min</th>
                                         <th>Description</th>
                                         <th>Statut</th>
-                                        <th>Actions</th>
+                                        <th width="100">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="activitiesTableBody">
-                                    <tr>
-                                        <td colspan="7" class="text-center">
-                                            <i class="fa fa-spinner fa-spin"></i> Chargement...
-                                        </td>
-                                    </tr>
+                                <tbody>
+                                    <!-- Data will be loaded via AJAX -->
                                 </tbody>
                             </table>
                         </div>
@@ -69,7 +64,7 @@
             </div>
             <form id="activityForm">
                 <input type="hidden" name="activity_id" id="activity_id">
-                <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="activity_name">Nom de l'activité <span class="text-danger">*</span></label>
@@ -129,67 +124,118 @@
 <?php init_tail(); ?>
 
 <script>
-// CSRF token
+// CSRF token management
 var csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrfHash = '<?php echo $this->security->get_csrf_hash(); ?>';
 
-// Load activities on page load
+var activitiesTable;
+
+// Initialize DataTable on page load
 $(document).ready(function() {
-    loadActivities();
+    initDataTable();
 });
 
-// Load all activities
-function loadActivities() {
-    $.ajax({
-        url: admin_url + 'dietetic/activities/get_activities',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                displayActivities(response.activities);
-            } else {
-                $('#activitiesTableBody').html('<tr><td colspan="7" class="text-center text-danger">Erreur lors du chargement</td></tr>');
+// Initialize DataTable with AJAX
+function initDataTable() {
+    activitiesTable = $('#activitiesTable').DataTable({
+        ajax: {
+            url: admin_url + 'dietetic/activities/get_activities',
+            type: 'GET',
+            dataSrc: function(response) {
+                if (response.success) {
+                    return response.activities;
+                }
+                return [];
             }
         },
-        error: function() {
-            $('#activitiesTableBody').html('<tr><td colspan="7" class="text-center text-danger">Erreur lors du chargement</td></tr>');
-        }
+        columns: [
+            {
+                data: 'name',
+                render: function(data, type, row) {
+                    return '<strong>' + data + '</strong>';
+                }
+            },
+            {
+                data: 'category',
+                render: function(data, type, row) {
+                    var colorClass = 'label-default';
+                    if (data === 'Cardio') colorClass = 'label-primary';
+                    else if (data === 'Musculation') colorClass = 'label-danger';
+                    else if (data === 'Sports collectifs') colorClass = 'label-success';
+                    else if (data === 'Arts martiaux') colorClass = 'label-warning';
+                    else if (data === 'Danse') colorClass = 'label-info';
+                    else if (data === 'Yoga/Étirements') colorClass = 'label-purple';
+
+                    return '<span class="label ' + colorClass + '">' + data + '</span>';
+                }
+            },
+            {
+                data: 'kcal_per_minute',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<strong>' + parseFloat(data).toFixed(1) + '</strong>';
+                }
+            },
+            {
+                data: 'kcal_per_minute',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    var kcal30 = (parseFloat(data) * 30).toFixed(0);
+                    return '<strong class="text-success">' + kcal30 + '</strong>';
+                }
+            },
+            {
+                data: 'description',
+                render: function(data, type, row) {
+                    return data || '<span class="text-muted">-</span>';
+                }
+            },
+            {
+                data: 'is_active',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    if (data == 1) {
+                        return '<span class="label label-success">Active</span>';
+                    }
+                    return '<span class="label label-default">Inactive</span>';
+                }
+            },
+            {
+                data: 'id',
+                className: 'text-center',
+                orderable: false,
+                render: function(data, type, row) {
+                    return '<div class="btn-group">' +
+                        '<button class="btn btn-default btn-sm" onclick="editActivity(' + data + ')" title="Modifier">' +
+                        '<i class="fa fa-edit"></i>' +
+                        '</button>' +
+                        '<button class="btn btn-danger btn-sm" onclick="deleteActivity(' + data + ')" title="Supprimer">' +
+                        '<i class="fa fa-trash"></i>' +
+                        '</button>' +
+                        '</div>';
+                }
+            }
+        ],
+        order: [[1, 'asc'], [0, 'asc']], // Sort by category, then name
+        pageLength: 25,
+        language: {
+            search: 'Rechercher:',
+            lengthMenu: 'Afficher _MENU_ activités',
+            info: 'Affichage de _START_ à _END_ sur _TOTAL_ activités',
+            infoEmpty: 'Aucune activité',
+            infoFiltered: '(filtré de _MAX_ activités au total)',
+            paginate: {
+                first: 'Premier',
+                last: 'Dernier',
+                next: 'Suivant',
+                previous: 'Précédent'
+            },
+            emptyTable: 'Aucune activité disponible',
+            zeroRecords: 'Aucune activité trouvée'
+        },
+        responsive: true,
+        stateSave: true
     });
-}
-
-// Display activities in table
-function displayActivities(activities) {
-    let html = '';
-
-    if (activities.length === 0) {
-        html = '<tr><td colspan="7" class="text-center text-muted">Aucune activité trouvée</td></tr>';
-    } else {
-        activities.forEach(activity => {
-            let kcal30min = (parseFloat(activity.kcal_per_minute) * 30).toFixed(0);
-            let statusBadge = activity.is_active == 1
-                ? '<span class="label label-success">Active</span>'
-                : '<span class="label label-default">Inactive</span>';
-
-            html += '<tr>';
-            html += '<td><strong>' + activity.name + '</strong></td>';
-            html += '<td><span class="label label-info">' + activity.category + '</span></td>';
-            html += '<td>' + activity.kcal_per_minute + '</td>';
-            html += '<td><strong>' + kcal30min + ' kcal</strong></td>';
-            html += '<td>' + (activity.description || '-') + '</td>';
-            html += '<td>' + statusBadge + '</td>';
-            html += '<td>';
-            html += '<button class="btn btn-default btn-sm" onclick="editActivity(' + activity.id + ')" title="Modifier">';
-            html += '<i class="fa fa-edit"></i>';
-            html += '</button> ';
-            html += '<button class="btn btn-danger btn-sm" onclick="deleteActivity(' + activity.id + ')" title="Supprimer">';
-            html += '<i class="fa fa-trash"></i>';
-            html += '</button>';
-            html += '</td>';
-            html += '</tr>';
-        });
-    }
-
-    $('#activitiesTableBody').html(html);
 }
 
 // Open modal to add new activity
@@ -204,46 +250,48 @@ function openActivityModal() {
 
 // Edit activity
 function editActivity(id) {
-    $.ajax({
-        url: admin_url + 'dietetic/activities/get_activities',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                let activity = response.activities.find(a => a.id == id);
-                if (activity) {
-                    $('#activity_id').val(activity.id);
-                    $('#activity_name').val(activity.name);
-                    $('#activity_category').val(activity.category);
-                    $('#activity_kcal').val(activity.kcal_per_minute);
-                    $('#activity_description').val(activity.description);
-                    $('#activity_is_active').prop('checked', activity.is_active == 1);
-                    $('#modalTitle').text('Modifier l\'activité');
-                    $('#csrf_token').val(csrfHash);
-                    $('#activityModal').modal('show');
-                }
-            }
+    var rowData = activitiesTable.rows().data();
+    var activity = null;
+
+    for (var i = 0; i < rowData.length; i++) {
+        if (rowData[i].id == id) {
+            activity = rowData[i];
+            break;
         }
-    });
+    }
+
+    if (activity) {
+        $('#activity_id').val(activity.id);
+        $('#activity_name').val(activity.name);
+        $('#activity_category').val(activity.category);
+        $('#activity_kcal').val(activity.kcal_per_minute);
+        $('#activity_description').val(activity.description);
+        $('#activity_is_active').prop('checked', activity.is_active == 1);
+        $('#modalTitle').text('Modifier l\'activité');
+        $('#csrf_token').val(csrfHash);
+        $('#activityModal').modal('show');
+    }
 }
 
 // Submit form
 $('#activityForm').on('submit', function(e) {
     e.preventDefault();
 
-    let activityId = $('#activity_id').val();
-    let url = activityId
+    var activityId = $('#activity_id').val();
+    var url = activityId
         ? admin_url + 'dietetic/activities/update_activity/' + activityId
         : admin_url + 'dietetic/activities/add_activity';
 
-    let formData = {
+    var formData = {
         name: $('#activity_name').val(),
         category: $('#activity_category').val(),
         kcal_per_minute: $('#activity_kcal').val(),
         description: $('#activity_description').val(),
-        is_active: $('#activity_is_active').is(':checked') ? 1 : 0,
-        csrf_token: $('#csrf_token').val()
+        is_active: $('#activity_is_active').is(':checked') ? 1 : 0
     };
+
+    // Add CSRF token using the correct name
+    formData[csrfTokenName] = $('#csrf_token').val();
 
     $.ajax({
         url: url,
@@ -254,52 +302,93 @@ $('#activityForm').on('submit', function(e) {
             if (response.success) {
                 alert_float('success', response.message);
                 $('#activityModal').modal('hide');
-                $('#csrf_token').val(response.csrf_token);
-                csrfHash = response.csrf_token;
-                loadActivities();
-            } else {
-                alert_float('danger', response.message);
+
+                // Update CSRF token
                 if (response.csrf_token) {
-                    $('#csrf_token').val(response.csrf_token);
                     csrfHash = response.csrf_token;
+                    $('#csrf_token').val(response.csrf_token);
+                }
+
+                // Reload table
+                activitiesTable.ajax.reload(null, false);
+            } else {
+                alert_float('danger', response.message || 'Erreur lors de l\'enregistrement');
+
+                // Update CSRF token even on error
+                if (response.csrf_token) {
+                    csrfHash = response.csrf_token;
+                    $('#csrf_token').val(response.csrf_token);
                 }
             }
         },
-        error: function() {
+        error: function(xhr) {
             alert_float('danger', 'Erreur lors de l\'enregistrement');
         }
     });
 });
 
-// Delete activity
+// Delete activity with proper CSRF
 function deleteActivity(id) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette activité ?')) {
         return;
     }
 
-    var csrfData = {};
-    csrfData[csrfTokenName] = csrfHash;
+    var formData = {};
+    formData[csrfTokenName] = csrfHash;
 
     $.ajax({
         url: admin_url + 'dietetic/activities/delete_activity/' + id,
         type: 'POST',
-        data: csrfData,
+        data: formData,
         dataType: 'json',
         success: function(response) {
             if (response.success) {
                 alert_float('success', response.message);
-                csrfHash = response.csrf_token;
-                loadActivities();
+
+                // Update CSRF token
+                if (response.csrf_token) {
+                    csrfHash = response.csrf_token;
+                }
+
+                // Reload table
+                activitiesTable.ajax.reload(null, false);
             } else {
-                alert_float('danger', response.message);
+                alert_float('danger', response.message || 'Erreur lors de la suppression');
+
+                // Update CSRF token even on error
                 if (response.csrf_token) {
                     csrfHash = response.csrf_token;
                 }
             }
         },
-        error: function() {
+        error: function(xhr) {
             alert_float('danger', 'Erreur lors de la suppression');
         }
     });
 }
 </script>
+
+<style>
+/* Custom purple label for Yoga */
+.label-purple {
+    background-color: #9c27b0;
+}
+
+/* Better spacing for action buttons */
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+/* DataTables custom styling */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #d2d6de;
+    border-radius: 3px;
+    padding: 5px 10px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #d2d6de;
+    border-radius: 3px;
+    padding: 5px;
+}
+</style>
