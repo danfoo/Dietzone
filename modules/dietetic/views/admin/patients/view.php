@@ -435,6 +435,11 @@ html {
                                 </a>
                             </li>
                             <li role="presentation">
+                                <a href="#tab-activities" aria-controls="tab-activities" role="tab" data-toggle="tab">
+                                    <i class="fa fa-heartbeat"></i> Activités
+                                </a>
+                            </li>
+                            <li role="presentation">
                                 <a href="#tab-lifestyle" aria-controls="tab-lifestyle" role="tab" data-toggle="tab">
                                     <i class="fa fa-heart"></i> Mode de Vie
                                 </a>
@@ -501,6 +506,11 @@ html {
                             <!-- Statistiques -->
                             <div role="tabpanel" class="tab-pane" id="tab-statistics">
                                 <?php $this->load->view('admin/patients/statistics_tab', ['patient' => $patient]); ?>
+                            </div>
+
+                            <!-- Activités Sportives -->
+                            <div role="tabpanel" class="tab-pane" id="tab-activities">
+                                <?php $this->load->view('admin/patients/activities_tab', ['patient' => $patient]); ?>
                             </div>
 
                             <!-- Mode de Vie & Santé -->

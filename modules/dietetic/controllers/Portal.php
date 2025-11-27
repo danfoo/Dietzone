@@ -120,7 +120,13 @@ class Portal extends App_Controller
             // Hydration tracking API methods
             'api_get_hydration_data',
             'api_add_hydration',
-            'api_update_hydration_goal'
+            'api_update_hydration_goal',
+            // Activity tracking methods
+            'activities',
+            'get_activities',
+            'get_my_activities',
+            'add_activity',
+            'delete_activity'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -6536,6 +6542,257 @@ class Portal extends App_Controller
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    // ========================================
+    // ACTIVITY TRACKING METHODS
+    // ========================================
+
+    /**
+     * Activities page - view for patients to track their activities
+     */
+    public function activities()
+    {
+        // Verify logged in patient
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        // Load activities model
+        if (!$this->load->model('dietetic_activities_model')) {
+            $this->load->model('dietetic_activities_model');
+        }
+
+        $data['patient'] = $patient;
+        $this->load->view('portal/activities', $data);
+    }
+
+    /**
+     * Get all available activities (for dropdown)
+     */
+    public function get_activities()
+    {
+        header('Content-Type: application/json');
+
+        // Load model if not loaded
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic_activities_model');
+        }
+
+        try {
+            $activities = $this->dietetic_activities_model->get_all_activities(true);
+
+            echo json_encode([
+                'success' => true,
+                'activities' => $activities
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des activités'
+            ]);
+        }
+    }
+
+    /**
+     * Get patient's activities with statistics
+     */
+    public function get_my_activities()
+    {
+        header('Content-Type: application/json');
+
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non connecté'
+            ]);
+            return;
+        }
+
+        // Load model if not loaded
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic_activities_model');
+        }
+
+        try {
+            $activities = $this->dietetic_activities_model->get_patient_activities($patient->id);
+            $stats = $this->dietetic_activities_model->get_patient_stats($patient->id);
+
+            echo json_encode([
+                'success' => true,
+                'activities' => $activities,
+                'stats' => $stats
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du chargement'
+            ]);
+        }
+    }
+
+    /**
+     * Add patient activity with CSRF protection
+     */
+    public function add_activity()
+    {
+        header('Content-Type: application/json');
+
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non connecté'
+            ]);
+            return;
+        }
+
+        // CSRF Protection
+        $csrf_token = $this->input->post('csrf_token');
+        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token CSRF invalide',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+
+        // Validate required fields
+        $activity_id = $this->input->post('activity_id');
+        $duration_minutes = $this->input->post('duration_minutes');
+        $kcal_burned = $this->input->post('kcal_burned');
+        $activity_date = $this->input->post('activity_date');
+
+        if (!$activity_id || !$duration_minutes || !$kcal_burned || !$activity_date) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Tous les champs obligatoires doivent être remplis',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+
+        // Load model if not loaded
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic_activities_model');
+        }
+
+        // Prepare data
+        $data = [
+            'patient_id' => $patient->id,
+            'activity_id' => $activity_id,
+            'duration_minutes' => $duration_minutes,
+            'kcal_burned' => $kcal_burned,
+            'activity_date' => $activity_date,
+            'activity_time' => $this->input->post('activity_time'),
+            'notes' => $this->input->post('notes'),
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        try {
+            $result = $this->dietetic_activities_model->add_patient_activity($data);
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Activité ajoutée avec succès',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'ajout de l\'activité',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        }
+    }
+
+    /**
+     * Delete patient activity with CSRF protection
+     */
+    public function delete_activity($activity_id)
+    {
+        header('Content-Type: application/json');
+
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non connecté'
+            ]);
+            return;
+        }
+
+        // CSRF Protection
+        $csrf_token = $this->input->post('csrf_token');
+        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token CSRF invalide',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+
+        if (!$activity_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'ID d\'activité requis',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+
+        // Load model if not loaded
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic_activities_model');
+        }
+
+        // Verify the activity belongs to this patient
+        $activity = $this->dietetic_activities_model->get_patient_activity($activity_id);
+        if (!$activity || $activity->patient_id != $patient->id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Activité non trouvée ou accès refusé',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+
+        try {
+            $result = $this->dietetic_activities_model->delete_patient_activity($activity_id);
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Activité supprimée avec succès',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur lors de la suppression',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'csrf_token' => $this->security->get_csrf_hash()
             ]);
         }
     }

@@ -90,6 +90,17 @@ function dietetic_force_recipes_menu_js()
 }
 
 /**
+ * Add JavaScript to force activities menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_activities_menu_js');
+
+function dietetic_force_activities_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Activités
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_activities_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Define module menu items
  */
 function dietetic_module_init_menu_items()
@@ -156,6 +167,15 @@ function dietetic_module_init_menu_items()
                 'position' => 5,
             ]);
         }
+
+        // Activities - FORCÉ sans condition pour permettre l'accès avant migration
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-activities',
+            'name'     => 'Activités Sportives',
+            'icon'     => 'fa fa-heartbeat',
+            'href'     => admin_url('dietetic/activities/manage'),
+            'position' => 5.3,
+        ]);
 
         // Notifications - Show if table exists and user is admin
         if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {

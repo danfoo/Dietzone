@@ -1,6 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<script>
+// Define CSRF tokens globally for JavaScript
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash_name = '<?php echo $this->security->get_csrf_hash(); ?>';
+</script>
+
 <style>
 .migrations-container {
     max-width: 1200px;
@@ -650,6 +656,49 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 8: Activity Tracking -->
+                <div class="migration-card" data-migration="activity_tracking">
+                    <div class="migration-card-header">
+                        <h3>
+                            <i class="fa fa-heartbeat"></i>
+                            Suivi d'Activités Sportives
+                        </h3>
+                        <span class="migration-status pending" id="status-activity_tracking">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            Système complet de suivi des activités sportives. Base de données avec <strong>86 activités</strong> pré-configurées (marche, course, vélo, natation, football, arts martiaux, danse, etc.), calcul automatique des calories selon la durée personnalisable par le patient.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_activities</code> - Base de données des activités (nom, kcal/min, catégorie)</li>
+                                <li><code>tbldietic_patient_activities</code> - Suivi des activités des patients</li>
+                                <li><strong>86 activités</strong> par défaut avec valeurs kcal/minute précises</li>
+                                <li>Calcul automatique des calories brûlées selon durée</li>
+                                <li><strong>Catégories:</strong> Cardio (marche, course, vélo, natation), Musculation (pompes, squats, burpees), Sports collectifs (football, basketball, tennis), Arts martiaux (boxe, karaté, judo, MMA), Danse (zumba, salsa, hip-hop), Yoga/Étirements</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info" style="margin-top: 15px; background: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Calcul par défaut :</strong> Chaque activité est calculée sur 30 minutes par défaut. Les patients peuvent personnaliser la durée et les calories sont recalculées automatiquement.
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_activity_tracking.php
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('activity_tracking')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('activity_tracking')">
+                                <i class="fa fa-play"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -705,6 +754,11 @@ const migrations = {
         name: 'Suivi d\'Hydratation',
         file: 'add_hydration_tracking.php',
         tables: ['dietic_hydration_tracking', 'dietic_hydration_goals']
+    },
+    activity_tracking: {
+        name: 'Suivi d\'Activités Sportives',
+        file: 'add_activity_tracking.php',
+        tables: ['dietic_activities', 'dietic_patient_activities']
     }
 };
 
@@ -715,10 +769,14 @@ function checkMigration(migrationId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification...';
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     $.ajax({
         url: admin_url + 'dietetic/notifications/check_migration',
         type: 'POST',
-        data: { migration: migrationId },
+        data: $.extend({ migration: migrationId }, csrfData),
         dataType: 'json',
         success: function(response) {
             updateMigrationStatus(migrationId, response.installed, response.message);
@@ -742,11 +800,15 @@ function checkAllMigrations() {
     let checked = 0;
     const total = Object.keys(migrations).length;
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     Object.keys(migrations).forEach(migrationId => {
         $.ajax({
             url: admin_url + 'dietetic/notifications/check_migration',
             type: 'POST',
-            data: { migration: migrationId },
+            data: $.extend({ migration: migrationId }, csrfData),
             dataType: 'json',
             success: function(response) {
                 updateMigrationStatus(migrationId, response.installed, response.message);
@@ -774,10 +836,14 @@ function runMigration(migrationId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Installation...';
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     $.ajax({
         url: admin_url + 'dietetic/notifications/execute_migration',
         type: 'POST',
-        data: { migration: migrationId },
+        data: $.extend({ migration: migrationId }, csrfData),
         dataType: 'json',
         success: function(response) {
             if (response.success) {
@@ -818,6 +884,10 @@ function runAllMigrations() {
     let completed = 0;
     let errors = 0;
 
+    // Get CSRF token
+    var csrfData = {};
+    csrfData[csrf_token_name] = csrf_hash_name;
+
     function runNext(index) {
         if (index >= migrationIds.length) {
             // All done
@@ -843,7 +913,7 @@ function runAllMigrations() {
         $.ajax({
             url: admin_url + 'dietetic/notifications/execute_migration',
             type: 'POST',
-            data: { migration: migrationId },
+            data: $.extend({ migration: migrationId }, csrfData),
             dataType: 'json',
             success: function(response) {
                 if (response.success || response.already_exists) {
