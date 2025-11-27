@@ -380,11 +380,61 @@ class Consultations extends AdminController
             $consultation_id
         );
 
+        // If not available, get alternative slots for the same day and next 3 days
+        $alternative_slots = [];
+        if (!$result['available']) {
+            $date = date('Y-m-d', strtotime($datetime));
+
+            // Check current day and next 3 days
+            for ($i = 0; $i < 4; $i++) {
+                $check_date = date('Y-m-d', strtotime($date . ' +' . $i . ' days'));
+                $slots = $this->dietetic_availability_model->get_available_slots(
+                    $dietitian_id,
+                    $check_date,
+                    null,
+                    $duration,
+                    $consultation_id
+                );
+
+                if (!empty($slots)) {
+                    foreach ($slots as $slot) {
+                        $alternative_slots[] = [
+                            'datetime' => $check_date . ' ' . $slot['time'],
+                            'display_date' => $this->format_french_date($check_date),
+                            'display_time' => $slot['time']
+                        ];
+
+                        // Limit to 6 alternative slots
+                        if (count($alternative_slots) >= 6) {
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
         echo json_encode([
             'success' => true,
             'available' => $result['available'],
             'reason' => $result['reason'],
-            'conflicts' => $result['conflicts']
+            'conflicts' => $result['conflicts'],
+            'alternative_slots' => $alternative_slots
         ]);
+    }
+
+    /**
+     * Format date in French
+     */
+    private function format_french_date($date)
+    {
+        $days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        $months = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+        $timestamp = strtotime($date);
+        $day_name = $days[date('w', $timestamp)];
+        $day = date('d', $timestamp);
+        $month = $months[date('n', $timestamp)];
+
+        return $day_name . ' ' . $day . ' ' . $month;
     }
 }

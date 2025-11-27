@@ -390,6 +390,60 @@
 .hidden {
     display: none;
 }
+
+/* Alternative Slots */
+.alternative-slots {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.alternative-slots-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alternative-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.slot-option {
+    padding: 10px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.slot-option:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.slot-date {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 4px;
+}
+
+.slot-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
 </style>
 
 <div id="wrapper">
@@ -930,7 +984,7 @@
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    displayAvailabilityStatus(response.available, response.reason, response.conflicts);
+                    displayAvailabilityStatus(response.available, response.reason, response.conflicts, response.alternative_slots);
                 } else {
                     $('#availability-indicator')
                         .css({
@@ -954,8 +1008,12 @@
     }
 
     // Display availability status visually
-    function displayAvailabilityStatus(available, reason, conflicts) {
+    function displayAvailabilityStatus(available, reason, conflicts, alternativeSlots) {
         const indicator = $('#availability-indicator');
+        const statusDiv = $('#availability-status');
+
+        // Remove any existing alternative slots section
+        statusDiv.find('.alternative-slots').remove();
 
         if (available) {
             // Available - Green
@@ -1005,6 +1063,35 @@
                     'border': '2px solid ' + borderColor
                 })
                 .html(html);
+
+            // Display alternative slots if available
+            if (alternativeSlots && alternativeSlots.length > 0) {
+                let alternativesHtml = '<div class="alternative-slots">';
+                alternativesHtml += '<div class="alternative-slots-title">';
+                alternativesHtml += '<i class="fa fa-clock-o"></i> Créneaux alternatifs disponibles :';
+                alternativesHtml += '</div>';
+                alternativesHtml += '<div class="alternative-slots-grid">';
+
+                alternativeSlots.forEach(function(slot) {
+                    alternativesHtml += '<div class="slot-option" data-datetime="' + slot.datetime + '">';
+                    alternativesHtml += '<div class="slot-date">' + slot.display_date + '</div>';
+                    alternativesHtml += '<div class="slot-time">' + slot.display_time + '</div>';
+                    alternativesHtml += '</div>';
+                });
+
+                alternativesHtml += '</div></div>';
+                statusDiv.append(alternativesHtml);
+
+                // Make slots clickable
+                $('.slot-option').on('click', function() {
+                    const datetime = $(this).data('datetime');
+                    const datetimeLocal = datetime.replace(' ', 'T').substring(0, 16);
+                    $('#consultation_date').val(datetimeLocal);
+
+                    // Re-check availability for the new time
+                    checkAvailability();
+                });
+            }
         }
     }
 
