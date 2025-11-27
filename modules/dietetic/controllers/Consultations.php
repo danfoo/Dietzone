@@ -399,9 +399,9 @@ class Consultations extends AdminController
                 if (!empty($slots)) {
                     foreach ($slots as $slot) {
                         $alternative_slots[] = [
-                            'datetime' => $check_date . ' ' . $slot['time'],
+                            'datetime' => $slot['datetime'], // Already in correct format
                             'display_date' => $this->format_french_date($check_date),
-                            'display_time' => $slot['time']
+                            'display_time' => $slot['start_time'] // Use start_time instead of time
                         ];
 
                         // Limit to 6 alternative slots

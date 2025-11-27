@@ -1081,19 +1081,21 @@
 
                 alternativesHtml += '</div></div>';
                 statusDiv.append(alternativesHtml);
-
-                // Make slots clickable
-                $('.slot-option').on('click', function() {
-                    const datetime = $(this).data('datetime');
-                    const datetimeLocal = datetime.replace(' ', 'T').substring(0, 16);
-                    $('#consultation_date').val(datetimeLocal);
-
-                    // Re-check availability for the new time
-                    checkAvailability();
-                });
             }
         }
     }
+
+    // Make slots clickable using event delegation (for dynamically created elements)
+    $(document).on('click', '.slot-option', function() {
+        const datetime = $(this).data('datetime');
+
+        // Convert from 'Y-m-d H:i:s' to 'Y-m-d\TH:i' format for datetime-local input
+        const datetimeLocal = datetime.substring(0, 16).replace(' ', 'T');
+        $('#consultation_date').val(datetimeLocal);
+
+        // Re-check availability for the new time
+        checkAvailability();
+    });
 
     // Check availability on page load if editing
     <?php if (isset($consultation)): ?>
