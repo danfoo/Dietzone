@@ -6882,5 +6882,30 @@ class Portal extends App_Controller
             ]);
         }
     }
+
+    /**
+     * Get logged in patient
+     * Helper method to get current patient from logged in client
+     *
+     * @return object|null Patient object or null if not found
+     */
+    private function get_logged_in_patient()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            return null;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+            return $patient;
+        } catch (Exception $e) {
+            log_activity('[DIETETIC ERROR] Failed to get patient: ' . $e->getMessage());
+            return null;
+        }
+    }
 }
 

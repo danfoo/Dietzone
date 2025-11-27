@@ -2944,7 +2944,11 @@ if (!$current_weight || !$target_weight) {
         </div>
         <div class="activity-modal-body">
             <form id="quickActivityForm" method="POST" action="<?php echo site_url('dietetic/portal/test_activity_post'); ?>">
-                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <?php
+                $csrf_name = $this->security->get_csrf_token_name();
+                $csrf_hash = $this->security->get_csrf_hash();
+                ?>
+                <input type="hidden" name="<?php echo $csrf_name; ?>" id="csrf_field" value="<?php echo $csrf_hash; ?>">
                 <input type="hidden" name="kcal_burned" id="kcalBurnedInput" value="0">
                 <input type="hidden" name="activity_date" value="<?php echo date('Y-m-d'); ?>">
                 <input type="hidden" name="redirect_to_dashboard" value="1">
