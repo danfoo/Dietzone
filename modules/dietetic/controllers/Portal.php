@@ -6563,9 +6563,7 @@ class Portal extends App_Controller
         }
 
         // Load activities model
-        if (!$this->load->model('dietetic_activities_model')) {
-            $this->load->model('dietetic_activities_model');
-        }
+        $this->load->model('dietetic/dietetic_activities_model');
 
         $data['patient'] = $patient;
         $this->load->view('portal/activities', $data);
