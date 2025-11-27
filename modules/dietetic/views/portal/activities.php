@@ -377,6 +377,184 @@ $this->load->view('portal/includes/portal_header');
         max-width: 1100px;
     }
 }
+
+/* Confirmation Modal (Mobile App Style) */
+.confirm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.confirm-modal.show {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    padding: 32px 24px 24px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideUp 0.3s ease;
+    z-index: 1;
+}
+
+.confirm-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+}
+
+.confirm-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.confirm-modal-message {
+    font-size: 15px;
+    color: #7f8c8d;
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+}
+
+.confirm-modal-buttons {
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+}
+
+.confirm-btn {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.confirm-btn-cancel {
+    background: #f0f0f0;
+    color: #2c3e50;
+}
+
+.confirm-btn-cancel:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+
+.confirm-btn-delete {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.confirm-btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.confirm-btn-delete:active {
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+    .confirm-modal-buttons {
+        flex-direction: row;
+    }
+
+    .confirm-btn-cancel {
+        order: 1;
+    }
+
+    .confirm-btn-delete {
+        order: 2;
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .confirm-modal-content {
+        padding: 28px 20px 20px;
+        border-radius: 16px;
+    }
+
+    .confirm-modal-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+
+    .confirm-modal-title {
+        font-size: 18px;
+    }
+
+    .confirm-modal-message {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .confirm-btn {
+        padding: 12px 18px;
+        font-size: 15px;
+    }
+}
 </style>
 
 <div class="activities-page">
@@ -491,12 +669,29 @@ $this->load->view('portal/includes/portal_header');
     </div>
 </div>
 
+<!-- Confirmation Modal (Mobile Style) -->
+<div id="deleteConfirmModal" class="confirm-modal">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+            <i class="fa fa-trash"></i>
+        </div>
+        <h3 class="confirm-modal-title">Supprimer l'activité</h3>
+        <p class="confirm-modal-message">Voulez-vous vraiment supprimer cette activité ? Cette action est irréversible.</p>
+        <div class="confirm-modal-buttons">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeDeleteModal()">Annuler</button>
+            <button class="confirm-btn confirm-btn-delete" onclick="confirmDelete()">Supprimer</button>
+        </div>
+    </div>
+</div>
+
 <?php $this->load->view('portal/includes/portal_footer'); ?>
 
 <script>
 let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
 const csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
+let activityToDelete = null; // Store the ID of activity to be deleted
 
 // Custom notification function for portal (replacement for alert_float)
 function showNotification(message, type) {
@@ -703,9 +898,28 @@ $('#addActivityForm').on('submit', function(e) {
     });
 });
 
-// Delete activity
+// Delete activity - Show modal
 function deleteActivity(id) {
-    if (!confirm('Voulez-vous vraiment supprimer cette activité ?')) {
+    activityToDelete = id;
+    showDeleteModal();
+}
+
+// Show delete confirmation modal
+function showDeleteModal() {
+    $('#deleteConfirmModal').addClass('show');
+    $('body').css('overflow', 'hidden'); // Prevent background scrolling
+}
+
+// Close delete confirmation modal
+function closeDeleteModal() {
+    $('#deleteConfirmModal').removeClass('show');
+    $('body').css('overflow', ''); // Restore scrolling
+    activityToDelete = null;
+}
+
+// Confirm and execute deletion
+function confirmDelete() {
+    if (!activityToDelete) {
         return;
     }
 
@@ -714,7 +928,7 @@ function deleteActivity(id) {
     deleteData[csrfTokenName] = $('#csrf_token_field').val();
 
     $.ajax({
-        url: site_url + 'dietetic/portal/delete_activity/' + id,
+        url: site_url + 'dietetic/portal/delete_activity/' + activityToDelete,
         type: 'POST',
         data: deleteData,
         dataType: 'json',
@@ -731,11 +945,30 @@ function deleteActivity(id) {
                     $('#csrf_token_field').val(response.csrf_token);
                 }
             }
+            closeDeleteModal();
         },
         error: function(xhr, status, error) {
             console.error('Error:', error);
             showNotification('Erreur lors de la suppression', 'danger');
+            closeDeleteModal();
         }
     });
 }
+
+// Close modal when clicking on overlay
+$(document).on('click', '.confirm-modal-overlay', function() {
+    closeDeleteModal();
+});
+
+// Prevent modal content clicks from closing modal
+$(document).on('click', '.confirm-modal-content', function(e) {
+    e.stopPropagation();
+});
+
+// Close modal with Escape key
+$(document).keyup(function(e) {
+    if (e.key === "Escape") {
+        closeDeleteModal();
+    }
+});
 </script>
