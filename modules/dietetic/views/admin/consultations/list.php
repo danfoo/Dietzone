@@ -391,6 +391,13 @@
                                                    title="Modifier">
                                                     <i class="fa fa-edit"></i>
                                                 </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger btn-action btn-delete-consultation"
+                                                        data-id="<?php echo $consultation->id; ?>"
+                                                        data-patient="<?php echo htmlspecialchars($consultation->client_name); ?>"
+                                                        title="Supprimer">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -405,7 +412,93 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+
+                    <!-- Pagination -->
+                    <?php if ($total_pages > 1): ?>
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-md-6">
+                                <p class="text-muted">
+                                    Affichage de <?php echo count($consultations); ?> sur <?php echo $total_consultations; ?> consultations
+                                    (Page <?php echo $current_page; ?> sur <?php echo $total_pages; ?>)
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Pagination des consultations">
+                                    <ul class="pagination pull-right" style="margin: 0;">
+                                        <!-- Bouton Précédent -->
+                                        <li class="<?php echo ($current_page <= 1) ? 'disabled' : ''; ?>">
+                                            <?php if ($current_page > 1): ?>
+                                                <a href="<?php echo admin_url('dietetic/consultations?status=' . ($status_filter ?: 'all') . '&page=' . ($current_page - 1)); ?>"
+                                                   aria-label="Précédent">
+                                                    <span aria-hidden="true">&laquo;</span>
+                                                </a>
+                                            <?php else: ?>
+                                                <span>&laquo;</span>
+                                            <?php endif; ?>
+                                        </li>
+
+                                        <!-- Numéros de page -->
+                                        <?php
+                                        $range = 2; // Nombre de pages à afficher de chaque côté
+                                        $start_page = max(1, $current_page - $range);
+                                        $end_page = min($total_pages, $current_page + $range);
+
+                                        // Première page
+                                        if ($start_page > 1): ?>
+                                            <li>
+                                                <a href="<?php echo admin_url('dietetic/consultations?status=' . ($status_filter ?: 'all') . '&page=1'); ?>">1</a>
+                                            </li>
+                                            <?php if ($start_page > 2): ?>
+                                                <li class="disabled"><span>...</span></li>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+
+                                        <!-- Pages du milieu -->
+                                        <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                            <li class="<?php echo ($i == $current_page) ? 'active' : ''; ?>">
+                                                <a href="<?php echo admin_url('dietetic/consultations?status=' . ($status_filter ?: 'all') . '&page=' . $i); ?>">
+                                                    <?php echo $i; ?>
+                                                </a>
+                                            </li>
+                                        <?php endfor; ?>
+
+                                        <!-- Dernière page -->
+                                        <?php if ($end_page < $total_pages): ?>
+                                            <?php if ($end_page < $total_pages - 1): ?>
+                                                <li class="disabled"><span>...</span></li>
+                                            <?php endif; ?>
+                                            <li>
+                                                <a href="<?php echo admin_url('dietetic/consultations?status=' . ($status_filter ?: 'all') . '&page=' . $total_pages); ?>">
+                                                    <?php echo $total_pages; ?>
+                                                </a>
+                                            </li>
+                                        <?php endif; ?>
+
+                                        <!-- Bouton Suivant -->
+                                        <li class="<?php echo ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
+                                            <?php if ($current_page < $total_pages): ?>
+                                                <a href="<?php echo admin_url('dietetic/consultations?status=' . ($status_filter ?: 'all') . '&page=' . ($current_page + 1)); ?>"
+                                                   aria-label="Suivant">
+                                                    <span aria-hidden="true">&raquo;</span>
+                                                </a>
+                                            <?php else: ?>
+                                                <span>&raquo;</span>
+                                            <?php endif; ?>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
+
+                <!-- Formulaire de suppression caché avec CSRF -->
+                <form id="delete-consultation-form" method="POST" action="" style="display: none;">
+                    <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                    <input type="hidden" name="consultation_id" id="delete-consultation-id">
+                    <input type="hidden" name="status_filter" value="<?php echo $status_filter ?: 'all'; ?>">
+                    <input type="hidden" name="current_page" value="<?php echo $current_page; ?>">
+                </form>
 
             </div>
         </div>
@@ -455,6 +548,24 @@ $(document).ready(function() {
         }
 
         updateResultsCount();
+    });
+
+    // ============================================
+    // Suppression de consultation avec confirmation
+    // ============================================
+    $('.btn-delete-consultation').on('click', function() {
+        var consultationId = $(this).data('id');
+        var patientName = $(this).data('patient');
+
+        // Confirmation de suppression
+        if (confirm('Êtes-vous sûr de vouloir supprimer la consultation pour ' + patientName + ' ?\n\nCette action est irréversible.')) {
+            // Remplir le formulaire caché
+            $('#delete-consultation-id').val(consultationId);
+            $('#delete-consultation-form').attr('action', '<?php echo admin_url("dietetic/consultations/delete/"); ?>' + consultationId);
+
+            // Soumettre le formulaire
+            $('#delete-consultation-form').submit();
+        }
     });
 
     // Script simple pour le menu Diététique

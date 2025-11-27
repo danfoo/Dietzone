@@ -52,9 +52,11 @@ class Dietetic_consultations_model extends App_Model
      * Get all consultations with filters
      *
      * @param array $where
+     * @param int|null $limit
+     * @param int|null $offset
      * @return array
      */
-    public function get_all($where = [])
+    public function get_all($where = [], $limit = null, $offset = null)
     {
         $this->db->select('cons.*, ' .
             'c.company as client_name, ' .
@@ -82,7 +84,38 @@ class Dietetic_consultations_model extends App_Model
         $this->db->group_by('cons.id'); // Group by to avoid duplicates from join
         $this->db->order_by('cons.consultation_date', 'DESC');
 
+        if ($limit !== null) {
+            $this->db->limit($limit, $offset);
+        }
+
         return $this->db->get()->result();
+    }
+
+    /**
+     * Count all consultations with filters
+     *
+     * @param array $where
+     * @return int
+     */
+    public function count_all($where = [])
+    {
+        $this->db->from(db_prefix() . $this->table . ' cons');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = cons.patient_id', 'left');
+
+        if (!empty($where)) {
+            $this->db->where($where);
+        }
+
+        // Apply staff permissions
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            dietetic_apply_dietitian_filter($this->db, 'pd');
+        } else {
+            if (!is_admin()) {
+                $this->db->where('cons.dietitian_id', get_staff_user_id());
+            }
+        }
+
+        return $this->db->count_all_results();
     }
 
     /**

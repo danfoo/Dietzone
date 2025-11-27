@@ -30,16 +30,31 @@ class Consultations extends AdminController
     {
         $data['title'] = _l('dietetic_consultations');
 
+        // Pagination configuration
+        $per_page = 20; // Nombre de consultations par page
+        $page = $this->input->get('page') ? (int)$this->input->get('page') : 1;
+        $offset = ($page - 1) * $per_page;
+
         // Get filter status from GET parameter
         $status = $this->input->get('status');
+        $where = [];
 
         if ($status && $status !== 'all') {
-            // Filter by specific status
-            $data['consultations'] = $this->dietetic_consultations_model->get_by_status($status);
-        } else {
-            // Get all consultations
-            $data['consultations'] = $this->dietetic_consultations_model->get_all();
+            $where['cons.status'] = $status;
         }
+
+        // Count total consultations
+        $total_consultations = $this->dietetic_consultations_model->count_all($where);
+
+        // Get consultations for current page
+        $data['consultations'] = $this->dietetic_consultations_model->get_all($where, $per_page, $offset);
+
+        // Pagination data
+        $data['total_consultations'] = $total_consultations;
+        $data['per_page'] = $per_page;
+        $data['current_page'] = $page;
+        $data['total_pages'] = ceil($total_consultations / $per_page);
+        $data['status_filter'] = $status;
 
         $this->load->view('admin/consultations/list', $data);
     }
@@ -269,21 +284,42 @@ class Consultations extends AdminController
     }
 
     /**
-     * Delete consultation
+     * Delete consultation (POST avec CSRF)
      *
      * @param int $id
      */
-    public function delete($id)
+    public function delete($id = null)
     {
         if (!dietetic_has_permission('delete')) {
-            ajax_access_denied();
+            access_denied('dietetic');
         }
 
-        if ($this->dietetic_consultations_model->delete($id)) {
-            echo json_encode(['success' => true, 'message' => _l('deleted')]);
-        } else {
-            echo json_encode(['success' => false, 'message' => _l('dietetic_error_delete_failed')]);
+        // Récupérer l'ID depuis POST si non fourni dans l'URL
+        if ($id === null) {
+            $id = $this->input->post('consultation_id');
         }
+
+        if (!$id) {
+            set_alert('danger', 'ID de consultation manquant');
+            redirect(admin_url('dietetic/consultations'));
+            return;
+        }
+
+        // Vérifier que la requête est bien en POST (CSRF automatiquement vérifié par CodeIgniter)
+        if ($this->input->post()) {
+            if ($this->dietetic_consultations_model->delete($id)) {
+                set_alert('success', 'Consultation supprimée avec succès');
+            } else {
+                set_alert('danger', 'Erreur lors de la suppression de la consultation');
+            }
+        } else {
+            set_alert('warning', 'Méthode non autorisée');
+        }
+
+        // Rediriger vers la page des consultations avec les filtres
+        $status = $this->input->post('status_filter') ?? 'all';
+        $page = $this->input->post('current_page') ?? 1;
+        redirect(admin_url('dietetic/consultations?status=' . $status . '&page=' . $page));
     }
 
     /**
