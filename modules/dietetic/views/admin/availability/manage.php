@@ -162,6 +162,7 @@
                                 </h4>
 
                                 <form method="POST" action="<?php echo admin_url('dietetic/availability/add'); ?>">
+                                    <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                                     <input type="hidden" name="dietitian_id" value="<?php echo $dietitian_id; ?>">
 
                                     <div class="row">

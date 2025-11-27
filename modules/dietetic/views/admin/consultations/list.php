@@ -227,6 +227,13 @@
                             <p>Gérez et suivez toutes vos consultations diététiques</p>
                         </div>
                         <div class="col-md-4 text-right">
+                            <a href="<?php echo admin_url('dietetic/availability'); ?>"
+                               class="btn btn-info"
+                               style="margin-right: 10px;"
+                               title="Gérer les horaires de disponibilité">
+                                <i class="fa fa-calendar"></i>
+                                Disponibilités
+                            </a>
                             <a href="<?php echo admin_url('dietetic/consultations/create'); ?>"
                                class="btn btn-new-consultation">
                                 <i class="fa fa-plus-circle"></i>

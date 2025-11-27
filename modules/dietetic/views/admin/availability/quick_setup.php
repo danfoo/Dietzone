@@ -24,6 +24,7 @@
 
                         <!-- Quick Setup Form -->
                         <form method="POST" action="<?php echo admin_url('dietetic/availability/quick_setup?dietitian_id=' . $dietitian_id); ?>">
+                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
 
                             <!-- Step 1: Select Working Days -->
                             <div class="form-group">
@@ -36,47 +37,47 @@
                                 <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-top: 10px;">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="1" checked>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="1" id="day_1" checked>
+                                                <label for="day_1">
                                                     <strong>Lundi</strong>
                                                 </label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="2" checked>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="2" id="day_2" checked>
+                                                <label for="day_2">
                                                     <strong>Mardi</strong>
                                                 </label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="3" checked>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="3" id="day_3" checked>
+                                                <label for="day_3">
                                                     <strong>Mercredi</strong>
                                                 </label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="4" checked>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="4" id="day_4" checked>
+                                                <label for="day_4">
                                                     <strong>Jeudi</strong>
                                                 </label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="5" checked>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="5" id="day_5" checked>
+                                                <label for="day_5">
                                                     <strong>Vendredi</strong>
                                                 </label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="6">
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="6" id="day_6">
+                                                <label for="day_6">
                                                     <strong>Samedi</strong>
                                                 </label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="working_days[]" value="0">
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="working_days[]" value="0" id="day_0">
+                                                <label for="day_0">
                                                     <strong>Dimanche</strong>
                                                 </label>
                                             </div>
