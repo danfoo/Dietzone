@@ -151,33 +151,41 @@ if (file_exists($food_surveys_sql_file)) {
     }
 }
 
-// Load sample data only if foods table is empty
-$sample_data_file = __DIR__ . '/sample_data.sql';
-if (file_exists($sample_data_file)) {
-    // Check if we already have foods in the database
-    $existing_foods_count = $CI->db->count_all(db_prefix() . 'dietic_foods');
+// Add module permissions for staff roles
+// These permissions will appear in Setup > Roles > Staff Permissions
+$permissions = [
+    [
+        'name' => 'dietetic',
+        'shortname' => 'view',
+    ],
+    [
+        'name' => 'dietetic',
+        'shortname' => 'create',
+    ],
+    [
+        'name' => 'dietetic',
+        'shortname' => 'edit',
+    ],
+    [
+        'name' => 'dietetic',
+        'shortname' => 'delete',
+    ],
+    [
+        'name' => 'dietetic',
+        'shortname' => 'manage', // For managing activities, foods database, etc.
+    ],
+];
 
-    // Only load sample data if the foods table is empty
-    if ($existing_foods_count == 0) {
-        $sample_sql = file_get_contents($sample_data_file);
+foreach ($permissions as $permission) {
+    // Check if permission already exists
+    $exists = $CI->db->get_where(db_prefix() . 'permissions', [
+        'name' => $permission['name'],
+        'shortname' => $permission['shortname']
+    ])->row();
 
-        // Replace table prefix
-        $sample_sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sample_sql);
-
-        $statements = array_filter(array_map('trim', explode(';', $sample_sql)));
-
-        foreach ($statements as $statement) {
-            if (!empty($statement)) {
-                try {
-                    $CI->db->query($statement);
-                } catch (Exception $e) {
-                    // Sample data might already exist, that's OK
-                    log_activity('Dietetic sample data: ' . substr($e->getMessage(), 0, 200));
-                }
-            }
-        }
-
-        log_activity('Dietetic Module: Sample food data loaded');
+    if (!$exists) {
+        $CI->db->insert(db_prefix() . 'permissions', $permission);
+        log_activity('Dietetic Module: Added permission ' . $permission['name'] . ' - ' . $permission['shortname']);
     }
 }
 

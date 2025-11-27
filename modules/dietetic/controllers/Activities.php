@@ -231,14 +231,19 @@ class Activities extends AdminController
 
     private function handle_add_activity()
     {
-        $this->db->insert(db_prefix() . 'dietic_activities', [
+        // Get is_active value - checkbox sends '1' when checked, null when unchecked
+        $is_active = ($this->input->post('is_active') == '1') ? 1 : 0;
+
+        $data = [
             'name' => $this->input->post('name'),
             'category' => $this->input->post('category'),
             'kcal_per_minute' => $this->input->post('kcal_per_minute'),
             'description' => $this->input->post('description'),
-            'is_active' => $this->input->post('is_active') ? 1 : 0,
+            'is_active' => $is_active,
             'created_at' => date('Y-m-d H:i:s')
-        ]);
+        ];
+
+        $this->db->insert(db_prefix() . 'dietic_activities', $data);
 
         set_alert('success', 'Activité ajoutée avec succès');
     }
@@ -247,15 +252,20 @@ class Activities extends AdminController
     {
         $id = $this->input->post('activity_id');
 
-        $this->db->where('id', $id);
-        $this->db->update(db_prefix() . 'dietic_activities', [
+        // Get is_active value - checkbox sends '1' when checked, null when unchecked
+        $is_active = ($this->input->post('is_active') == '1') ? 1 : 0;
+
+        $data = [
             'name' => $this->input->post('name'),
             'category' => $this->input->post('category'),
             'kcal_per_minute' => $this->input->post('kcal_per_minute'),
             'description' => $this->input->post('description'),
-            'is_active' => $this->input->post('is_active') ? 1 : 0,
+            'is_active' => $is_active,
             'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        ];
+
+        $this->db->where('id', $id);
+        $this->db->update(db_prefix() . 'dietic_activities', $data);
 
         set_alert('success', 'Activité mise à jour avec succès');
     }
