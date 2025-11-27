@@ -147,11 +147,9 @@
                     </div>
 
                     <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="is_active" value="1" checked>
-                                Activité active
-                            </label>
+                        <div class="checkbox checkbox-primary">
+                            <input type="checkbox" name="is_active" id="add_is_active" value="1" checked>
+                            <label for="add_is_active">Activité active</label>
                         </div>
                     </div>
                 </div>
@@ -219,11 +217,9 @@
                     </div>
 
                     <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="is_active" id="edit_is_active" value="1">
-                                Activité active
-                            </label>
+                        <div class="checkbox checkbox-primary">
+                            <input type="checkbox" name="is_active" id="edit_is_active" value="1">
+                            <label for="edit_is_active">Activité active</label>
                         </div>
                     </div>
                 </div>
