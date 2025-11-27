@@ -425,7 +425,7 @@ $this->load->view('portal/includes/portal_header');
 
         <form id="addActivityForm" class="activity-form">
             <input type="hidden" name="patient_id" value="<?php echo $patient->id; ?>">
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" id="csrf_token_field">
 
             <div class="row">
                 <div class="col-md-8">
@@ -496,6 +496,7 @@ $this->load->view('portal/includes/portal_header');
 <script>
 let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
+const csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
 
 $(document).ready(function() {
     loadActivitiesList();
@@ -652,15 +653,21 @@ $('#addActivityForm').on('submit', function(e) {
             if (response.success) {
                 alert_float('success', 'Activité enregistrée !');
                 $('#addActivityForm')[0].reset();
-                $('#addActivityForm input[name="csrf_token"]').val(response.csrf_token);
+                if (response.csrf_token) {
+                    $('#csrf_token_field').val(response.csrf_token);
+                }
                 $('#kcalValue').text('0');
                 loadMyActivities();
             } else {
                 alert_float('danger', response.message || 'Erreur');
                 if (response.csrf_token) {
-                    $('#addActivityForm input[name="csrf_token"]').val(response.csrf_token);
+                    $('#csrf_token_field').val(response.csrf_token);
                 }
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            alert_float('danger', 'Erreur lors de l\'ajout de l\'activité');
         }
     });
 });
@@ -671,24 +678,32 @@ function deleteActivity(id) {
         return;
     }
 
+    // Prepare data with dynamic CSRF token name
+    let deleteData = {};
+    deleteData[csrfTokenName] = $('#csrf_token_field').val();
+
     $.ajax({
         url: site_url + 'dietetic/portal/delete_activity/' + id,
         type: 'POST',
-        data: {
-            csrf_token: $('input[name="csrf_token"]').val()
-        },
+        data: deleteData,
         dataType: 'json',
         success: function(response) {
             if (response.success) {
                 alert_float('success', 'Activité supprimée');
-                $('input[name="csrf_token"]').val(response.csrf_token);
+                if (response.csrf_token) {
+                    $('#csrf_token_field').val(response.csrf_token);
+                }
                 loadMyActivities();
             } else {
                 alert_float('danger', response.message || 'Erreur');
                 if (response.csrf_token) {
-                    $('input[name="csrf_token"]').val(response.csrf_token);
+                    $('#csrf_token_field').val(response.csrf_token);
                 }
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            alert_float('danger', 'Erreur lors de la suppression');
         }
     });
 }
