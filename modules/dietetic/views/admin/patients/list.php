@@ -245,6 +245,7 @@
     padding: 16px 12px;
     vertical-align: middle;
     border: none;
+    color: #2c3e50;
 }
 
 .patient-name {
@@ -258,6 +259,12 @@
 .patient-name i {
     color: var(--primary-color);
     font-size: 18px;
+}
+
+/* Date de création */
+.created-date {
+    color: #7f8c8d !important;
+    font-size: 13px;
 }
 
 .dietitian-info {
@@ -744,9 +751,9 @@
                                             <?php } ?>
                                         </td>
                                         <td>
-                                            <small style="color: #7f8c8d;">
-                                                <?php echo _dt($patient->created_at); ?>
-                                            </small>
+                                            <span class="created-date">
+                                                <?php echo $patient->created_at ? _dt($patient->created_at) : '-'; ?>
+                                            </span>
                                         </td>
                                         <td onclick="event.stopPropagation();">
                                             <div class="action-buttons">
