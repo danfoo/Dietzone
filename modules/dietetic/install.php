@@ -181,43 +181,5 @@ if (file_exists($sample_data_file)) {
     }
 }
 
-// Add module permissions for staff roles
-// These permissions will appear in Setup > Roles > Staff Permissions
-$permissions = [
-    [
-        'name' => 'dietetic',
-        'shortname' => 'view',
-    ],
-    [
-        'name' => 'dietetic',
-        'shortname' => 'create',
-    ],
-    [
-        'name' => 'dietetic',
-        'shortname' => 'edit',
-    ],
-    [
-        'name' => 'dietetic',
-        'shortname' => 'delete',
-    ],
-    [
-        'name' => 'dietetic',
-        'shortname' => 'manage', // For managing activities, foods database, etc.
-    ],
-];
-
-foreach ($permissions as $permission) {
-    // Check if permission already exists
-    $exists = $CI->db->get_where(db_prefix() . 'permissions', [
-        'name' => $permission['name'],
-        'shortname' => $permission['shortname']
-    ])->row();
-
-    if (!$exists) {
-        $CI->db->insert(db_prefix() . 'permissions', $permission);
-        log_activity('Dietetic Module: Added permission ' . $permission['name'] . ' - ' . $permission['shortname']);
-    }
-}
-
 // Log installation
 log_activity('Dietetic Module Installed Successfully');

@@ -8,16 +8,8 @@ class Activities extends AdminController
     {
         parent::__construct();
 
-        // Load helper
-        $this->load->helper('dietetic/dietetic');
-
         // Load models
         $this->load->model('dietetic_activities_model');
-
-        // Check permission - allow admins or staff with dietetic view permission
-        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
-            access_denied('dietetic');
-        }
     }
 
     /**
@@ -202,11 +194,6 @@ class Activities extends AdminController
      */
     public function manage()
     {
-        // Simple permission check - admins or staff with view permission
-        if (!is_admin() && !has_permission('dietetic', '', 'view')) {
-            access_denied('dietetic');
-        }
-
         // Handle POST actions
         // Note: CSRF is automatically verified by CodeIgniter when using form_open()
         if ($this->input->post()) {

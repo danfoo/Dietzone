@@ -978,15 +978,6 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'Manquant';
                 break;
 
-            case 'dietetic_permissions':
-                // Check if dietetic permissions exist
-                $this->db->where('name', 'dietetic');
-                $this->db->where('shortname', 'manage');
-                $permission = $this->db->get(db_prefix() . 'permissions')->row();
-                $installed = (bool)$permission;
-                $message = $installed ? 'Installé' : 'Manquant';
-                break;
-
             default:
                 echo json_encode([
                     'success' => false,
@@ -1030,8 +1021,7 @@ class Notifications extends AdminController
                 'firebase_v1' => 'add_firebase_v1_api_support.sql',
                 'statistics_notes' => 'add_statistics_notes.php',
                 'hydration_tracking' => 'add_hydration_tracking.php',
-                'activity_tracking' => 'add_activity_tracking.php',
-                'dietetic_permissions' => 'add_permissions.php'
+                'activity_tracking' => 'add_activity_tracking.php'
             ];
 
             if (!isset($migration_files[$migration])) {

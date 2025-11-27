@@ -699,49 +699,6 @@ var csrf_hash_name = '<?php echo $this->security->get_csrf_hash(); ?>';
                         </div>
                     </div>
                 </div>
-
-                <!-- Migration 9: Dietetic Permissions -->
-                <div class="migration-card" data-migration="dietetic_permissions">
-                    <div class="migration-card-header">
-                        <h3>
-                            <i class="fa fa-shield"></i>
-                            Permissions Module Diététique
-                        </h3>
-                        <span class="migration-status pending" id="status-dietetic_permissions">En attente</span>
-                    </div>
-                    <div class="migration-card-body">
-                        <div class="migration-description">
-                            Ajoute les permissions du module diététique au système de rôles Perfex CRM. Permet de gérer les droits d'accès des diététiciens (view, create, edit, delete, manage) via <strong>Configuration > Rôles > Permissions Staff</strong>.
-                        </div>
-                        <div class="migration-tables">
-                            <h4>Permissions ajoutées :</h4>
-                            <ul>
-                                <li><strong>View</strong> - Voir les données diététiques</li>
-                                <li><strong>Create</strong> - Créer des programmes, consultations, etc.</li>
-                                <li><strong>Edit</strong> - Modifier les données existantes</li>
-                                <li><strong>Delete</strong> - Supprimer des éléments</li>
-                                <li><strong>Manage</strong> - Gérer la base de données (activités, aliments, recettes)</li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-success" style="margin-top: 15px; background: #d5f4e6; border-left: 4px solid #0e6655; padding: 10px;">
-                            <i class="fa fa-check-circle"></i>
-                            <strong>Important :</strong> Après installation, allez dans Configuration > Rôles pour attribuer ces permissions aux diététiciens.
-                        </div>
-                    </div>
-                    <div class="migration-card-footer">
-                        <div class="migration-meta">
-                            <i class="fa fa-file-code-o"></i> add_permissions.php
-                        </div>
-                        <div class="migration-actions">
-                            <button class="btn-check" onclick="checkMigration('dietetic_permissions')">
-                                <i class="fa fa-search"></i> Vérifier
-                            </button>
-                            <button class="btn-migrate" onclick="runMigration('dietetic_permissions')">
-                                <i class="fa fa-play"></i> Installer
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Back Link -->
@@ -802,11 +759,6 @@ const migrations = {
         name: 'Suivi d\'Activités Sportives',
         file: 'add_activity_tracking.php',
         tables: ['dietic_activities', 'dietic_patient_activities']
-    },
-    dietetic_permissions: {
-        name: 'Permissions Module Diététique',
-        file: 'add_permissions.php',
-        permissions: ['view', 'create', 'edit', 'delete', 'manage']
     }
 };
 
