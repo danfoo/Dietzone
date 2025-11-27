@@ -6796,5 +6796,62 @@ class Portal extends App_Controller
             ]);
         }
     }
+
+    /**
+     * API: Get today's activities for dashboard widget
+     * Returns activities count, total minutes, and total calories for today
+     */
+    public function api_get_today_activities()
+    {
+        header('Content-Type: application/json');
+
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non connecté'
+            ]);
+            return;
+        }
+
+        // Load activities model
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic/dietetic_activities_model');
+        }
+
+        try {
+            // Get today's date
+            $today = date('Y-m-d');
+
+            // Get today's activities
+            $activities = $this->dietetic_activities_model->get_patient_activities_by_date_range(
+                $patient->id,
+                $today,
+                $today
+            );
+
+            // Calculate totals
+            $total_minutes = 0;
+            $total_kcal = 0;
+
+            foreach ($activities as $activity) {
+                $total_minutes += $activity->duration_minutes;
+                $total_kcal += $activity->kcal_burned;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'count' => count($activities),
+                'total_minutes' => $total_minutes,
+                'total_kcal' => $total_kcal,
+                'activities' => $activities
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du chargement: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
 
