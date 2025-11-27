@@ -2790,27 +2790,6 @@ if (!$current_weight || !$target_weight) {
         </div>
     </div>
 
-    <!-- Grid pour Calories et Activité -->
-    <div class="tracking-secondary-grid">
-        <!-- Calories -->
-        <div class="daily-item calories-item" onclick="openCaloriesModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-fire"></i>
-            </div>
-            <span class="daily-item-label">Calories</span>
-            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
-        </div>
-
-        <!-- Activité -->
-        <div class="daily-item activity-item" onclick="openActivityModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-heartbeat"></i>
-            </div>
-            <span class="daily-item-label">Activité</span>
-            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
-        </div>
-    </div>
-
     <?php if ($tracking_streak > 0) { ?>
     <div class="daily-motivation">
         <i class="fa fa-star"></i>
@@ -3475,100 +3454,6 @@ function updateMealsProgress() {
     if (progressText) {
         progressText.textContent = count + '/3 repas validés';
     }
-}
-
-/**
- * Open modal to enter calories
- */
-function openCaloriesModal() {
-    const currentCalories = document.getElementById('calories-count').textContent;
-    const calories = prompt('Entrez vos calories consommées aujourd\'hui:', currentCalories !== '-' ? currentCalories : '');
-
-    if (calories !== null && calories !== '') {
-        const caloriesNum = parseInt(calories);
-        if (isNaN(caloriesNum) || caloriesNum < 0) {
-            showToast('❌ Veuillez entrer un nombre valide', 'error');
-            return;
-        }
-
-        updateCalories(caloriesNum);
-    }
-}
-
-/**
- * Update calories consumed
- */
-function updateCalories(calories) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_calories'); ?>';
-
-    const formData = new FormData();
-    formData.append('calories', calories);
-    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
-
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('calories-count').textContent = data.calories_consumed || '-';
-            showToast('🔥 Calories mises à jour !', 'success');
-        } else {
-            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('❌ Erreur de connexion', 'error');
-    });
-}
-
-/**
- * Open modal to add activity
- */
-function openActivityModal() {
-    const currentActivity = document.getElementById('activity-count').textContent.replace(' min', '');
-    const minutes = prompt('Combien de minutes d\'activité physique aujourd\'hui ?', currentActivity || '0');
-
-    if (minutes !== null && minutes !== '') {
-        const minutesNum = parseInt(minutes);
-        if (isNaN(minutesNum) || minutesNum < 0) {
-            showToast('❌ Veuillez entrer un nombre valide', 'error');
-            return;
-        }
-
-        updateActivity(minutesNum);
-    }
-}
-
-/**
- * Update activity minutes
- */
-function updateActivity(minutes) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_activity'); ?>';
-
-    const formData = new FormData();
-    formData.append('minutes', minutes);
-    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
-
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('activity-count').textContent = data.activity_minutes + ' min';
-            showToast('🏃 Activité mise à jour !', 'success');
-        } else {
-            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('❌ Erreur de connexion', 'error');
-    });
 }
 
 /**
