@@ -6635,31 +6635,25 @@ class Portal extends App_Controller
     }
 
     /**
-     * Add patient activity with CSRF protection
+     * Add patient activity - Supports both POST redirect and JSON response
      */
     public function add_activity()
     {
-        header('Content-Type: application/json');
+        // Check if this is a redirect request (from dashboard)
+        $redirect_to_dashboard = $this->input->post('redirect_to_dashboard');
+
+        if (!$redirect_to_dashboard) {
+            header('Content-Type: application/json');
+        }
 
         $patient = $this->get_logged_in_patient();
         if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Non connecté'
-            ]);
-            return;
-        }
-
-        // CSRF Protection - CodeIgniter validates automatically, but verify manually
-        $csrf_token_name = $this->security->get_csrf_token_name();
-        $csrf_token = $this->input->post($csrf_token_name);
-
-        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Token CSRF invalide',
-                'csrf_token' => $this->security->get_csrf_hash()
-            ]);
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Non connecté');
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            echo json_encode(['success' => false, 'message' => 'Non connecté']);
             return;
         }
 
@@ -6670,11 +6664,12 @@ class Portal extends App_Controller
         $activity_date = $this->input->post('activity_date');
 
         if (!$activity_id || !$duration_minutes || !$kcal_burned || !$activity_date) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Tous les champs obligatoires doivent être remplis',
-                'csrf_token' => $this->security->get_csrf_hash()
-            ]);
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Tous les champs obligatoires doivent être remplis');
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            echo json_encode(['success' => false, 'message' => 'Tous les champs obligatoires doivent être remplis']);
             return;
         }
 
@@ -6699,24 +6694,27 @@ class Portal extends App_Controller
             $result = $this->dietetic_activities_model->add_patient_activity($data);
 
             if ($result) {
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Activité ajoutée avec succès',
-                    'csrf_token' => $this->security->get_csrf_hash()
-                ]);
+                if ($redirect_to_dashboard) {
+                    set_alert('success', 'Activité ajoutée avec succès');
+                    redirect(site_url('dietetic/portal'));
+                    return;
+                }
+                echo json_encode(['success' => true, 'message' => 'Activité ajoutée avec succès']);
             } else {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Erreur lors de l\'ajout de l\'activité',
-                    'csrf_token' => $this->security->get_csrf_hash()
-                ]);
+                if ($redirect_to_dashboard) {
+                    set_alert('danger', 'Erreur lors de l\'ajout de l\'activité');
+                    redirect(site_url('dietetic/portal'));
+                    return;
+                }
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout de l\'activité']);
             }
         } catch (Exception $e) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Erreur serveur: ' . $e->getMessage(),
-                'csrf_token' => $this->security->get_csrf_hash()
-            ]);
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Erreur: ' . $e->getMessage());
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            echo json_encode(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()]);
         }
     }
 

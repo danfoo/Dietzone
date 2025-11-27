@@ -2943,8 +2943,11 @@ if (!$current_weight || !$target_weight) {
             </button>
         </div>
         <div class="activity-modal-body">
-            <form id="quickActivityForm">
+            <form id="quickActivityForm" method="POST" action="<?php echo site_url('dietetic/portal/add_activity'); ?>">
                 <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <input type="hidden" name="kcal_burned" id="kcalBurnedInput" value="0">
+                <input type="hidden" name="activity_date" value="<?php echo date('Y-m-d'); ?>">
+                <input type="hidden" name="redirect_to_dashboard" value="1">
 
                 <div class="form-group">
                     <label>Activité sportive</label>
@@ -4010,10 +4013,15 @@ document.addEventListener('DOMContentLoaded', function() {
         durationInput.addEventListener('input', updateCaloriesPreview);
     }
 
-    // Handle form submission
+    // Update hidden field before submit
     const form = document.getElementById('quickActivityForm');
     if (form) {
-        form.addEventListener('submit', handleActivitySubmit);
+        form.addEventListener('submit', function(e) {
+            const duration = parseInt(document.getElementById('durationInputModal').value) || 0;
+            const kcalBurned = Math.round(selectedActivityKcalPerMin * duration);
+            document.getElementById('kcalBurnedInput').value = kcalBurned;
+            // Form will submit normally
+        });
     }
 
     // Close modal when clicking outside
@@ -4032,54 +4040,6 @@ function updateCaloriesPreview() {
     const duration = parseInt(document.getElementById('durationInputModal').value) || 0;
     const calories = Math.round(selectedActivityKcalPerMin * duration);
     document.getElementById('caloriesPreview').textContent = calories;
-}
-
-// Handle form submission
-async function handleActivitySubmit(e) {
-    e.preventDefault();
-
-    const form = e.target;
-    const formData = new FormData(form);
-    const submitBtn = form.querySelector('.btn-validate-activity');
-    const originalHtml = submitBtn.innerHTML;
-
-    // Calculate calories
-    const duration = parseInt(formData.get('duration_minutes'));
-    const kcalBurned = Math.round(selectedActivityKcalPerMin * duration);
-
-    formData.append('kcal_burned', kcalBurned);
-    formData.append('activity_date', new Date().toISOString().split('T')[0]);
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Ajout...';
-
-    try {
-        const response = await fetch('<?php echo site_url('dietetic/portal/add_activity'); ?>', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            submitBtn.innerHTML = '<i class="fa fa-check"></i> Ajouté !';
-            setTimeout(() => {
-                closeActivityModal();
-                loadTodayActivities(); // Reload activities
-                submitBtn.innerHTML = originalHtml;
-                submitBtn.disabled = false;
-            }, 1000);
-        } else {
-            alert('Erreur: ' + (data.message || 'Impossible d\'ajouter l\'activité'));
-            submitBtn.innerHTML = originalHtml;
-            submitBtn.disabled = false;
-        }
-    } catch (error) {
-        console.error('Error adding activity:', error);
-        alert('Erreur lors de l\'ajout de l\'activité');
-        submitBtn.innerHTML = originalHtml;
-        submitBtn.disabled = false;
-    }
 }
 </script>
 
