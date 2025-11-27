@@ -175,8 +175,8 @@
                     <p class="text-muted">
                         Gérer les pourcentages de commission entre diététiciens et plateforme.
                     </p>
-                    <a href="<?php echo admin_url('dietetic/commissions/settings'); ?>" class="btn btn-info" disabled>
-                        <i class="fa fa-cog"></i> Configurer (Bientôt disponible)
+                    <a href="<?php echo admin_url('dietetic/commissions/settings'); ?>" class="btn btn-info">
+                        <i class="fa fa-cog"></i> Configurer
                     </a>
                 </div>
             </div>
