@@ -1010,8 +1010,9 @@ html {
                                                           ($day->lunch_checked ? 1 : 0) +
                                                           ($day->dinner_checked ? 1 : 0);
                                             $completion = 0;
-                                            if ($day->water_glasses >= 8) $completion += 25;
-                                            else if ($day->water_glasses > 0) $completion += round(($day->water_glasses / 8) * 25);
+                                            // Water completion based on ml (goal: 2000ml)
+                                            if (isset($day->hydration_ml) && $day->hydration_ml >= 2000) $completion += 25;
+                                            else if (isset($day->hydration_ml) && $day->hydration_ml > 0) $completion += round(($day->hydration_ml / 2000) * 25);
                                             $completion += round(($meals_count / 3) * 25);
                                             // Use new activities data for completion
                                             $activity_mins = isset($day->activities_minutes) ? $day->activities_minutes : $day->activity_minutes;
