@@ -6578,7 +6578,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         try {
@@ -6614,7 +6614,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         try {
@@ -6678,7 +6678,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         // Prepare data
@@ -6756,7 +6756,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         // Verify the activity belongs to this patient
