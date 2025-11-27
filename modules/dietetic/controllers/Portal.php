@@ -126,7 +126,9 @@ class Portal extends App_Controller
             'get_activities',
             'get_my_activities',
             'add_activity',
-            'delete_activity'
+            'delete_activity',
+            'test_activity_post',
+            'api_get_today_activities'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter

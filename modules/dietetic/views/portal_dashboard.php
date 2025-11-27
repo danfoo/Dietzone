@@ -3882,7 +3882,8 @@ let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
 
 // Load today's activities on page load
-loadTodayActivities();
+// Temporarily disabled for debugging
+// loadTodayActivities();
 
 async function loadTodayActivities() {
     try {
