@@ -11,6 +11,9 @@
                             <button type="button" class="btn btn-info pull-left" data-toggle="modal" data-target="#addActivityModal">
                                 <i class="fa fa-plus"></i> Nouvelle Activité
                             </button>
+                            <button type="button" class="btn btn-warning pull-left mleft5" onclick="removeDuplicates()" title="Supprimer les activités en double">
+                                <i class="fa fa-eraser"></i> Nettoyer les doublons
+                            </button>
                             <div class="clearfix"></div>
                         </div>
                         <hr class="hr-panel-heading">
@@ -260,6 +263,31 @@ function deleteActivity(id, name) {
         $('#delete_activity_id').val(id);
         $('#deleteActivityForm').submit();
     }
+}
+
+function removeDuplicates() {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les activités en double ?\n\nCette action conservera uniquement la première occurrence de chaque activité et supprimera les doublons.')) {
+        return;
+    }
+
+    $.ajax({
+        url: admin_url + 'dietetic/activities/remove_duplicates',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                alert_float('danger', response.message || 'Erreur lors de la suppression des doublons');
+            }
+        },
+        error: function(xhr) {
+            alert_float('danger', 'Erreur lors de la suppression des doublons');
+        }
+    });
 }
 </script>
 

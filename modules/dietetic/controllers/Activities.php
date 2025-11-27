@@ -301,6 +301,56 @@ class Activities extends AdminController
     }
 
     /**
+     * Remove duplicate activities (keep only the first occurrence)
+     */
+    public function remove_duplicates()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Find duplicates by name
+            $query = "
+                SELECT name, MIN(id) as keep_id
+                FROM " . db_prefix() . "dietic_activities
+                GROUP BY name
+                HAVING COUNT(*) > 1
+            ";
+
+            $duplicates = $this->db->query($query)->result();
+
+            $deleted_count = 0;
+
+            foreach ($duplicates as $dup) {
+                // Delete all except the first one (keep_id)
+                $this->db->where('name', $dup->name);
+                $this->db->where('id !=', $dup->keep_id);
+                $this->db->delete(db_prefix() . 'dietic_activities');
+
+                $deleted_count += $this->db->affected_rows();
+            }
+
+            if ($deleted_count > 0) {
+                log_activity('Removed ' . $deleted_count . ' duplicate activities');
+                echo json_encode([
+                    'success' => true,
+                    'message' => $deleted_count . ' doublons supprimés avec succès'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Aucun doublon trouvé'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_activity('Error removing duplicates: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression des doublons'
+            ]);
+        }
+    }
+
+    /**
      * Add new activity to database (admin only)
      */
     public function add_activity()

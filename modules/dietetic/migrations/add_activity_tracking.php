@@ -139,15 +139,21 @@ class Migration_Add_activity_tracking extends App_module_migration
         ];
 
         $now = date('Y-m-d H:i:s');
-        foreach ($default_activities as $activity) {
-            $CI->db->insert(db_prefix() . 'dietic_activities', [
-                'name' => $activity['name'],
-                'kcal_per_minute' => $activity['kcal_per_minute'],
-                'category' => $activity['category'],
-                'description' => $activity['description'],
-                'is_active' => 1,
-                'created_at' => $now
-            ]);
+        // Check if activities already exist to prevent duplicates
+        $existing_count = $CI->db->count_all(db_prefix() . 'dietic_activities');
+
+        // Only insert if table is empty
+        if ($existing_count == 0) {
+            foreach ($default_activities as $activity) {
+                $CI->db->insert(db_prefix() . 'dietic_activities', [
+                    'name' => $activity['name'],
+                    'kcal_per_minute' => $activity['kcal_per_minute'],
+                    'category' => $activity['category'],
+                    'description' => $activity['description'],
+                    'is_active' => 1,
+                    'created_at' => $now
+                ]);
+            }
         }
     }
 
