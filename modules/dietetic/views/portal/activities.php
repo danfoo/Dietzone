@@ -6,108 +6,110 @@ $this->load->view('portal/includes/portal_header');
 
 <style>
 .activities-page {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 16px;
 }
 
 .activity-header {
     background: linear-gradient(135deg, #01807B 0%, #026660 100%);
     color: white;
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 15px rgba(1, 128, 123, 0.2);
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
 }
 
 .activity-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 28px;
+    margin: 0 0 8px 0;
+    font-size: 24px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .activity-header p {
     margin: 0;
-    opacity: 0.9;
-    font-size: 15px;
+    opacity: 0.95;
+    font-size: 14px;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: none;
+    border: 1px solid #f0f0f0;
+    transition: transform 0.2s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
 }
 
 .stat-card-icon {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 16px;
-    font-size: 24px;
+    margin-bottom: 12px;
+    font-size: 22px;
 }
 
 .stat-card-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
     color: #2c3e50;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    line-height: 1;
 }
 
 .stat-card-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #7f8c8d;
     font-weight: 500;
 }
 
 .activity-section {
     background: white;
-    border-radius: 12px;
-    padding: 28px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: none;
+    border: 1px solid #f0f0f0;
 }
 
 .section-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: #2c3e50;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid #01807B;
+    margin-bottom: 16px;
+    padding-bottom: 0;
+    border-bottom: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .activity-form {
-    background: #f8f9fa;
-    padding: 24px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: none;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .form-group label {
@@ -115,18 +117,19 @@ $this->load->view('portal/includes/portal_header');
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .form-group select,
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
     font-size: 14px;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    background: white;
 }
 
 .form-group select:focus,
@@ -134,63 +137,67 @@ $this->load->view('portal/includes/portal_header');
 .form-group textarea:focus {
     border-color: #01807B;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.08);
 }
 
 .btn-add-activity {
     background: linear-gradient(135deg, #01807B 0%, #026660 100%);
     color: white;
     border: none;
-    padding: 14px 32px;
-    border-radius: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.2);
 }
 
 .btn-add-activity:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
 }
 
 .kcal-display {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
     padding: 16px;
-    border-radius: 8px;
+    border-radius: 12px;
     text-align: center;
     margin-top: 16px;
 }
 
 .kcal-display-value {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: bold;
     margin-bottom: 4px;
+    line-height: 1;
 }
 
 .kcal-display-label {
-    font-size: 14px;
-    opacity: 0.9;
+    font-size: 13px;
+    opacity: 0.95;
 }
 
 .activity-item {
-    background: #f8f9fa;
+    background: #fafafa;
     border-left: 4px solid #01807B;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 16px;
-    transition: all 0.3s ease;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    border: 1px solid #f0f0f0;
+    border-left: 4px solid #01807B;
 }
 
 .activity-item:hover {
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(2px);
+    background: #f5f5f5;
 }
 
 .activity-item-header {
@@ -198,38 +205,41 @@ $this->load->view('portal/includes/portal_header');
     justify-content: space-between;
     align-items: start;
     margin-bottom: 12px;
+    gap: 12px;
 }
 
 .activity-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: #2c3e50;
     margin-bottom: 4px;
+    line-height: 1.3;
 }
 
 .activity-date {
     color: #7f8c8d;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .activity-details {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
     margin-top: 12px;
 }
 
 .activity-detail {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: #2c3e50;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .activity-detail i {
     color: #01807B;
-    width: 20px;
+    width: 18px;
+    font-size: 14px;
 }
 
 .activity-detail strong {
@@ -239,21 +249,21 @@ $this->load->view('portal/includes/portal_header');
 
 .category-badge {
     display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .no-activities {
     text-align: center;
-    padding: 60px 20px;
+    padding: 50px 20px;
     color: #7f8c8d;
 }
 
 .no-activities i {
-    font-size: 80px;
-    margin-bottom: 20px;
+    font-size: 60px;
+    margin-bottom: 16px;
     opacity: 0.3;
 }
 
@@ -261,27 +271,110 @@ $this->load->view('portal/includes/portal_header');
     background: #e74c3c;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 13px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .btn-delete:hover {
     background: #c0392b;
-    transform: translateY(-2px);
+    transform: scale(1.1);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+    .activities-page {
+        padding: 12px;
+    }
+
+    .activity-header {
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+
+    .activity-header h1 {
+        font-size: 20px;
+    }
+
+    .activity-header p {
+        font-size: 13px;
+    }
+
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-card-value {
+        font-size: 24px;
+    }
+
+    .stat-card-label {
+        font-size: 12px;
+    }
+
+    .activity-section {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .activity-form {
+        padding: 16px;
     }
 
     .activity-details {
-        flex-direction: column;
-        gap: 12px;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .activity-name {
+        font-size: 15px;
+    }
+
+    .kcal-display-value {
+        font-size: 28px;
+    }
+}
+
+@media (min-width: 769px) {
+    .activities-page {
+        max-width: 900px;
+        padding: 24px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .activity-header {
+        padding: 32px 28px;
+    }
+
+    .activity-section {
+        padding: 28px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .activities-page {
+        max-width: 1100px;
     }
 }
 </style>
@@ -505,7 +598,7 @@ function displayActivities(activities) {
             if (activity.activity_time) html += ' à ' + activity.activity_time;
             html += '</div>';
             html += '</div>';
-            html += '<button class="btn-delete" onclick="deleteActivity(' + activity.id + ')"><i class="fa fa-trash"></i> Supprimer</button>';
+            html += '<button class="btn-delete" onclick="deleteActivity(' + activity.id + ')" title="Supprimer"><i class="fa fa-trash"></i></button>';
             html += '</div>';
 
             html += '<div class="activity-details">';
