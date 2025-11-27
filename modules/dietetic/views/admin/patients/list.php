@@ -588,7 +588,7 @@
                 <div class="stat-icon">
                     <i class="fa fa-users"></i>
                 </div>
-                <div class="stat-value"><?php echo count($patients); ?></div>
+                <div class="stat-value"><?php echo $total_patients; ?></div>
                 <div class="stat-label">Total Patients</div>
             </div>
 
@@ -605,7 +605,7 @@
                     echo $active_count;
                     ?>
                 </div>
-                <div class="stat-label">Patients Actifs</div>
+                <div class="stat-label">Patients Actifs (page)</div>
             </div>
 
             <div class="stat-card blue">
@@ -616,7 +616,7 @@
                     <?php
                     $today_count = 0;
                     foreach ($patients as $p) {
-                        if (date('Y-m-d', strtotime($p->created_at)) === date('Y-m-d')) {
+                        if ($p->created_at && date('Y-m-d', strtotime($p->created_at)) === date('Y-m-d')) {
                             $today_count++;
                         }
                     }
@@ -634,14 +634,14 @@
                     <?php
                     $dietitians = array();
                     foreach ($patients as $p) {
-                        if (!in_array($p->dietitian_name, $dietitians)) {
+                        if ($p->dietitian_name && !in_array($p->dietitian_name, $dietitians)) {
                             $dietitians[] = $p->dietitian_name;
                         }
                     }
                     echo count($dietitians);
                     ?>
                 </div>
-                <div class="stat-label">Diététiciens</div>
+                <div class="stat-label">Diététiciens (page)</div>
             </div>
         </div>
 
@@ -776,6 +776,84 @@
                                 <?php } ?>
                             </tbody>
                         </table>
+
+                        <!-- Pagination -->
+                        <?php if ($total_pages > 1): ?>
+                            <div class="row" style="margin-top: 20px;">
+                                <div class="col-md-6">
+                                    <p class="text-muted">
+                                        Affichage de <?php echo count($patients); ?> sur <?php echo $total_patients; ?> patients
+                                        (Page <?php echo $current_page; ?> sur <?php echo $total_pages; ?>)
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <nav aria-label="Pagination des patients">
+                                        <ul class="pagination pull-right" style="margin: 0;">
+                                            <!-- Bouton Précédent -->
+                                            <li class="<?php echo ($current_page <= 1) ? 'disabled' : ''; ?>">
+                                                <?php if ($current_page > 1): ?>
+                                                    <a href="<?php echo admin_url('dietetic/patients?page=' . ($current_page - 1)); ?>"
+                                                       aria-label="Précédent">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span>&laquo;</span>
+                                                <?php endif; ?>
+                                            </li>
+
+                                            <!-- Numéros de page -->
+                                            <?php
+                                            $range = 2;
+                                            $start_page = max(1, $current_page - $range);
+                                            $end_page = min($total_pages, $current_page + $range);
+
+                                            // Première page
+                                            if ($start_page > 1): ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/patients?page=1'); ?>">1</a>
+                                                </li>
+                                                <?php if ($start_page > 2): ?>
+                                                    <li class="disabled"><span>...</span></li>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+
+                                            <!-- Pages du milieu -->
+                                            <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                                <li class="<?php echo ($i == $current_page) ? 'active' : ''; ?>">
+                                                    <a href="<?php echo admin_url('dietetic/patients?page=' . $i); ?>">
+                                                        <?php echo $i; ?>
+                                                    </a>
+                                                </li>
+                                            <?php endfor; ?>
+
+                                            <!-- Dernière page -->
+                                            <?php if ($end_page < $total_pages): ?>
+                                                <?php if ($end_page < $total_pages - 1): ?>
+                                                    <li class="disabled"><span>...</span></li>
+                                                <?php endif; ?>
+                                                <li>
+                                                    <a href="<?php echo admin_url('dietetic/patients?page=' . $total_pages); ?>">
+                                                        <?php echo $total_pages; ?>
+                                                    </a>
+                                                </li>
+                                            <?php endif; ?>
+
+                                            <!-- Bouton Suivant -->
+                                            <li class="<?php echo ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
+                                                <?php if ($current_page < $total_pages): ?>
+                                                    <a href="<?php echo admin_url('dietetic/patients?page=' . ($current_page + 1)); ?>"
+                                                       aria-label="Suivant">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span>&raquo;</span>
+                                                <?php endif; ?>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 

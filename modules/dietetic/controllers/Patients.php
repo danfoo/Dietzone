@@ -32,7 +32,23 @@ class Patients extends AdminController
     public function index()
     {
         $data['title'] = _l('dietetic_patients');
-        $data['patients'] = $this->dietetic_patients_model->get_all();
+
+        // Pagination configuration
+        $per_page = 20; // Nombre de patients par page
+        $page = $this->input->get('page') ? (int)$this->input->get('page') : 1;
+        $offset = ($page - 1) * $per_page;
+
+        // Count total patients
+        $total_patients = $this->dietetic_patients_model->count_all();
+
+        // Get patients for current page
+        $data['patients'] = $this->dietetic_patients_model->get_all([], $per_page, $offset);
+
+        // Pagination data
+        $data['total_patients'] = $total_patients;
+        $data['per_page'] = $per_page;
+        $data['current_page'] = $page;
+        $data['total_pages'] = ceil($total_patients / $per_page);
 
         $this->load->view('admin/patients/list', $data);
     }
