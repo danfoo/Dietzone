@@ -206,10 +206,70 @@ class Activities extends AdminController
             access_denied('dietetic');
         }
 
-        // Load activities directly
+        // Handle POST actions
+        if ($this->input->post()) {
+            $action = $this->input->post('action');
+
+            if ($action === 'add') {
+                $this->handle_add_activity();
+            } elseif ($action === 'edit') {
+                $this->handle_edit_activity();
+            } elseif ($action === 'delete') {
+                $this->handle_delete_activity();
+            }
+
+            // Redirect to avoid form resubmission
+            redirect(admin_url('dietetic/activities/manage'));
+            return;
+        }
+
+        // Load activities directly (get all including inactive)
         $data['title'] = 'Gestion des Activités';
-        $data['activities'] = $this->dietetic_activities_model->get_all_activities();
+        $data['activities'] = $this->dietetic_activities_model->get_all_activities(false); // false = get all
         $this->load->view('admin/activities/manage', $data);
+    }
+
+    private function handle_add_activity()
+    {
+        $this->db->insert(db_prefix() . 'dietic_activities', [
+            'name' => $this->input->post('name'),
+            'category' => $this->input->post('category'),
+            'kcal_per_minute' => $this->input->post('kcal_per_minute'),
+            'description' => $this->input->post('description'),
+            'is_active' => $this->input->post('is_active') ? 1 : 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        set_alert('success', 'Activité ajoutée avec succès');
+    }
+
+    private function handle_edit_activity()
+    {
+        $id = $this->input->post('activity_id');
+
+        $this->db->where('id', $id);
+        $this->db->update(db_prefix() . 'dietic_activities', [
+            'name' => $this->input->post('name'),
+            'category' => $this->input->post('category'),
+            'kcal_per_minute' => $this->input->post('kcal_per_minute'),
+            'description' => $this->input->post('description'),
+            'is_active' => $this->input->post('is_active') ? 1 : 0,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        set_alert('success', 'Activité mise à jour avec succès');
+    }
+
+    private function handle_delete_activity()
+    {
+        $id = $this->input->post('activity_id');
+
+        $this->db->where('id', $id);
+        $this->db->update(db_prefix() . 'dietic_activities', [
+            'is_active' => 0
+        ]);
+
+        set_alert('success', 'Activité supprimée avec succès');
     }
 
     /**

@@ -8,7 +8,7 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="_buttons">
-                            <button type="button" class="btn btn-info pull-left" onclick="openActivityModal()">
+                            <button type="button" class="btn btn-info pull-left" data-toggle="modal" data-target="#addActivityModal">
                                 <i class="fa fa-plus"></i> Nouvelle Activité
                             </button>
                             <div class="clearfix"></div>
@@ -25,7 +25,7 @@
                         <hr>
 
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered" id="activitiesTable">
+                            <table class="table table-striped table-bordered dt-table">
                                 <thead>
                                     <tr>
                                         <th>Activité</th>
@@ -44,25 +44,25 @@
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($activities as $activity): ?>
-                                            <tr data-activity-id="<?php echo $activity['id']; ?>">
-                                                <td><strong><?php echo htmlspecialchars($activity['name']); ?></strong></td>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($activity->name); ?></strong></td>
                                                 <td>
                                                     <?php
                                                     $colorClass = 'label-default';
-                                                    if ($activity['category'] === 'Cardio') $colorClass = 'label-primary';
-                                                    elseif ($activity['category'] === 'Musculation') $colorClass = 'label-danger';
-                                                    elseif ($activity['category'] === 'Sports collectifs') $colorClass = 'label-success';
-                                                    elseif ($activity['category'] === 'Arts martiaux') $colorClass = 'label-warning';
-                                                    elseif ($activity['category'] === 'Danse') $colorClass = 'label-info';
-                                                    elseif ($activity['category'] === 'Yoga/Étirements') $colorClass = 'label-purple';
+                                                    if ($activity->category === 'Cardio') $colorClass = 'label-primary';
+                                                    elseif ($activity->category === 'Musculation') $colorClass = 'label-danger';
+                                                    elseif ($activity->category === 'Sports collectifs') $colorClass = 'label-success';
+                                                    elseif ($activity->category === 'Arts martiaux') $colorClass = 'label-warning';
+                                                    elseif ($activity->category === 'Danse') $colorClass = 'label-info';
+                                                    elseif ($activity->category === 'Yoga/Étirements') $colorClass = 'label-purple';
                                                     ?>
-                                                    <span class="label <?php echo $colorClass; ?>"><?php echo htmlspecialchars($activity['category']); ?></span>
+                                                    <span class="label <?php echo $colorClass; ?>"><?php echo htmlspecialchars($activity->category); ?></span>
                                                 </td>
-                                                <td class="text-center"><strong><?php echo number_format($activity['kcal_per_minute'], 1); ?></strong></td>
-                                                <td class="text-center"><strong class="text-success"><?php echo number_format($activity['kcal_per_minute'] * 30, 0); ?></strong></td>
-                                                <td><?php echo $activity['description'] ? htmlspecialchars($activity['description']) : '<span class="text-muted">-</span>'; ?></td>
+                                                <td class="text-center"><strong><?php echo number_format($activity->kcal_per_minute, 1); ?></strong></td>
+                                                <td class="text-center"><strong class="text-success"><?php echo number_format($activity->kcal_per_minute * 30, 0); ?></strong></td>
+                                                <td><?php echo $activity->description ? htmlspecialchars($activity->description) : '<span class="text-muted">-</span>'; ?></td>
                                                 <td class="text-center">
-                                                    <?php if ($activity['is_active'] == 1): ?>
+                                                    <?php if ($activity->is_active == 1): ?>
                                                         <span class="label label-success">Active</span>
                                                     <?php else: ?>
                                                         <span class="label label-default">Inactive</span>
@@ -70,10 +70,14 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="btn-group">
-                                                        <button class="btn btn-default btn-sm" onclick="editActivity(<?php echo $activity['id']; ?>)" title="Modifier">
+                                                        <button class="btn btn-default btn-sm"
+                                                                onclick="editActivity(<?php echo $activity->id; ?>, '<?php echo addslashes($activity->name); ?>', '<?php echo $activity->category; ?>', <?php echo $activity->kcal_per_minute; ?>, '<?php echo addslashes($activity->description); ?>', <?php echo $activity->is_active; ?>)"
+                                                                title="Modifier">
                                                             <i class="fa fa-edit"></i>
                                                         </button>
-                                                        <button class="btn btn-danger btn-sm" onclick="deleteActivity(<?php echo $activity['id']; ?>)" title="Supprimer">
+                                                        <button class="btn btn-danger btn-sm"
+                                                                onclick="deleteActivity(<?php echo $activity->id; ?>, '<?php echo addslashes($activity->name); ?>')"
+                                                                title="Supprimer">
                                                             <i class="fa fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -91,8 +95,8 @@
     </div>
 </div>
 
-<!-- Activity Modal -->
-<div class="modal fade" id="activityModal" tabindex="-1" role="dialog">
+<!-- Add Activity Modal -->
+<div class="modal fade" id="addActivityModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -101,23 +105,22 @@
                 </button>
                 <h4 class="modal-title">
                     <i class="fa fa-heartbeat"></i>
-                    <span id="modalTitle">Nouvelle Activité</span>
+                    Nouvelle Activité
                 </h4>
             </div>
-            <form id="activityForm">
-                <input type="hidden" name="activity_id" id="activity_id">
-                <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <?php echo form_open(admin_url('dietetic/activities/manage')); ?>
+                <input type="hidden" name="action" value="add">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="activity_name">Nom de l'activité <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="activity_name" name="name" required>
+                        <label for="add_name">Nom de l'activité <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" id="add_name" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="activity_category">Catégorie <span class="text-danger">*</span></label>
-                                <select class="form-control" id="activity_category" name="category" required>
+                                <label for="add_category">Catégorie <span class="text-danger">*</span></label>
+                                <select class="form-control selectpicker" name="category" id="add_category" required>
                                     <option value="">Sélectionner...</option>
                                     <option value="Cardio">Cardio</option>
                                     <option value="Musculation">Musculation</option>
@@ -131,22 +134,22 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="activity_kcal">Kcal/minute <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" class="form-control" id="activity_kcal" name="kcal_per_minute" required>
+                                <label for="add_kcal">Kcal/minute <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" name="kcal_per_minute" id="add_kcal" required>
                                 <small class="text-muted">Calories brûlées par minute</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="activity_description">Description</label>
-                        <textarea class="form-control" id="activity_description" name="description" rows="3"></textarea>
+                        <label for="add_description">Description</label>
+                        <textarea class="form-control" name="description" id="add_description" rows="3"></textarea>
                     </div>
 
                     <div class="form-group">
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" name="is_active" id="activity_is_active" value="1" checked>
+                                <input type="checkbox" name="is_active" value="1" checked>
                                 Activité active
                             </label>
                         </div>
@@ -158,169 +161,109 @@
                         <i class="fa fa-save"></i> Enregistrer
                     </button>
                 </div>
-            </form>
+            <?php echo form_close(); ?>
         </div>
     </div>
+</div>
+
+<!-- Edit Activity Modal -->
+<div class="modal fade" id="editActivityModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-heartbeat"></i>
+                    Modifier l'Activité
+                </h4>
+            </div>
+            <?php echo form_open(admin_url('dietetic/activities/manage')); ?>
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="activity_id" id="edit_activity_id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_name">Nom de l'activité <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" id="edit_name" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_category">Catégorie <span class="text-danger">*</span></label>
+                                <select class="form-control selectpicker" name="category" id="edit_category" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="Cardio">Cardio</option>
+                                    <option value="Musculation">Musculation</option>
+                                    <option value="Sports collectifs">Sports collectifs</option>
+                                    <option value="Arts martiaux">Arts martiaux</option>
+                                    <option value="Danse">Danse</option>
+                                    <option value="Yoga/Étirements">Yoga/Étirements</option>
+                                    <option value="Autres">Autres</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_kcal">Kcal/minute <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" name="kcal_per_minute" id="edit_kcal" required>
+                                <small class="text-muted">Calories brûlées par minute</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_description">Description</label>
+                        <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="is_active" id="edit_is_active" value="1">
+                                Activité active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fa fa-save"></i> Mettre à jour
+                    </button>
+                </div>
+            <?php echo form_close(); ?>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Form (hidden) -->
+<div style="display: none;">
+    <?php echo form_open(admin_url('dietetic/activities/manage'), ['id' => 'deleteActivityForm']); ?>
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="activity_id" id="delete_activity_id">
+    <?php echo form_close(); ?>
 </div>
 
 <?php init_tail(); ?>
 
 <script>
-// CSRF token management
-var csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
-var csrfHash = '<?php echo $this->security->get_csrf_hash(); ?>';
-
-// Store activities data for editing
-var activitiesData = <?php echo json_encode($activities); ?>;
-
-// Initialize DataTable on page load (simple client-side)
-$(document).ready(function() {
-    $('#activitiesTable').DataTable({
-        pageLength: 25,
-        order: [[1, 'asc'], [0, 'asc']], // Sort by category, then name
-        language: {
-            search: 'Rechercher:',
-            lengthMenu: 'Afficher _MENU_ activités',
-            info: 'Affichage de _START_ à _END_ sur _TOTAL_ activités',
-            infoEmpty: 'Aucune activité',
-            infoFiltered: '(filtré de _MAX_ activités au total)',
-            paginate: {
-                first: 'Premier',
-                last: 'Dernier',
-                next: 'Suivant',
-                previous: 'Précédent'
-            },
-            emptyTable: 'Aucune activité disponible',
-            zeroRecords: 'Aucune activité trouvée'
-        },
-        responsive: true,
-        stateSave: true
-    });
-});
-
-// Open modal to add new activity
-function openActivityModal() {
-    $('#activityForm')[0].reset();
-    $('#activity_id').val('');
-    $('#modalTitle').text('Nouvelle Activité');
-    $('#activity_is_active').prop('checked', true);
-    $('#csrf_token').val(csrfHash);
-    $('#activityModal').modal('show');
+function editActivity(id, name, category, kcal, description, is_active) {
+    $('#edit_activity_id').val(id);
+    $('#edit_name').val(name);
+    $('#edit_category').val(category).selectpicker('refresh');
+    $('#edit_kcal').val(kcal);
+    $('#edit_description').val(description);
+    $('#edit_is_active').prop('checked', is_active == 1);
+    $('#editActivityModal').modal('show');
 }
 
-// Edit activity
-function editActivity(id) {
-    var activity = activitiesData.find(a => a.id == id);
-
-    if (activity) {
-        $('#activity_id').val(activity.id);
-        $('#activity_name').val(activity.name);
-        $('#activity_category').val(activity.category);
-        $('#activity_kcal').val(activity.kcal_per_minute);
-        $('#activity_description').val(activity.description);
-        $('#activity_is_active').prop('checked', activity.is_active == 1);
-        $('#modalTitle').text('Modifier l\'activité');
-        $('#csrf_token').val(csrfHash);
-        $('#activityModal').modal('show');
+function deleteActivity(id, name) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer l\'activité "' + name + '" ?')) {
+        $('#delete_activity_id').val(id);
+        $('#deleteActivityForm').submit();
     }
-}
-
-// Submit form
-$('#activityForm').on('submit', function(e) {
-    e.preventDefault();
-
-    var activityId = $('#activity_id').val();
-    var url = activityId
-        ? admin_url + 'dietetic/activities/update_activity/' + activityId
-        : admin_url + 'dietetic/activities/add_activity';
-
-    var formData = {
-        name: $('#activity_name').val(),
-        category: $('#activity_category').val(),
-        kcal_per_minute: $('#activity_kcal').val(),
-        description: $('#activity_description').val(),
-        is_active: $('#activity_is_active').is(':checked') ? 1 : 0
-    };
-
-    // Add CSRF token using the correct name
-    formData[csrfTokenName] = $('#csrf_token').val();
-
-    $.ajax({
-        url: url,
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-                $('#activityModal').modal('hide');
-
-                // Update CSRF token
-                if (response.csrf_token) {
-                    csrfHash = response.csrf_token;
-                    $('#csrf_token').val(response.csrf_token);
-                }
-
-                // Reload page to show updated data
-                setTimeout(function() {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                alert_float('danger', response.message || 'Erreur lors de l\'enregistrement');
-
-                // Update CSRF token even on error
-                if (response.csrf_token) {
-                    csrfHash = response.csrf_token;
-                    $('#csrf_token').val(response.csrf_token);
-                }
-            }
-        },
-        error: function(xhr) {
-            alert_float('danger', 'Erreur lors de l\'enregistrement');
-        }
-    });
-});
-
-// Delete activity with proper CSRF
-function deleteActivity(id) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette activité ?')) {
-        return;
-    }
-
-    var formData = {};
-    formData[csrfTokenName] = csrfHash;
-
-    $.ajax({
-        url: admin_url + 'dietetic/activities/delete_activity/' + id,
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-
-                // Update CSRF token
-                if (response.csrf_token) {
-                    csrfHash = response.csrf_token;
-                }
-
-                // Reload page to show updated data
-                setTimeout(function() {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                alert_float('danger', response.message || 'Erreur lors de la suppression');
-
-                // Update CSRF token even on error
-                if (response.csrf_token) {
-                    csrfHash = response.csrf_token;
-                }
-            }
-        },
-        error: function(xhr) {
-            alert_float('danger', 'Erreur lors de la suppression');
-        }
-    });
 }
 </script>
 
@@ -333,18 +276,5 @@ function deleteActivity(id) {
 /* Better spacing for action buttons */
 .btn-group .btn {
     margin: 0 2px;
-}
-
-/* DataTables custom styling */
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid #d2d6de;
-    border-radius: 3px;
-    padding: 5px 10px;
-}
-
-.dataTables_wrapper .dataTables_length select {
-    border: 1px solid #d2d6de;
-    border-radius: 3px;
-    padding: 5px;
 }
 </style>
