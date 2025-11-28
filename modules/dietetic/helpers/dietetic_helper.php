@@ -948,6 +948,29 @@ function dietetic_get_staff_permissions($staff_id = null)
 function dietetic_get_available_permissions()
 {
     return [
+        // Core permissions
+        'view' => [
+            'label' => 'Voir',
+            'description' => 'Voir les données (patients, consultations, programmes, etc.)',
+            'default' => true,
+        ],
+        'create' => [
+            'label' => 'Créer',
+            'description' => 'Créer des abonnements, patients, consultations, etc.',
+            'default' => false,
+        ],
+        'edit' => [
+            'label' => 'Modifier',
+            'description' => 'Modifier des données existantes',
+            'default' => false,
+        ],
+        'delete' => [
+            'label' => 'Supprimer',
+            'description' => 'Supprimer/Annuler des données',
+            'default' => false,
+        ],
+
+        // Feature-specific permissions
         'food_surveys' => [
             'label' => 'Enquêtes Alimentaires',
             'description' => 'Accès au module des enquêtes alimentaires',
