@@ -177,6 +177,46 @@ function dietetic_module_init_menu_items()
             'position' => 5.3,
         ]);
 
+        // Service Plans - FORCÉ sans condition pour permettre l'accès
+        if (is_admin()) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-service-plans',
+                'name'     => 'Plans de Service',
+                'icon'     => 'fa fa-cube',
+                'href'     => admin_url('dietetic/service_plans'),
+                'position' => 5.4,
+            ]);
+        }
+
+        // Subscriptions - Visible to all with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-subscriptions',
+            'name'     => 'Abonnements',
+            'icon'     => 'fa fa-refresh',
+            'href'     => admin_url('dietetic/subscriptions'),
+            'position' => 5.6,
+        ]);
+
+        // Invoices - Visible to all with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-invoices',
+            'name'     => 'Factures',
+            'icon'     => 'fa fa-file-text-o',
+            'href'     => admin_url('dietetic/invoices'),
+            'position' => 5.7,
+        ]);
+
+        // Commissions - Admin only
+        if (is_admin()) {
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-commissions',
+                'name'     => 'Commissions',
+                'icon'     => 'fa fa-percent',
+                'href'     => admin_url('dietetic/commissions/settings'),
+                'position' => 5.8,
+            ]);
+        }
+
         // Notifications - Show if table exists and user is admin
         if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
