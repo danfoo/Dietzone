@@ -62,7 +62,20 @@ class Service_plans extends AdminController
     public function create()
     {
         if ($this->input->post()) {
-            $data = $this->input->post();
+            // Only get the fields we need (exclude CSRF token and other unwanted fields)
+            $data = [
+                'name' => $this->input->post('name'),
+                'name_fr' => $this->input->post('name_fr'),
+                'description' => $this->input->post('description'),
+                'description_fr' => $this->input->post('description_fr'),
+                'duration_value' => $this->input->post('duration_value'),
+                'duration_unit' => $this->input->post('duration_unit'),
+                'price' => $this->input->post('price'),
+                'billing_cycle' => $this->input->post('billing_cycle'),
+                'trial_days' => $this->input->post('trial_days') ?: 0,
+                'is_active' => $this->input->post('is_active') ?: 1,
+                'features' => $this->input->post('features')
+            ];
 
             // Process features (convert from array to JSON)
             if (isset($data['features']) && is_array($data['features'])) {
@@ -95,7 +108,20 @@ class Service_plans extends AdminController
         }
 
         if ($this->input->post()) {
-            $update_data = $this->input->post();
+            // Only get the fields we need (exclude CSRF token and other unwanted fields)
+            $update_data = [
+                'name' => $this->input->post('name'),
+                'name_fr' => $this->input->post('name_fr'),
+                'description' => $this->input->post('description'),
+                'description_fr' => $this->input->post('description_fr'),
+                'duration_value' => $this->input->post('duration_value'),
+                'duration_unit' => $this->input->post('duration_unit'),
+                'price' => $this->input->post('price'),
+                'billing_cycle' => $this->input->post('billing_cycle'),
+                'trial_days' => $this->input->post('trial_days') ?: 0,
+                'is_active' => $this->input->post('is_active') ?: 1,
+                'features' => $this->input->post('features')
+            ];
 
             // Process features
             if (isset($update_data['features']) && is_array($update_data['features'])) {

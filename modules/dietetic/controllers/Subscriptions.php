@@ -94,7 +94,16 @@ class Subscriptions extends AdminController
         }
 
         if ($this->input->post()) {
-            $data = $this->input->post();
+            // Only get the fields we need from the form
+            $data = [
+                'patient_id' => $this->input->post('patient_id'),
+                'service_plan_id' => $this->input->post('service_plan_id'),
+                'dietitian_id' => $this->input->post('dietitian_id'),
+                'referral_source' => $this->input->post('referral_source'),
+                'start_date' => $this->input->post('start_date'),
+                'tax_rate' => $this->input->post('tax_rate') ?: 0,
+                'notes' => $this->input->post('notes')
+            ];
 
             // Get plan details
             $plan = $this->dietetic_service_plans_model->get($data['service_plan_id']);
@@ -175,7 +184,11 @@ class Subscriptions extends AdminController
         }
 
         if ($this->input->post()) {
-            $update_data = $this->input->post();
+            // Only get the fields that can be updated
+            $update_data = [
+                'tax_rate' => $this->input->post('tax_rate'),
+                'notes' => $this->input->post('notes')
+            ];
 
             if ($this->dietetic_subscriptions_model->update($id, $update_data)) {
                 set_alert('success', 'Abonnement mis à jour avec succès');
