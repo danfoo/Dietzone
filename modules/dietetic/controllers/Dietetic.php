@@ -571,29 +571,45 @@ class Dietetic extends AdminController
             }
 
             try {
+                // Start output buffering to capture migration output
+                ob_start();
+
                 // Include and execute migration
                 require_once($migration_path);
+
+                // Get migration output
+                $migration_output = ob_get_clean();
 
                 // Get class name from file
                 $migration_name = pathinfo($migration_file, PATHINFO_FILENAME);
                 $class_name = 'Migration_' . $migration_name;
 
-                if (!class_exists($class_name)) {
-                    set_alert('danger', 'Classe de migration non trouvée: ' . $class_name);
-                    redirect(admin_url('dietetic/migrations'));
-                    return;
+                // Try to execute class-based migration if class exists
+                if (class_exists($class_name)) {
+                    $migration = new $class_name();
+                    $migration->up();
                 }
-
-                $migration = new $class_name();
-                $migration->up();
+                // Otherwise, the migration was executed directly (procedural style)
 
                 // Record migration as applied
                 $this->record_migration($migration_name);
 
-                set_alert('success', 'Migration appliquée avec succès: ' . $migration_file);
+                // If migration produced HTML output, display it directly
+                if (!empty($migration_output)) {
+                    echo $migration_output;
+                    // Don't redirect, let user see the migration output
+                    return;
+                } else {
+                    set_alert('success', 'Migration appliquée avec succès: ' . $migration_file);
+                }
+
                 log_activity('Migration appliquée: ' . $migration_file);
 
             } catch (Exception $e) {
+                // Clean output buffer in case of error
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
                 log_activity('Migration error: ' . $e->getMessage());
                 set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
             }
