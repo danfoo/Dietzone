@@ -228,6 +228,15 @@ function dietetic_module_init_menu_items()
             ]);
         }
 
+        // Revenue Dashboard - Visible to all with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-revenue-dashboard',
+            'name'     => 'Dashboard Revenus',
+            'icon'     => 'fa fa-line-chart',
+            'href'     => admin_url('dietetic/revenue_dashboard'),
+            'position' => 5.85,
+        ]);
+
         // Notifications - Show if table exists and user is admin
         if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
