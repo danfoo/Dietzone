@@ -248,15 +248,210 @@ class Dietetic_invoices_model extends App_Model
             return false;
         }
 
-        // Update status to sent
-        $this->update($id, ['status' => 'sent']);
+        // Get patient email from client
+        $this->db->select('email');
+        $this->db->from(db_prefix() . 'dietic_patients p');
+        $this->db->join(db_prefix() . 'contacts c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('p.id', $invoice->patient_id);
+        $patient_contact = $this->db->get()->row();
 
-        // TODO: Send email with invoice PDF attached
-        // This will be implemented when we add email functionality
+        $email = $patient_contact && $patient_contact->email ? $patient_contact->email : $invoice->patient_email;
 
-        log_activity('Invoice Sent to Patient [Invoice: ' . $invoice->invoice_number . ']');
+        if (!$email) {
+            log_activity('Invoice Email Failed - No email found [Invoice: ' . $invoice->invoice_number . ']');
+            return false;
+        }
 
-        return true;
+        // Generate PDF in memory
+        $pdf_content = $this->generate_invoice_pdf($invoice);
+
+        if (!$pdf_content) {
+            log_activity('Invoice Email Failed - PDF generation failed [Invoice: ' . $invoice->invoice_number . ']');
+            return false;
+        }
+
+        // Prepare email
+        $patient_name = $invoice->patient_name ?: 'Client';
+        $subject = 'Facture ' . $invoice->invoice_number . ' - ' . get_option('companyname');
+
+        $message = $this->build_invoice_email_html($invoice, $patient_name);
+
+        // Save PDF to temporary file
+        $temp_dir = get_temp_dir();
+        $pdf_filename = 'Facture_' . $invoice->invoice_number . '.pdf';
+        $pdf_path = $temp_dir . $pdf_filename;
+        file_put_contents($pdf_path, $pdf_content);
+
+        // Send email with attachment
+        try {
+            $this->load->library('email');
+
+            $config = [
+                'mailtype' => 'html',
+                'charset' => 'utf-8',
+                'newline' => "\r\n"
+            ];
+
+            $this->email->initialize($config);
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($email);
+            $this->email->subject($subject);
+            $this->email->message($message);
+            $this->email->attach($pdf_path);
+
+            $sent = $this->email->send();
+
+            // Clean up temp file
+            @unlink($pdf_path);
+
+            if ($sent) {
+                // Update status to sent
+                $this->update($id, ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s')]);
+                log_activity('Invoice Sent to Patient [Invoice: ' . $invoice->invoice_number . ', Email: ' . $email . ']');
+                return true;
+            } else {
+                log_activity('Invoice Email Failed [Invoice: ' . $invoice->invoice_number . ', Email: ' . $email . ']: ' . $this->email->print_debugger());
+                return false;
+            }
+        } catch (Exception $e) {
+            @unlink($pdf_path);
+            log_activity('Invoice Email Exception [Invoice: ' . $invoice->invoice_number . ']: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Generate invoice PDF content in memory
+     *
+     * @param object $invoice
+     * @return string|bool PDF content or false on failure
+     */
+    private function generate_invoice_pdf($invoice)
+    {
+        try {
+            // Load PDF library
+            require_once(APPPATH . 'libraries/pdf/App_pdf.php');
+
+            // Generate HTML from template
+            $html = $this->load->view('dietetic/admin/invoices/pdf_template', [
+                'invoice' => $invoice
+            ], true);
+
+            // Create PDF
+            $pdf = new App_pdf();
+
+            // Set document properties
+            $pdf->SetTitle('Facture ' . $invoice->invoice_number);
+            $pdf->SetAuthor(get_option('companyname'));
+            $pdf->SetCreator('DIETZONE');
+            $pdf->SetSubject('Facture de service');
+
+            // Set margins
+            $pdf->SetMargins(15, 15, 15);
+            $pdf->SetAutoPageBreak(true, 15);
+
+            // Add page
+            $pdf->AddPage();
+
+            // Write HTML
+            $pdf->writeHTML($html, true, false, true, false, '');
+
+            // Return PDF as string
+            return $pdf->Output('', 'S');
+        } catch (Exception $e) {
+            log_activity('PDF Generation Error [Invoice: ' . $invoice->invoice_number . ']: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Build invoice email HTML
+     *
+     * @param object $invoice
+     * @param string $patient_name
+     * @return string
+     */
+    private function build_invoice_email_html($invoice, $patient_name)
+    {
+        $company_name = get_option('companyname');
+        $company_logo = get_option('company_logo');
+        $logo_url = $company_logo ? base_url('uploads/company/' . $company_logo) : '';
+
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .logo { max-width: 200px; margin-bottom: 20px; }
+                .content { background: #f9f9f9; padding: 20px; border-radius: 5px; }
+                .invoice-details { margin: 20px 0; }
+                .invoice-details table { width: 100%; border-collapse: collapse; }
+                .invoice-details td { padding: 8px; border-bottom: 1px solid #ddd; }
+                .invoice-details td:first-child { font-weight: bold; width: 40%; }
+                .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+                .button { display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">';
+
+        if ($logo_url) {
+            $html .= '<img src="' . $logo_url . '" alt="' . $company_name . '" class="logo">';
+        }
+
+        $html .= '
+                    <h2>' . $company_name . '</h2>
+                </div>
+
+                <div class="content">
+                    <p>Bonjour <strong>' . htmlspecialchars($patient_name) . '</strong>,</p>
+
+                    <p>Veuillez trouver ci-joint votre facture pour les services diététiques.</p>
+
+                    <div class="invoice-details">
+                        <table>
+                            <tr>
+                                <td>Numéro de facture</td>
+                                <td>' . htmlspecialchars($invoice->invoice_number) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Date d\'émission</td>
+                                <td>' . date('d/m/Y', strtotime($invoice->issue_date)) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Date d\'échéance</td>
+                                <td>' . date('d/m/Y', strtotime($invoice->due_date)) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Montant total</td>
+                                <td><strong>' . number_format($invoice->total_amount, 0, ',', ' ') . ' FCFA</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p>La facture complète est jointe à cet email en format PDF.</p>
+
+                    <p>Pour toute question concernant cette facture, n\'hésitez pas à nous contacter.</p>
+
+                    <p>Cordialement,<br>
+                    <strong>L\'équipe ' . $company_name . '</strong></p>
+                </div>
+
+                <div class="footer">
+                    <p>' . get_option('company_address') . '</p>
+                    <p>Email: ' . get_option('smtp_email') . ' | Tél: ' . get_option('company_phonenumber') . '</p>
+                    <p>&copy; ' . date('Y') . ' ' . $company_name . '. Tous droits réservés.</p>
+                </div>
+            </div>
+        </body>
+        </html>';
+
+        return $html;
     }
 
     /**
