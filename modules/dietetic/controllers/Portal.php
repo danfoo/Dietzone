@@ -128,7 +128,10 @@ class Portal extends App_Controller
             'add_activity',
             'delete_activity',
             'test_activity_post',
-            'api_get_today_activities'
+            'api_get_today_activities',
+            // Invoice and payment methods
+            'invoices',
+            'invoice'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -6928,6 +6931,77 @@ class Portal extends App_Controller
             log_activity('[DIETETIC ERROR] Failed to get patient: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Display patient invoices
+     */
+    public function invoices()
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_invoices_model');
+        $this->load->model('dietetic/dietetic_subscriptions_model');
+
+        // Get patient's invoices
+        $invoices = $this->dietetic_invoices_model->get_by_patient($patient->id);
+
+        $data['invoices'] = $invoices;
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Factures';
+
+        // Check which payment methods are enabled
+        $data['paypal_enabled'] = (bool) dietetic_get_option('paypal_enabled');
+        $data['wave_enabled'] = (bool) dietetic_get_option('wave_enabled');
+        $data['orange_money_enabled'] = (bool) dietetic_get_option('orange_money_enabled');
+        $data['any_payment_enabled'] = $data['paypal_enabled'] || $data['wave_enabled'] || $data['orange_money_enabled'];
+
+        $this->data($data);
+        $this->view('portal/invoices');
+        $this->layout();
+    }
+
+    /**
+     * View single invoice
+     */
+    public function invoice($id)
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_invoices_model');
+        $this->load->model('dietetic/dietetic_payments_model');
+
+        $invoice = $this->dietetic_invoices_model->get($id);
+
+        if (!$invoice || $invoice->patient_id != $patient->id) {
+            show_404();
+        }
+
+        // Get payments for this invoice
+        $payments = $this->dietetic_payments_model->get_all(['p.invoice_id' => $id]);
+
+        $data['invoice'] = $invoice;
+        $data['payments'] = $payments;
+        $data['patient'] = $patient;
+        $data['title'] = 'Facture ' . $invoice->invoice_number;
+
+        // Check which payment methods are enabled
+        $data['paypal_enabled'] = (bool) dietetic_get_option('paypal_enabled');
+        $data['wave_enabled'] = (bool) dietetic_get_option('wave_enabled');
+        $data['orange_money_enabled'] = (bool) dietetic_get_option('orange_money_enabled');
+        $data['any_payment_enabled'] = $data['paypal_enabled'] || $data['wave_enabled'] || $data['orange_money_enabled'];
+
+        $this->data($data);
+        $this->view('portal/invoice');
+        $this->layout();
     }
 }
 
