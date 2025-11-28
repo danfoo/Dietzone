@@ -101,6 +101,17 @@ function dietetic_force_activities_menu_js()
 }
 
 /**
+ * Add JavaScript to force billing menus in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_billing_menu_js');
+
+function dietetic_force_billing_menu_js()
+{
+    // Charger le script qui force l'ajout des menus de billing
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_billing_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Define module menu items
  */
 function dietetic_module_init_menu_items()
