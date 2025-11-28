@@ -101,40 +101,53 @@ CREATE TABLE IF NOT EXISTS `tbldietic_refunds` (
 -- SETTINGS FOR RECURRING PAYMENTS
 -- ========================================
 
-INSERT INTO `tbldietic_settings` (`setting_key`, `setting_value`, `created_at`, `updated_at`)
+INSERT INTO `tbldietic_settings` (`setting_key`, `setting_value`, `setting_type`, `description`)
 VALUES
-    ('recurring_payments_enabled', '1', NOW(), NOW()),
-    ('recurring_retry_max_attempts', '3', NOW(), NOW()),
-    ('recurring_retry_interval_days', '3', NOW(), NOW()),
-    ('recurring_send_reminder_days', '3', NOW(), NOW()),
-    ('recurring_send_failure_notification', '1', NOW(), NOW()),
-    ('refunds_enabled', '1', NOW(), NOW()),
-    ('refunds_require_approval', '0', NOW(), NOW()),
-    ('refunds_auto_update_invoice', '1', NOW(), NOW())
+    ('recurring_payments_enabled', '1', 'boolean', 'Activer les paiements récurrents'),
+    ('recurring_retry_max_attempts', '3', 'number', 'Nombre maximum de tentatives de retry'),
+    ('recurring_retry_interval_days', '3', 'number', 'Intervalle en jours entre chaque retry'),
+    ('recurring_send_reminder_days', '3', 'number', 'Jours avant paiement pour envoyer un rappel'),
+    ('recurring_send_failure_notification', '1', 'boolean', 'Envoyer notification en cas d\'échec'),
+    ('refunds_enabled', '1', 'boolean', 'Activer les remboursements'),
+    ('refunds_require_approval', '0', 'boolean', 'Les remboursements nécessitent une approbation'),
+    ('refunds_auto_update_invoice', '1', 'boolean', 'Mettre à jour automatiquement les factures')
 ON DUPLICATE KEY UPDATE
-    `updated_at` = NOW();
+    `setting_value` = VALUES(`setting_value`);
 
 -- ========================================
 -- ALTER EXISTING TABLES
 -- ========================================
 
 -- Add recurring flag to subscriptions
+-- Note: IF NOT EXISTS not supported in MariaDB, errors will be ignored by migration script
 ALTER TABLE `tbldietic_subscriptions`
-ADD COLUMN IF NOT EXISTS `is_recurring` TINYINT(1) DEFAULT 0 AFTER `status`,
-ADD COLUMN IF NOT EXISTS `recurring_payment_id` INT(11) DEFAULT NULL AFTER `is_recurring`,
-ADD INDEX IF NOT EXISTS `idx_recurring` (`is_recurring`);
+ADD COLUMN `is_recurring` TINYINT(1) DEFAULT 0 AFTER `status`;
+
+ALTER TABLE `tbldietic_subscriptions`
+ADD COLUMN `recurring_payment_id` INT(11) DEFAULT NULL AFTER `is_recurring`;
+
+ALTER TABLE `tbldietic_subscriptions`
+ADD INDEX `idx_recurring` (`is_recurring`);
 
 -- Add refunded flag to payments
 ALTER TABLE `tbldietic_payments`
-ADD COLUMN IF NOT EXISTS `refunded_amount` DECIMAL(10,2) DEFAULT 0.00 AFTER `status`,
-ADD COLUMN IF NOT EXISTS `is_refunded` TINYINT(1) DEFAULT 0 AFTER `refunded_amount`,
-ADD COLUMN IF NOT EXISTS `refund_id` INT(11) DEFAULT NULL AFTER `is_refunded`,
-ADD INDEX IF NOT EXISTS `idx_refunded` (`is_refunded`);
+ADD COLUMN `refunded_amount` DECIMAL(10,2) DEFAULT 0.00 AFTER `status`;
+
+ALTER TABLE `tbldietic_payments`
+ADD COLUMN `is_refunded` TINYINT(1) DEFAULT 0 AFTER `refunded_amount`;
+
+ALTER TABLE `tbldietic_payments`
+ADD COLUMN `refund_id` INT(11) DEFAULT NULL AFTER `is_refunded`;
+
+ALTER TABLE `tbldietic_payments`
+ADD INDEX `idx_refunded` (`is_refunded`);
 
 -- Add refunded amount to invoices
 ALTER TABLE `tbldietic_invoices`
-ADD COLUMN IF NOT EXISTS `refunded_amount` DECIMAL(10,2) DEFAULT 0.00 AFTER `total_amount`,
-ADD COLUMN IF NOT EXISTS `net_amount` DECIMAL(10,2) DEFAULT NULL AFTER `refunded_amount` COMMENT 'Total - refunded amount';
+ADD COLUMN `refunded_amount` DECIMAL(10,2) DEFAULT 0.00 AFTER `total_amount`;
+
+ALTER TABLE `tbldietic_invoices`
+ADD COLUMN `net_amount` DECIMAL(10,2) DEFAULT NULL AFTER `refunded_amount`;
 
 -- Update net_amount for existing invoices
 UPDATE `tbldietic_invoices`
@@ -146,8 +159,9 @@ WHERE `net_amount` IS NULL;
 -- ========================================
 
 -- Optimize queries for dashboard
-CREATE INDEX IF NOT EXISTS `idx_recurring_active` ON `tbldietic_recurring_payments` (`status`, `next_payment_date`);
-CREATE INDEX IF NOT EXISTS `idx_refunds_pending` ON `tbldietic_refunds` (`status`, `created_at`);
+-- Note: IF NOT EXISTS not supported in MariaDB, duplicate key errors will be ignored
+CREATE INDEX `idx_recurring_active` ON `tbldietic_recurring_payments` (`status`, `next_payment_date`);
+CREATE INDEX `idx_refunds_pending` ON `tbldietic_refunds` (`status`, `created_at`);
 
 -- ========================================
 -- FOREIGN KEY CONSTRAINTS (Optional but recommended)
