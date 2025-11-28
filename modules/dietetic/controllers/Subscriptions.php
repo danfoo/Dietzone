@@ -82,8 +82,8 @@ class Subscriptions extends AdminController
      */
     public function create()
     {
-        // Only admins can create subscriptions
-        if (!is_admin()) {
+        // Admins and dietitians can create subscriptions
+        if (!is_admin() && !dietetic_has_permission('create')) {
             access_denied('dietetic');
         }
 
@@ -174,8 +174,8 @@ class Subscriptions extends AdminController
      */
     public function edit($id)
     {
-        // Only admins can edit subscriptions
-        if (!is_admin()) {
+        // Admins and dietitians can edit subscriptions
+        if (!is_admin() && !dietetic_has_permission('edit')) {
             access_denied('dietetic');
         }
 
