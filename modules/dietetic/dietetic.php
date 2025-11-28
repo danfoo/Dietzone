@@ -101,6 +101,28 @@ function dietetic_force_activities_menu_js()
 }
 
 /**
+ * Add JavaScript to force recurring payments menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_recurring_payments_menu_js');
+
+function dietetic_force_recurring_payments_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Paiements Récurrents
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_recurring_payments_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
+ * Add JavaScript to force refunds menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_refunds_menu_js');
+
+function dietetic_force_refunds_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Remboursements
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_refunds_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Add JavaScript to force billing menus in admin
  */
 hooks()->add_action('app_admin_footer', 'dietetic_force_billing_menu_js');
@@ -246,6 +268,24 @@ function dietetic_module_init_menu_items()
             'icon'     => 'fa fa-line-chart',
             'href'     => admin_url('dietetic/revenue_dashboard'),
             'position' => 5.85,
+        ]);
+
+        // Recurring Payments - Visible to all with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-recurring-payments',
+            'name'     => 'Paiements Récurrents',
+            'icon'     => 'fa fa-refresh',
+            'href'     => admin_url('dietetic/recurring_payments'),
+            'position' => 5.86,
+        ]);
+
+        // Refunds - Visible to all with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-refunds',
+            'name'     => 'Remboursements',
+            'icon'     => 'fa fa-undo',
+            'href'     => admin_url('dietetic/refunds'),
+            'position' => 5.87,
         ]);
 
         // Notifications - Show if table exists and user is admin
