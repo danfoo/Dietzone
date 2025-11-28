@@ -15,6 +15,7 @@ class Consultations extends AdminController
         // Load dietetic models
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('dietetic/dietetic_availability_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
@@ -29,16 +30,31 @@ class Consultations extends AdminController
     {
         $data['title'] = _l('dietetic_consultations');
 
+        // Pagination configuration
+        $per_page = 20; // Nombre de consultations par page
+        $page = $this->input->get('page') ? (int)$this->input->get('page') : 1;
+        $offset = ($page - 1) * $per_page;
+
         // Get filter status from GET parameter
         $status = $this->input->get('status');
+        $where = [];
 
         if ($status && $status !== 'all') {
-            // Filter by specific status
-            $data['consultations'] = $this->dietetic_consultations_model->get_by_status($status);
-        } else {
-            // Get all consultations
-            $data['consultations'] = $this->dietetic_consultations_model->get_all();
+            $where['cons.status'] = $status;
         }
+
+        // Count total consultations
+        $total_consultations = $this->dietetic_consultations_model->count_all($where);
+
+        // Get consultations for current page
+        $data['consultations'] = $this->dietetic_consultations_model->get_all($where, $per_page, $offset);
+
+        // Pagination data
+        $data['total_consultations'] = $total_consultations;
+        $data['per_page'] = $per_page;
+        $data['current_page'] = $page;
+        $data['total_pages'] = ceil($total_consultations / $per_page);
+        $data['status_filter'] = $status;
 
         $this->load->view('admin/consultations/list', $data);
     }
@@ -91,6 +107,20 @@ class Consultations extends AdminController
                 $data['duration'] = dietetic_get_option('default_consultation_duration', 60);
             }
 
+            // Check availability before creating consultation
+            if (isset($data['consultation_date']) && isset($data['dietitian_id'])) {
+                $availability_check = $this->dietetic_availability_model->check_availability(
+                    $data['dietitian_id'],
+                    $data['consultation_date'],
+                    $data['duration']
+                );
+
+                if (!$availability_check['available']) {
+                    set_alert('warning', '⚠️ Attention : ' . $availability_check['reason']);
+                    // Continue anyway but warn the user
+                }
+            }
+
             $consultation_id = $this->dietetic_consultations_model->add($data);
 
             if ($consultation_id) {
@@ -135,6 +165,9 @@ class Consultations extends AdminController
         // Get staff members
         $data['staff'] = $this->staff_model->get();
 
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types();
+
         $this->load->view('admin/consultations/form', $data);
     }
 
@@ -160,6 +193,29 @@ class Consultations extends AdminController
 
             // Remove fields that don't exist in database
             unset($update_data['height_patient']); // Used only for BMI calculation in form
+
+            // Check availability if date/time changed
+            $date_changed = isset($update_data['consultation_date']) &&
+                          $update_data['consultation_date'] != $data['consultation']->consultation_date;
+            $dietitian_changed = isset($update_data['dietitian_id']) &&
+                               $update_data['dietitian_id'] != $data['consultation']->dietitian_id;
+
+            if (($date_changed || $dietitian_changed) && isset($update_data['consultation_date'])) {
+                $dietitian_id = $update_data['dietitian_id'] ?? $data['consultation']->dietitian_id;
+                $duration = $update_data['duration'] ?? $data['consultation']->duration;
+
+                $availability_check = $this->dietetic_availability_model->check_availability(
+                    $dietitian_id,
+                    $update_data['consultation_date'],
+                    $duration,
+                    $id // Exclude current consultation
+                );
+
+                if (!$availability_check['available']) {
+                    set_alert('warning', '⚠️ Attention : ' . $availability_check['reason']);
+                    // Continue anyway but warn the user
+                }
+            }
 
             // Check if consultation was cancelled
             $was_cancelled = (isset($update_data['status']) &&
@@ -221,25 +277,49 @@ class Consultations extends AdminController
         // Get staff members
         $data['staff'] = $this->staff_model->get();
 
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types();
+
         $this->load->view('admin/consultations/form', $data);
     }
 
     /**
-     * Delete consultation
+     * Delete consultation (POST avec CSRF)
      *
      * @param int $id
      */
-    public function delete($id)
+    public function delete($id = null)
     {
         if (!dietetic_has_permission('delete')) {
-            ajax_access_denied();
+            access_denied('dietetic');
         }
 
-        if ($this->dietetic_consultations_model->delete($id)) {
-            echo json_encode(['success' => true, 'message' => _l('deleted')]);
-        } else {
-            echo json_encode(['success' => false, 'message' => _l('dietetic_error_delete_failed')]);
+        // Récupérer l'ID depuis POST si non fourni dans l'URL
+        if ($id === null) {
+            $id = $this->input->post('consultation_id');
         }
+
+        if (!$id) {
+            set_alert('danger', 'ID de consultation manquant');
+            redirect(admin_url('dietetic/consultations'));
+            return;
+        }
+
+        // Vérifier que la requête est bien en POST (CSRF automatiquement vérifié par CodeIgniter)
+        if ($this->input->post()) {
+            if ($this->dietetic_consultations_model->delete($id)) {
+                set_alert('success', 'Consultation supprimée avec succès');
+            } else {
+                set_alert('danger', 'Erreur lors de la suppression de la consultation');
+            }
+        } else {
+            set_alert('warning', 'Méthode non autorisée');
+        }
+
+        // Rediriger vers la page des consultations avec les filtres
+        $status = $this->input->post('status_filter') ?? 'all';
+        $page = $this->input->post('current_page') ?? 1;
+        redirect(admin_url('dietetic/consultations?status=' . $status . '&page=' . $page));
     }
 
     /**
@@ -305,5 +385,92 @@ class Consultations extends AdminController
         } else {
             echo json_encode(['success' => false, 'message' => _l('dietetic_error_update_failed')]);
         }
+    }
+
+    /**
+     * API: Check availability for a consultation
+     * Used for real-time validation in the consultation form
+     */
+    public function check_availability()
+    {
+        header('Content-Type: application/json');
+
+        $dietitian_id = $this->input->get('dietitian_id') ?? $this->input->post('dietitian_id');
+        $datetime = $this->input->get('datetime') ?? $this->input->post('datetime');
+        $duration = $this->input->get('duration') ?? $this->input->post('duration') ?? 60;
+        $consultation_id = $this->input->get('consultation_id') ?? $this->input->post('consultation_id');
+
+        if (!$dietitian_id || !$datetime) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Paramètres manquants'
+            ]);
+            return;
+        }
+
+        // Check availability
+        $result = $this->dietetic_availability_model->check_availability(
+            $dietitian_id,
+            $datetime,
+            $duration,
+            $consultation_id
+        );
+
+        // If not available, get alternative slots for the same day and next 3 days
+        $alternative_slots = [];
+        if (!$result['available']) {
+            $date = date('Y-m-d', strtotime($datetime));
+
+            // Check current day and next 3 days
+            for ($i = 0; $i < 4; $i++) {
+                $check_date = date('Y-m-d', strtotime($date . ' +' . $i . ' days'));
+                $slots = $this->dietetic_availability_model->get_available_slots(
+                    $dietitian_id,
+                    $check_date,
+                    null,
+                    $duration,
+                    $consultation_id
+                );
+
+                if (!empty($slots)) {
+                    foreach ($slots as $slot) {
+                        $alternative_slots[] = [
+                            'datetime' => $slot['datetime'], // Already in correct format
+                            'display_date' => $this->format_french_date($check_date),
+                            'display_time' => $slot['start_time'] // Use start_time instead of time
+                        ];
+
+                        // Limit to 6 alternative slots
+                        if (count($alternative_slots) >= 6) {
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'available' => $result['available'],
+            'reason' => $result['reason'],
+            'conflicts' => $result['conflicts'],
+            'alternative_slots' => $alternative_slots
+        ]);
+    }
+
+    /**
+     * Format date in French
+     */
+    private function format_french_date($date)
+    {
+        $days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        $months = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+        $timestamp = strtotime($date);
+        $day_name = $days[date('w', $timestamp)];
+        $day = date('d', $timestamp);
+        $month = $months[date('n', $timestamp)];
+
+        return $day_name . ' ' . $day . ' ' . $month;
     }
 }

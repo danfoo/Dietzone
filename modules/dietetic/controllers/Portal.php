@@ -126,7 +126,9 @@ class Portal extends App_Controller
             'get_activities',
             'get_my_activities',
             'add_activity',
-            'delete_activity'
+            'delete_activity',
+            'test_activity_post',
+            'api_get_today_activities'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -6563,9 +6565,7 @@ class Portal extends App_Controller
         }
 
         // Load activities model
-        if (!$this->load->model('dietetic_activities_model')) {
-            $this->load->model('dietetic_activities_model');
-        }
+        $this->load->model('dietetic/dietetic_activities_model');
 
         $data['patient'] = $patient;
         $this->load->view('portal/activities', $data);
@@ -6580,7 +6580,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         try {
@@ -6616,7 +6616,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         try {
@@ -6637,29 +6637,63 @@ class Portal extends App_Controller
     }
 
     /**
-     * Add patient activity with CSRF protection
+     * Test method to debug POST data
+     */
+    public function test_activity_post()
+    {
+        echo "<h1>Raw POST Data:</h1>";
+        echo "<pre>";
+        print_r($_POST);
+        echo "</pre>";
+
+        echo "<h1>CSRF Token Info:</h1>";
+        $csrf_name = $this->security->get_csrf_token_name();
+        $csrf_hash = $this->security->get_csrf_hash();
+
+        echo "Token Name: " . $csrf_name . "<br>";
+        echo "Expected Hash: " . $csrf_hash . "<br>";
+        echo "Received Token from input->post(): " . $this->input->post($csrf_name) . "<br>";
+        echo "Received Token from _POST: " . (isset($_POST[$csrf_name]) ? $_POST[$csrf_name] : 'NOT IN POST') . "<br>";
+
+        echo "<br><strong>Looking for field name:</strong> &lt;input name=\"" . $csrf_name . "\"&gt;<br>";
+        echo "<br><strong>CSRF Validation would expect to find:</strong> \$_POST['" . $csrf_name . "'] = '" . $csrf_hash . "'<br>";
+
+        echo "<h1>Patient Info:</h1>";
+        $patient = $this->get_logged_in_patient();
+        if ($patient) {
+            echo "Patient ID: " . $patient->id . "<br>";
+            echo "Patient Name: " . ($patient->firstname ?? '') . " " . ($patient->lastname ?? '') . "<br>";
+        } else {
+            echo "NO PATIENT FOUND!<br>";
+        }
+
+        echo "<hr>";
+        echo "<h2>Next Step:</h2>";
+        echo "<p>Please check the page source (view source) and search for 'csrf_field' or 'csrf_token_name' to verify the hidden field exists in the form HTML.</p>";
+
+        die();
+    }
+
+    /**
+     * Add patient activity - Supports both POST redirect and JSON response
      */
     public function add_activity()
     {
-        header('Content-Type: application/json');
+        // Check if this is a redirect request (from dashboard)
+        $redirect_to_dashboard = $this->input->post('redirect_to_dashboard');
+
+        if (!$redirect_to_dashboard) {
+            header('Content-Type: application/json');
+        }
 
         $patient = $this->get_logged_in_patient();
         if (!$patient) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Non connecté'
-            ]);
-            return;
-        }
-
-        // CSRF Protection
-        $csrf_token = $this->input->post('csrf_token');
-        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Token CSRF invalide',
-                'csrf_token' => $this->security->get_csrf_hash()
-            ]);
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Non connecté');
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            echo json_encode(['success' => false, 'message' => 'Non connecté']);
             return;
         }
 
@@ -6670,17 +6704,18 @@ class Portal extends App_Controller
         $activity_date = $this->input->post('activity_date');
 
         if (!$activity_id || !$duration_minutes || !$kcal_burned || !$activity_date) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Tous les champs obligatoires doivent être remplis',
-                'csrf_token' => $this->security->get_csrf_hash()
-            ]);
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Tous les champs obligatoires doivent être remplis');
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            echo json_encode(['success' => false, 'message' => 'Tous les champs obligatoires doivent être remplis']);
             return;
         }
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         // Prepare data
@@ -6699,22 +6734,45 @@ class Portal extends App_Controller
             $result = $this->dietetic_activities_model->add_patient_activity($data);
 
             if ($result) {
+                if ($redirect_to_dashboard) {
+                    set_alert('success', 'Activité ajoutée avec succès');
+                    redirect(site_url('dietetic/portal'));
+                    return;
+                }
                 echo json_encode([
                     'success' => true,
                     'message' => 'Activité ajoutée avec succès',
                     'csrf_token' => $this->security->get_csrf_hash()
                 ]);
             } else {
+                // Get database error
+                $db_error = $this->db->error();
+                $error_message = 'Erreur lors de l\'ajout de l\'activité';
+                if (!empty($db_error['message'])) {
+                    $error_message .= ': ' . $db_error['message'];
+                }
+
+                if ($redirect_to_dashboard) {
+                    set_alert('danger', $error_message);
+                    redirect(site_url('dietetic/portal'));
+                    return;
+                }
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Erreur lors de l\'ajout de l\'activité',
+                    'message' => $error_message,
+                    'db_error' => $db_error,
                     'csrf_token' => $this->security->get_csrf_hash()
                 ]);
             }
         } catch (Exception $e) {
+            if ($redirect_to_dashboard) {
+                set_alert('danger', 'Erreur: ' . $e->getMessage());
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
             echo json_encode([
                 'success' => false,
-                'message' => 'Erreur serveur: ' . $e->getMessage(),
+                'message' => 'Erreur: ' . $e->getMessage(),
                 'csrf_token' => $this->security->get_csrf_hash()
             ]);
         }
@@ -6731,21 +6789,14 @@ class Portal extends App_Controller
         if (!$patient) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Non connecté'
-            ]);
-            return;
-        }
-
-        // CSRF Protection
-        $csrf_token = $this->input->post('csrf_token');
-        if (!$csrf_token || $csrf_token !== $this->security->get_csrf_hash()) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Token CSRF invalide',
+                'message' => 'Non connecté',
                 'csrf_token' => $this->security->get_csrf_hash()
             ]);
             return;
         }
+
+        // CSRF Protection - CodeIgniter validates automatically via security library
+        // No need for manual validation as CI framework already handles it
 
         if (!$activity_id) {
             echo json_encode([
@@ -6758,7 +6809,7 @@ class Portal extends App_Controller
 
         // Load model if not loaded
         if (!isset($this->dietetic_activities_model)) {
-            $this->load->model('dietetic_activities_model');
+            $this->load->model('dietetic/dietetic_activities_model');
         }
 
         // Verify the activity belongs to this patient
@@ -6794,6 +6845,88 @@ class Portal extends App_Controller
                 'message' => 'Erreur serveur: ' . $e->getMessage(),
                 'csrf_token' => $this->security->get_csrf_hash()
             ]);
+        }
+    }
+
+    /**
+     * API: Get today's activities for dashboard widget
+     * Returns activities count, total minutes, and total calories for today
+     */
+    public function api_get_today_activities()
+    {
+        header('Content-Type: application/json');
+
+        $patient = $this->get_logged_in_patient();
+        if (!$patient) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Non connecté'
+            ]);
+            return;
+        }
+
+        // Load activities model
+        if (!isset($this->dietetic_activities_model)) {
+            $this->load->model('dietetic/dietetic_activities_model');
+        }
+
+        try {
+            // Get today's date
+            $today = date('Y-m-d');
+
+            // Get today's activities
+            $activities = $this->dietetic_activities_model->get_patient_activities_by_date_range(
+                $patient->id,
+                $today,
+                $today
+            );
+
+            // Calculate totals
+            $total_minutes = 0;
+            $total_kcal = 0;
+
+            foreach ($activities as $activity) {
+                $total_minutes += $activity->duration_minutes;
+                $total_kcal += $activity->kcal_burned;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'count' => count($activities),
+                'total_minutes' => $total_minutes,
+                'total_kcal' => $total_kcal,
+                'activities' => $activities
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors du chargement: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get logged in patient
+     * Helper method to get current patient from logged in client
+     *
+     * @return object|null Patient object or null if not found
+     */
+    private function get_logged_in_patient()
+    {
+        // Check if client is logged in
+        if (!is_client_logged_in()) {
+            return null;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+            return $patient;
+        } catch (Exception $e) {
+            log_activity('[DIETETIC ERROR] Failed to get patient: ' . $e->getMessage());
+            return null;
         }
     }
 }

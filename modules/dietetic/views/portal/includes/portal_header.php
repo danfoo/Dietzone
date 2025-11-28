@@ -907,6 +907,16 @@
                 <span>Mes Mesures</span>
             </a>
 
+            <?php
+            // Check if activities tracking is enabled
+            if ($CI_menu->db->table_exists(db_prefix() . 'dietic_activities')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/activities'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'activities') ? 'active' : ''; ?>">
+                <i class="fa fa-heartbeat"></i>
+                <span>Mes Activités</span>
+            </a>
+            <?php } ?>
+
             <a href="<?php echo site_url('clients/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
                 <i class="fa fa-file-text"></i>
                 <span>Mon plan</span>

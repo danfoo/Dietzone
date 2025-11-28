@@ -2181,6 +2181,486 @@ body {
         padding: 20px 16px;
     }
 }
+
+/* ============================================
+   ACTIVITIES CARD - Simple & Clean
+   ============================================ */
+.activities-card-compact {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 22px;
+    border: 2px solid #f1f3f5;
+    margin-bottom: 24px;
+    transition: all 0.3s;
+}
+
+.activities-card-compact:hover {
+    border-color: #F3911D;
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.1);
+}
+
+.activities-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f8f9fa;
+    margin-bottom: 16px;
+}
+
+.total-calories-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.total-calories-display i {
+    color: #e74c3c;
+    font-size: 20px;
+}
+
+.total-calories-display span {
+    color: #e74c3c;
+    font-size: 22px;
+}
+
+.btn-add-activity-plus {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.4);
+}
+
+.btn-add-activity-plus:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(243, 145, 29, 0.5);
+}
+
+.btn-add-activity-plus:active {
+    transform: scale(0.95);
+}
+
+.activities-simple-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.no-activities-text {
+    text-align: center;
+    padding: 24px;
+    color: #95a5a6;
+    font-size: 13px;
+    font-style: italic;
+}
+
+.activity-item-simple {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #F3911D;
+    transition: all 0.2s;
+}
+
+.activity-item-simple:hover {
+    background: #fff5e6;
+    transform: translateX(4px);
+}
+
+.activity-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    flex: 1;
+}
+
+.activity-item-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: #7f8c8d;
+}
+
+.activity-item-minutes {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.activity-item-calories {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #e74c3c;
+    font-weight: 700;
+}
+
+/* Modal */
+.activity-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    animation: fadeIn 0.2s;
+    backdrop-filter: blur(2px);
+}
+
+.activity-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.activity-modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 92%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.activity-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+    border-radius: 20px 20px 0 0;
+}
+
+.activity-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e0e0e0;
+    color: #7f8c8d;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: #e74c3c;
+    color: white;
+    border-color: #e74c3c;
+}
+
+.activity-modal-body {
+    padding: 20px;
+}
+
+.activity-modal-body .form-group {
+    margin-bottom: 16px;
+}
+
+.activity-modal-body label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.activity-modal-body select,
+.activity-modal-body input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: all 0.2s;
+    background: white;
+}
+
+.activity-modal-body select:focus,
+.activity-modal-body input:focus {
+    border-color: #01807B;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+.activity-modal-body select option {
+    font-size: 13px;
+    padding: 8px;
+}
+
+.calories-preview {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    margin: 16px 0;
+    border: 1px solid #ffe0b3;
+}
+
+.calories-preview i {
+    color: #e74c3c;
+    font-size: 20px;
+    margin-right: 6px;
+}
+
+.calories-preview span {
+    font-size: 24px;
+    font-weight: 700;
+    color: #e74c3c;
+}
+
+.btn-validate-activity {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.btn-validate-activity:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+}
+
+.btn-validate-activity:active {
+    transform: translateY(0);
+}
+
+/* Custom Select Dropdown */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.custom-select-trigger:hover {
+    border-color: #01807B;
+}
+
+.custom-select-trigger.active {
+    border-color: #01807B;
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+}
+
+.custom-select-trigger span {
+    flex: 1;
+    color: #2c3e50;
+}
+
+.custom-select-trigger i {
+    color: #7f8c8d;
+    font-size: 11px;
+    transition: transform 0.2s;
+}
+
+.custom-select-trigger.active i {
+    transform: rotate(180deg);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.custom-select-dropdown.active {
+    display: block;
+    animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-select-search {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 8px;
+    background: #fafafa;
+    border-radius: 10px 10px 0 0;
+}
+
+.custom-select-search i {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.custom-select-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    padding: 0;
+}
+
+.custom-select-search input::placeholder {
+    color: #adb5bd;
+}
+
+.custom-select-options {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.custom-select-option {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-select-option:hover {
+    background: #f0f9f8;
+}
+
+.custom-select-option.selected {
+    background: #01807B;
+    color: white;
+}
+
+.custom-select-option-name {
+    flex: 1;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.custom-select-option.selected .custom-select-option-name {
+    color: white;
+}
+
+.custom-select-option-kcal {
+    font-size: 10px;
+    color: #7f8c8d;
+    padding: 2px 6px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.custom-select-option.selected .custom-select-option-kcal {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.custom-select-category {
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #01807B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #f8f9fa;
+    margin-top: 4px;
+    border-radius: 4px;
+}
+
+.custom-select-category:first-child {
+    margin-top: 0;
+}
+
+.no-results {
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .activity-modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
 </style>
 
 <!-- Welcome Message -->
@@ -2500,27 +2980,6 @@ if (!$current_weight || !$target_weight) {
         </div>
     </div>
 
-    <!-- Grid pour Calories et Activité -->
-    <div class="tracking-secondary-grid">
-        <!-- Calories -->
-        <div class="daily-item calories-item" onclick="openCaloriesModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-fire"></i>
-            </div>
-            <span class="daily-item-label">Calories</span>
-            <span class="daily-value" id="calories-count"><?php echo $daily_tracking->calories_consumed ?? '-'; ?></span>
-        </div>
-
-        <!-- Activité -->
-        <div class="daily-item activity-item" onclick="openActivityModal()">
-            <div class="daily-item-icon">
-                <i class="fa fa-heartbeat"></i>
-            </div>
-            <span class="daily-item-label">Activité</span>
-            <span class="daily-value" id="activity-count"><?php echo $daily_tracking->activity_minutes; ?> min</span>
-        </div>
-    </div>
-
     <?php if ($tracking_streak > 0) { ?>
     <div class="daily-motivation">
         <i class="fa fa-star"></i>
@@ -2620,6 +3079,83 @@ if (!$current_weight || !$target_weight) {
         <div class="history-title-compact">7 derniers jours</div>
         <div class="history-bars-compact" id="hydrationHistory">
             <!-- Will be filled by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Activities Card - Simple & Clean -->
+<div class="activities-card-compact">
+    <!-- Header with total calories and add button -->
+    <div class="activities-header-row">
+        <div class="total-calories-display">
+            <i class="fa fa-fire"></i>
+            <span id="totalCaloriesText">0</span> kcal brûlées
+        </div>
+        <button class="btn-add-activity-plus" onclick="openActivityModal()" title="Ajouter une activité">
+            <i class="fa fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Activities List -->
+    <div class="activities-simple-list" id="todayActivitiesList">
+        <div class="no-activities-text">Aucune activité aujourd'hui</div>
+    </div>
+</div>
+
+<!-- Activity Modal -->
+<div id="activityModal" class="activity-modal">
+    <div class="activity-modal-content">
+        <div class="activity-modal-header">
+            <h3>Ajouter une activité</h3>
+            <button class="modal-close" onclick="closeActivityModal()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="activity-modal-body">
+            <form id="quickActivityForm" method="POST" action="<?php echo site_url('dietetic/portal/add_activity'); ?>">
+                <?php
+                $csrf_name = $this->security->get_csrf_token_name();
+                $csrf_hash = $this->security->get_csrf_hash();
+                ?>
+                <input type="hidden" name="<?php echo $csrf_name; ?>" id="csrf_field" value="<?php echo $csrf_hash; ?>">
+                <input type="hidden" name="kcal_burned" id="kcalBurnedInput" value="0">
+                <input type="hidden" name="activity_date" value="<?php echo date('Y-m-d'); ?>">
+                <input type="hidden" name="redirect_to_dashboard" value="1">
+
+                <div class="form-group">
+                    <label>Activité sportive</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select-trigger" id="customSelectTrigger">
+                            <span id="selectedActivityText">Rechercher et sélectionner...</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-select-dropdown" id="customSelectDropdown">
+                            <div class="custom-select-search">
+                                <i class="fa fa-search"></i>
+                                <input type="text" id="activitySearchInput" placeholder="Rechercher une activité..." autocomplete="off">
+                            </div>
+                            <div class="custom-select-options" id="customSelectOptions">
+                                <!-- Will be filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="activitySelectModal" name="activity_id" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Durée (minutes)</label>
+                    <input type="number" id="durationInputModal" name="duration_minutes" value="30" min="1" max="600" required>
+                </div>
+
+                <div class="calories-preview">
+                    <i class="fa fa-fire"></i>
+                    <span id="caloriesPreview">0</span> kcal
+                </div>
+
+                <button type="submit" class="btn-validate-activity">
+                    <i class="fa fa-check"></i> Valider
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -3124,100 +3660,6 @@ function updateMealsProgress() {
 }
 
 /**
- * Open modal to enter calories
- */
-function openCaloriesModal() {
-    const currentCalories = document.getElementById('calories-count').textContent;
-    const calories = prompt('Entrez vos calories consommées aujourd\'hui:', currentCalories !== '-' ? currentCalories : '');
-
-    if (calories !== null && calories !== '') {
-        const caloriesNum = parseInt(calories);
-        if (isNaN(caloriesNum) || caloriesNum < 0) {
-            showToast('❌ Veuillez entrer un nombre valide', 'error');
-            return;
-        }
-
-        updateCalories(caloriesNum);
-    }
-}
-
-/**
- * Update calories consumed
- */
-function updateCalories(calories) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_calories'); ?>';
-
-    const formData = new FormData();
-    formData.append('calories', calories);
-    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
-
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('calories-count').textContent = data.calories_consumed || '-';
-            showToast('🔥 Calories mises à jour !', 'success');
-        } else {
-            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('❌ Erreur de connexion', 'error');
-    });
-}
-
-/**
- * Open modal to add activity
- */
-function openActivityModal() {
-    const currentActivity = document.getElementById('activity-count').textContent.replace(' min', '');
-    const minutes = prompt('Combien de minutes d\'activité physique aujourd\'hui ?', currentActivity || '0');
-
-    if (minutes !== null && minutes !== '') {
-        const minutesNum = parseInt(minutes);
-        if (isNaN(minutesNum) || minutesNum < 0) {
-            showToast('❌ Veuillez entrer un nombre valide', 'error');
-            return;
-        }
-
-        updateActivity(minutesNum);
-    }
-}
-
-/**
- * Update activity minutes
- */
-function updateActivity(minutes) {
-    const url = '<?php echo site_url('dietetic/portal/api_update_activity'); ?>';
-
-    const formData = new FormData();
-    formData.append('minutes', minutes);
-    formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
-
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('activity-count').textContent = data.activity_minutes + ' min';
-            showToast('🏃 Activité mise à jour !', 'success');
-        } else {
-            showToast('❌ Erreur: ' + (data.error || 'Impossible de mettre à jour'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('❌ Erreur de connexion', 'error');
-    });
-}
-
-/**
  * Simple toast notification
  */
 function showToast(message, type = 'info') {
@@ -3523,6 +3965,274 @@ async function addCustomWater() {
 
 // Load hydration data on page load
 loadHydrationData();
+
+// ============================================
+// ACTIVITIES TRACKING - Simple & Clean
+// ============================================
+
+let activitiesData = [];
+let selectedActivityKcalPerMin = 0;
+
+// Load today's activities on page load
+loadTodayActivities();
+
+async function loadTodayActivities() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_get_today_activities'); ?>');
+        const data = await response.json();
+
+        if (data.success) {
+            updateActivitiesDisplay(data);
+        }
+    } catch (error) {
+        console.error('Error loading activities:', error);
+    }
+}
+
+function updateActivitiesDisplay(data) {
+    // Update total calories
+    $('#totalCaloriesText').text(Math.round(data.total_kcal || 0));
+
+    // Update activities list
+    const listContainer = $('#todayActivitiesList');
+
+    if (!data.activities || data.activities.length === 0) {
+        listContainer.html('<div class="no-activities-text">Aucune activité aujourd\'hui</div>');
+        return;
+    }
+
+    let html = '';
+    data.activities.forEach(activity => {
+        html += `
+            <div class="activity-item-simple">
+                <div class="activity-item-name">${activity.activity_name}</div>
+                <div class="activity-item-details">
+                    <div class="activity-item-minutes">
+                        <i class="fa fa-clock-o"></i> ${activity.duration_minutes} min
+                    </div>
+                    <div class="activity-item-calories">
+                        <i class="fa fa-fire"></i> ${Math.round(activity.kcal_burned)} kcal
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.html(html);
+}
+
+// Open activity modal
+async function openActivityModal() {
+    const modal = document.getElementById('activityModal');
+    modal.classList.add('active');
+
+    // Load activities if not already loaded
+    if (activitiesData.length === 0) {
+        await loadActivitiesList();
+    }
+}
+
+// Close activity modal
+function closeActivityModal() {
+    const modal = document.getElementById('activityModal');
+    modal.classList.remove('active');
+    document.getElementById('quickActivityForm').reset();
+    selectedActivityKcalPerMin = 0;
+    updateCaloriesPreview();
+}
+
+// Load activities list for dropdown
+async function loadActivitiesList() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/get_activities'); ?>');
+        const data = await response.json();
+
+        if (data.success && data.activities) {
+            activitiesData = data.activities;
+            populateActivitiesSelect();
+        }
+    } catch (error) {
+        console.error('Error loading activities list:', error);
+    }
+}
+
+// Populate custom select with activities
+function populateActivitiesSelect() {
+    const optionsContainer = document.getElementById('customSelectOptions');
+    if (!optionsContainer) return;
+
+    // Group by category
+    const grouped = {};
+    activitiesData.forEach(activity => {
+        const cat = activity.category || 'Autres';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(activity);
+    });
+
+    // Build HTML for custom select
+    let html = '';
+    Object.keys(grouped).sort().forEach(category => {
+        html += `<div class="custom-select-category">${category}</div>`;
+        grouped[category].forEach(activity => {
+            html += `
+                <div class="custom-select-option" data-id="${activity.id}" data-kcal="${activity.kcal_per_minute}" data-name="${activity.name}">
+                    <span class="custom-select-option-name">${activity.name}</span>
+                    <span class="custom-select-option-kcal">${activity.kcal_per_minute} kcal/min</span>
+                </div>
+            `;
+        });
+    });
+
+    optionsContainer.innerHTML = html;
+    initializeCustomSelect();
+}
+
+// Initialize custom select functionality
+function initializeCustomSelect() {
+    const trigger = document.getElementById('customSelectTrigger');
+    const dropdown = document.getElementById('customSelectDropdown');
+    const searchInput = document.getElementById('activitySearchInput');
+    const optionsContainer = document.getElementById('customSelectOptions');
+    const hiddenInput = document.getElementById('activitySelectModal');
+    const selectedText = document.getElementById('selectedActivityText');
+
+    // Toggle dropdown
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isActive = dropdown.classList.contains('active');
+
+        if (isActive) {
+            closeCustomSelect();
+        } else {
+            dropdown.classList.add('active');
+            trigger.classList.add('active');
+            searchInput.focus();
+        }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+            closeCustomSelect();
+        }
+    });
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const options = optionsContainer.querySelectorAll('.custom-select-option');
+        const categories = optionsContainer.querySelectorAll('.custom-select-category');
+        let hasResults = false;
+
+        categories.forEach(category => {
+            let categoryHasVisibleOptions = false;
+            let currentCategory = category;
+            let sibling = category.nextElementSibling;
+
+            while (sibling && !sibling.classList.contains('custom-select-category')) {
+                if (sibling.classList.contains('custom-select-option')) {
+                    const name = sibling.dataset.name.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        sibling.style.display = 'flex';
+                        categoryHasVisibleOptions = true;
+                        hasResults = true;
+                    } else {
+                        sibling.style.display = 'none';
+                    }
+                }
+                sibling = sibling.nextElementSibling;
+            }
+
+            currentCategory.style.display = categoryHasVisibleOptions ? 'block' : 'none';
+        });
+
+        // Show "no results" message
+        const existingNoResults = optionsContainer.querySelector('.no-results');
+        if (existingNoResults) existingNoResults.remove();
+
+        if (!hasResults && searchTerm) {
+            optionsContainer.insertAdjacentHTML('beforeend', '<div class="no-results">Aucune activité trouvée</div>');
+        }
+    });
+
+    // Handle option selection
+    optionsContainer.addEventListener('click', function(e) {
+        const option = e.target.closest('.custom-select-option');
+        if (!option) return;
+
+        const activityId = option.dataset.id;
+        const activityName = option.dataset.name;
+        const kcalPerMin = option.dataset.kcal;
+
+        // Update hidden input
+        hiddenInput.value = activityId;
+
+        // Update selected text
+        selectedText.textContent = activityName;
+
+        // Update global variable for calorie calculation
+        selectedActivityKcalPerMin = parseFloat(kcalPerMin);
+        updateCaloriesPreview();
+
+        // Update UI
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+
+        // Close dropdown
+        closeCustomSelect();
+    });
+
+    function closeCustomSelect() {
+        dropdown.classList.remove('active');
+        trigger.classList.remove('active');
+        searchInput.value = '';
+        // Reset filter
+        optionsContainer.querySelectorAll('.custom-select-option, .custom-select-category').forEach(el => {
+            el.style.display = '';
+        });
+        const noResults = optionsContainer.querySelector('.no-results');
+        if (noResults) noResults.remove();
+    }
+}
+
+// Handle duration input and form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const durationInput = document.getElementById('durationInputModal');
+
+    if (durationInput) {
+        durationInput.addEventListener('input', updateCaloriesPreview);
+    }
+
+    // Update hidden field before submit
+    const form = document.getElementById('quickActivityForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const duration = parseInt(document.getElementById('durationInputModal').value) || 0;
+            const kcalBurned = Math.round(selectedActivityKcalPerMin * duration);
+            document.getElementById('kcalBurnedInput').value = kcalBurned;
+            // Form will submit normally
+        });
+    }
+
+    // Close modal when clicking outside
+    const modal = document.getElementById('activityModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeActivityModal();
+            }
+        });
+    }
+});
+
+// Update calories preview
+function updateCaloriesPreview() {
+    const duration = parseInt(document.getElementById('durationInputModal').value) || 0;
+    const calories = Math.round(selectedActivityKcalPerMin * duration);
+    document.getElementById('caloriesPreview').textContent = calories;
+}
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

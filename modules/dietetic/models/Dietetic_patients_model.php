@@ -85,9 +85,9 @@ class Dietetic_patients_model extends App_Model
      * @param array $where
      * @return array
      */
-    public function get_all($where = [])
+    public function get_all($where = [], $limit = null, $offset = null)
     {
-        $this->db->select('p.*, ' .
+        $this->db->select('p.*, p.created_at, ' .
             'c.company as client_name, ' .
             'CONCAT(s.firstname, " ", s.lastname) as dietitian_name', false);
         $this->db->from(db_prefix() . $this->table . ' p');
@@ -117,7 +117,38 @@ class Dietetic_patients_model extends App_Model
         $this->db->group_by('p.id'); // Group by to avoid duplicates from join
         $this->db->order_by('p.created_at', 'DESC');
 
+        if ($limit !== null) {
+            $this->db->limit($limit, $offset);
+        }
+
         return $this->db->get()->result();
+    }
+
+    /**
+     * Count all patients with filters
+     *
+     * @param array $where
+     * @return int
+     */
+    public function count_all($where = [])
+    {
+        $this->db->from(db_prefix() . $this->table . ' p');
+
+        if (!empty($where)) {
+            $this->db->where($where);
+        }
+
+        // Apply staff permissions
+        if ($this->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            dietetic_apply_dietitian_filter($this->db, 'pd');
+        } else {
+            $current_staff_id = get_staff_user_id();
+            if ($current_staff_id != 1 || !is_admin()) {
+                $this->db->where('p.dietitian_id', $current_staff_id);
+            }
+        }
+
+        return $this->db->count_all_results();
     }
 
     /**

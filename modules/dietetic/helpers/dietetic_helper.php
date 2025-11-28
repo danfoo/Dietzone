@@ -325,13 +325,22 @@ function dietetic_format_date($date, $include_time = false)
 
 /**
  * Check if user has dietetic permission
+ * This function now checks the custom permissions table (tbldietic_staff_permissions)
+ * which is managed via Diététique → Permissions Diététiciens
  *
  * @param string $capability
  * @return bool
  */
 function dietetic_has_permission($capability = 'view')
 {
-    return has_permission('dietetic', '', $capability);
+    // Admins always have all permissions
+    if (is_admin()) {
+        return true;
+    }
+
+    // Use the custom permissions system (tbldietic_staff_permissions)
+    // This checks the permissions set in: Diététique → Permissions Diététiciens
+    return dietetic_has_feature_permission($capability);
 }
 
 /**
@@ -807,7 +816,7 @@ function dietetic_can_manage_assignments()
 
 /**
  * Check if current staff has a specific granular permission
- * Examples: 'food_surveys', 'notifications_manage', 'reports_advanced'
+ * Examples: 'food_surveys', 'notifications_manage', 'reports_advanced', 'view', 'create', 'edit', 'delete'
  *
  * @param string $permission_key Permission key to check
  * @param int $staff_id If null, uses current staff user
@@ -836,8 +845,12 @@ function dietetic_has_feature_permission($permission_key, $staff_id = null)
 
     // Check if permissions table exists
     if (!$CI->db->table_exists(db_prefix() . 'dietic_staff_permissions')) {
-        // Table doesn't exist yet - deny by default (secure)
-        return false;
+        // Table doesn't exist yet - use defaults from dietetic_get_available_permissions()
+        $available_permissions = dietetic_get_available_permissions();
+        if (isset($available_permissions[$permission_key]['default'])) {
+            return (bool)$available_permissions[$permission_key]['default'];
+        }
+        return false; // Deny by default if permission not defined
     }
 
     // Query permission - use get_where to avoid Query Builder conflicts
@@ -850,7 +863,13 @@ function dietetic_has_feature_permission($permission_key, $staff_id = null)
         return (bool)$permission->permission_value;
     }
 
-    // No record found - check default setting
+    // No record found - use default from dietetic_get_available_permissions()
+    $available_permissions = dietetic_get_available_permissions();
+    if (isset($available_permissions[$permission_key]['default'])) {
+        return (bool)$available_permissions[$permission_key]['default'];
+    }
+
+    // Fallback to settings table
     $default_setting = dietetic_get_option('permissions_default_' . $permission_key, false);
     return (bool)$default_setting;
 }
@@ -948,6 +967,29 @@ function dietetic_get_staff_permissions($staff_id = null)
 function dietetic_get_available_permissions()
 {
     return [
+        // Core permissions
+        'view' => [
+            'label' => 'Voir',
+            'description' => 'Voir les données (patients, consultations, programmes, etc.)',
+            'default' => true,
+        ],
+        'create' => [
+            'label' => 'Créer',
+            'description' => 'Créer des abonnements, patients, consultations, etc.',
+            'default' => false,
+        ],
+        'edit' => [
+            'label' => 'Modifier',
+            'description' => 'Modifier des données existantes',
+            'default' => false,
+        ],
+        'delete' => [
+            'label' => 'Supprimer',
+            'description' => 'Supprimer/Annuler des données',
+            'default' => false,
+        ],
+
+        // Feature-specific permissions
         'food_surveys' => [
             'label' => 'Enquêtes Alimentaires',
             'description' => 'Accès au module des enquêtes alimentaires',

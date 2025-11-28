@@ -22,8 +22,26 @@ class Foods extends AdminController
     public function index()
     {
         $data['title'] = _l('dietetic_foods');
-        $data['foods'] = $this->dietetic_foods_model->get_all();
-        $data['total_count'] = $this->dietetic_foods_model->get_total_count();
+
+        // Pagination configuration
+        $per_page = 20; // Nombre d'aliments par page
+        $page = $this->input->get('page') ? (int)$this->input->get('page') : 1;
+        $offset = ($page - 1) * $per_page;
+
+        // Count total foods
+        $total_foods = $this->dietetic_foods_model->count_all();
+
+        // Get foods for current page
+        $data['foods'] = $this->dietetic_foods_model->get_all([], $per_page, $offset);
+
+        // Keep total_count for statistics display
+        $data['total_count'] = $total_foods;
+
+        // Pagination data
+        $data['total_foods'] = $total_foods;
+        $data['per_page'] = $per_page;
+        $data['current_page'] = $page;
+        $data['total_pages'] = ceil($total_foods / $per_page);
 
         $this->load->view('admin/foods/list', $data);
     }

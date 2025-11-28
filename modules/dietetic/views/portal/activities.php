@@ -6,108 +6,110 @@ $this->load->view('portal/includes/portal_header');
 
 <style>
 .activities-page {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 16px;
 }
 
 .activity-header {
     background: linear-gradient(135deg, #01807B 0%, #026660 100%);
     color: white;
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 15px rgba(1, 128, 123, 0.2);
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
 }
 
 .activity-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 28px;
+    margin: 0 0 8px 0;
+    font-size: 24px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .activity-header p {
     margin: 0;
-    opacity: 0.9;
-    font-size: 15px;
+    opacity: 0.95;
+    font-size: 14px;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: none;
+    border: 1px solid #f0f0f0;
+    transition: transform 0.2s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
 }
 
 .stat-card-icon {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 16px;
-    font-size: 24px;
+    margin-bottom: 12px;
+    font-size: 22px;
 }
 
 .stat-card-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
     color: #2c3e50;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    line-height: 1;
 }
 
 .stat-card-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #7f8c8d;
     font-weight: 500;
 }
 
 .activity-section {
     background: white;
-    border-radius: 12px;
-    padding: 28px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: none;
+    border: 1px solid #f0f0f0;
 }
 
 .section-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: #2c3e50;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid #01807B;
+    margin-bottom: 16px;
+    padding-bottom: 0;
+    border-bottom: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .activity-form {
-    background: #f8f9fa;
-    padding: 24px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: none;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .form-group label {
@@ -115,18 +117,19 @@ $this->load->view('portal/includes/portal_header');
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .form-group select,
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
     font-size: 14px;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    background: white;
 }
 
 .form-group select:focus,
@@ -134,63 +137,67 @@ $this->load->view('portal/includes/portal_header');
 .form-group textarea:focus {
     border-color: #01807B;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+    box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.08);
 }
 
 .btn-add-activity {
     background: linear-gradient(135deg, #01807B 0%, #026660 100%);
     color: white;
     border: none;
-    padding: 14px 32px;
-    border-radius: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.2);
 }
 
 .btn-add-activity:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
 }
 
 .kcal-display {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
     padding: 16px;
-    border-radius: 8px;
+    border-radius: 12px;
     text-align: center;
     margin-top: 16px;
 }
 
 .kcal-display-value {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: bold;
     margin-bottom: 4px;
+    line-height: 1;
 }
 
 .kcal-display-label {
-    font-size: 14px;
-    opacity: 0.9;
+    font-size: 13px;
+    opacity: 0.95;
 }
 
 .activity-item {
-    background: #f8f9fa;
+    background: #fafafa;
     border-left: 4px solid #01807B;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 16px;
-    transition: all 0.3s ease;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    border: 1px solid #f0f0f0;
+    border-left: 4px solid #01807B;
 }
 
 .activity-item:hover {
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(2px);
+    background: #f5f5f5;
 }
 
 .activity-item-header {
@@ -198,38 +205,41 @@ $this->load->view('portal/includes/portal_header');
     justify-content: space-between;
     align-items: start;
     margin-bottom: 12px;
+    gap: 12px;
 }
 
 .activity-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: #2c3e50;
     margin-bottom: 4px;
+    line-height: 1.3;
 }
 
 .activity-date {
     color: #7f8c8d;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .activity-details {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
     margin-top: 12px;
 }
 
 .activity-detail {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: #2c3e50;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .activity-detail i {
     color: #01807B;
-    width: 20px;
+    width: 18px;
+    font-size: 14px;
 }
 
 .activity-detail strong {
@@ -239,21 +249,21 @@ $this->load->view('portal/includes/portal_header');
 
 .category-badge {
     display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .no-activities {
     text-align: center;
-    padding: 60px 20px;
+    padding: 50px 20px;
     color: #7f8c8d;
 }
 
 .no-activities i {
-    font-size: 80px;
-    margin-bottom: 20px;
+    font-size: 60px;
+    margin-bottom: 16px;
     opacity: 0.3;
 }
 
@@ -261,27 +271,288 @@ $this->load->view('portal/includes/portal_header');
     background: #e74c3c;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 13px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .btn-delete:hover {
     background: #c0392b;
-    transform: translateY(-2px);
+    transform: scale(1.1);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+    .activities-page {
+        padding: 12px;
+    }
+
+    .activity-header {
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+
+    .activity-header h1 {
+        font-size: 20px;
+    }
+
+    .activity-header p {
+        font-size: 13px;
+    }
+
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-card-value {
+        font-size: 24px;
+    }
+
+    .stat-card-label {
+        font-size: 12px;
+    }
+
+    .activity-section {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .activity-form {
+        padding: 16px;
     }
 
     .activity-details {
-        flex-direction: column;
-        gap: 12px;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .activity-name {
+        font-size: 15px;
+    }
+
+    .kcal-display-value {
+        font-size: 28px;
+    }
+}
+
+@media (min-width: 769px) {
+    .activities-page {
+        max-width: 900px;
+        padding: 24px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .activity-header {
+        padding: 32px 28px;
+    }
+
+    .activity-section {
+        padding: 28px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .activities-page {
+        max-width: 1100px;
+    }
+}
+
+/* Confirmation Modal (Mobile App Style) */
+.confirm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.confirm-modal.show {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    padding: 32px 24px 24px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideUp 0.3s ease;
+    z-index: 1;
+}
+
+.confirm-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+}
+
+.confirm-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.confirm-modal-message {
+    font-size: 15px;
+    color: #7f8c8d;
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+}
+
+.confirm-modal-buttons {
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+}
+
+.confirm-btn {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.confirm-btn-cancel {
+    background: #f0f0f0;
+    color: #2c3e50;
+}
+
+.confirm-btn-cancel:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+
+.confirm-btn-delete {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.confirm-btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.confirm-btn-delete:active {
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+    .confirm-modal-buttons {
+        flex-direction: row;
+    }
+
+    .confirm-btn-cancel {
+        order: 1;
+    }
+
+    .confirm-btn-delete {
+        order: 2;
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .confirm-modal-content {
+        padding: 28px 20px 20px;
+        border-radius: 16px;
+    }
+
+    .confirm-modal-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+
+    .confirm-modal-title {
+        font-size: 18px;
+    }
+
+    .confirm-modal-message {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .confirm-btn {
+        padding: 12px 18px;
+        font-size: 15px;
     }
 }
 </style>
@@ -332,7 +603,7 @@ $this->load->view('portal/includes/portal_header');
 
         <form id="addActivityForm" class="activity-form">
             <input type="hidden" name="patient_id" value="<?php echo $patient->id; ?>">
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" id="csrf_token_field">
 
             <div class="row">
                 <div class="col-md-8">
@@ -398,11 +669,60 @@ $this->load->view('portal/includes/portal_header');
     </div>
 </div>
 
+<!-- Confirmation Modal (Mobile Style) -->
+<div id="deleteConfirmModal" class="confirm-modal">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+            <i class="fa fa-trash"></i>
+        </div>
+        <h3 class="confirm-modal-title">Supprimer l'activité</h3>
+        <p class="confirm-modal-message">Voulez-vous vraiment supprimer cette activité ? Cette action est irréversible.</p>
+        <div class="confirm-modal-buttons">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeDeleteModal()">Annuler</button>
+            <button class="confirm-btn confirm-btn-delete" onclick="confirmDelete()">Supprimer</button>
+        </div>
+    </div>
+</div>
+
 <?php $this->load->view('portal/includes/portal_footer'); ?>
 
 <script>
 let activitiesData = [];
 let selectedActivityKcalPerMin = 0;
+const csrfTokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
+let activityToDelete = null; // Store the ID of activity to be deleted
+
+// Custom notification function for portal (replacement for alert_float)
+function showNotification(message, type) {
+    // type: 'success' or 'danger'
+    const bgColor = type === 'success' ? '#48bb78' : '#e74c3c';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    const toast = $('<div>')
+        .css({
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: bgColor,
+            color: 'white',
+            padding: '14px 20px',
+            borderRadius: '10px',
+            zIndex: 10000,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            fontSize: '14px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            minWidth: '250px',
+            maxWidth: '400px'
+        })
+        .html('<i class="fa ' + icon + '"></i> ' + message)
+        .appendTo('body');
+
+    setTimeout(() => toast.fadeOut(300, () => toast.remove()), 3500);
+}
 
 $(document).ready(function() {
     loadActivitiesList();
@@ -505,7 +825,7 @@ function displayActivities(activities) {
             if (activity.activity_time) html += ' à ' + activity.activity_time;
             html += '</div>';
             html += '</div>';
-            html += '<button class="btn-delete" onclick="deleteActivity(' + activity.id + ')"><i class="fa fa-trash"></i> Supprimer</button>';
+            html += '<button class="btn-delete" onclick="deleteActivity(' + activity.id + ')" title="Supprimer"><i class="fa fa-trash"></i></button>';
             html += '</div>';
 
             html += '<div class="activity-details">';
@@ -557,46 +877,98 @@ $('#addActivityForm').on('submit', function(e) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Activité enregistrée !');
+                showNotification('Activité enregistrée !', 'success');
                 $('#addActivityForm')[0].reset();
-                $('#addActivityForm input[name="csrf_token"]').val(response.csrf_token);
+                if (response.csrf_token) {
+                    $('#csrf_token_field').val(response.csrf_token);
+                }
                 $('#kcalValue').text('0');
                 loadMyActivities();
             } else {
-                alert_float('danger', response.message || 'Erreur');
+                showNotification(response.message || 'Erreur', 'danger');
                 if (response.csrf_token) {
-                    $('#addActivityForm input[name="csrf_token"]').val(response.csrf_token);
+                    $('#csrf_token_field').val(response.csrf_token);
                 }
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            showNotification('Erreur lors de l\'ajout de l\'activité', 'danger');
         }
     });
 });
 
-// Delete activity
+// Delete activity - Show modal
 function deleteActivity(id) {
-    if (!confirm('Voulez-vous vraiment supprimer cette activité ?')) {
+    activityToDelete = id;
+    showDeleteModal();
+}
+
+// Show delete confirmation modal
+function showDeleteModal() {
+    $('#deleteConfirmModal').addClass('show');
+    $('body').css('overflow', 'hidden'); // Prevent background scrolling
+}
+
+// Close delete confirmation modal
+function closeDeleteModal() {
+    $('#deleteConfirmModal').removeClass('show');
+    $('body').css('overflow', ''); // Restore scrolling
+    activityToDelete = null;
+}
+
+// Confirm and execute deletion
+function confirmDelete() {
+    if (!activityToDelete) {
         return;
     }
 
+    // Prepare data with dynamic CSRF token name
+    let deleteData = {};
+    deleteData[csrfTokenName] = $('#csrf_token_field').val();
+
     $.ajax({
-        url: site_url + 'dietetic/portal/delete_activity/' + id,
+        url: site_url + 'dietetic/portal/delete_activity/' + activityToDelete,
         type: 'POST',
-        data: {
-            csrf_token: $('input[name="csrf_token"]').val()
-        },
+        data: deleteData,
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Activité supprimée');
-                $('input[name="csrf_token"]').val(response.csrf_token);
+                showNotification('Activité supprimée', 'success');
+                if (response.csrf_token) {
+                    $('#csrf_token_field').val(response.csrf_token);
+                }
                 loadMyActivities();
             } else {
-                alert_float('danger', response.message || 'Erreur');
+                showNotification(response.message || 'Erreur', 'danger');
                 if (response.csrf_token) {
-                    $('input[name="csrf_token"]').val(response.csrf_token);
+                    $('#csrf_token_field').val(response.csrf_token);
                 }
             }
+            closeDeleteModal();
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            showNotification('Erreur lors de la suppression', 'danger');
+            closeDeleteModal();
         }
     });
 }
+
+// Close modal when clicking on overlay
+$(document).on('click', '.confirm-modal-overlay', function() {
+    closeDeleteModal();
+});
+
+// Prevent modal content clicks from closing modal
+$(document).on('click', '.confirm-modal-content', function(e) {
+    e.stopPropagation();
+});
+
+// Close modal with Escape key
+$(document).keyup(function(e) {
+    if (e.key === "Escape") {
+        closeDeleteModal();
+    }
+});
 </script>

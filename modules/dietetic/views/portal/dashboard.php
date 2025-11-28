@@ -1080,6 +1080,229 @@ $this->load->view('portal/includes/portal_header');
         height: 50px;
     }
 }
+
+/* ============================================
+   ACTIVITIES CARD - Compact & Fun
+   ============================================ */
+.activities-card-compact {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    border: 2px solid #f1f3f5;
+    margin-bottom: 24px;
+    transition: all 0.3s;
+}
+
+.activities-card-compact:hover {
+    border-color: #F3911D;
+    box-shadow: 0 8px 20px rgba(243, 145, 29, 0.12);
+}
+
+.activities-header-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.activities-title-compact {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.activities-title-compact i {
+    color: #F3911D;
+    font-size: 20px;
+}
+
+.activities-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.activity-stat-item {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    border-left: 3px solid #F3911D;
+    transition: all 0.2s;
+}
+
+.activity-stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.15);
+}
+
+.activity-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #F3911D;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.activity-stat-label {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.activities-list-compact {
+    margin-bottom: 16px;
+}
+
+.activity-item-compact {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 3px solid #F3911D;
+    transition: all 0.2s;
+}
+
+.activity-item-compact:hover {
+    background: #fff5e6;
+    transform: translateX(4px);
+}
+
+.activity-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.activity-icon-compact {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+}
+
+.activity-info-compact {
+    flex: 1;
+}
+
+.activity-name-compact {
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+}
+
+.activity-duration-compact {
+    font-size: 12px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.activity-kcal-compact {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.no-activities-compact {
+    text-align: center;
+    padding: 24px 16px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.no-activities-compact i {
+    font-size: 40px;
+    opacity: 0.3;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.activities-actions-compact {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-add-activity-compact {
+    flex: 1;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #F3911D 0%, #e67e00 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 3px 8px rgba(243, 145, 29, 0.3);
+}
+
+.btn-add-activity-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(243, 145, 29, 0.4);
+}
+
+.btn-add-activity-compact:active {
+    transform: translateY(0);
+}
+
+.btn-view-all-activities {
+    padding: 12px 20px;
+    background: white;
+    color: #F3911D;
+    border: 2px solid #F3911D;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-view-all-activities:hover {
+    background: #F3911D;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .activities-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .activities-actions-compact {
+        flex-direction: column;
+    }
+}
 </style>
 
 <?php
@@ -1512,6 +1735,52 @@ if (!$current_weight || !$target_weight) {
     </div>
 </div>
 
+<!-- Activities Card - Compact & Fun -->
+<div class="activities-card-compact">
+    <div class="activities-header-compact">
+        <div class="activities-title-compact">
+            <i class="fa fa-heartbeat"></i>
+            Activités Sportives
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="activities-stats-row">
+        <div class="activity-stat-item">
+            <div class="activity-stat-value" id="todayActivitiesCount">0</div>
+            <div class="activity-stat-label">Activités</div>
+        </div>
+        <div class="activity-stat-item">
+            <div class="activity-stat-value" id="todayMinutes">0</div>
+            <div class="activity-stat-label">Minutes</div>
+        </div>
+        <div class="activity-stat-item">
+            <div class="activity-stat-value" id="todayKcal">0</div>
+            <div class="activity-stat-label">Kcal brûlées</div>
+        </div>
+    </div>
+
+    <!-- Today's Activities List -->
+    <div class="activities-list-compact" id="todayActivitiesList">
+        <div class="no-activities-compact">
+            <i class="fa fa-heartbeat"></i>
+            Aucune activité enregistrée aujourd'hui
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="activities-actions-compact">
+        <button class="btn-add-activity-compact" onclick="window.location.href='<?php echo site_url('dietetic/portal/activities'); ?>#add-activity'">
+            <i class="fa fa-plus"></i>
+            Ajouter une activité
+        </button>
+        <button class="btn-view-all-activities" onclick="window.location.href='<?php echo site_url('dietetic/portal/activities'); ?>'">
+            <i class="fa fa-list"></i>
+            Voir tout
+        </button>
+    </div>
+</div>
+
 <!-- Program Card -->
 <?php if ($active_program) { ?>
 <div class="program-card">
@@ -1894,6 +2163,92 @@ async function addCustomWater() {
         btn.innerHTML = originalHtml;
         btn.disabled = false;
     }
+}
+
+// ============================================
+// ACTIVITIES TRACKING - Dashboard Widget
+// ============================================
+
+// Load today's activities on page load
+$(document).ready(function() {
+    loadTodayActivities();
+});
+
+async function loadTodayActivities() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_get_today_activities'); ?>');
+        const data = await response.json();
+
+        if (data.success) {
+            updateActivitiesDisplay(data);
+        }
+    } catch (error) {
+        console.error('Error loading activities:', error);
+    }
+}
+
+function updateActivitiesDisplay(data) {
+    // Update stats
+    $('#todayActivitiesCount').text(data.count || 0);
+    $('#todayMinutes').text(data.total_minutes || 0);
+    $('#todayKcal').text(Math.round(data.total_kcal || 0));
+
+    // Update activities list
+    const listContainer = $('#todayActivitiesList');
+
+    if (!data.activities || data.activities.length === 0) {
+        listContainer.html(`
+            <div class="no-activities-compact">
+                <i class="fa fa-heartbeat"></i>
+                Aucune activité enregistrée aujourd'hui
+            </div>
+        `);
+        return;
+    }
+
+    // Display up to 3 most recent activities
+    const activitiesToShow = data.activities.slice(0, 3);
+    let html = '';
+
+    activitiesToShow.forEach(activity => {
+        const icon = getActivityIcon(activity.category);
+        html += `
+            <div class="activity-item-compact">
+                <div class="activity-item-left">
+                    <div class="activity-icon-compact">
+                        <i class="fa ${icon}"></i>
+                    </div>
+                    <div class="activity-info-compact">
+                        <div class="activity-name-compact">${activity.activity_name}</div>
+                        <div class="activity-duration-compact">
+                            <i class="fa fa-clock-o"></i>
+                            ${activity.duration_minutes} min
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-kcal-compact">
+                    <i class="fa fa-fire"></i>
+                    ${Math.round(activity.kcal_burned)}
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.html(html);
+}
+
+function getActivityIcon(category) {
+    const icons = {
+        'Cardio': 'fa-running',
+        'Musculation': 'fa-dumbbell',
+        'Sports collectifs': 'fa-futbol-o',
+        'Arts martiaux': 'fa-hand-rock-o',
+        'Yoga/Étirements': 'fa-child',
+        'Danse': 'fa-music',
+        'Autres': 'fa-heartbeat'
+    };
+
+    return icons[category] || 'fa-heartbeat';
 }
 </script>
 

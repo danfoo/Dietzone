@@ -390,6 +390,60 @@
 .hidden {
     display: none;
 }
+
+/* Alternative Slots */
+.alternative-slots {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.alternative-slots-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alternative-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.slot-option {
+    padding: 10px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.slot-option:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.slot-date {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 4px;
+}
+
+.slot-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
 </style>
 
 <div id="wrapper">
@@ -467,6 +521,11 @@
                             <input type="datetime-local" class="form-control" id="consultation_date" name="consultation_date"
                                    value="<?php echo isset($consultation) ? date('Y-m-d\TH:i', strtotime($consultation->consultation_date)) : ''; ?>" required />
                             <span class="help-text">Sélectionnez la date et l'heure de la consultation</span>
+
+                            <!-- Availability Status Indicator -->
+                            <div id="availability-status" style="margin-top: 10px; display: none;">
+                                <div id="availability-indicator" style="padding: 10px 15px; border-radius: 8px; font-weight: 600; font-size: 14px;"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -494,12 +553,23 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group-modern">
-                            <label for="consultation_type">Type de Consultation</label>
-                            <select name="consultation_type" id="consultation_type" class="form-control">
-                                <option value="initial" <?php echo set_select('consultation_type', 'initial', isset($consultation) && $consultation->consultation_type == 'initial'); ?>>Consultation Initiale</option>
-                                <option value="follow_up" <?php echo set_select('consultation_type', 'follow_up', (isset($consultation) && $consultation->consultation_type == 'follow_up') || !isset($consultation)); ?>>Suivi</option>
-                                <option value="emergency" <?php echo set_select('consultation_type', 'emergency', isset($consultation) && $consultation->consultation_type == 'emergency'); ?>>Urgence</option>
+                            <label for="consultation_type_id">Type de Consultation</label>
+                            <select name="consultation_type_id" id="consultation_type_id" class="form-control">
+                                <option value="">-- Sélectionner un type --</option>
+                                <?php if (isset($consultation_types) && !empty($consultation_types)): ?>
+                                    <?php foreach ($consultation_types as $type): ?>
+                                        <option value="<?php echo $type->id; ?>"
+                                                data-duration="<?php echo $type->duration; ?>"
+                                                data-slug="<?php echo $type->slug; ?>"
+                                                <?php echo set_select('consultation_type_id', $type->id, isset($consultation) && $consultation->consultation_type_id == $type->id); ?>>
+                                            <?php echo $type->name; ?> (<?php echo $type->duration; ?> min)
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="">Consultation Générale (60 min)</option>
+                                <?php endif; ?>
                             </select>
+                            <span class="help-text">Le type de consultation détermine la durée</span>
                         </div>
                     </div>
                 </div>
@@ -845,6 +915,198 @@
 
     // Initialize BMI if editing
     calculateBMI();
+
+    // ============================================
+    // Availability Checking System
+    // ============================================
+
+    let availabilityCheckTimeout = null;
+
+    // Auto-update duration when consultation type changes
+    $('#consultation_type_id').on('change', function() {
+        const selectedOption = $(this).find(':selected');
+        const duration = selectedOption.data('duration');
+
+        if (duration) {
+            $('#duration').val(duration);
+            // Trigger availability check
+            checkAvailability();
+        }
+    });
+
+    // Check availability when relevant fields change
+    $('#consultation_date, #dietitian_id, #duration').on('change input', function() {
+        // Debounce the availability check
+        clearTimeout(availabilityCheckTimeout);
+        availabilityCheckTimeout = setTimeout(function() {
+            checkAvailability();
+        }, 500);
+    });
+
+    // Function to check availability
+    function checkAvailability() {
+        const dietitianId = $('#dietitian_id').val();
+        const datetime = $('#consultation_date').val();
+        const duration = $('#duration').val() || 60;
+
+        // Hide indicator if required fields are missing
+        if (!dietitianId || !datetime) {
+            $('#availability-status').hide();
+            return;
+        }
+
+        // Convert datetime-local format to MySQL format
+        const mysqlDatetime = datetime.replace('T', ' ') + ':00';
+
+        // Get consultation ID if editing
+        const consultationId = <?php echo isset($consultation) ? $consultation->id : 'null'; ?>;
+
+        // Show loading state
+        $('#availability-status').show();
+        $('#availability-indicator')
+            .css({
+                'background': '#f0f0f0',
+                'color': '#666',
+                'border': '2px solid #ddd'
+            })
+            .html('<i class="fa fa-spinner fa-spin"></i> Vérification de la disponibilité...');
+
+        // Make AJAX request
+        $.ajax({
+            url: '<?php echo admin_url("dietetic/consultations/check_availability"); ?>',
+            type: 'GET',
+            data: {
+                dietitian_id: dietitianId,
+                datetime: mysqlDatetime,
+                duration: duration,
+                consultation_id: consultationId
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    displayAvailabilityStatus(response.available, response.reason, response.conflicts, response.alternative_slots);
+                } else {
+                    $('#availability-indicator')
+                        .css({
+                            'background': '#fff3cd',
+                            'color': '#856404',
+                            'border': '2px solid #ffc107'
+                        })
+                        .html('⚠️ ' + (response.message || 'Erreur de vérification'));
+                }
+            },
+            error: function() {
+                $('#availability-indicator')
+                    .css({
+                        'background': '#f8d7da',
+                        'color': '#721c24',
+                        'border': '2px solid #dc3545'
+                    })
+                    .html('❌ Erreur de connexion');
+            }
+        });
+    }
+
+    // Display availability status visually
+    function displayAvailabilityStatus(available, reason, conflicts, alternativeSlots) {
+        const indicator = $('#availability-indicator');
+        const statusDiv = $('#availability-status');
+
+        // Remove any existing alternative slots section
+        statusDiv.find('.alternative-slots').remove();
+
+        if (available) {
+            // Available - Green
+            indicator
+                .css({
+                    'background': '#d4edda',
+                    'color': '#155724',
+                    'border': '2px solid #28a745'
+                })
+                .html('🟢 <strong>Disponible</strong> - ' + reason);
+        } else {
+            // Not available - Red/Orange
+            let icon = '🔴';
+            let bgColor = '#f8d7da';
+            let textColor = '#721c24';
+            let borderColor = '#dc3545';
+
+            // Different styling for different reasons
+            if (reason.includes('ne travaille pas')) {
+                icon = '⏰';
+                bgColor = '#fff3cd';
+                textColor = '#856404';
+                borderColor = '#ffc107';
+            } else if (reason.includes('Hors des horaires')) {
+                icon = '⚠️';
+                bgColor = '#fff3cd';
+                textColor = '#856404';
+                borderColor = '#ffc107';
+            }
+
+            let html = icon + ' <strong>Non disponible</strong> - ' + reason;
+
+            // Show conflicts if any
+            if (conflicts && conflicts.length > 0) {
+                html += '<br><small>Conflits: ';
+                conflicts.forEach(function(conflict, index) {
+                    html += conflict.start + ' - ' + conflict.end;
+                    if (index < conflicts.length - 1) html += ', ';
+                });
+                html += '</small>';
+            }
+
+            indicator
+                .css({
+                    'background': bgColor,
+                    'color': textColor,
+                    'border': '2px solid ' + borderColor
+                })
+                .html(html);
+
+            // Display alternative slots if available
+            if (alternativeSlots && alternativeSlots.length > 0) {
+                let alternativesHtml = '<div class="alternative-slots">';
+                alternativesHtml += '<div class="alternative-slots-title">';
+                alternativesHtml += '<i class="fa fa-clock-o"></i> Créneaux alternatifs disponibles :';
+                alternativesHtml += '</div>';
+                alternativesHtml += '<div class="alternative-slots-grid">';
+
+                alternativeSlots.forEach(function(slot) {
+                    alternativesHtml += '<div class="slot-option" data-datetime="' + slot.datetime + '">';
+                    alternativesHtml += '<div class="slot-date">' + slot.display_date + '</div>';
+                    alternativesHtml += '<div class="slot-time">' + slot.display_time + '</div>';
+                    alternativesHtml += '</div>';
+                });
+
+                alternativesHtml += '</div></div>';
+                statusDiv.append(alternativesHtml);
+            }
+        }
+    }
+
+    // Make slots clickable using event delegation (for dynamically created elements)
+    $(document).on('click', '.slot-option', function() {
+        const datetime = $(this).data('datetime');
+
+        // Convert from 'Y-m-d H:i:s' to 'Y-m-d\TH:i' format for datetime-local input
+        const datetimeLocal = datetime.substring(0, 16).replace(' ', 'T');
+        $('#consultation_date').val(datetimeLocal);
+
+        // Re-check availability for the new time
+        checkAvailability();
+    });
+
+    // Check availability on page load if editing
+    <?php if (isset($consultation)): ?>
+        setTimeout(function() {
+            checkAvailability();
+        }, 500);
+    <?php endif; ?>
+
+    // ============================================
+    // End Availability Checking System
+    // ============================================
 
     // Form validation
     $('form').on('submit', function(e) {

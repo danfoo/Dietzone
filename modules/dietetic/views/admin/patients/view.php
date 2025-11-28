@@ -1010,12 +1010,17 @@ html {
                                                           ($day->lunch_checked ? 1 : 0) +
                                                           ($day->dinner_checked ? 1 : 0);
                                             $completion = 0;
-                                            if ($day->water_glasses >= 8) $completion += 25;
-                                            else if ($day->water_glasses > 0) $completion += round(($day->water_glasses / 8) * 25);
+                                            // Water completion based on ml (goal: 2000ml)
+                                            if (isset($day->hydration_ml) && $day->hydration_ml >= 2000) $completion += 25;
+                                            else if (isset($day->hydration_ml) && $day->hydration_ml > 0) $completion += round(($day->hydration_ml / 2000) * 25);
                                             $completion += round(($meals_count / 3) * 25);
-                                            if ($day->activity_minutes >= 30) $completion += 25;
-                                            else if ($day->activity_minutes > 0) $completion += round(($day->activity_minutes / 30) * 25);
-                                            if ($day->calories_consumed > 0) $completion += 25;
+                                            // Use new activities data for completion
+                                            $activity_mins = isset($day->activities_minutes) ? $day->activities_minutes : $day->activity_minutes;
+                                            if ($activity_mins >= 30) $completion += 25;
+                                            else if ($activity_mins > 0) $completion += round(($activity_mins / 30) * 25);
+                                            // Use activities calories if available, otherwise use old calories_consumed
+                                            $calories = isset($day->activities_kcal) && $day->activities_kcal > 0 ? $day->activities_kcal : $day->calories_consumed;
+                                            if ($calories > 0) $completion += 25;
 
                                             // Row color based on completion
                                             $row_style = '';
@@ -1060,18 +1065,21 @@ html {
                                                     <?php } ?>
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php if ($day->activity_minutes > 0) { ?>
+                                                    <?php if (isset($day->activities_minutes) && $day->activities_minutes > 0) { ?>
                                                         <span class="badge" style="background: #fa709a; font-size: 13px; padding: 5px 10px;">
-                                                            <?php echo $day->activity_minutes; ?> min
+                                                            <?php echo $day->activities_minutes; ?> min
+                                                            <?php if ($day->activities_count > 1) { ?>
+                                                                <i class="fa fa-list" title="<?php echo $day->activities_count; ?> activités"></i>
+                                                            <?php } ?>
                                                         </span>
                                                     <?php } else { ?>
                                                         <span class="text-muted">-</span>
                                                     <?php } ?>
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php if ($day->calories_consumed > 0) { ?>
+                                                    <?php if (isset($day->activities_kcal) && $day->activities_kcal > 0) { ?>
                                                         <span class="badge" style="background: #f5576c; font-size: 13px; padding: 5px 10px;">
-                                                            <?php echo $day->calories_consumed; ?> kcal
+                                                            <?php echo round($day->activities_kcal); ?> kcal
                                                         </span>
                                                     <?php } else { ?>
                                                         <span class="text-muted">-</span>
