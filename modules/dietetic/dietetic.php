@@ -112,6 +112,17 @@ function dietetic_force_billing_menu_js()
 }
 
 /**
+ * Add JavaScript to force revenue dashboard menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_revenue_menu_js');
+
+function dietetic_force_revenue_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Dashboard Revenus
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_revenue_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
  * Define module menu items
  */
 function dietetic_module_init_menu_items()

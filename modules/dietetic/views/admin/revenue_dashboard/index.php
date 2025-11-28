@@ -63,41 +63,41 @@
                         <!-- Statistics Cards -->
                         <div class="row">
                             <div class="col-md-3">
-                                <div class="panel_s" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <div class="panel_s stat-card-purple">
                                     <div class="panel-body text-center" style="padding: 20px;">
-                                        <h1 style="margin: 0; color: white;"><?php echo number_format($stats->total_revenue, 0, ',', ' '); ?></h1>
-                                        <p style="margin: 5px 0 0 0; opacity: 0.9;">FCFA - Revenu Total</p>
-                                        <small style="opacity: 0.8;"><?php echo $stats->total_payments; ?> paiements</small>
+                                        <h1 style="margin: 0; color: white !important;"><?php echo number_format($stats->total_revenue, 0, ',', ' '); ?></h1>
+                                        <p style="margin: 5px 0 0 0; color: white !important; opacity: 0.9;">FCFA - Revenu Total</p>
+                                        <small style="color: white !important; opacity: 0.8;"><?php echo $stats->total_payments; ?> paiements</small>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
-                                <div class="panel_s" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                                <div class="panel_s stat-card-pink">
                                     <div class="panel-body text-center" style="padding: 20px;">
-                                        <h1 style="margin: 0; color: white;"><?php echo number_format($stats->dietitian_share, 0, ',', ' '); ?></h1>
-                                        <p style="margin: 5px 0 0 0; opacity: 0.9;">FCFA - Part Diététicien</p>
-                                        <small style="opacity: 0.8;"><?php echo $stats->total_payments > 0 ? number_format(($stats->dietitian_share / $stats->total_revenue) * 100, 1) : 0; ?>% du total</small>
+                                        <h1 style="margin: 0; color: white !important;"><?php echo number_format($stats->dietitian_share, 0, ',', ' '); ?></h1>
+                                        <p style="margin: 5px 0 0 0; color: white !important; opacity: 0.9;">FCFA - Part Diététicien</p>
+                                        <small style="color: white !important; opacity: 0.8;"><?php echo $stats->total_payments > 0 ? number_format(($stats->dietitian_share / $stats->total_revenue) * 100, 1) : 0; ?>% du total</small>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
-                                <div class="panel_s" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                                <div class="panel_s stat-card-blue">
                                     <div class="panel-body text-center" style="padding: 20px;">
-                                        <h1 style="margin: 0; color: white;"><?php echo number_format($stats->active_subscriptions); ?></h1>
-                                        <p style="margin: 5px 0 0 0; opacity: 0.9;">Abonnements Actifs</p>
-                                        <small style="opacity: 0.8;">Moyenne: <?php echo number_format($stats->avg_payment, 0, ',', ' '); ?> FCFA</small>
+                                        <h1 style="margin: 0; color: white !important;"><?php echo number_format($stats->active_subscriptions); ?></h1>
+                                        <p style="margin: 5px 0 0 0; color: white !important; opacity: 0.9;">Abonnements Actifs</p>
+                                        <small style="color: white !important; opacity: 0.8;">Moyenne: <?php echo number_format($stats->avg_payment, 0, ',', ' '); ?> FCFA</small>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
-                                <div class="panel_s" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                                <div class="panel_s stat-card-orange">
                                     <div class="panel-body text-center" style="padding: 20px;">
-                                        <h1 style="margin: 0; color: white;"><?php echo number_format($stats->pending_amount, 0, ',', ' '); ?></h1>
-                                        <p style="margin: 5px 0 0 0; opacity: 0.9;">FCFA - En Attente</p>
-                                        <small style="opacity: 0.8;"><?php echo $stats->pending_invoices; ?> factures</small>
+                                        <h1 style="margin: 0; color: white !important;"><?php echo number_format($stats->pending_amount, 0, ',', ' '); ?></h1>
+                                        <p style="margin: 5px 0 0 0; color: white !important; opacity: 0.9;">FCFA - En Attente</p>
+                                        <small style="color: white !important; opacity: 0.8;"><?php echo $stats->pending_invoices; ?> factures</small>
                                     </div>
                                 </div>
                             </div>
@@ -245,6 +245,39 @@
 </div>
 
 <?php init_tail(); ?>
+
+<style>
+.stat-card-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background-color: #667eea !important; /* Fallback */
+    color: white !important;
+}
+
+.stat-card-pink {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    background-color: #f5576c !important; /* Fallback */
+    color: white !important;
+}
+
+.stat-card-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+    background-color: #4facfe !important; /* Fallback */
+    color: white !important;
+}
+
+.stat-card-orange {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+    background-color: #fa709a !important; /* Fallback */
+    color: white !important;
+}
+
+.stat-card-purple h1, .stat-card-purple p, .stat-card-purple small,
+.stat-card-pink h1, .stat-card-pink p, .stat-card-pink small,
+.stat-card-blue h1, .stat-card-blue p, .stat-card-blue small,
+.stat-card-orange h1, .stat-card-orange p, .stat-card-orange small {
+    color: white !important;
+}
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 

@@ -126,7 +126,7 @@ class Revenue_dashboard extends AdminController
     }
 
     /**
-     * Export revenue report to PDF
+     * Export revenue report to PDF (printable HTML)
      */
     public function export_pdf()
     {
@@ -139,19 +139,10 @@ class Revenue_dashboard extends AdminController
         $data['start_date'] = $start_date;
         $data['end_date'] = $end_date;
         $data['dietitian_name'] = $this->_get_dietitian_name($dietitian_id);
+        $data['title'] = 'Rapport de Revenus';
 
-        // Load PDF library
-        $this->load->library('pdf');
-
-        $pdf = $this->pdf->load();
-        $pdf->SetTitle('Rapport de Revenus');
-        $pdf->SetAuthor('Dietzone');
-
-        // Render view to HTML
-        $html = $this->load->view('admin/revenue_dashboard/pdf_export', $data, true);
-
-        $pdf->WriteHTML($html);
-        $pdf->Output('rapport_revenus_' . date('Y-m-d') . '.pdf', 'D');
+        // Load a printable HTML view that can be printed to PDF by the browser
+        $this->load->view('admin/revenue_dashboard/pdf_export', $data);
     }
 
     /**
