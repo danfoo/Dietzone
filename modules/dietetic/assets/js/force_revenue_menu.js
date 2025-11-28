@@ -10,6 +10,27 @@
         // Vérifier si le menu existe déjà
         if ($('#side-menu a[href*="revenue_dashboard"]').length > 0) {
             console.log('Menu Dashboard Revenus déjà présent');
+
+            // Activer le menu parent si on est sur la page revenue_dashboard
+            if (window.location.href.indexOf('revenue_dashboard') !== -1) {
+                // Trouver le lien du menu
+                var revenueLink = $('#side-menu a[href*="revenue_dashboard"]');
+                var revenueMenuItem = revenueLink.closest('li');
+
+                // Trouver le menu parent Diététique
+                var dieteticMenu = revenueMenuItem.closest('li.menu-item-dietetic');
+
+                // Activer le menu item et le parent
+                revenueMenuItem.addClass('active');
+                dieteticMenu.addClass('active');
+
+                // Ouvrir le sous-menu
+                var submenu = dieteticMenu.find('ul.nav-second-level');
+                if (submenu.length > 0) {
+                    submenu.addClass('in');
+                    submenu.css('display', 'block');
+                }
+            }
             return;
         }
 
@@ -59,6 +80,10 @@
         if (window.location.href.indexOf('revenue_dashboard') !== -1) {
             revenueMenuItem.addClass('active');
             dieteticMenu.addClass('active');
+
+            // Ouvrir le sous-menu
+            submenu.addClass('in');
+            submenu.css('display', 'block');
         }
     });
 })();
