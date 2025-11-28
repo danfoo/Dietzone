@@ -247,34 +247,40 @@
 <?php init_tail(); ?>
 
 <style>
-.stat-card-purple {
+/* Force colored backgrounds on statistics cards */
+.panel_s.stat-card-purple,
+.panel_s.stat-card-purple .panel-body {
+    background-color: #667eea !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    background-color: #667eea !important; /* Fallback */
     color: white !important;
 }
 
-.stat-card-pink {
+.panel_s.stat-card-pink,
+.panel_s.stat-card-pink .panel-body {
+    background-color: #f5576c !important;
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-    background-color: #f5576c !important; /* Fallback */
     color: white !important;
 }
 
-.stat-card-blue {
+.panel_s.stat-card-blue,
+.panel_s.stat-card-blue .panel-body {
+    background-color: #4facfe !important;
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-    background-color: #4facfe !important; /* Fallback */
     color: white !important;
 }
 
-.stat-card-orange {
+.panel_s.stat-card-orange,
+.panel_s.stat-card-orange .panel-body {
+    background-color: #fa709a !important;
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
-    background-color: #fa709a !important; /* Fallback */
     color: white !important;
 }
 
-.stat-card-purple h1, .stat-card-purple p, .stat-card-purple small,
-.stat-card-pink h1, .stat-card-pink p, .stat-card-pink small,
-.stat-card-blue h1, .stat-card-blue p, .stat-card-blue small,
-.stat-card-orange h1, .stat-card-orange p, .stat-card-orange small {
+/* Force white text on all elements inside stat cards */
+.stat-card-purple *,
+.stat-card-pink *,
+.stat-card-blue *,
+.stat-card-orange * {
     color: white !important;
 }
 </style>
