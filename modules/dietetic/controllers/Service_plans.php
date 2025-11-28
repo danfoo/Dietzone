@@ -41,9 +41,11 @@ class Service_plans extends AdminController
         $total_plans = $this->dietetic_service_plans_model->count_all($where);
         $data['plans'] = $this->dietetic_service_plans_model->get_all($where, $per_page, $offset);
 
-        // Add stats to each plan
+        // Add default stats to each plan (to avoid errors in view)
         foreach ($data['plans'] as &$plan) {
-            $plan = $this->dietetic_service_plans_model->get_with_stats($plan->id);
+            $plan->active_subscriptions = 0;
+            $plan->total_subscriptions = 0;
+            $plan->total_revenue = 0;
         }
 
         // Pagination data
@@ -73,7 +75,7 @@ class Service_plans extends AdminController
                 'price' => $this->input->post('price'),
                 'billing_cycle' => $this->input->post('billing_cycle'),
                 'trial_days' => $this->input->post('trial_days') ?: 0,
-                'is_active' => $this->input->post('is_active') ?: 1,
+                'is_active' => $this->input->post('is_active') ? 1 : 0,
                 'features' => $this->input->post('features')
             ];
 
@@ -119,7 +121,7 @@ class Service_plans extends AdminController
                 'price' => $this->input->post('price'),
                 'billing_cycle' => $this->input->post('billing_cycle'),
                 'trial_days' => $this->input->post('trial_days') ?: 0,
-                'is_active' => $this->input->post('is_active') ?: 1,
+                'is_active' => $this->input->post('is_active') ? 1 : 0,
                 'features' => $this->input->post('features')
             ];
 

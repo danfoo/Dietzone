@@ -72,7 +72,7 @@
             {
                 slug: 'dietetic-invoices',
                 name: 'Factures',
-                icon: 'fa-file-text-o',
+                icon: 'fa-file-text',
                 href: admin_url + 'dietetic/invoices',
                 adminOnly: false
             },
