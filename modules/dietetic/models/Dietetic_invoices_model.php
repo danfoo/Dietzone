@@ -20,7 +20,7 @@ class Dietetic_invoices_model extends App_Model
     public function get($id)
     {
         $this->db->select('i.*, ' .
-            'c.company as patient_name, c.email as patient_email, c.phonenumber as patient_phone, c.address as patient_address, ' .
+            'c.company as patient_name, ' .
             'CONCAT(st.firstname, " ", st.lastname) as dietitian_name, st.email as dietitian_email, ' .
             'sp.name as plan_name, sp.name_fr as plan_name_fr, ' .
             's.referral_source');

@@ -37,7 +37,6 @@
                             <div class="col-md-6">
                                 <h4>Patient</h4>
                                 <p><strong><?php echo htmlspecialchars($subscription->patient_name); ?></strong></p>
-                                <p class="text-muted"><?php echo htmlspecialchars($subscription->patient_email); ?></p>
                             </div>
                             <div class="col-md-6">
                                 <h4>Diététicien</h4>
