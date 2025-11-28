@@ -98,7 +98,7 @@
                                 </p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <?php if (dietetic_has_permission('create')): ?>
+                                <?php if (is_admin()): ?>
                                     <a href="<?php echo admin_url('dietetic/subscriptions/create'); ?>" class="btn btn-success btn-lg">
                                         <i class="fa fa-plus-circle"></i> Nouvel Abonnement
                                     </a>
@@ -287,12 +287,12 @@
                                                         <a href="<?php echo admin_url('dietetic/subscriptions/view/' . $sub->id); ?>" class="btn btn-default btn-sm" title="Voir">
                                                             <i class="fa fa-eye"></i>
                                                         </a>
-                                                        <?php if (dietetic_has_permission('edit') && in_array($sub->status, ['trial', 'active', 'pending'])): ?>
+                                                        <?php if (is_admin() && in_array($sub->status, ['trial', 'active', 'pending'])): ?>
                                                             <a href="<?php echo admin_url('dietetic/subscriptions/edit/' . $sub->id); ?>" class="btn btn-info btn-sm" title="Modifier">
                                                                 <i class="fa fa-edit"></i>
                                                             </a>
                                                         <?php endif; ?>
-                                                        <?php if (dietetic_has_permission('delete') && $sub->status != 'cancelled'): ?>
+                                                        <?php if (is_admin() && $sub->status != 'cancelled'): ?>
                                                             <button type="button" class="btn btn-danger btn-sm btn-cancel-subscription" data-id="<?php echo $sub->id; ?>" data-patient="<?php echo htmlspecialchars($sub->patient_name); ?>" title="Annuler">
                                                                 <i class="fa fa-ban"></i>
                                                             </button>

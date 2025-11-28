@@ -82,7 +82,8 @@ class Subscriptions extends AdminController
      */
     public function create()
     {
-        if (!dietetic_has_permission('create')) {
+        // Only admins can create subscriptions
+        if (!is_admin()) {
             access_denied('dietetic');
         }
 
@@ -159,7 +160,7 @@ class Subscriptions extends AdminController
         $data['plans'] = $this->dietetic_service_plans_model->get_active();
 
         // Get patients
-        $data['patients'] = $this->dietetic_patients_model->get_all();
+        $data['patients'] = $this->dietetic_patients_model->get_all([], null, null);
 
         // Get staff (dietitians)
         $this->load->model('staff_model');
@@ -173,7 +174,8 @@ class Subscriptions extends AdminController
      */
     public function edit($id)
     {
-        if (!dietetic_has_permission('edit')) {
+        // Only admins can edit subscriptions
+        if (!is_admin()) {
             access_denied('dietetic');
         }
 
@@ -199,8 +201,8 @@ class Subscriptions extends AdminController
         }
 
         $data['title'] = 'Modifier l\'Abonnement';
-        $data['plans'] = $this->dietetic_service_plans_model->get_all();
-        $data['patients'] = $this->dietetic_patients_model->get_all();
+        $data['plans'] = $this->dietetic_service_plans_model->get_all([], null, null);
+        $data['patients'] = $this->dietetic_patients_model->get_all([], null, null);
 
         $this->load->model('staff_model');
         $data['staff'] = $this->staff_model->get();
