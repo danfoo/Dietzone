@@ -23,6 +23,13 @@ class Subscriptions extends AdminController
      */
     public function index()
     {
+        // Check if migration has been run
+        if (!$this->db->table_exists(db_prefix() . 'dietic_service_plans')) {
+            set_alert('warning', 'Veuillez d\'abord exécuter la migration depuis la page des paramètres');
+            redirect(admin_url('dietetic/settings'));
+            return;
+        }
+
         $data['title'] = 'Abonnements';
 
         // Pagination
@@ -77,6 +84,13 @@ class Subscriptions extends AdminController
     {
         if (!dietetic_has_permission('create')) {
             access_denied('dietetic');
+        }
+
+        // Check if migration has been run
+        if (!$this->db->table_exists(db_prefix() . 'dietic_service_plans')) {
+            set_alert('warning', 'Veuillez d\'abord exécuter la migration depuis la page des paramètres');
+            redirect(admin_url('dietetic/settings'));
+            return;
         }
 
         if ($this->input->post()) {

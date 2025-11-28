@@ -23,7 +23,7 @@
                                     <option value="">Sélectionnez un patient</option>
                                     <?php foreach ($patients as $patient): ?>
                                         <option value="<?php echo $patient->id; ?>" <?php echo (isset($subscription) && $subscription->patient_id == $patient->id) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($patient->company); ?>
+                                            <?php echo htmlspecialchars($patient->client_name); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
