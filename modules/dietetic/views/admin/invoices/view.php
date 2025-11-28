@@ -141,7 +141,10 @@
                                 <i class="fa fa-file-pdf-o"></i> Télécharger PDF
                             </a>
                             <?php if ($invoice->status != 'paid' && $invoice->status != 'cancelled'): ?>
-                                <button type="button" class="btn btn-success" id="btn-mark-paid">
+                                <a href="<?php echo admin_url('dietetic/payments/record/' . $invoice->id); ?>" class="btn btn-success">
+                                    <i class="fa fa-money"></i> Enregistrer un Paiement
+                                </a>
+                                <button type="button" class="btn btn-default" id="btn-mark-paid">
                                     <i class="fa fa-check"></i> Marquer Payée
                                 </button>
                             <?php endif; ?>
