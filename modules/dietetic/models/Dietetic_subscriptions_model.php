@@ -20,11 +20,12 @@ class Dietetic_subscriptions_model extends App_Model
     public function get($id)
     {
         $this->db->select('s.*, ' .
-            'p.company as patient_name, p.email as patient_email, ' .
-            'CONCAT(st.firstname, " ", st.lastname) as dietitian_name, ' .
+            'c.company as patient_name, c.email as patient_email, c.phonenumber as patient_phone, c.address as patient_address, ' .
+            'CONCAT(st.firstname, " ", st.lastname) as dietitian_name, st.email as dietitian_email, ' .
             'sp.name as plan_name, sp.name_fr as plan_name_fr');
         $this->db->from(db_prefix() . $this->table . ' s');
         $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = s.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
         $this->db->join(db_prefix() . 'staff st', 'st.staffid = s.dietitian_id', 'left');
         $this->db->join(db_prefix() . 'dietic_service_plans sp', 'sp.id = s.service_plan_id', 'left');
         $this->db->where('s.id', $id);
@@ -43,11 +44,12 @@ class Dietetic_subscriptions_model extends App_Model
     public function get_all($where = [], $limit = null, $offset = null)
     {
         $this->db->select('s.*, ' .
-            'p.company as patient_name, ' .
+            'c.company as patient_name, ' .
             'CONCAT(st.firstname, " ", st.lastname) as dietitian_name, ' .
             'sp.name as plan_name, sp.name_fr as plan_name_fr');
         $this->db->from(db_prefix() . $this->table . ' s');
         $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = s.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
         $this->db->join(db_prefix() . 'staff st', 'st.staffid = s.dietitian_id', 'left');
         $this->db->join(db_prefix() . 'dietic_service_plans sp', 'sp.id = s.service_plan_id', 'left');
 
@@ -278,10 +280,11 @@ class Dietetic_subscriptions_model extends App_Model
     public function get_due_for_billing()
     {
         $this->db->select('s.*, ' .
-            'p.company as patient_name, p.email as patient_email, ' .
+            'c.company as patient_name, c.email as patient_email, ' .
             'CONCAT(st.firstname, " ", st.lastname) as dietitian_name');
         $this->db->from(db_prefix() . $this->table . ' s');
         $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = s.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
         $this->db->join(db_prefix() . 'staff st', 'st.staffid = s.dietitian_id', 'left');
         $this->db->where('s.status', 'active');
         $this->db->where('s.next_billing_date <=', date('Y-m-d'));

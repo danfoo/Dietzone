@@ -339,13 +339,14 @@ class Dietetic_revenue_shares_model extends App_Model
      */
     public function get_revenue_by_patient($dietitian_id, $filters = [])
     {
-        $this->db->select('p.id as patient_id, p.company as patient_name, ' .
+        $this->db->select('dp.id as patient_id, c.company as patient_name, ' .
             'SUM(rs.dietitian_share) as total_revenue, ' .
             'COUNT(rs.id) as payment_count, ' .
             'MAX(i.issue_date) as last_payment_date');
         $this->db->from(db_prefix() . $this->table . ' rs');
         $this->db->join(db_prefix() . 'dietic_invoices i', 'i.id = rs.invoice_id');
-        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = rs.patient_id');
+        $this->db->join(db_prefix() . 'dietic_patients dp', 'dp.id = rs.patient_id');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = dp.client_id', 'left');
         $this->db->where('rs.dietitian_id', $dietitian_id);
         $this->db->where('rs.status', 'paid');
 
