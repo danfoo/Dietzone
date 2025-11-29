@@ -28,6 +28,10 @@
                                             <?php echo _l('initiate_refund'); ?>
                                         </a>
                                     <?php } ?>
+                                    <a href="<?php echo admin_url('dietetic/refunds/export' . ($this->input->get('status') ? '?status=' . $this->input->get('status') : '')); ?>" class="btn btn-default pull-left mleft5">
+                                        <i class="fa fa-download"></i>
+                                        <?php echo _l('export'); ?> CSV
+                                    </a>
                                     <div class="clearfix"></div>
                                 </div>
                             </div>
@@ -60,94 +64,131 @@
                                     </div>
                                 </div>
 
-                                <!-- Table -->
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th><?php echo _l('id'); ?></th>
-                                            <th><?php echo _l('patient'); ?></th>
-                                            <th><?php echo _l('invoice'); ?></th>
-                                            <th><?php echo _l('refund_type'); ?></th>
-                                            <th><?php echo _l('refund_amount'); ?></th>
-                                            <th><?php echo _l('reason'); ?></th>
-                                            <th><?php echo _l('status'); ?></th>
-                                            <th><?php echo _l('date'); ?></th>
-                                            <th><?php echo _l('options'); ?></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        if (!isset($refunds)) {
-                                            $refunds = [];
-                                        }
-
-                                        foreach ($refunds as $refund) {
-                                            $status_class = '';
-                                            switch ($refund->status) {
-                                                case 'completed':
-                                                    $status_class = 'success';
-                                                    break;
-                                                case 'pending':
-                                                    $status_class = 'warning';
-                                                    break;
-                                                case 'processing':
-                                                    $status_class = 'info';
-                                                    break;
-                                                case 'failed':
-                                                case 'cancelled':
-                                                    $status_class = 'danger';
-                                                    break;
-                                                default:
-                                                    $status_class = 'default';
-                                            }
-                                            ?>
-                                            <tr>
-                                                <td><?php echo $refund->id; ?></td>
-                                                <td>
-                                                    <?php if ($refund->patient_id && $refund->patient_name) { ?>
-                                                        <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
-                                                            <?php echo $refund->patient_name; ?>
-                                                        </a>
-                                                    <?php } else { ?>
-                                                        <span class="text-muted">-</span>
-                                                    <?php } ?>
-                                                </td>
-                                                <td>
-                                                    <?php if ($refund->invoice_id && $refund->invoice_number) { ?>
-                                                        <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
-                                                            <?php echo $refund->invoice_number; ?>
-                                                        </a>
-                                                    <?php } else { ?>
-                                                        <span class="text-muted">-</span>
-                                                    <?php } ?>
-                                                </td>
-                                                <td>
-                                                    <span class="label label-<?php echo $refund->refund_type == 'full' ? 'primary' : 'default'; ?>">
-                                                        <?php echo _l('refund_type_' . $refund->refund_type); ?>
-                                                    </span>
-                                                </td>
-                                                <td><?php echo app_format_money($refund->refund_amount, $refund->currency ?? 'XOF'); ?></td>
-                                                <td><?php echo character_limiter($refund->reason ?? '', 50); ?></td>
-                                                <td>
-                                                    <span class="label label-<?php echo $status_class; ?>">
-                                                        <?php echo _l('refund_status_' . $refund->status); ?>
-                                                    </span>
-                                                </td>
-                                                <td><?php echo _dt($refund->created_at); ?></td>
-                                                <td>
-                                                    <a href="<?php echo admin_url('dietetic/refunds/view/' . $refund->id); ?>" class="btn btn-default btn-icon">
-                                                        <i class="fa fa-eye"></i>
-                                                    </a>
-                                                    <?php if (has_permission('dietetic', '', 'edit') && $refund->status == 'pending') { ?>
-                                                        <a href="<?php echo admin_url('dietetic/refunds/approve/' . $refund->id); ?>" class="btn btn-success btn-icon" onclick="return confirm('<?php echo _l('confirm_approve_refund'); ?>');">
-                                                            <i class="fa fa-check"></i>
-                                                        </a>
-                                                    <?php } ?>
-                                                </td>
+                                <!-- Simple HTML Table - No DataTables -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered">
+                                        <thead>
+                                            <tr style="background-color: #f4f4f4;">
+                                                <th><?php echo _l('id'); ?></th>
+                                                <th><?php echo _l('patient'); ?></th>
+                                                <th><?php echo _l('invoice'); ?></th>
+                                                <th><?php echo _l('refund_type'); ?></th>
+                                                <th><?php echo _l('refund_amount'); ?></th>
+                                                <th><?php echo _l('reason'); ?></th>
+                                                <th><?php echo _l('status'); ?></th>
+                                                <th><?php echo _l('date'); ?></th>
+                                                <th><?php echo _l('options'); ?></th>
                                             </tr>
-                                        <?php } ?>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            if (!isset($refunds)) {
+                                                $refunds = [];
+                                            }
+
+                                            if (empty($refunds)) {
+                                                ?>
+                                                <tr>
+                                                    <td colspan="9" class="text-center text-muted">
+                                                        <p class="mtop20 mbot20">
+                                                            <i class="fa fa-info-circle"></i>
+                                                            <?php echo _l('no_refunds_found'); ?>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                                <?php
+                                            } else {
+                                                foreach ($refunds as $refund) {
+                                                    $status_class = '';
+                                                    switch ($refund->status) {
+                                                        case 'completed':
+                                                            $status_class = 'success';
+                                                            break;
+                                                        case 'pending':
+                                                            $status_class = 'warning';
+                                                            break;
+                                                        case 'processing':
+                                                            $status_class = 'info';
+                                                            break;
+                                                        case 'failed':
+                                                        case 'cancelled':
+                                                            $status_class = 'danger';
+                                                            break;
+                                                        default:
+                                                            $status_class = 'default';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><strong>#<?php echo $refund->id; ?></strong></td>
+                                                        <td>
+                                                            <?php if ($refund->patient_id && $refund->patient_name) { ?>
+                                                                <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
+                                                                    <?php echo htmlspecialchars($refund->patient_name); ?>
+                                                                </a>
+                                                            <?php } else { ?>
+                                                                <span class="text-muted">-</span>
+                                                            <?php } ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($refund->invoice_id && $refund->invoice_number) { ?>
+                                                                <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
+                                                                    #<?php echo htmlspecialchars($refund->invoice_number); ?>
+                                                                </a>
+                                                            <?php } else { ?>
+                                                                <span class="text-muted">-</span>
+                                                            <?php } ?>
+                                                        </td>
+                                                        <td>
+                                                            <span class="label label-<?php echo $refund->refund_type == 'full' ? 'primary' : 'default'; ?>">
+                                                                <?php echo _l('refund_type_' . $refund->refund_type); ?>
+                                                            </span>
+                                                        </td>
+                                                        <td><strong><?php echo app_format_money($refund->refund_amount, $refund->currency ?? 'XOF'); ?></strong></td>
+                                                        <td>
+                                                            <?php
+                                                            $reason = $refund->reason ?? '';
+                                                            if (strlen($reason) > 50) {
+                                                                echo '<span title="' . htmlspecialchars($reason) . '">';
+                                                                echo htmlspecialchars(substr($reason, 0, 50)) . '...';
+                                                                echo '</span>';
+                                                            } else {
+                                                                echo htmlspecialchars($reason);
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                            <span class="label label-<?php echo $status_class; ?>">
+                                                                <?php echo _l('refund_status_' . $refund->status); ?>
+                                                            </span>
+                                                        </td>
+                                                        <td><?php echo _dt($refund->created_at); ?></td>
+                                                        <td class="text-center">
+                                                            <div class="btn-group">
+                                                                <a href="<?php echo admin_url('dietetic/refunds/view/' . $refund->id); ?>" class="btn btn-default btn-sm" title="<?php echo _l('view'); ?>">
+                                                                    <i class="fa fa-eye"></i>
+                                                                </a>
+                                                                <?php if (has_permission('dietetic', '', 'edit') && $refund->status == 'pending') { ?>
+                                                                    <a href="<?php echo admin_url('dietetic/refunds/approve/' . $refund->id); ?>" class="btn btn-success btn-sm" title="<?php echo _l('approve'); ?>">
+                                                                        <i class="fa fa-check"></i>
+                                                                    </a>
+                                                                    <a href="<?php echo admin_url('dietetic/refunds/reject/' . $refund->id); ?>" class="btn btn-danger btn-sm" title="<?php echo _l('reject'); ?>">
+                                                                        <i class="fa fa-times"></i>
+                                                                    </a>
+                                                                <?php } ?>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php } ?>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <?php if (!empty($refunds)) { ?>
+                                    <div class="text-right text-muted mtop10">
+                                        <?php echo count($refunds); ?> <?php echo _l('refund(s)'); ?>
+                                    </div>
+                                <?php } ?>
                             </div>
                         </div>
                     </div>
@@ -156,4 +197,13 @@
         </div>
     </div>
 </div>
+
+<!-- Disable automatic DataTables initialization -->
+<script>
+    // Prevent any DataTables auto-initialization
+    if (typeof $.fn.dataTable !== 'undefined') {
+        $.fn.dataTable.ext.search = [];
+    }
+</script>
+
 <?php init_tail(); ?>

@@ -430,3 +430,13 @@ $lang['refund_reason'] = 'Raison du Remboursement';
 $lang['confirm_approve_refund'] = 'Êtes-vous sûr de vouloir approuver ce remboursement ?';
 $lang['confirm_reject_refund'] = 'Êtes-vous sûr de vouloir rejeter ce remboursement ?';
 $lang['confirm_process_refund'] = 'Êtes-vous sûr de vouloir traiter ce remboursement ?';
+
+// Table Messages
+$lang['no_refunds_found'] = 'Aucun remboursement trouvé';
+$lang['no_recurring_payments_found'] = 'Aucun paiement récurrent trouvé';
+$lang['refund(s)'] = 'remboursement(s)';
+$lang['recurring_payment(s)'] = 'paiement(s) récurrent(s)';
+$lang['pause'] = 'Mettre en pause';
+$lang['resume'] = 'Reprendre';
+$lang['export'] = 'Exporter';
+
