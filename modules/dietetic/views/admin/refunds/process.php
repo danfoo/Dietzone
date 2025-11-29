@@ -31,7 +31,7 @@
                                             </tr>
                                             <tr>
                                                 <td><strong><?php echo _l('payment_reference'); ?>:</strong></td>
-                                                <td><?php echo $payment->payment_reference ?? 'N/A'; ?></td>
+                                                <td><?php echo $payment->transaction_id ?? 'N/A'; ?></td>
                                             </tr>
                                             <tr>
                                                 <td><strong><?php echo _l('refund_amount'); ?>:</strong></td>

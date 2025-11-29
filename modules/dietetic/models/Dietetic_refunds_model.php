@@ -23,7 +23,7 @@ class Dietetic_refunds_model extends App_Model
     public function get($id)
     {
         $this->db->select('r.*, ' .
-            'p.payment_reference, p.payment_method as original_payment_method, ' .
+            'p.transaction_id as payment_transaction_id, p.payment_method as original_payment_method, ' .
             'i.invoice_number, ' .
             'c.company as patient_name, ' .
             'CONCAT(st.firstname, " ", st.lastname) as initiated_by_name, ' .
@@ -46,7 +46,7 @@ class Dietetic_refunds_model extends App_Model
     public function get_all($where = [])
     {
         $this->db->select('r.*, ' .
-            'p.payment_reference, ' .
+            'p.transaction_id as payment_transaction_id, ' .
             'i.invoice_number, ' .
             'c.company as patient_name, ' .
             'CONCAT(st.firstname, " ", st.lastname) as initiated_by_name');

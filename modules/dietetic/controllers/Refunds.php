@@ -295,15 +295,15 @@ class Refunds extends AdminController
             $csv_data .= sprintf(
                 "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 $refund->id,
-                '"' . $refund->patient_name . '"',
-                $refund->invoice_number,
-                $refund->payment_reference,
+                '"' . ($refund->patient_name ?? '') . '"',
+                $refund->invoice_number ?? '',
+                $refund->payment_transaction_id ?? '',
                 $refund->refund_amount,
                 $refund->refund_type,
                 $refund->status,
                 '"' . str_replace('"', '""', $refund->reason ?? '') . '"',
                 $refund->created_at,
-                $refund->processed_at ?? ''
+                $refund->processed_date ?? ''
             );
         }
 
