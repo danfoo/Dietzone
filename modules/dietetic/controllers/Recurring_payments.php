@@ -25,9 +25,8 @@ class Recurring_payments extends AdminController
             access_denied('dietetic');
         }
 
-        if ($this->input->is_ajax_request()) {
-            $this->app->get_table_data('dietetic_recurring_payments');
-        }
+        // Get all recurring payments
+        $data['recurring_payments'] = $this->dietetic_recurring_payments_model->get_all();
 
         $data['title'] = _l('recurring_payments');
         $this->load->view('admin/recurring_payments/manage', $data);
@@ -50,8 +49,17 @@ class Recurring_payments extends AdminController
 
         // Get related data
         $data['recurring'] = $recurring;
-        $data['subscription'] = $this->dietetic_subscriptions_model->get($recurring->subscription_id);
-        $data['patient'] = $this->dietetic_patients_model->get($recurring->patient_id);
+        $data['subscription'] = null;
+        $data['patient'] = null;
+
+        if ($recurring->subscription_id) {
+            $data['subscription'] = $this->dietetic_subscriptions_model->get($recurring->subscription_id);
+        }
+
+        if ($recurring->patient_id) {
+            $data['patient'] = $this->dietetic_patients_model->get($recurring->patient_id);
+        }
+
         $data['transactions'] = $this->dietetic_recurring_payments_model->get_transactions($id);
         // $data['statistics'] = $this->dietetic_recurring_payments_model->get_recurring_statistics($id); // TODO: Implement this method
         $data['title'] = _l('recurring_payment') . ' #' . $id;

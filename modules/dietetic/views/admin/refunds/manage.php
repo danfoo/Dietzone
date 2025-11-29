@@ -61,7 +61,7 @@
                                 </div>
 
                                 <!-- Table -->
-                                <table class="table dt-table scroll-responsive" data-order-col="0" data-order-type="desc">
+                                <table class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th><?php echo _l('id'); ?></th>

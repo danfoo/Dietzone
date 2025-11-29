@@ -34,8 +34,8 @@
                             <div class="col-md-12">
                                 <div class="clearfix mtop20"></div>
 
-                                <!-- Table will be loaded here -->
-                                <table class="table dt-table scroll-responsive" data-order-col="0" data-order-type="desc">
+                                <!-- Table -->
+                                <table class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th><?php echo _l('id'); ?></th>
@@ -50,8 +50,9 @@
                                     </thead>
                                     <tbody>
                                         <?php
-                                        $this->load->model('dietetic/dietetic_recurring_payments_model');
-                                        $recurring_payments = $this->dietetic_recurring_payments_model->get_all();
+                                        if (!isset($recurring_payments)) {
+                                            $recurring_payments = [];
+                                        }
 
                                         foreach ($recurring_payments as $rp) {
                                             $status_class = '';
@@ -73,16 +74,24 @@
                                             <tr>
                                                 <td><?php echo $rp->id; ?></td>
                                                 <td>
-                                                    <a href="<?php echo admin_url('dietetic/patients/view/' . $rp->patient_id); ?>">
-                                                        <?php echo $rp->patient_name; ?>
-                                                    </a>
+                                                    <?php if ($rp->patient_id && $rp->patient_name) { ?>
+                                                        <a href="<?php echo admin_url('dietetic/patients/view/' . $rp->patient_id); ?>">
+                                                            <?php echo $rp->patient_name; ?>
+                                                        </a>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
                                                 </td>
                                                 <td>
-                                                    <a href="<?php echo admin_url('dietetic/subscriptions/view/' . $rp->subscription_id); ?>">
-                                                        <?php echo $rp->service_plan_name; ?>
-                                                    </a>
+                                                    <?php if ($rp->subscription_id && $rp->service_plan_name) { ?>
+                                                        <a href="<?php echo admin_url('dietetic/subscriptions/view/' . $rp->subscription_id); ?>">
+                                                            <?php echo $rp->service_plan_name; ?>
+                                                        </a>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
                                                 </td>
-                                                <td><?php echo app_format_money($rp->amount, $rp->currency); ?></td>
+                                                <td><?php echo app_format_money($rp->amount, $rp->currency ?? 'XOF'); ?></td>
                                                 <td><?php echo _l('recurring_payment_frequency_' . $rp->frequency); ?></td>
                                                 <td><?php echo _d($rp->next_payment_date); ?></td>
                                                 <td>

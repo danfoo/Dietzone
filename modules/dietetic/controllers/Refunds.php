@@ -26,10 +26,6 @@ class Refunds extends AdminController
             access_denied('dietetic');
         }
 
-        if ($this->input->is_ajax_request()) {
-            $this->app->get_table_data('dietetic_refunds');
-        }
-
         // Build where clause based on status filter
         $where = [];
         $status_filter = $this->input->get('status');
