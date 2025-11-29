@@ -20,17 +20,25 @@
                                         <tr>
                                             <td><strong><?php echo _l('patient'); ?>:</strong></td>
                                             <td>
-                                                <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
-                                                    <?php echo $refund->patient_name; ?>
-                                                </a>
+                                                <?php if ($refund->patient_id && $refund->patient_name) { ?>
+                                                    <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
+                                                        <?php echo htmlspecialchars($refund->patient_name); ?>
+                                                    </a>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('invoice'); ?>:</strong></td>
                                             <td>
-                                                <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
-                                                    <?php echo $refund->invoice_number; ?>
-                                                </a>
+                                                <?php if ($refund->invoice_id && $refund->invoice_number) { ?>
+                                                    <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
+                                                        #<?php echo htmlspecialchars($refund->invoice_number); ?>
+                                                    </a>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <tr>
@@ -43,19 +51,19 @@
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('original_amount'); ?>:</strong></td>
-                                            <td><?php echo app_format_money($refund->original_amount, $refund->currency); ?></td>
+                                            <td><?php echo app_format_money($refund->original_amount, $refund->currency ?? 'XOF'); ?></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('refund_amount'); ?>:</strong></td>
-                                            <td><strong><?php echo app_format_money($refund->refund_amount, $refund->currency); ?></strong></td>
+                                            <td><strong><?php echo app_format_money($refund->refund_amount, $refund->currency ?? 'XOF'); ?></strong></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('remaining_amount'); ?>:</strong></td>
-                                            <td><?php echo app_format_money($refund->remaining_amount, $refund->currency); ?></td>
+                                            <td><?php echo app_format_money($refund->remaining_amount ?? 0, $refund->currency ?? 'XOF'); ?></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('payment_method'); ?>:</strong></td>
-                                            <td><?php echo ucfirst($refund->payment_method); ?></td>
+                                            <td><?php echo $refund->payment_method ? ucfirst($refund->payment_method) : '-'; ?></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('status'); ?>:</strong></td>
@@ -114,7 +122,7 @@
 
                                 <h5><strong><?php echo _l('reason'); ?></strong></h5>
                                 <div class="alert alert-info">
-                                    <?php echo nl2br(htmlspecialchars($refund->reason)); ?>
+                                    <?php echo nl2br(htmlspecialchars($refund->reason ?? '')); ?>
                                 </div>
 
                                 <?php if ($refund->notes): ?>

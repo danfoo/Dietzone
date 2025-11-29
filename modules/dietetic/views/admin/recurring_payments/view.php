@@ -20,22 +20,30 @@
                                         <tr>
                                             <td><strong><?php echo _l('patient'); ?>:</strong></td>
                                             <td>
-                                                <a href="<?php echo admin_url('dietetic/patients/view/' . $recurring->patient_id); ?>">
-                                                    <?php echo $recurring->patient_name; ?>
-                                                </a>
+                                                <?php if ($recurring->patient_id && $recurring->patient_name) { ?>
+                                                    <a href="<?php echo admin_url('dietetic/patients/view/' . $recurring->patient_id); ?>">
+                                                        <?php echo htmlspecialchars($recurring->patient_name); ?>
+                                                    </a>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('subscription'); ?>:</strong></td>
                                             <td>
-                                                <a href="<?php echo admin_url('dietetic/subscriptions/view/' . $recurring->subscription_id); ?>">
-                                                    <?php echo $recurring->service_plan_name; ?>
-                                                </a>
+                                                <?php if ($recurring->subscription_id && $recurring->service_plan_name) { ?>
+                                                    <a href="<?php echo admin_url('dietetic/subscriptions/view/' . $recurring->subscription_id); ?>">
+                                                        <?php echo htmlspecialchars($recurring->service_plan_name); ?>
+                                                    </a>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('amount'); ?>:</strong></td>
-                                            <td><?php echo app_format_money($recurring->amount, $recurring->currency); ?></td>
+                                            <td><?php echo app_format_money($recurring->amount, $recurring->currency ?? 'XOF'); ?></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('frequency'); ?>:</strong></td>
@@ -43,7 +51,7 @@
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('payment_method'); ?>:</strong></td>
-                                            <td><?php echo ucfirst($recurring->payment_method); ?></td>
+                                            <td><?php echo $recurring->payment_method ? ucfirst($recurring->payment_method) : '-'; ?></td>
                                         </tr>
                                         <tr>
                                             <td><strong><?php echo _l('status'); ?>:</strong></td>

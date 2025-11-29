@@ -60,11 +60,24 @@ class Refunds extends AdminController
             show_404();
         }
 
-        // Get related data
+        // Get related data with NULL protection
         $data['refund'] = $refund;
-        $data['payment'] = $this->dietetic_payments_model->get($refund->payment_id);
-        $data['invoice'] = $this->dietetic_invoices_model->get($refund->invoice_id);
-        $data['patient'] = $this->dietetic_patients_model->get($refund->patient_id);
+        $data['payment'] = null;
+        $data['invoice'] = null;
+        $data['patient'] = null;
+
+        if ($refund->payment_id) {
+            $data['payment'] = $this->dietetic_payments_model->get($refund->payment_id);
+        }
+
+        if ($refund->invoice_id) {
+            $data['invoice'] = $this->dietetic_invoices_model->get($refund->invoice_id);
+        }
+
+        if ($refund->patient_id) {
+            $data['patient'] = $this->dietetic_patients_model->get($refund->patient_id);
+        }
+
         $data['title'] = _l('refund') . ' #' . $refund->id;
 
         $this->load->view('admin/refunds/view', $data);
