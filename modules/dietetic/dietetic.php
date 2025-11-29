@@ -218,6 +218,15 @@ function dietetic_module_init_menu_items()
             'position' => 7.5,
         ]);
 
+        // Blog / Conseils - Show to everyone with view permission
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-blog',
+            'name'     => 'Blog & Conseils',
+            'icon'     => 'fa fa-newspaper-o',
+            'href'     => admin_url('dietetic/blog'),
+            'position' => 7.6,
+        ]);
+
         // Staff Permissions - Admin only
         if (is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [

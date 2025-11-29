@@ -897,6 +897,16 @@
             </a>
             <?php } ?>
 
+            <?php
+            // Check if blog is enabled
+            if ($CI_menu->db->table_exists(db_prefix() . 'dietic_blog_articles')) {
+            ?>
+            <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'blog') ? 'active' : ''; ?>">
+                <i class="fa fa-newspaper-o"></i>
+                <span>Conseils & Blog</span>
+            </a>
+            <?php } ?>
+
             <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'add_measurement') ? 'active' : ''; ?>">
                 <i class="fa fa-plus-circle"></i>
                 <span>Ajouter une Mesure</span>
@@ -920,11 +930,6 @@
             <a href="<?php echo site_url('clients/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
                 <i class="fa fa-file-text"></i>
                 <span>Mon plan</span>
-            </a>
-
-            <a href="<?php echo site_url('dietetic/portal/subscriptions'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'subscriptions') ? 'active' : ''; ?>">
-                <i class="fa fa-refresh"></i>
-                <span>Mes Abonnements</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'statistics') ? 'active' : ''; ?>">

@@ -7092,5 +7092,144 @@ class Portal extends App_Controller
         $this->view('portal/invoice');
         $this->layout();
     }
+
+    // ==================== BLOG / CONSEILS ====================
+
+    /**
+     * Display blog articles list
+     */
+    public function blog()
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_blog_model');
+
+        // Pagination
+        $per_page = 12;
+        $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
+        $offset = ($page - 1) * $per_page;
+
+        // Filter by category
+        $category = $this->input->get('category', true);
+
+        // Get articles
+        $articles = $this->dietetic_blog_model->get_published($per_page, $offset, $category);
+        $total_articles = $this->dietetic_blog_model->get_count([
+            'status' => 'published',
+            'published_at <=' => date('Y-m-d H:i:s')
+        ]);
+
+        // Get categories
+        $categories = $this->dietetic_blog_model->get_all_categories();
+
+        // Get featured articles
+        $featured = $this->dietetic_blog_model->get_featured(3);
+
+        $data['articles'] = $articles;
+        $data['categories'] = $categories;
+        $data['featured'] = $featured;
+        $data['current_category'] = $category;
+        $data['total_pages'] = ceil($total_articles / $per_page);
+        $data['current_page'] = $page;
+        $data['patient'] = $patient;
+        $data['title'] = 'Conseils & Blog';
+        $data['active_page'] = 'blog';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        $this->data($data);
+        $this->view('portal/blog/index');
+        $this->layout();
+    }
+
+    /**
+     * Display single blog article
+     */
+    public function blog_article($slug)
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_blog_model');
+
+        $article = $this->dietetic_blog_model->get($slug);
+
+        if (!$article || $article->status != 'published') {
+            show_404();
+        }
+
+        // Increment views
+        $this->dietetic_blog_model->increment_views($article->id, $patient->id);
+
+        // Get related articles from same category
+        $related = [];
+        if ($article->category) {
+            $all_in_category = $this->dietetic_blog_model->get_published(4, 0, $article->category);
+            // Remove current article from related
+            $related = array_filter($all_in_category, function($a) use ($article) {
+                return $a->id != $article->id;
+            });
+            $related = array_slice($related, 0, 3);
+        }
+
+        $data['article'] = $article;
+        $data['related'] = $related;
+        $data['patient'] = $patient;
+        $data['title'] = $article->title;
+        $data['active_page'] = 'blog';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        $this->data($data);
+        $this->view('portal/blog/article');
+        $this->layout();
+    }
+
+    /**
+     * Search blog articles
+     */
+    public function blog_search()
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_blog_model');
+
+        $query = $this->input->get('q', true);
+
+        $per_page = 12;
+        $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
+        $offset = ($page - 1) * $per_page;
+
+        $articles = $this->dietetic_blog_model->search($query, $per_page, $offset);
+
+        $data['articles'] = $articles;
+        $data['search_query'] = $query;
+        $data['patient'] = $patient;
+        $data['title'] = 'Recherche: ' . $query;
+        $data['active_page'] = 'blog';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        $this->data($data);
+        $this->view('portal/blog/search');
+        $this->layout();
+    }
 }
 
