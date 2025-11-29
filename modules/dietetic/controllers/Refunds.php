@@ -31,7 +31,9 @@ class Refunds extends AdminController
         }
 
         $data['title'] = _l('refunds');
-        $data['pending_count'] = $this->dietetic_refunds_model->count_by_status('pending');
+        // Count pending refunds manually
+        $pending_refunds = $this->dietetic_refunds_model->get_all(['r.status' => 'pending']);
+        $data['pending_count'] = count($pending_refunds);
         $this->load->view('admin/refunds/manage', $data);
     }
 
@@ -55,7 +57,7 @@ class Refunds extends AdminController
         $data['payment'] = $this->dietetic_payments_model->get($refund->payment_id);
         $data['invoice'] = $this->dietetic_invoices_model->get($refund->invoice_id);
         $data['patient'] = $this->dietetic_patients_model->get($refund->patient_id);
-        $data['title'] = _l('refund') . ' #' . $refund->refund_number;
+        $data['title'] = _l('refund') . ' #' . $refund->id;
 
         $this->load->view('admin/refunds/view', $data);
     }
