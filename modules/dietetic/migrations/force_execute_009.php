@@ -9,22 +9,40 @@
  * Supprimez ce fichier après utilisation pour des raisons de sécurité
  */
 
-// Allow direct access for this specific file
-define('BASEPATH', true);
+// Chargement de la config Perfex
+define('BASEPATH', TRUE);
+$config_path = dirname(__FILE__) . '/../../../application/config/app-config.php';
 
-// Load Perfex CRM
-require_once(dirname(__FILE__) . '/../../../application/config/app-config.php');
-require_once(dirname(__FILE__) . '/../../../application/libraries/App_Controller.php');
+if (!file_exists($config_path)) {
+    die("Erreur: Fichier de configuration non trouvé");
+}
 
-// Start CodeIgniter
-$CI = &get_instance();
-$CI->load->database();
+require_once($config_path);
+
+// Connexion directe à la base de données
+try {
+    $dsn = "mysql:host=" . APP_DB_HOSTNAME . ";dbname=" . APP_DB_NAME . ";charset=utf8mb4";
+    $pdo = new PDO($dsn, APP_DB_USERNAME, APP_DB_PASSWORD);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erreur de connexion à la base de données: " . $e->getMessage());
+}
+
+// Définir le préfixe de table
+if (!defined('APP_DB_PREFIX')) {
+    define('APP_DB_PREFIX', 'tbl');
+}
+
+function db_prefix() {
+    return defined('APP_DB_PREFIX') ? APP_DB_PREFIX : 'tbl';
+}
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Force Migration 009 - Recurring Payments & Refunds</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -116,10 +134,14 @@ $CI->load->database();
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
         }
         .btn-execute:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+            color: white;
+            text-decoration: none;
         }
         .execution-log {
             background: #2c3e50;
@@ -128,14 +150,37 @@ $CI->load->database();
             border-radius: 6px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
             margin-top: 20px;
+            line-height: 1.6;
         }
-        .log-success { color: #2ecc71; }
-        .log-error { color: #e74c3c; }
-        .log-warning { color: #f39c12; }
-        .log-info { color: #3498db; }
+        .log-success { color: #2ecc71; font-weight: bold; }
+        .log-error { color: #e74c3c; font-weight: bold; }
+        .log-warning { color: #f39c12; font-weight: bold; }
+        .log-info { color: #3498db; font-weight: bold; }
+        .log-separator {
+            color: #7f8c8d;
+            border-top: 1px solid #34495e;
+            margin: 10px 0;
+            padding-top: 10px;
+        }
+        .btn-back {
+            background: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-back:hover {
+            background: #2980b9;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -162,7 +207,7 @@ $CI->load->database();
                         <i class="fa fa-info-circle"></i>
                         <strong>Cette migration va :</strong>
                         <ul style="margin: 10px 0 0 20px;">
-                            <li>Supprimer l'enregistrement actuel de la migration 009</li>
+                            <li>Supprimer l'enregistrement actuel de la migration 009 (si existe)</li>
                             <li>Créer 3 nouvelles tables (recurring_payments, transactions, refunds)</li>
                             <li>Modifier 3 tables existantes (subscriptions, payments, invoices)</li>
                             <li>Ajouter 8 nouveaux paramètres dans settings</li>
@@ -176,7 +221,7 @@ $CI->load->database();
                         <strong>Suppression enregistrement migration</strong>
                         <br>
                         <small style="color: #6c757d; margin-left: 42px;">
-                            DELETE FROM tbldietic_migrations WHERE migration_name = '009_add_recurring_payments_and_refunds'
+                            DELETE FROM <?php echo db_prefix(); ?>dietic_migrations WHERE migration_name = '009_add_recurring_payments_and_refunds'
                         </small>
                     </div>
 
@@ -203,7 +248,7 @@ $CI->load->database();
                         <strong>Enregistrement migration</strong>
                         <br>
                         <small style="color: #6c757d; margin-left: 42px;">
-                            INSERT INTO tbldietic_migrations avec date d'application
+                            INSERT INTO <?php echo db_prefix(); ?>dietic_migrations avec date d'application
                         </small>
                     </div>
 
@@ -216,6 +261,10 @@ $CI->load->database();
                     <div class="alert alert-warning" style="margin-top: 30px;">
                         <i class="fa fa-shield"></i>
                         <strong>Sécurité :</strong> Supprimez ce fichier après utilisation !
+                        <br>
+                        <code style="background: rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 3px; margin-top: 8px; display: inline-block;">
+                            rm modules/dietetic/migrations/force_execute_009.php
+                        </code>
                     </div>
                     <?php
                 } else {
@@ -230,32 +279,42 @@ $CI->load->database();
                         $errors = 0;
                         $success = 0;
                         $warnings = 0;
+                        $startTime = microtime(true);
+
+                        echo "<span class='log-info'>[INFO]</span> Démarrage de la migration 009...\n";
+                        echo "<span class='log-info'>[INFO]</span> Base de données: " . APP_DB_NAME . "\n";
+                        echo "<span class='log-info'>[INFO]</span> Préfixe: " . db_prefix() . "\n";
+                        echo "<div class='log-separator'></div>\n";
 
                         // Step 1: Delete existing migration record
-                        echo "<span class='log-info'>[INFO]</span> Étape 1/4 : Suppression enregistrement migration...\n";
-                        $CI->db->where('migration_name', '009_add_recurring_payments_and_refunds');
-                        $deleted = $CI->db->delete(db_prefix() . 'dietic_migrations');
+                        echo "<span class='log-info'>[ÉTAPE 1/4]</span> Suppression enregistrement migration...\n";
+                        try {
+                            $stmt = $pdo->prepare("DELETE FROM " . db_prefix() . "dietic_migrations WHERE migration_name = ?");
+                            $stmt->execute(['009_add_recurring_payments_and_refunds']);
+                            $deleted = $stmt->rowCount();
 
-                        if ($deleted) {
-                            echo "<span class='log-success'>[OK]</span> Enregistrement migration supprimé\n\n";
-                        } else {
-                            echo "<span class='log-warning'>[WARN]</span> Aucun enregistrement à supprimer (normal si première exécution)\n\n";
+                            if ($deleted > 0) {
+                                echo "<span class='log-success'>[✓]</span> {$deleted} enregistrement(s) supprimé(s)\n";
+                            } else {
+                                echo "<span class='log-warning'>[⚠]</span> Aucun enregistrement à supprimer (normal si première exécution)\n";
+                            }
+                        } catch (PDOException $e) {
+                            echo "<span class='log-error'>[✗]</span> Erreur: " . $e->getMessage() . "\n";
+                            $errors++;
                         }
+                        echo "<div class='log-separator'></div>\n";
 
                         // Step 2: Load SQL file
-                        echo "<span class='log-info'>[INFO]</span> Étape 2/4 : Chargement fichier SQL...\n";
+                        echo "<span class='log-info'>[ÉTAPE 2/4]</span> Chargement fichier SQL...\n";
                         $sql_file = dirname(__FILE__) . '/add_recurring_payments_and_refunds.sql';
 
                         if (!file_exists($sql_file)) {
-                            echo "<span class='log-error'>[ERROR]</span> Fichier SQL non trouvé : $sql_file\n";
+                            echo "<span class='log-error'>[✗]</span> Fichier SQL non trouvé: $sql_file\n";
                             $errors++;
                         } else {
                             $sql_content = file_get_contents($sql_file);
                             $file_size = number_format(filesize($sql_file) / 1024, 2);
-                            echo "<span class='log-success'>[OK]</span> Fichier chargé ({$file_size} KB)\n\n";
-
-                            // Step 3: Execute SQL
-                            echo "<span class='log-info'>[INFO]</span> Étape 3/4 : Exécution requêtes SQL...\n";
+                            echo "<span class='log-success'>[✓]</span> Fichier chargé ({$file_size} KB)\n";
 
                             // Replace table prefix
                             $sql_content = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $sql_content);
@@ -270,7 +329,11 @@ $CI->load->database();
                                 function($stmt) { return !empty($stmt); }
                             );
 
-                            echo "<span class='log-info'>[INFO]</span> " . count($statements) . " requêtes à exécuter\n\n";
+                            echo "<span class='log-info'>[INFO]</span> " . count($statements) . " requêtes à exécuter\n";
+                            echo "<div class='log-separator'></div>\n";
+
+                            // Step 3: Execute SQL
+                            echo "<span class='log-info'>[ÉTAPE 3/4]</span> Exécution requêtes SQL...\n\n";
 
                             foreach ($statements as $index => $statement) {
                                 $statement = trim($statement);
@@ -278,7 +341,7 @@ $CI->load->database();
 
                                 $num = $index + 1;
 
-                                // Get statement type
+                                // Get statement type and target
                                 if (preg_match('/^CREATE TABLE.*?`([^`]+)`/i', $statement, $matches)) {
                                     $type = "CREATE TABLE";
                                     $target = $matches[1];
@@ -286,66 +349,65 @@ $CI->load->database();
                                     $type = "ALTER TABLE";
                                     $target = $matches[1];
                                 } elseif (preg_match('/^INSERT INTO.*?`([^`]+)`/i', $statement, $matches)) {
-                                    $type = "INSERT INTO";
+                                    $type = "INSERT";
                                     $target = $matches[1];
                                 } else {
                                     $type = "SQL";
-                                    $target = substr($statement, 0, 50) . "...";
+                                    $target = substr($statement, 0, 40) . "...";
                                 }
 
                                 try {
-                                    $result = $CI->db->query($statement);
+                                    $pdo->exec($statement);
+                                    echo "<span class='log-success'>[✓ {$num}]</span> {$type} {$target}\n";
+                                    $success++;
+                                } catch (PDOException $e) {
+                                    $errorCode = $e->getCode();
+                                    $errorMsg = $e->getMessage();
 
-                                    if ($result) {
-                                        echo "<span class='log-success'>[OK {$num}]</span> {$type} {$target}\n";
-                                        $success++;
+                                    // Check if it's a duplicate error (not critical)
+                                    if (strpos($errorMsg, 'Duplicate') !== false ||
+                                        strpos($errorMsg, 'already exists') !== false ||
+                                        $errorCode == '42S01' || // Table already exists
+                                        $errorCode == '23000') { // Duplicate entry
+                                        echo "<span class='log-warning'>[⚠ {$num}]</span> {$type} {$target} (déjà existe)\n";
+                                        $warnings++;
                                     } else {
-                                        $error = $CI->db->error();
-                                        if ($error['code'] == 1060 || $error['code'] == 1061 || $error['code'] == 1050) {
-                                            // Duplicate column/key/table - not critical
-                                            echo "<span class='log-warning'>[SKIP {$num}]</span> {$type} {$target} (déjà existe)\n";
-                                            $warnings++;
-                                        } else {
-                                            echo "<span class='log-error'>[ERROR {$num}]</span> {$type} {$target}\n";
-                                            echo "<span class='log-error'>    └─ Code: {$error['code']}, Message: {$error['message']}</span>\n";
-                                            $errors++;
-                                        }
+                                        echo "<span class='log-error'>[✗ {$num}]</span> {$type} {$target}\n";
+                                        echo "<span class='log-error'>    └─ Erreur: {$errorMsg}</span>\n";
+                                        $errors++;
                                     }
-                                } catch (Exception $e) {
-                                    echo "<span class='log-error'>[ERROR {$num}]</span> {$type} {$target}\n";
-                                    echo "<span class='log-error'>    └─ Exception: {$e->getMessage()}</span>\n";
-                                    $errors++;
                                 }
                             }
 
-                            echo "\n";
+                            echo "<div class='log-separator'></div>\n";
 
                             // Step 4: Register migration
-                            echo "<span class='log-info'>[INFO]</span> Étape 4/4 : Enregistrement migration...\n";
-                            $migration_data = [
-                                'migration_name' => '009_add_recurring_payments_and_refunds',
-                                'applied_at' => date('Y-m-d H:i:s')
-                            ];
-
-                            if ($CI->db->insert(db_prefix() . 'dietic_migrations', $migration_data)) {
-                                echo "<span class='log-success'>[OK]</span> Migration enregistrée dans la base de données\n\n";
-                            } else {
-                                echo "<span class='log-error'>[ERROR]</span> Échec enregistrement migration\n\n";
+                            echo "<span class='log-info'>[ÉTAPE 4/4]</span> Enregistrement migration...\n";
+                            try {
+                                $stmt = $pdo->prepare("INSERT INTO " . db_prefix() . "dietic_migrations (migration_name, applied_at) VALUES (?, ?)");
+                                $stmt->execute(['009_add_recurring_payments_and_refunds', date('Y-m-d H:i:s')]);
+                                echo "<span class='log-success'>[✓]</span> Migration enregistrée dans la base de données\n";
+                            } catch (PDOException $e) {
+                                echo "<span class='log-error'>[✗]</span> Erreur enregistrement: " . $e->getMessage() . "\n";
                                 $errors++;
                             }
                         }
 
+                        $endTime = microtime(true);
+                        $duration = round($endTime - $startTime, 2);
+
                         // Summary
+                        echo "<div class='log-separator'></div>\n";
                         echo "================================================================================\n";
-                        echo "<span class='log-info'>[RÉSUMÉ]</span> Exécution terminée\n\n";
-                        echo "<span class='log-success'>[✓]</span> Succès : {$success}\n";
+                        echo "<span class='log-info'>[RÉSUMÉ]</span> Exécution terminée en {$duration} secondes\n\n";
+                        echo "<span class='log-success'>[✓]</span> Succès     : {$success}\n";
 
                         if ($warnings > 0) {
-                            echo "<span class='log-warning'>[⚠]</span> Ignorés : {$warnings} (déjà existants)\n";
+                            echo "<span class='log-warning'>[⚠]</span> Ignorés    : {$warnings} (déjà existants)\n";
                         }
 
                         if ($errors > 0) {
-                            echo "<span class='log-error'>[✗]</span> Erreurs : {$errors}\n";
+                            echo "<span class='log-error'>[✗]</span> Erreurs    : {$errors}\n";
                         }
 
                         echo "================================================================================\n";
@@ -359,35 +421,38 @@ $CI->load->database();
                             <ul style="margin: 10px 0 0 20px;">
                                 <li><?php echo $success; ?> opérations réussies</li>
                                 <?php if ($warnings > 0): ?>
-                                    <li><?php echo $warnings; ?> éléments ignorés (déjà existants)</li>
+                                    <li><?php echo $warnings; ?> éléments ignorés (déjà existants - normal)</li>
                                 <?php endif; ?>
+                                <li>Durée: <?php echo $duration; ?> secondes</li>
                             </ul>
                         </div>
 
                         <div style="text-align: center; margin-top: 30px;">
-                            <a href="<?php echo admin_url('dietetic/migrations'); ?>" class="btn btn-primary btn-lg">
+                            <a href="https://app.dietsenegal.net/admin/dietetic/migrations" class="btn-back">
                                 <i class="fa fa-arrow-left"></i> Retour à la page Migrations
                             </a>
                         </div>
 
                         <div class="alert alert-warning" style="margin-top: 20px;">
                             <i class="fa fa-trash"></i>
-                            <strong>IMPORTANT :</strong> Supprimez ce fichier maintenant !
+                            <strong>IMPORTANT :</strong> Supprimez ce fichier maintenant pour des raisons de sécurité !
+                            <br><br>
+                            <strong>Via SSH :</strong>
                             <br>
-                            <code style="background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 3px; margin-top: 10px; display: inline-block;">
-                                rm /home/user/Dietzone/modules/dietetic/migrations/force_execute_009.php
+                            <code style="background: #2c3e50; color: #2ecc71; padding: 8px 12px; border-radius: 3px; margin-top: 10px; display: inline-block; font-size: 14px;">
+                                rm modules/dietetic/migrations/force_execute_009.php
                             </code>
                         </div>
                     <?php else: ?>
                         <div class="alert alert-danger" style="margin-top: 20px;">
                             <i class="fa fa-exclamation-triangle"></i>
-                            <strong>Erreurs détectées !</strong>
+                            <strong><?php echo $errors; ?> erreur(s) détectée(s) !</strong>
                             <br>
                             Consultez le log ci-dessus pour plus de détails.
                         </div>
 
                         <div style="text-align: center; margin-top: 20px;">
-                            <a href="?execute=yes" class="btn btn-warning">
+                            <a href="?execute=yes" class="btn btn-warning" style="padding: 12px 30px; font-weight: 600;">
                                 <i class="fa fa-refresh"></i> Réessayer
                             </a>
                         </div>
@@ -399,7 +464,7 @@ $CI->load->database();
         </div>
 
         <div style="text-align: center; margin-top: 20px; color: #6c757d;">
-            <small>Force Execute Migration 009 - Dietzone Project</small>
+            <small>Force Execute Migration 009 - Dietzone Project - Phase 10</small>
         </div>
     </div>
 </body>
