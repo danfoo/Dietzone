@@ -368,3 +368,24 @@ $lang['refund_total_refunded'] = 'Total Remboursé';
 $lang['refund_success'] = 'Remboursement effectué avec succès';
 $lang['refund_failed'] = 'Échec du remboursement';
 $lang['refund_requires_approval'] = 'Nécessite Approbation';
+
+// Patient Portal - Subscriptions
+$lang['my_subscriptions'] = 'Mes Abonnements';
+$lang['subscription_details'] = 'Détails de l\'Abonnement';
+$lang['no_subscriptions'] = 'Aucun Abonnement';
+$lang['no_subscriptions_message'] = 'Vous n\'avez pas encore d\'abonnement actif.';
+$lang['view_subscription'] = 'Voir l\'Abonnement';
+$lang['subscription_status_active'] = 'Actif';
+$lang['subscription_status_expired'] = 'Expiré';
+$lang['subscription_status_cancelled'] = 'Annulé';
+$lang['subscription_status_pending'] = 'En Attente';
+$lang['subscription_start_date'] = 'Date de Début';
+$lang['subscription_end_date'] = 'Date de Fin';
+$lang['subscription_duration'] = 'Durée';
+$lang['subscription_days_remaining'] = 'Jours Restants';
+$lang['subscription_recurring_active'] = 'Paiement Récurrent Actif';
+$lang['subscription_next_payment'] = 'Prochain Paiement';
+$lang['subscription_history'] = 'Historique des Paiements Récurrents';
+$lang['subscription_related_invoices'] = 'Factures Associées';
+$lang['subscription_per_month'] = 'par mois';
+$lang['back_to_subscriptions'] = 'Retour aux Abonnements';

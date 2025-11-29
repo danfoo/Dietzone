@@ -131,7 +131,10 @@ class Portal extends App_Controller
             'api_get_today_activities',
             // Invoice and payment methods
             'invoices',
-            'invoice'
+            'invoice',
+            // Subscription management methods
+            'subscriptions',
+            'subscription'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -6931,6 +6934,92 @@ class Portal extends App_Controller
             log_activity('[DIETETIC ERROR] Failed to get patient: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Display patient subscriptions
+     */
+    public function subscriptions()
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_subscriptions_model');
+        $this->load->model('dietetic/dietetic_service_plans_model');
+        $this->load->model('dietetic/dietetic_recurring_payments_model');
+
+        // Get patient's subscriptions
+        $subscriptions = $this->dietetic_subscriptions_model->get_by_patient($patient->id);
+
+        // For each subscription, get recurring payment info if applicable
+        foreach ($subscriptions as $subscription) {
+            if (!empty($subscription->recurring_payment_id)) {
+                $subscription->recurring_payment = $this->dietetic_recurring_payments_model->get($subscription->recurring_payment_id);
+            }
+        }
+
+        $data['subscriptions'] = $subscriptions;
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Abonnements';
+        $data['active_page'] = 'subscriptions';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        $this->data($data);
+        $this->view('portal_subscriptions');
+        $this->layout();
+    }
+
+    /**
+     * View single subscription
+     */
+    public function subscription($id)
+    {
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $this->load->model('dietetic/dietetic_subscriptions_model');
+        $this->load->model('dietetic/dietetic_recurring_payments_model');
+        $this->load->model('dietetic/dietetic_invoices_model');
+
+        $subscription = $this->dietetic_subscriptions_model->get($id);
+
+        if (!$subscription || $subscription->patient_id != $patient->id) {
+            show_404();
+        }
+
+        // Get recurring payment if applicable
+        if (!empty($subscription->recurring_payment_id)) {
+            $subscription->recurring_payment = $this->dietetic_recurring_payments_model->get($subscription->recurring_payment_id);
+
+            // Get transactions for this recurring payment
+            $subscription->recurring_transactions = $this->dietetic_recurring_payments_model->get_transactions($subscription->recurring_payment_id);
+        }
+
+        // Get invoices for this subscription
+        $invoices = $this->dietetic_invoices_model->get_all(['i.subscription_id' => $id]);
+
+        $data['subscription'] = $subscription;
+        $data['invoices'] = $invoices;
+        $data['patient'] = $patient;
+        $data['title'] = 'Détails Abonnement';
+        $data['active_page'] = 'subscriptions';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        $this->data($data);
+        $this->view('portal_subscription_view');
+        $this->layout();
     }
 
     /**
