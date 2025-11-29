@@ -77,14 +77,9 @@
                                     </thead>
                                     <tbody>
                                         <?php
-                                        $this->load->model('dietetic/dietetic_refunds_model');
-
-                                        $where = [];
-                                        if ($this->input->get('status')) {
-                                            $where['r.status'] = $this->input->get('status');
+                                        if (!isset($refunds)) {
+                                            $refunds = [];
                                         }
-
-                                        $refunds = $this->dietetic_refunds_model->get_all($where);
 
                                         foreach ($refunds as $refund) {
                                             $status_class = '';
@@ -109,22 +104,30 @@
                                             <tr>
                                                 <td><?php echo $refund->id; ?></td>
                                                 <td>
-                                                    <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
-                                                        <?php echo $refund->patient_name; ?>
-                                                    </a>
+                                                    <?php if ($refund->patient_id && $refund->patient_name) { ?>
+                                                        <a href="<?php echo admin_url('dietetic/patients/view/' . $refund->patient_id); ?>">
+                                                            <?php echo $refund->patient_name; ?>
+                                                        </a>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
                                                 </td>
                                                 <td>
-                                                    <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
-                                                        <?php echo $refund->invoice_number; ?>
-                                                    </a>
+                                                    <?php if ($refund->invoice_id && $refund->invoice_number) { ?>
+                                                        <a href="<?php echo admin_url('dietetic/invoices/view/' . $refund->invoice_id); ?>">
+                                                            <?php echo $refund->invoice_number; ?>
+                                                        </a>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">-</span>
+                                                    <?php } ?>
                                                 </td>
                                                 <td>
                                                     <span class="label label-<?php echo $refund->refund_type == 'full' ? 'primary' : 'default'; ?>">
                                                         <?php echo _l('refund_type_' . $refund->refund_type); ?>
                                                     </span>
                                                 </td>
-                                                <td><?php echo app_format_money($refund->refund_amount, $refund->currency); ?></td>
-                                                <td><?php echo character_limiter($refund->reason, 50); ?></td>
+                                                <td><?php echo app_format_money($refund->refund_amount, $refund->currency ?? 'XOF'); ?></td>
+                                                <td><?php echo character_limiter($refund->reason ?? '', 50); ?></td>
                                                 <td>
                                                     <span class="label label-<?php echo $status_class; ?>">
                                                         <?php echo _l('refund_status_' . $refund->status); ?>

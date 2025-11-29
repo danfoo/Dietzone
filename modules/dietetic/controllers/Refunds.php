@@ -30,10 +30,22 @@ class Refunds extends AdminController
             $this->app->get_table_data('dietetic_refunds');
         }
 
+        // Build where clause based on status filter
+        $where = [];
+        $status_filter = $this->input->get('status');
+        if ($status_filter) {
+            $where['r.status'] = $status_filter;
+        }
+
+        // Get refunds list
+        $data['refunds'] = $this->dietetic_refunds_model->get_all($where);
+
         $data['title'] = _l('refunds');
+
         // Count pending refunds manually
         $pending_refunds = $this->dietetic_refunds_model->get_all(['r.status' => 'pending']);
         $data['pending_count'] = count($pending_refunds);
+
         $this->load->view('admin/refunds/manage', $data);
     }
 
