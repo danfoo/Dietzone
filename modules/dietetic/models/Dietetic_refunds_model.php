@@ -161,7 +161,7 @@ class Dietetic_refunds_model extends App_Model
     /**
      * Approve a pending refund
      */
-    public function approve($id)
+    public function approve($id, $notes = null, $auto_process = false)
     {
         if (!is_admin()) {
             return ['success' => false, 'error' => 'Only admins can approve refunds'];
@@ -177,17 +177,27 @@ class Dietetic_refunds_model extends App_Model
             return ['success' => false, 'error' => 'Refund is not pending approval'];
         }
 
-        $this->db->where('id', $id);
-        $this->db->update(db_prefix() . $this->table, [
+        $update_data = [
             'status' => 'processing',
             'approved_by' => get_staff_user_id(),
             'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        ];
+
+        if ($notes) {
+            $update_data['notes'] = ($refund->notes ? $refund->notes . "\n\n" : '') . 'Approval notes: ' . $notes;
+        }
+
+        $this->db->where('id', $id);
+        $this->db->update(db_prefix() . $this->table, $update_data);
 
         log_activity('Refund Approved [ID: ' . $id . ']');
 
-        // Process the refund
-        return $this->process_refund($id);
+        // Process the refund if auto_process is enabled
+        if ($auto_process) {
+            return $this->process_refund($id);
+        }
+
+        return ['success' => true];
     }
 
     /**
@@ -222,12 +232,26 @@ class Dietetic_refunds_model extends App_Model
     /**
      * Process a refund (execute the actual refund)
      */
-    public function process_refund($id)
+    public function process_refund($id, $manual_reference = null, $notes = null)
     {
         $refund = $this->get($id);
 
-        if (!$refund || $refund->status != 'processing') {
-            return ['success' => false, 'error' => 'Invalid refund or status'];
+        if (!$refund) {
+            return ['success' => false, 'error' => 'Refund not found'];
+        }
+
+        if (!in_array($refund->status, ['pending', 'processing'])) {
+            return ['success' => false, 'error' => 'Refund cannot be processed in current status'];
+        }
+
+        // Update status to processing if it was pending
+        if ($refund->status == 'pending') {
+            $this->db->where('id', $id);
+            $this->db->update(db_prefix() . $this->table, [
+                'status' => 'processing',
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            $refund->status = 'processing';
         }
 
         $this->db->trans_start();
@@ -243,14 +267,20 @@ class Dietetic_refunds_model extends App_Model
 
         if ($gateway_result['success']) {
             // Gateway refund successful
-            $this->db->where('id', $id);
-            $this->db->update(db_prefix() . $this->table, [
+            $update_data = [
                 'status' => 'completed',
                 'completed_date' => date('Y-m-d H:i:s'),
-                'refund_reference' => $gateway_result['reference'] ?? null,
+                'refund_reference' => $manual_reference ?? ($gateway_result['reference'] ?? null),
                 'transaction_id' => $gateway_result['transaction_id'] ?? null,
                 'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            ];
+
+            if ($notes) {
+                $update_data['notes'] = ($refund->notes ? $refund->notes . "\n\n" : '') . 'Processing notes: ' . $notes;
+            }
+
+            $this->db->where('id', $id);
+            $this->db->update(db_prefix() . $this->table, $update_data);
 
             // Update payment record
             $current_refunded = $this->db->select('refunded_amount')

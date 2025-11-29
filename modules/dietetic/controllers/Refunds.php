@@ -266,16 +266,23 @@ class Refunds extends AdminController
         }
 
         $status = $this->input->get('status');
-        $refunds = $this->dietetic_refunds_model->get_all($status);
+
+        // Build where clause based on status filter
+        $where = [];
+        if ($status) {
+            $where['r.status'] = $status;
+        }
+
+        $refunds = $this->dietetic_refunds_model->get_all($where);
 
         // Generate CSV
         $this->load->helper('download');
-        $csv_data = "Refund Number,Patient,Invoice,Payment,Amount,Type,Status,Reason,Initiated Date,Processed Date\n";
+        $csv_data = "Refund ID,Patient,Invoice,Payment,Amount,Type,Status,Reason,Initiated Date,Processed Date\n";
 
         foreach ($refunds as $refund) {
             $csv_data .= sprintf(
                 "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                $refund->refund_number,
+                $refund->id,
                 '"' . $refund->patient_name . '"',
                 $refund->invoice_number,
                 $refund->payment_reference,
