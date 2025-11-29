@@ -389,3 +389,44 @@ $lang['subscription_history'] = 'Historique des Paiements Récurrents';
 $lang['subscription_related_invoices'] = 'Factures Associées';
 $lang['subscription_per_month'] = 'par mois';
 $lang['back_to_subscriptions'] = 'Retour aux Abonnements';
+
+// Refund Actions - Approve
+$lang['refund_approval_confirmation'] = 'Confirmation d\'Approbation';
+$lang['refund_approval_info_text'] = 'Vous êtes sur le point d\'approuver cette demande de remboursement. Veuillez vérifier les détails ci-dessous avant de continuer.';
+$lang['approval_notes'] = 'Notes d\'Approbation';
+$lang['approval_notes_placeholder'] = 'Ajouter des notes concernant l\'approbation (optionnel)';
+$lang['auto_process_refund_after_approval'] = 'Traiter automatiquement le remboursement après approbation';
+$lang['auto_process_refund_help_text'] = 'Si coché, le remboursement sera traité automatiquement après approbation. Sinon, il devra être traité manuellement.';
+$lang['approve_refund'] = 'Approuver le Remboursement';
+$lang['refund_cannot_be_approved'] = 'Ce remboursement ne peut pas être approuvé. Statut actuel invalide ou remboursement introuvable.';
+
+// Refund Actions - Reject
+$lang['refund_rejection_warning'] = 'Avertissement de Rejet';
+$lang['refund_rejection_warning_text'] = 'Vous êtes sur le point de rejeter cette demande de remboursement. Cette action annulera définitivement la demande.';
+$lang['rejection_reason'] = 'Raison du Rejet';
+$lang['rejection_reason_placeholder'] = 'Expliquer pourquoi cette demande de remboursement est rejetée';
+$lang['rejection_reason_help_text'] = 'Cette raison sera enregistrée et le patient pourra la consulter.';
+$lang['reject_refund'] = 'Rejeter le Remboursement';
+$lang['refund_cannot_be_rejected'] = 'Ce remboursement ne peut pas être rejeté. Statut actuel invalide ou remboursement introuvable.';
+
+// Refund Actions - Process
+$lang['manual_refund_processing'] = 'Traitement Manuel du Remboursement';
+$lang['manual_refund_processing_text'] = 'Utilisez ce formulaire pour marquer manuellement un remboursement comme traité après avoir effectué le remboursement via votre système de paiement.';
+$lang['process_refund_instructions'] = 'Instructions de Traitement';
+$lang['process_refund_step_1'] = 'Effectuez le remboursement via votre système de paiement (PayPal, Wave, virement bancaire, etc.)';
+$lang['process_refund_step_2'] = 'Notez la référence de transaction fournie par le système de paiement';
+$lang['process_refund_step_3'] = 'Remplissez le formulaire ci-dessous pour confirmer le remboursement';
+$lang['refund_transaction_reference'] = 'Référence de Transaction de Remboursement';
+$lang['refund_reference_placeholder'] = 'Ex: PAYPAL-REF-123456, WAVE-789012, VIR-345678';
+$lang['refund_reference_help_text'] = 'Saisissez la référence fournie par votre système de paiement après avoir effectué le remboursement.';
+$lang['processing_notes'] = 'Notes de Traitement';
+$lang['processing_notes_placeholder'] = 'Ajouter des détails sur le traitement du remboursement (optionnel)';
+$lang['mark_refund_as_processed'] = 'Marquer comme Traité';
+$lang['refund_cannot_be_processed'] = 'Ce remboursement ne peut pas être traité. Statut actuel invalide ou remboursement introuvable.';
+
+// Additional Refund Translations
+$lang['refund_details'] = 'Détails du Remboursement';
+$lang['refund_reason'] = 'Raison du Remboursement';
+$lang['confirm_approve_refund'] = 'Êtes-vous sûr de vouloir approuver ce remboursement ?';
+$lang['confirm_reject_refund'] = 'Êtes-vous sûr de vouloir rejeter ce remboursement ?';
+$lang['confirm_process_refund'] = 'Êtes-vous sûr de vouloir traiter ce remboursement ?';
