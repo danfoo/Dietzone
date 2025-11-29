@@ -30,7 +30,7 @@ class Recurring_payments extends AdminController
         }
 
         $data['title'] = _l('recurring_payments');
-        $this->load->view('dietetic/recurring_payments/manage', $data);
+        $this->load->view('admin/recurring_payments/manage', $data);
     }
 
     /**
@@ -56,7 +56,7 @@ class Recurring_payments extends AdminController
         $data['statistics'] = $this->dietetic_recurring_payments_model->get_recurring_statistics($id);
         $data['title'] = _l('recurring_payment') . ' #' . $id;
 
-        $this->load->view('dietetic/recurring_payments/view', $data);
+        $this->load->view('admin/recurring_payments/view', $data);
     }
 
     /**
@@ -91,7 +91,7 @@ class Recurring_payments extends AdminController
         }
 
         $data['title'] = _l('new_recurring_payment');
-        $this->load->view('dietetic/recurring_payments/form', $data);
+        $this->load->view('admin/recurring_payments/form', $data);
     }
 
     /**
@@ -127,7 +127,7 @@ class Recurring_payments extends AdminController
         $data['patient'] = $this->dietetic_patients_model->get($recurring->patient_id);
         $data['title'] = _l('edit_recurring_payment');
 
-        $this->load->view('dietetic/recurring_payments/form', $data);
+        $this->load->view('admin/recurring_payments/form', $data);
     }
 
     /**
@@ -194,7 +194,7 @@ class Recurring_payments extends AdminController
         $data['recurring'] = $this->dietetic_recurring_payments_model->get($id);
         $data['title'] = _l('cancel_recurring_payment');
 
-        $this->load->view('dietetic/recurring_payments/cancel', $data);
+        $this->load->view('admin/recurring_payments/cancel', $data);
     }
 
     /**

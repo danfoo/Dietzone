@@ -32,7 +32,7 @@ class Refunds extends AdminController
 
         $data['title'] = _l('refunds');
         $data['pending_count'] = $this->dietetic_refunds_model->count_by_status('pending');
-        $this->load->view('dietetic/refunds/manage', $data);
+        $this->load->view('admin/refunds/manage', $data);
     }
 
     /**
@@ -57,7 +57,7 @@ class Refunds extends AdminController
         $data['patient'] = $this->dietetic_patients_model->get($refund->patient_id);
         $data['title'] = _l('refund') . ' #' . $refund->refund_number;
 
-        $this->load->view('dietetic/refunds/view', $data);
+        $this->load->view('admin/refunds/view', $data);
     }
 
     /**
@@ -97,7 +97,7 @@ class Refunds extends AdminController
         }
 
         $data['title'] = _l('initiate_refund');
-        $this->load->view('dietetic/refunds/form', $data);
+        $this->load->view('admin/refunds/form', $data);
     }
 
     /**
@@ -128,7 +128,7 @@ class Refunds extends AdminController
         $data['payment'] = $this->dietetic_payments_model->get($data['refund']->payment_id);
         $data['title'] = _l('approve_refund');
 
-        $this->load->view('dietetic/refunds/approve', $data);
+        $this->load->view('admin/refunds/approve', $data);
     }
 
     /**
@@ -163,7 +163,7 @@ class Refunds extends AdminController
         $data['refund'] = $this->dietetic_refunds_model->get($id);
         $data['title'] = _l('reject_refund');
 
-        $this->load->view('dietetic/refunds/reject', $data);
+        $this->load->view('admin/refunds/reject', $data);
     }
 
     /**
@@ -194,7 +194,7 @@ class Refunds extends AdminController
         $data['payment'] = $this->dietetic_payments_model->get($data['refund']->payment_id);
         $data['title'] = _l('process_refund');
 
-        $this->load->view('dietetic/refunds/process', $data);
+        $this->load->view('admin/refunds/process', $data);
     }
 
     /**
@@ -235,7 +235,7 @@ class Refunds extends AdminController
         $data['refund'] = $this->dietetic_refunds_model->get($id);
         $data['title'] = _l('cancel_refund');
 
-        $this->load->view('dietetic/refunds/cancel', $data);
+        $this->load->view('admin/refunds/cancel', $data);
     }
 
     /**
