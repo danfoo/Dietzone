@@ -132,10 +132,10 @@ $this->load->view('portal/includes/portal_header');
 /* Enhanced Stat Cards - Mobile App Design */
 .enhanced-stat-card {
     position: relative;
-    padding: 12px 14px !important;
+    padding: 20px 15px !important;
     height: 110px !important;
-    min-height: 110px !important;
-    max-height: 110px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
     border-radius: 16px !important;
     border: none !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
@@ -250,9 +250,9 @@ $this->load->view('portal/includes/portal_header');
     align-items: center;
     justify-content: center;
     font-size: 18px !important;
-    background: rgba(255, 255, 255, 0.6);
+    background: none;
     border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 /* Enhanced Value Styling */
