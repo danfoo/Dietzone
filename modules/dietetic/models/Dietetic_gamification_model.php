@@ -400,7 +400,7 @@ class Dietetic_gamification_model extends App_Model
         $new_badges = 0;
 
         // Check streak badges
-        $streak = $this->dietetic_daily_tracking_model->get_current_streak($patient_id);
+        $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient_id);
         $new_badges += $this->check_streak_badges($patient_id, $streak);
 
         // Check weight loss badges
@@ -493,9 +493,13 @@ class Dietetic_gamification_model extends App_Model
     private function check_nutrition_badges($patient_id)
     {
         // Count days with meals logged
-        $this->db->select('COUNT(DISTINCT DATE(created_at)) as days_count');
+        $this->db->select('COUNT(DISTINCT tracking_date) as days_count');
         $this->db->where('patient_id', $patient_id);
-        $this->db->where('meals_validated >', 0);
+        $this->db->group_start();
+        $this->db->where('breakfast_checked', 1);
+        $this->db->or_where('lunch_checked', 1);
+        $this->db->or_where('dinner_checked', 1);
+        $this->db->group_end();
         $result = $this->db->get(db_prefix() . 'dietic_daily_tracking')->row();
 
         $days_logged = $result ? $result->days_count : 0;
@@ -525,9 +529,9 @@ class Dietetic_gamification_model extends App_Model
     private function check_hydration_badges($patient_id)
     {
         // Count days with water logged
-        $this->db->select('COUNT(DISTINCT DATE(created_at)) as days_count');
+        $this->db->select('COUNT(DISTINCT tracking_date) as days_count');
         $this->db->where('patient_id', $patient_id);
-        $this->db->where('water_intake >', 0);
+        $this->db->where('water_glasses >', 0);
         $result = $this->db->get(db_prefix() . 'dietic_daily_tracking')->row();
 
         $days_logged = $result ? $result->days_count : 0;
