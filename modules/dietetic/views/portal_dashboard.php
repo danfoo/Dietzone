@@ -132,13 +132,19 @@ $this->load->view('portal/includes/portal_header');
 /* Enhanced Stat Cards - Mobile App Design */
 .enhanced-stat-card {
     position: relative;
-    padding: 20px 16px !important;
-    min-height: 160px !important;
+    padding: 12px 14px !important;
+    height: 110px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
     border-radius: 16px !important;
     border: none !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .enhanced-stat-card::before {
@@ -217,13 +223,13 @@ $this->load->view('portal/includes/portal_header');
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    margin-top: 12px;
-    padding: 8px 14px;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 5px 10px;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 24px;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: #2d3748;
     letter-spacing: 0.3px;
@@ -232,18 +238,18 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .stat-category i {
-    font-size: 12px;
+    font-size: 10px;
 }
 
 /* Improved Icon Container */
 .enhanced-stat-card .stat-icon {
-    width: 48px !important;
-    height: 48px !important;
-    margin: 0 auto 12px !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 auto 4px !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px !important;
+    font-size: 18px !important;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -251,9 +257,9 @@ $this->load->view('portal/includes/portal_header');
 
 /* Enhanced Value Styling */
 .enhanced-stat-card .stat-value {
-    font-size: 32px !important;
+    font-size: 24px !important;
     font-weight: 900 !important;
-    margin: 8px 0 !important;
+    margin: 4px 0 2px 0 !important;
 }
 
 /* Hydration Section - Compact Version */
