@@ -97,6 +97,14 @@ class Portal extends App_Controller
             // Legal pages
             'privacy',
             'terms',
+            // Blog methods
+            'blog',
+            'blog_article',
+            'blog_search',
+            // Gamification
+            'achievements',
+            'gamification_diagnostic',
+            'test_api_php',
             // Profile methods
             'profile',
             'update_password',
@@ -170,6 +178,37 @@ class Portal extends App_Controller
             $this->ratings_model_loaded = true;
             return true;
         } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if gamification system is ready to use
+     *
+     * @return bool True if gamification tables exist and model can be loaded
+     */
+    private function is_gamification_ready()
+    {
+        try {
+            // Check if all required tables exist
+            $required_tables = [
+                db_prefix() . 'dietic_badge_definitions',
+                db_prefix() . 'dietic_patient_points',
+                db_prefix() . 'dietic_patient_badges',
+                db_prefix() . 'dietic_points_history'
+            ];
+
+            foreach ($required_tables as $table) {
+                if (!$this->db->table_exists($table)) {
+                    return false;
+                }
+            }
+
+            // Try to load the model
+            $this->load->model('dietetic/dietetic_gamification_model');
+            return true;
+        } catch (Exception $e) {
+            log_activity('Gamification readiness check failed: ' . $e->getMessage());
             return false;
         }
     }
@@ -297,6 +336,19 @@ class Portal extends App_Controller
             ];
             $data['tracking_streak'] = 0;
             $data['tracking_completion'] = 0;
+        }
+
+        // Get recent blog articles for carousel (if blog enabled)
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_blog_articles')) {
+                $this->load->model('dietetic/dietetic_blog_model');
+                // Get 6 most recent published articles
+                $data['blog_articles'] = $this->dietetic_blog_model->get_published(6, 0);
+            } else {
+                $data['blog_articles'] = [];
+            }
+        } catch (Exception $e) {
+            $data['blog_articles'] = [];
         }
 
         $this->load->view('portal_dashboard', $data);
@@ -5152,6 +5204,8 @@ class Portal extends App_Controller
     public function api_toggle_meal()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'error' => 'Not authenticated']);
@@ -5186,6 +5240,29 @@ class Portal extends App_Controller
             if ($success) {
                 $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
                 $field = $meal . '_checked';
+
+                // Award points if meal was checked (validated)
+                if ($checked && $this->is_gamification_ready()) {
+                    try {
+                        $meal_names = [
+                            'breakfast' => 'Petit-déjeuner',
+                            'lunch' => 'Déjeuner',
+                            'dinner' => 'Dîner'
+                        ];
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            5,
+                            'meal_validated',
+                            $meal_names[$meal] . ' validé'
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in toggle_meal: ' . $e->getMessage());
+                    }
+                }
+
                 echo json_encode([
                     'success' => true,
                     'checked' => (bool)$tracking->$field
@@ -6409,6 +6486,8 @@ class Portal extends App_Controller
         ob_clean();
 
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -6450,6 +6529,24 @@ class Portal extends App_Controller
             $entry_id = $this->db->insert_id();
 
             if ($entry_id) {
+                // Award points for hydration tracking
+                if ($this->is_gamification_ready()) {
+                    try {
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            3,
+                            'hydration_logged',
+                            "Hydratation enregistrée: {$quantity_ml}ml",
+                            $entry_id
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in api_add_hydration: ' . $e->getMessage());
+                    }
+                }
+
                 // Get new total
                 $this->db->select_sum('quantity_ml');
                 $this->db->where('patient_id', $patient->id);
@@ -6690,6 +6787,8 @@ class Portal extends App_Controller
 
         if (!$redirect_to_dashboard) {
             header('Content-Type: application/json');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
         }
 
         $patient = $this->get_logged_in_patient();
@@ -6740,6 +6839,24 @@ class Portal extends App_Controller
             $result = $this->dietetic_activities_model->add_patient_activity($data);
 
             if ($result) {
+                // Award points for activity
+                if ($this->is_gamification_ready()) {
+                    try {
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            15,
+                            'activity_logged',
+                            "Activité sportive: {$duration_minutes} min - {$kcal_burned} kcal",
+                            $result
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in add_activity: ' . $e->getMessage());
+                    }
+                }
+
                 if ($redirect_to_dashboard) {
                     set_alert('success', 'Activité ajoutée avec succès');
                     redirect(site_url('dietetic/portal'));
@@ -7100,16 +7217,23 @@ class Portal extends App_Controller
      */
     public function blog()
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
 
         // Pagination
-        $per_page = 12;
+        $per_page = 10;
         $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
         $offset = ($page - 1) * $per_page;
 
@@ -7118,10 +7242,16 @@ class Portal extends App_Controller
 
         // Get articles
         $articles = $this->dietetic_blog_model->get_published($per_page, $offset, $category);
-        $total_articles = $this->dietetic_blog_model->get_count([
-            'status' => 'published',
-            'published_at <=' => date('Y-m-d H:i:s')
-        ]);
+
+        // Count total articles (filtered by category if applicable)
+        if ($category) {
+            $total_articles = count($this->dietetic_blog_model->get_published(999999, 0, $category));
+        } else {
+            $total_articles = $this->dietetic_blog_model->get_count([
+                'status' => 'published',
+                'published_at <=' => date('Y-m-d H:i:s')
+            ]);
+        }
 
         // Get categories
         $categories = $this->dietetic_blog_model->get_all_categories();
@@ -7143,9 +7273,8 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/index');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/index', $data);
     }
 
     /**
@@ -7153,10 +7282,17 @@ class Portal extends App_Controller
      */
     public function blog_article($slug)
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
@@ -7191,9 +7327,8 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/article');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/article', $data);
     }
 
     /**
@@ -7201,17 +7336,24 @@ class Portal extends App_Controller
      */
     public function blog_search()
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
 
         $query = $this->input->get('q', true);
 
-        $per_page = 12;
+        $per_page = 10;
         $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
         $offset = ($page - 1) * $per_page;
 
@@ -7227,9 +7369,629 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/search');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/search', $data);
+    }
+
+    /**
+     * DIAGNOSTIC TOOL - Gamification System
+     * Access: /dietetic/portal/gamification_diagnostic
+     */
+    public function gamification_diagnostic()
+    {
+        // Must be logged in as admin or patient
+        if (!is_client_logged_in() && !is_staff_logged_in()) {
+            die('Access denied. Please login first.');
+        }
+
+        // Get patient for testing
+        $patient = null;
+        if (is_client_logged_in()) {
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } else {
+            // For admin, get first patient for testing
+            $this->db->limit(1);
+            $patient = $this->db->get(db_prefix() . 'dietic_patients')->row();
+        }
+
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagnostic Gamification</title>';
+        echo '<style>
+            body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+            h1, h2 { color: #0ff; border-bottom: 2px solid #0ff; padding-bottom: 5px; }
+            .success { color: #0f0; font-weight: bold; }
+            .error { color: #f00; font-weight: bold; }
+            .warning { color: #ff0; font-weight: bold; }
+            .info { color: #0ff; }
+            pre { background: #000; padding: 10px; border-left: 3px solid #0f0; overflow-x: auto; }
+            .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; background: #222; }
+            .test-item { margin: 10px 0; padding: 5px; }
+        </style></head><body>';
+
+        echo '<h1>🔍 DIAGNOSTIC COMPLET DU SYSTÈME DE GAMIFICATION</h1>';
+        echo '<p class="info">Date: ' . date('Y-m-d H:i:s') . '</p>';
+        echo '<p class="info">Patient ID: ' . ($patient ? $patient->id : 'N/A') . '</p>';
+        echo '<hr>';
+
+        // TEST 1: Database Tables
+        echo '<div class="test-section">';
+        echo '<h2>TEST 1: Vérification des Tables de Base de Données</h2>';
+
+        $required_tables = [
+            'dietic_badge_definitions' => 'Définitions des badges',
+            'dietic_patient_points' => 'Points des patients',
+            'dietic_patient_badges' => 'Badges débloqués',
+            'dietic_points_history' => 'Historique des points'
+        ];
+
+        $all_tables_exist = true;
+        foreach ($required_tables as $table => $description) {
+            $full_table_name = db_prefix() . $table;
+            $exists = $this->db->table_exists($full_table_name);
+            echo '<div class="test-item">';
+            echo ($exists ? '✅ ' : '❌ ') . '<span class="' . ($exists ? 'success' : 'error') . '">';
+            echo $full_table_name . '</span> - ' . $description;
+
+            if ($exists) {
+                // Count rows
+                $count = $this->db->count_all($full_table_name);
+                echo ' (' . $count . ' entrées)';
+            }
+            echo '</div>';
+
+            if (!$exists) $all_tables_exist = false;
+        }
+        echo '</div>';
+
+        // TEST 2: Model Loading
+        echo '<div class="test-section">';
+        echo '<h2>TEST 2: Chargement du Modèle de Gamification</h2>';
+
+        try {
+            $this->load->model('dietetic/dietetic_gamification_model');
+            echo '<div class="test-item success">✅ Modèle chargé avec succès</div>';
+
+            // Test method exists
+            $methods = get_class_methods($this->dietetic_gamification_model);
+            echo '<div class="test-item info">Méthodes disponibles: ' . count($methods) . '</div>';
+            echo '<pre>' . implode("\n", array_slice($methods, 0, 10)) . "\n... (et " . (count($methods) - 10) . " autres)</pre>";
+        } catch (Exception $e) {
+            echo '<div class="test-item error">❌ Erreur de chargement: ' . $e->getMessage() . '</div>';
+            echo '<pre>' . $e->getTraceAsString() . '</pre>';
+        }
+        echo '</div>';
+
+        // TEST 3: is_gamification_ready() method
+        echo '<div class="test-section">';
+        echo '<h2>TEST 3: Méthode is_gamification_ready()</h2>';
+
+        $is_ready = $this->is_gamification_ready();
+        echo '<div class="test-item ' . ($is_ready ? 'success' : 'error') . '">';
+        echo ($is_ready ? '✅ Gamification READY' : '❌ Gamification NOT READY');
+        echo '</div>';
+        echo '</div>';
+
+        // TEST 4: Patient Points Record (only if tables exist)
+        if ($all_tables_exist && $patient) {
+            echo '<div class="test-section">';
+            echo '<h2>TEST 4: Enregistrement Points du Patient</h2>';
+
+            $this->db->where('patient_id', $patient->id);
+            $patient_points = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+
+            if ($patient_points) {
+                echo '<div class="test-item success">✅ Patient a un enregistrement de points</div>';
+                echo '<pre>' . print_r($patient_points, true) . '</pre>';
+            } else {
+                echo '<div class="test-item warning">⚠️ Patient n\'a PAS d\'enregistrement de points (sera créé automatiquement)</div>';
+
+                // Try to create it
+                try {
+                    if (method_exists($this->dietetic_gamification_model, 'get_patient_points')) {
+                        $points = $this->dietetic_gamification_model->get_patient_points($patient->id);
+                        echo '<div class="test-item success">✅ Enregistrement créé automatiquement</div>';
+                        echo '<pre>' . print_r($points, true) . '</pre>';
+                    }
+                } catch (Exception $e) {
+                    echo '<div class="test-item error">❌ Erreur lors de la création: ' . $e->getMessage() . '</div>';
+                }
+            }
+            echo '</div>';
+        }
+
+        // TEST 5: Test award_points() method
+        if ($is_ready && $patient) {
+            echo '<div class="test-section">';
+            echo '<h2>TEST 5: Test de la Méthode award_points()</h2>';
+
+            try {
+                // Get points before
+                $this->db->where('patient_id', $patient->id);
+                $before = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+                $points_before = $before ? $before->total_points : 0;
+
+                echo '<div class="test-item info">Points avant: ' . $points_before . '</div>';
+
+                // Award 1 point for testing
+                $result = $this->dietetic_gamification_model->award_points(
+                    $patient->id,
+                    1,
+                    'diagnostic_test',
+                    'Test diagnostic du système'
+                );
+
+                // Get points after
+                $this->db->where('patient_id', $patient->id);
+                $after = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+                $points_after = $after ? $after->total_points : 0;
+
+                echo '<div class="test-item info">Points après: ' . $points_after . '</div>';
+
+                if ($result && $points_after > $points_before) {
+                    echo '<div class="test-item success">✅ Attribution de points FONCTIONNE</div>';
+                } else {
+                    echo '<div class="test-item error">❌ Attribution de points ÉCHOUE</div>';
+                }
+            } catch (Exception $e) {
+                echo '<div class="test-item error">❌ Erreur: ' . $e->getMessage() . '</div>';
+                echo '<pre>' . $e->getTraceAsString() . '</pre>';
+            }
+            echo '</div>';
+        }
+
+        // TEST 6: Test API toggle_meal with full error capture
+        echo '<div class="test-section">';
+        echo '<h2>TEST 6: Simulation API toggle_meal()</h2>';
+
+        if ($patient) {
+            ob_start();
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+
+            try {
+                // Simulate the exact flow
+                $test_meal = 'breakfast';
+                $test_checked = true;
+
+                echo '<div class="test-item info">Simulation: Validation du petit-déjeuner...</div>';
+
+                // Test the daily tracking update
+                $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $test_meal, $test_checked);
+
+                echo '<div class="test-item ' . ($success ? 'success' : 'error') . '">';
+                echo ($success ? '✅' : '❌') . ' Toggle meal DB: ' . ($success ? 'OK' : 'FAIL');
+                echo '</div>';
+
+                if ($success && $test_checked && $is_ready) {
+                    echo '<div class="test-item info">Tentative d\'attribution de points...</div>';
+
+                    try {
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            5,
+                            'meal_validated',
+                            'Petit-déjeuner validé (test diagnostic)'
+                        );
+                        echo '<div class="test-item success">✅ Points attribués avec succès</div>';
+                    } catch (Exception $e) {
+                        echo '<div class="test-item error">❌ Erreur attribution: ' . $e->getMessage() . '</div>';
+                        echo '<pre>' . $e->getTraceAsString() . '</pre>';
+                    }
+                }
+
+            } catch (Exception $e) {
+                echo '<div class="test-item error">❌ Exception: ' . $e->getMessage() . '</div>';
+                echo '<pre>' . $e->getTraceAsString() . '</pre>';
+            }
+
+            $output = ob_get_clean();
+            echo $output;
+        } else {
+            echo '<div class="test-item warning">⚠️ Pas de patient pour tester</div>';
+        }
+        echo '</div>';
+
+        // TEST 7: PHP Error Log Check
+        echo '<div class="test-section">';
+        echo '<h2>TEST 7: Dernières Erreurs PHP</h2>';
+
+        $error_log = ini_get('error_log');
+        echo '<div class="test-item info">Error log path: ' . ($error_log ? $error_log : 'default') . '</div>';
+
+        if ($error_log && file_exists($error_log)) {
+            $last_lines = shell_exec('tail -50 ' . escapeshellarg($error_log));
+            echo '<pre>' . htmlspecialchars($last_lines) . '</pre>';
+        } else {
+            echo '<div class="test-item warning">⚠️ Impossible d\'accéder au error log</div>';
+        }
+        echo '</div>';
+
+        // SUMMARY
+        echo '<div class="test-section">';
+        echo '<h2>📊 RÉSUMÉ DU DIAGNOSTIC</h2>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Tables:</strong> ' . ($all_tables_exist ? '<span class="success">✅ Toutes présentes</span>' : '<span class="error">❌ Manquantes</span>');
+        echo '</div>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Gamification Ready:</strong> ' . ($is_ready ? '<span class="success">✅ OUI</span>' : '<span class="error">❌ NON</span>');
+        echo '</div>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Recommandation:</strong> ';
+        if (!$all_tables_exist) {
+            echo '<span class="error">Exécutez la migration SQL depuis Admin → Diététique → Notifications → Migrations</span>';
+        } elseif (!$is_ready) {
+            echo '<span class="warning">Tables présentes mais système pas prêt - Vérifiez les erreurs ci-dessus</span>';
+        } else {
+            echo '<span class="success">Système opérationnel - Les erreurs viennent d\'ailleurs</span>';
+        }
+        echo '</div>';
+        echo '</div>';
+
+        echo '</body></html>';
+        exit;
+    }
+
+    /**
+     * TEST API WITH PHP FORMS (NO JAVASCRIPT)
+     * Access: /dietetic/portal/test_api_php
+     */
+    public function test_api_php()
+    {
+        // Enable error reporting for debugging
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        try {
+            if (!is_client_logged_in()) {
+                die('Please login as patient first');
+            }
+
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                die('Patient not found');
+            }
+
+            // Handle form submissions
+            $result = null;
+            $test_type = null;
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $test_type = $this->input->post('test_type');
+
+                switch ($test_type) {
+                    case 'toggle_meal':
+                        $meal = $this->input->post('meal');
+                        $checked = $this->input->post('checked') === '1';
+
+                        $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $meal, $checked);
+
+                        if ($success && $checked && $this->is_gamification_ready()) {
+                            try {
+                                $meal_names = [
+                                    'breakfast' => 'Petit-déjeuner',
+                                    'lunch' => 'Déjeuner',
+                                    'dinner' => 'Dîner'
+                                ];
+                                $this->dietetic_gamification_model->award_points(
+                                    $patient->id,
+                                    5,
+                                    'meal_validated',
+                                    $meal_names[$meal] . ' validé (test PHP)'
+                                );
+                                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                                $result = ['success' => true, 'message' => 'Repas validé + 5 points attribués'];
+                            } catch (Exception $e) {
+                                $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                            }
+                        } else {
+                            $result = ['success' => $success, 'message' => $success ? 'Repas validé (pas de points)' : 'Échec validation'];
+                        }
+                        break;
+
+                    case 'add_hydration':
+                        $quantity_ml = (int)$this->input->post('quantity_ml');
+
+                        if ($quantity_ml > 0 && $quantity_ml <= 2000) {
+                            $data = [
+                                'patient_id' => $patient->id,
+                                'quantity_ml' => $quantity_ml,
+                                'tracking_date' => date('Y-m-d'),
+                                'tracking_time' => date('H:i:s'),
+                                'created_at' => date('Y-m-d H:i:s')
+                            ];
+
+                            $this->db->insert(db_prefix() . 'dietic_hydration_tracking', $data);
+                            $entry_id = $this->db->insert_id();
+
+                            if ($entry_id && $this->is_gamification_ready()) {
+                                try {
+                                    $this->dietetic_gamification_model->award_points(
+                                        $patient->id,
+                                        3,
+                                        'hydration_logged',
+                                        "Hydratation: {$quantity_ml}ml (test PHP)",
+                                        $entry_id
+                                    );
+                                    $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                                    $result = ['success' => true, 'message' => "Hydratation enregistrée ({$quantity_ml}ml) + 3 points"];
+                                } catch (Exception $e) {
+                                    $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                                }
+                            } else {
+                                $result = ['success' => $entry_id > 0, 'message' => $entry_id ? 'Hydratation enregistrée (pas de points)' : 'Échec enregistrement'];
+                            }
+                        } else {
+                            $result = ['success' => false, 'message' => 'Quantité invalide (1-2000ml)'];
+                        }
+                        break;
+
+                    case 'add_activity':
+                        // Load model
+                        if (!isset($this->dietetic_activities_model)) {
+                            $this->load->model('dietetic/dietetic_activities_model');
+                        }
+
+                        $activity_data = [
+                            'patient_id' => $patient->id,
+                            'activity_id' => 1, // Default activity
+                            'duration_minutes' => (int)$this->input->post('duration_minutes'),
+                            'kcal_burned' => (int)$this->input->post('kcal_burned'),
+                            'activity_date' => date('Y-m-d'),
+                            'activity_time' => date('H:i:s'),
+                            'notes' => 'Test PHP',
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+
+                        $activity_result = $this->dietetic_activities_model->add_patient_activity($activity_data);
+
+                        if ($activity_result && $this->is_gamification_ready()) {
+                            try {
+                                $this->dietetic_gamification_model->award_points(
+                                    $patient->id,
+                                    15,
+                                    'activity_logged',
+                                    "Activité: {$activity_data['duration_minutes']}min (test PHP)",
+                                    $activity_result
+                                );
+                                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                                $result = ['success' => true, 'message' => 'Activité ajoutée + 15 points'];
+                            } catch (Exception $e) {
+                                $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                            }
+                        } else {
+                            $result = ['success' => $activity_result > 0, 'message' => $activity_result ? 'Activité ajoutée (pas de points)' : 'Échec ajout'];
+                        }
+                        break;
+                }
+            }
+
+            // Get current points
+            $gamification_ready = $this->is_gamification_ready();
+            if ($gamification_ready) {
+                $this->db->where('patient_id', $patient->id);
+                $patient_points = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+                $current_points = $patient_points ? $patient_points->total_points : 0;
+            } else {
+                $current_points = 'N/A (gamification not ready)';
+            }
+
+            // Get CSRF token info
+            $csrf_name = $this->security->get_csrf_token_name();
+            $csrf_hash = $this->security->get_csrf_hash();
+
+            // Display HTML page
+            ?>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Test API PHP - Sans JavaScript</title>
+                <style>
+                    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+                    h2 { color: #555; margin-top: 30px; }
+                    .info-box { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; }
+                    .result { padding: 15px; margin: 20px 0; border-radius: 5px; font-weight: bold; }
+                    .result.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+                    .result.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+                    .form-section { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 5px; border: 1px solid #ddd; }
+                    .form-group { margin: 15px 0; }
+                    label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+                    input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+                    button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+                    button:hover { background: #45a049; }
+                    .points-display { font-size: 24px; color: #4CAF50; font-weight: bold; text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🧪 TEST API GAMIFICATION - PHP PUR (SANS JAVASCRIPT)</h1>
+
+                    <div class="info-box">
+                        <strong>Patient ID:</strong> <?php echo htmlspecialchars($patient->id); ?><br>
+                        <strong>Gamification Ready:</strong> <?php echo $gamification_ready ? '✅ OUI' : '❌ NON'; ?>
+                    </div>
+
+                    <div class="points-display">
+                        🏆 Points Actuels: <?php echo htmlspecialchars($current_points); ?>
+                    </div>
+
+                    <?php if ($result): ?>
+                        <div class="result <?php echo $result['success'] ? 'success' : 'error'; ?>">
+                            <?php echo $result['success'] ? '✅' : '❌'; ?> <?php echo htmlspecialchars($result['message']); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- TEST 1: Toggle Meal -->
+                    <div class="form-section">
+                        <h2>TEST 1: Valider un Repas (+5 points)</h2>
+                        <form method="POST">
+                            <input type="hidden" name="test_type" value="toggle_meal">
+                            <input type="hidden" name="<?php echo htmlspecialchars($csrf_name); ?>" value="<?php echo htmlspecialchars($csrf_hash); ?>">
+
+                            <div class="form-group">
+                                <label>Repas:</label>
+                                <select name="meal" required>
+                                    <option value="breakfast">Petit-déjeuner</option>
+                                    <option value="lunch">Déjeuner</option>
+                                    <option value="dinner">Dîner</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Action:</label>
+                                <select name="checked" required>
+                                    <option value="1">Valider (cocher)</option>
+                                    <option value="0">Invalider (décocher)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit">🍽️ Tester Validation Repas</button>
+                        </form>
+                    </div>
+
+                    <!-- TEST 2: Add Hydration -->
+                    <div class="form-section">
+                        <h2>TEST 2: Ajouter Hydratation (+3 points)</h2>
+                        <form method="POST">
+                            <input type="hidden" name="test_type" value="add_hydration">
+                            <input type="hidden" name="<?php echo htmlspecialchars($csrf_name); ?>" value="<?php echo htmlspecialchars($csrf_hash); ?>">
+
+                            <div class="form-group">
+                                <label>Quantité (ml):</label>
+                                <input type="number" name="quantity_ml" min="1" max="2000" value="250" required>
+                            </div>
+
+                            <button type="submit">💧 Tester Hydratation</button>
+                        </form>
+                    </div>
+
+                    <!-- TEST 3: Add Activity -->
+                    <div class="form-section">
+                        <h2>TEST 3: Ajouter Activité (+15 points)</h2>
+                        <form method="POST">
+                            <input type="hidden" name="test_type" value="add_activity">
+                            <input type="hidden" name="<?php echo htmlspecialchars($csrf_name); ?>" value="<?php echo htmlspecialchars($csrf_hash); ?>">
+
+                            <div class="form-group">
+                                <label>Durée (minutes):</label>
+                                <input type="number" name="duration_minutes" min="1" value="30" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Calories brûlées:</label>
+                                <input type="number" name="kcal_burned" min="1" value="150" required>
+                            </div>
+
+                            <button type="submit">🏃 Tester Activité</button>
+                        </form>
+                    </div>
+
+                    <div class="info-box" style="margin-top: 30px;">
+                        <strong>ℹ️ Comment utiliser :</strong><br>
+                        1. Cliquez sur un bouton de test<br>
+                        2. La page se recharge avec le résultat<br>
+                        3. Vérifiez que les points augmentent<br>
+                        4. Pas d'erreur = Backend fonctionne ✅<br>
+                        5. Erreur = Problème serveur à identifier 🐛
+                    </div>
+                </div>
+            </body>
+            </html>
+            <?php
+        } catch (Exception $e) {
+            // Display error in a user-friendly way
+            ?>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Erreur - Test API PHP</title>
+                <style>
+                    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                    .error-container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    .error-title { color: #d32f2f; border-bottom: 3px solid #d32f2f; padding-bottom: 10px; }
+                    .error-details { background: #ffebee; padding: 15px; border-left: 4px solid #d32f2f; margin: 20px 0; }
+                    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                </style>
+            </head>
+            <body>
+                <div class="error-container">
+                    <h1 class="error-title">❌ Erreur PHP</h1>
+                    <div class="error-details">
+                        <strong>Message:</strong> <?php echo htmlspecialchars($e->getMessage()); ?><br>
+                        <strong>File:</strong> <?php echo htmlspecialchars($e->getFile()); ?><br>
+                        <strong>Line:</strong> <?php echo htmlspecialchars($e->getLine()); ?>
+                    </div>
+                    <h2>Stack Trace:</h2>
+                    <pre><?php echo htmlspecialchars($e->getTraceAsString()); ?></pre>
+                </div>
+            </body>
+            </html>
+            <?php
+        }
+        exit;
+    }
+
+    /**
+     * Display achievements and badges page
+     */
+    public function achievements()
+    {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('clients/login'));
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_gamification_model');
+
+        // Get all badge definitions grouped by category
+        $all_badges = $this->dietetic_gamification_model->get_all_badges_with_progress($patient->id);
+
+        // Get patient badges (unlocked)
+        $patient_badges = $this->dietetic_gamification_model->get_patient_badges($patient->id);
+
+        // Get patient points and level
+        $patient_points = $this->dietetic_gamification_model->get_patient_points($patient->id);
+
+        // Get points history
+        $points_history = $this->dietetic_gamification_model->get_points_history($patient->id, 50);
+
+        // Get level info
+        $current_level_info = $this->dietetic_gamification_model->get_level_info($patient_points->current_level);
+        $next_level_info = $this->dietetic_gamification_model->get_next_level_info($patient_points->current_level);
+
+        $data['all_badges'] = $all_badges;
+        $data['patient_badges'] = $patient_badges;
+        $data['patient_points'] = $patient_points;
+        $data['points_history'] = $points_history;
+        $data['current_level_info'] = $current_level_info;
+        $data['next_level_info'] = $next_level_info;
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Succès';
+        $data['active_page'] = 'achievements';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        // Load view
+        $this->load->view('dietetic/portal/achievements/index', $data);
     }
 }
 

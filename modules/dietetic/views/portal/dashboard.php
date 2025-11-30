@@ -1082,6 +1082,234 @@ $this->load->view('portal/includes/portal_header');
 }
 
 /* ============================================
+   BLOG CAROUSEL - Conseils
+   ============================================ */
+.blog-carousel-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    border: 2px solid #f1f3f5;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    transition: all 0.3s;
+}
+
+.blog-carousel-section:hover {
+    border-color: #01807B;
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.12);
+}
+
+.blog-carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.blog-carousel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.blog-carousel-title i {
+    color: #01807B;
+    font-size: 20px;
+}
+
+.blog-view-all {
+    padding: 8px 16px;
+    background: #01807B;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.blog-view-all:hover {
+    background: #026660;
+    text-decoration: none;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+.blog-carousel-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.blog-carousel-track {
+    display: flex;
+    gap: 16px;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-bottom: 10px;
+}
+
+.blog-card-carousel {
+    flex: 0 0 calc(33.333% - 12px);
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.blog-card-carousel:hover {
+    border-color: #01807B;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    text-decoration: none;
+}
+
+.blog-card-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(1, 128, 123, 0.1);
+    color: #01807B;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    align-self: flex-start;
+}
+
+.blog-card-title-carousel {
+    font-size: 16px;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.blog-card-footer-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid #e9ecef;
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.blog-carousel-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.blog-nav-btn {
+    width: 44px;
+    height: 44px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #6c757d;
+    font-size: 18px;
+}
+
+.blog-nav-btn:hover:not(:disabled) {
+    background: #01807B;
+    border-color: #01807B;
+    color: white;
+    transform: scale(1.1);
+}
+
+.blog-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.blog-carousel-dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.blog-carousel-dot {
+    width: 8px;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.blog-carousel-dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: #01807B;
+}
+
+.blog-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.blog-empty-state i {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+    display: block;
+}
+
+@media (max-width: 992px) {
+    .blog-card-carousel {
+        flex: 0 0 calc(50% - 8px);
+    }
+}
+
+@media (max-width: 576px) {
+    .blog-card-carousel {
+        flex: 0 0 100%;
+    }
+
+    .blog-carousel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .blog-view-all {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
    ACTIVITIES CARD - Compact & Fun
    ============================================ */
 .activities-card-compact {
@@ -1937,6 +2165,63 @@ if (!$current_weight || !$target_weight) {
     </div>
 </div>
 
+<!-- Blog Carousel Section - Conseils -->
+<?php if (!empty($blog_articles)) { ?>
+<div class="blog-carousel-section">
+    <div class="blog-carousel-header">
+        <div class="blog-carousel-title">
+            <i class="fa fa-file-text-o"></i>
+            Conseils & Actualités
+        </div>
+        <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="blog-view-all">
+            <span>Voir tout</span>
+            <i class="fa fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="blog-carousel-container">
+        <div class="blog-carousel-track" id="blogCarouselTrack">
+            <?php foreach ($blog_articles as $article) { ?>
+                <a href="<?php echo site_url('dietetic/portal/blog_article/' . $article->slug); ?>" class="blog-card-carousel">
+                    <?php if ($article->category && isset($article->category_details)) { ?>
+                        <span class="blog-card-category">
+                            <i class="fa <?php echo $article->category_details->icon; ?>"></i>
+                            <?php echo htmlspecialchars($article->category_details->name); ?>
+                        </span>
+                    <?php } ?>
+
+                    <div class="blog-card-title-carousel">
+                        <?php echo htmlspecialchars($article->title); ?>
+                    </div>
+
+                    <div class="blog-card-footer-carousel">
+                        <span>
+                            <i class="fa fa-calendar"></i> <?php echo date('d M Y', strtotime($article->published_at)); ?>
+                        </span>
+                        <span>
+                            <i class="fa fa-eye"></i> <?php echo $article->views_count; ?>
+                        </span>
+                    </div>
+                </a>
+            <?php } ?>
+        </div>
+    </div>
+
+    <div class="blog-carousel-nav">
+        <button class="blog-nav-btn" id="blogPrevBtn" onclick="blogCarouselPrev()">
+            <i class="fa fa-chevron-left"></i>
+        </button>
+        <button class="blog-nav-btn" id="blogNextBtn" onclick="blogCarouselNext()">
+            <i class="fa fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <div class="blog-carousel-dots" id="blogCarouselDots">
+        <!-- Dots will be generated by JavaScript -->
+    </div>
+</div>
+<?php } ?>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 $(function() {
@@ -2250,6 +2535,115 @@ function getActivityIcon(category) {
 
     return icons[category] || 'fa-heartbeat';
 }
+
+// ============================================
+// BLOG CAROUSEL - Responsive navigation
+// ============================================
+
+let blogCurrentIndex = 0;
+let blogCardsPerView = 3;
+
+// Calculate how many cards to show based on screen size
+function updateBlogCardsPerView() {
+    const width = window.innerWidth;
+    if (width < 576) {
+        blogCardsPerView = 1;
+    } else if (width < 992) {
+        blogCardsPerView = 2;
+    } else {
+        blogCardsPerView = 3;
+    }
+}
+
+function initBlogCarousel() {
+    updateBlogCardsPerView();
+
+    const track = document.getElementById('blogCarouselTrack');
+    const dotsContainer = document.getElementById('blogCarouselDots');
+
+    if (!track || !dotsContainer) {
+        return;
+    }
+
+    const totalCards = track.children.length;
+    const totalPages = Math.ceil(totalCards / blogCardsPerView);
+
+    // Generate dots
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i < totalPages; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'blog-carousel-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => blogGoToPage(i);
+        dotsContainer.appendChild(dot);
+    }
+
+    updateBlogCarousel();
+}
+
+function blogCarouselNext() {
+    const track = document.getElementById('blogCarouselTrack');
+    if (!track) return;
+
+    const totalCards = track.children.length;
+    const totalPages = Math.ceil(totalCards / blogCardsPerView);
+
+    if (blogCurrentIndex < totalPages - 1) {
+        blogCurrentIndex++;
+        updateBlogCarousel();
+    }
+}
+
+function blogCarouselPrev() {
+    if (blogCurrentIndex > 0) {
+        blogCurrentIndex--;
+        updateBlogCarousel();
+    }
+}
+
+function blogGoToPage(pageIndex) {
+    blogCurrentIndex = pageIndex;
+    updateBlogCarousel();
+}
+
+function updateBlogCarousel() {
+    const track = document.getElementById('blogCarouselTrack');
+    const prevBtn = document.getElementById('blogPrevBtn');
+    const nextBtn = document.getElementById('blogNextBtn');
+    const dots = document.querySelectorAll('.blog-carousel-dot');
+
+    if (!track) return;
+
+    const totalCards = track.children.length;
+    const totalPages = Math.ceil(totalCards / blogCardsPerView);
+
+    // Calculate the offset
+    const cardWidth = 100 / blogCardsPerView;
+    const offset = -(blogCurrentIndex * 100);
+    track.style.transform = `translateX(${offset}%)`;
+
+    // Update button states
+    if (prevBtn) prevBtn.disabled = blogCurrentIndex === 0;
+    if (nextBtn) nextBtn.disabled = blogCurrentIndex >= totalPages - 1;
+
+    // Update dots
+    dots.forEach((dot, index) => {
+        if (index === blogCurrentIndex) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+}
+
+// Initialize on page load and window resize
+$(document).ready(function() {
+    initBlogCarousel();
+});
+
+window.addEventListener('resize', function() {
+    updateBlogCardsPerView();
+    initBlogCarousel();
+});
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

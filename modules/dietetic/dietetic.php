@@ -100,6 +100,17 @@ function dietetic_force_activities_menu_js()
     echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_activities_menu.js') . '?v=' . time() . '"></script>';
 }
 
+/**
+ * Add JavaScript to force blog menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_blog_menu_js');
+
+function dietetic_force_blog_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Blog & Conseils
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_blog_menu.js') . '?v=' . time() . '"></script>';
+}
+
 
 /**
  * Define module menu items

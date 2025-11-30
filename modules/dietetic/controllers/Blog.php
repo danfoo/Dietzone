@@ -100,7 +100,7 @@ class Blog extends AdminController
             if (!empty($_FILES['featured_image']['name'])) {
                 // Delete old image
                 if ($data['article']->featured_image) {
-                    $old_image = module_dir_path(DIETETIC_MODULE_NAME, 'uploads/blog/' . $data['article']->featured_image);
+                    $old_image = FCPATH . 'uploads/blog/' . $data['article']->featured_image;
                     if (file_exists($old_image)) {
                         @unlink($old_image);
                     }
@@ -180,7 +180,7 @@ class Blog extends AdminController
         $article = $this->dietetic_blog_model->get($id);
 
         if ($article && $article->featured_image) {
-            $image_path = module_dir_path(DIETETIC_MODULE_NAME, 'uploads/blog/' . $article->featured_image);
+            $image_path = FCPATH . 'uploads/blog/' . $article->featured_image;
             if (file_exists($image_path)) {
                 @unlink($image_path);
             }
@@ -199,7 +199,8 @@ class Blog extends AdminController
      */
     private function handle_image_upload()
     {
-        $upload_path = module_dir_path(DIETETIC_MODULE_NAME, 'uploads/blog');
+        // Store in main Perfex uploads folder to preserve images during module updates
+        $upload_path = FCPATH . 'uploads/blog';
 
         // Create directory if it doesn't exist
         if (!is_dir($upload_path)) {
