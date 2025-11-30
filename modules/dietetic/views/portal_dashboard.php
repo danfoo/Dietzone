@@ -3414,6 +3414,9 @@ if (!$current_weight || !$target_weight) {
 </div>
 <?php } ?>
 
+<!-- Achievements & Badges Widget -->
+<?php $this->load->view('dietetic/portal/widgets/achievements_badges', ['patient' => $patient]); ?>
+
 <!-- Program Card -->
 <?php if ($active_program) { ?>
     <?php
