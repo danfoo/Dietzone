@@ -80,18 +80,22 @@
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 20px;
-    padding: 10px 24px;
-    font-weight: 600;
-    font-size: 14px;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
     cursor: pointer;
     transition: all 0.3s;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .blog-search-btn:hover {
     background: var(--primary-dark);
-    transform: scale(1.05);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
 }
 
 /* ============================================
@@ -429,8 +433,8 @@
                         placeholder="Rechercher des articles, conseils..."
                         value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>"
                     >
-                    <button type="submit" class="blog-search-btn">
-                        <i class="fa fa-search"></i> Rechercher
+                    <button type="submit" class="blog-search-btn" title="Rechercher">
+                        <i class="fa fa-search"></i>
                     </button>
                 </div>
             </form>
