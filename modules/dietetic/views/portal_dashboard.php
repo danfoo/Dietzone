@@ -129,69 +129,131 @@ $this->load->view('portal/includes/portal_header');
     background-clip: text;
 }
 
-/* Enhanced Stat Cards */
+/* Enhanced Stat Cards - Mobile App Design */
 .enhanced-stat-card {
     position: relative;
-    padding-bottom: 20px !important;
-    min-height: 140px !important;
+    padding: 20px 16px !important;
+    min-height: 160px !important;
+    border-radius: 16px !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
+.enhanced-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.05;
+    border-radius: 16px;
+    transition: opacity 0.3s ease;
+}
+
+.enhanced-stat-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.enhanced-stat-card:hover::before {
+    opacity: 0.08;
+}
+
+/* BMI Category Backgrounds */
+.enhanced-stat-card[data-category="underweight"] {
+    background: linear-gradient(135deg, #ffffff 0%, #ebf8ff 100%);
+}
+
+.enhanced-stat-card[data-category="underweight"]::before {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.enhanced-stat-card[data-category="normal"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.enhanced-stat-card[data-category="normal"]::before {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.enhanced-stat-card[data-category="overweight"] {
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+}
+
+.enhanced-stat-card[data-category="overweight"]::before {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+}
+
+.enhanced-stat-card[data-category="obese"] {
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.enhanced-stat-card[data-category="obese"]::before {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+/* Progress Status Backgrounds */
+.enhanced-stat-card[data-status="excellent"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.enhanced-stat-card[data-status="excellent"]::before {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.enhanced-stat-card[data-status="attention"] {
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.enhanced-stat-card[data-status="attention"]::before {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+/* Stat Category Badge */
 .stat-category {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    margin-top: 10px;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.03);
-    border-radius: 20px;
+    margin-top: 12px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
     font-size: 10px;
-    font-weight: 600;
-    color: #4a5568;
+    font-weight: 700;
+    color: #2d3748;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .stat-category i {
-    font-size: 11px;
+    font-size: 12px;
 }
 
-.stat-indicator {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    border-radius: 0 0 12px 12px;
-    transition: all 0.3s ease;
+/* Improved Icon Container */
+.enhanced-stat-card .stat-icon {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 auto 12px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px !important;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.enhanced-stat-card:hover .stat-indicator {
-    height: 6px;
-}
-
-/* BMI Category Colors */
-.enhanced-stat-card[data-category="underweight"] {
-    border-top: 3px solid #3498db;
-}
-
-.enhanced-stat-card[data-category="normal"] {
-    border-top: 3px solid #48bb78;
-}
-
-.enhanced-stat-card[data-category="overweight"] {
-    border-top: 3px solid #f39c12;
-}
-
-.enhanced-stat-card[data-category="obese"] {
-    border-top: 3px solid #e74c3c;
-}
-
-/* Progress Status Colors */
-.enhanced-stat-card[data-status="excellent"] {
-    border-top: 3px solid #48bb78;
-}
-
-.enhanced-stat-card[data-status="attention"] {
-    border-top: 3px solid #e74c3c;
+/* Enhanced Value Styling */
+.enhanced-stat-card .stat-value {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    margin: 8px 0 !important;
 }
 
 /* Hydration Section - Compact Version */
@@ -3187,7 +3249,6 @@ if (!$current_weight || !$target_weight) {
             <i class="fa <?php echo $bmi_icon; ?>"></i>
             <span><?php echo $bmi_label; ?></span>
         </div>
-        <div class="stat-indicator" style="background: <?php echo $bmi_color; ?>;"></div>
         <?php } ?>
     </div>
 
@@ -3212,7 +3273,6 @@ if (!$current_weight || !$target_weight) {
             <i class="fa <?php echo $progress_icon; ?>"></i>
             <span><?php echo $progress_label; ?></span>
         </div>
-        <div class="stat-indicator" style="background: <?php echo $progress_color; ?>;"></div>
     </div>
     <?php } ?>
 </div>
