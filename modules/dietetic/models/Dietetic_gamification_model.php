@@ -108,6 +108,28 @@ class Dietetic_gamification_model extends App_Model
     }
 
     /**
+     * Get all badges with progress (alias pour get_patient_badge_wall)
+     * Retourne tous les badges avec leur statut de déverrouillage et progression
+     */
+    public function get_all_badges_with_progress($patient_id)
+    {
+        // Récupérer le mur de badges (méthode existante)
+        $badge_wall = $this->get_patient_badge_wall($patient_id);
+
+        // Grouper par catégorie pour l'affichage
+        $badges_by_category = [];
+        foreach ($badge_wall as $badge) {
+            $category = $badge['category'];
+            if (!isset($badges_by_category[$category])) {
+                $badges_by_category[$category] = [];
+            }
+            $badges_by_category[$category][] = $badge;
+        }
+
+        return $badges_by_category;
+    }
+
+    /**
      * Get badge unlock date
      */
     private function get_badge_unlock_date($patient_id, $badge_id)
@@ -341,11 +363,19 @@ class Dietetic_gamification_model extends App_Model
     }
 
     /**
-     * Get level information
+     * Get level information (public pour accès depuis contrôleur)
      */
-    private function get_level_info($level_key)
+    public function get_level_info($level_key)
     {
         return isset($this->levels[$level_key]) ? $this->levels[$level_key] : $this->levels['debutant'];
+    }
+
+    /**
+     * Get next level information (wrapper public pour get_next_level)
+     */
+    public function get_next_level_info($current_level)
+    {
+        return $this->get_next_level($current_level);
     }
 
     /**
