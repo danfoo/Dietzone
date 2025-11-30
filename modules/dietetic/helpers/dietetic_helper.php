@@ -6,6 +6,59 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * Dietetic Module Helper Functions
  */
 
+// Charger la configuration du module
+require_once(__DIR__ . '/../config.php');
+
+// ==================== DEBUG & LOGGING ====================
+
+/**
+ * Log conditionnel pour le mode debug
+ * N'enregistre que si DIETETIC_DEBUG est activé
+ *
+ * @param string $message Message à logger
+ * @param string $type Type de log (info, warning, error, debug)
+ * @return void
+ */
+function dietetic_debug_log($message, $type = 'debug')
+{
+    if (!defined('DIETETIC_DEBUG') || !DIETETIC_DEBUG) {
+        return; // Debug désactivé, ne rien logger
+    }
+
+    // Préfixes selon le type
+    $prefixes = [
+        'debug' => '🔍 [DEBUG]',
+        'info' => 'ℹ️ [INFO]',
+        'warning' => '⚠️ [WARNING]',
+        'error' => '❌ [ERROR]',
+        'success' => '✅ [SUCCESS]'
+    ];
+
+    $prefix = isset($prefixes[$type]) ? $prefixes[$type] : '📝 [LOG]';
+
+    log_activity($prefix . ' ' . $message);
+}
+
+/**
+ * Log d'erreur critique (toujours enregistré, même en production)
+ *
+ * @param string $message Message d'erreur
+ * @param array $context Contexte additionnel
+ * @return void
+ */
+function dietetic_log_error($message, $context = [])
+{
+    $log_message = '❌ [DIETETIC ERROR] ' . $message;
+
+    if (!empty($context)) {
+        $log_message .= ' | Context: ' . json_encode($context);
+    }
+
+    log_activity($log_message);
+}
+
+// ==================== BMI & CALCULATIONS ====================
+
 /**
  * Calculate BMI (Body Mass Index)
  *
