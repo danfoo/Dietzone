@@ -7,7 +7,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     min-height: 100vh;
 }
 
@@ -365,7 +365,7 @@
     <div class="achievements-header">
         <div class="level-card">
             <div class="level-icon" style="background: <?php echo $current_level_info['color']; ?>">
-                <?php echo $current_level_info['icon']; ?>
+                <i class="<?php echo $current_level_info['icon']; ?>"></i>
             </div>
             <div class="level-info">
                 <h1 class="level-title"><?php echo $current_level_info['name']; ?></h1>
@@ -423,8 +423,8 @@
         </h2>
 
         <?php
-        // Group badges by category
-        $categories = [
+        // Category names and icons
+        $categories_info = [
             'streak' => ['name' => 'Régularité', 'icon' => '🔥'],
             'weight_loss' => ['name' => 'Perte de Poids', 'icon' => '⚖️'],
             'nutrition' => ['name' => 'Nutrition', 'icon' => '🥗'],
@@ -433,12 +433,11 @@
             'goals' => ['name' => 'Objectifs', 'icon' => '🎯']
         ];
 
-        foreach ($categories as $cat_key => $cat_info):
-            $cat_badges = array_filter($all_badges, function($b) use ($cat_key) {
-                return $b->category == $cat_key;
-            });
-
+        // $all_badges est déjà groupé par catégorie par get_all_badges_with_progress()
+        foreach ($all_badges as $cat_key => $cat_badges):
             if (empty($cat_badges)) continue;
+
+            $cat_info = isset($categories_info[$cat_key]) ? $categories_info[$cat_key] : ['name' => ucfirst($cat_key), 'icon' => '📋'];
         ?>
             <div class="category-badges">
                 <div class="category-header">
@@ -446,30 +445,30 @@
                 </div>
                 <div class="badges-grid">
                     <?php foreach ($cat_badges as $badge):
-                        $is_unlocked = isset($badge->unlocked_at);
-                        $is_new = $is_unlocked && (strtotime($badge->unlocked_at) > strtotime('-7 days'));
+                        $is_unlocked = $badge['unlocked'] ?? false;
+                        $is_new = $is_unlocked && isset($badge['unlocked_at']) && (strtotime($badge['unlocked_at']) > strtotime('-7 days'));
                     ?>
                         <div class="badge-card <?php echo $is_unlocked ? 'unlocked' : 'locked'; ?>"
-                             data-badge-id="<?php echo $badge->id; ?>"
+                             data-badge-id="<?php echo $badge['id']; ?>"
                              onclick="showBadgeTooltip(this, event)">
                             <?php if ($is_new): ?>
                                 <div class="new-badge">NEW</div>
                             <?php endif; ?>
-                            <div class="badge-icon" style="background: <?php echo $badge->color; ?>">
-                                <?php echo $badge->icon; ?>
+                            <div class="badge-icon" style="background: <?php echo $badge['color']; ?>">
+                                <i class="<?php echo $badge['icon']; ?>"></i>
                             </div>
-                            <div class="badge-name"><?php echo htmlspecialchars($badge->name); ?></div>
-                            <div class="badge-description"><?php echo htmlspecialchars($badge->description); ?></div>
+                            <div class="badge-name"><?php echo htmlspecialchars($badge['name']); ?></div>
+                            <div class="badge-description"><?php echo htmlspecialchars($badge['description']); ?></div>
                             <div class="badge-points">
                                 <?php if ($is_unlocked): ?>
                                     <i class="fa fa-check-circle"></i> Débloqué
                                 <?php else: ?>
-                                    +<?php echo $badge->points; ?> points
+                                    +<?php echo $badge['points']; ?> points
                                 <?php endif; ?>
                             </div>
-                            <?php if (!$is_unlocked && isset($badge->progress)): ?>
+                            <?php if (!$is_unlocked && isset($badge['progress'])): ?>
                                 <div class="badge-progress">
-                                    <?php echo $badge->progress; ?>
+                                    <?php echo $badge['progress']; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
