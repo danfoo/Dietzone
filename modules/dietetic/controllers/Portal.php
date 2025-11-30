@@ -101,6 +101,9 @@ class Portal extends App_Controller
             'blog',
             'blog_article',
             'blog_search',
+            // Gamification
+            'achievements',
+            'gamification_diagnostic',
             // Profile methods
             'profile',
             'update_password',
@@ -7361,6 +7364,268 @@ class Portal extends App_Controller
 
         // Load view directly - the view already includes portal_header and portal_footer
         $this->load->view('dietetic/portal/blog/search', $data);
+    }
+
+    /**
+     * DIAGNOSTIC TOOL - Gamification System
+     * Access: /dietetic/portal/gamification_diagnostic
+     */
+    public function gamification_diagnostic()
+    {
+        // Must be logged in as admin or patient
+        if (!is_client_logged_in() && !is_staff_logged_in()) {
+            die('Access denied. Please login first.');
+        }
+
+        // Get patient for testing
+        $patient = null;
+        if (is_client_logged_in()) {
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } else {
+            // For admin, get first patient for testing
+            $this->db->limit(1);
+            $patient = $this->db->get(db_prefix() . 'dietic_patients')->row();
+        }
+
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagnostic Gamification</title>';
+        echo '<style>
+            body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+            h1, h2 { color: #0ff; border-bottom: 2px solid #0ff; padding-bottom: 5px; }
+            .success { color: #0f0; font-weight: bold; }
+            .error { color: #f00; font-weight: bold; }
+            .warning { color: #ff0; font-weight: bold; }
+            .info { color: #0ff; }
+            pre { background: #000; padding: 10px; border-left: 3px solid #0f0; overflow-x: auto; }
+            .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; background: #222; }
+            .test-item { margin: 10px 0; padding: 5px; }
+        </style></head><body>';
+
+        echo '<h1>🔍 DIAGNOSTIC COMPLET DU SYSTÈME DE GAMIFICATION</h1>';
+        echo '<p class="info">Date: ' . date('Y-m-d H:i:s') . '</p>';
+        echo '<p class="info">Patient ID: ' . ($patient ? $patient->id : 'N/A') . '</p>';
+        echo '<hr>';
+
+        // TEST 1: Database Tables
+        echo '<div class="test-section">';
+        echo '<h2>TEST 1: Vérification des Tables de Base de Données</h2>';
+
+        $required_tables = [
+            'dietic_badge_definitions' => 'Définitions des badges',
+            'dietic_patient_points' => 'Points des patients',
+            'dietic_patient_badges' => 'Badges débloqués',
+            'dietic_points_history' => 'Historique des points'
+        ];
+
+        $all_tables_exist = true;
+        foreach ($required_tables as $table => $description) {
+            $full_table_name = db_prefix() . $table;
+            $exists = $this->db->table_exists($full_table_name);
+            echo '<div class="test-item">';
+            echo ($exists ? '✅ ' : '❌ ') . '<span class="' . ($exists ? 'success' : 'error') . '">';
+            echo $full_table_name . '</span> - ' . $description;
+
+            if ($exists) {
+                // Count rows
+                $count = $this->db->count_all($full_table_name);
+                echo ' (' . $count . ' entrées)';
+            }
+            echo '</div>';
+
+            if (!$exists) $all_tables_exist = false;
+        }
+        echo '</div>';
+
+        // TEST 2: Model Loading
+        echo '<div class="test-section">';
+        echo '<h2>TEST 2: Chargement du Modèle de Gamification</h2>';
+
+        try {
+            $this->load->model('dietetic/dietetic_gamification_model');
+            echo '<div class="test-item success">✅ Modèle chargé avec succès</div>';
+
+            // Test method exists
+            $methods = get_class_methods($this->dietetic_gamification_model);
+            echo '<div class="test-item info">Méthodes disponibles: ' . count($methods) . '</div>';
+            echo '<pre>' . implode("\n", array_slice($methods, 0, 10)) . "\n... (et " . (count($methods) - 10) . " autres)</pre>";
+        } catch (Exception $e) {
+            echo '<div class="test-item error">❌ Erreur de chargement: ' . $e->getMessage() . '</div>';
+            echo '<pre>' . $e->getTraceAsString() . '</pre>';
+        }
+        echo '</div>';
+
+        // TEST 3: is_gamification_ready() method
+        echo '<div class="test-section">';
+        echo '<h2>TEST 3: Méthode is_gamification_ready()</h2>';
+
+        $is_ready = $this->is_gamification_ready();
+        echo '<div class="test-item ' . ($is_ready ? 'success' : 'error') . '">';
+        echo ($is_ready ? '✅ Gamification READY' : '❌ Gamification NOT READY');
+        echo '</div>';
+        echo '</div>';
+
+        // TEST 4: Patient Points Record (only if tables exist)
+        if ($all_tables_exist && $patient) {
+            echo '<div class="test-section">';
+            echo '<h2>TEST 4: Enregistrement Points du Patient</h2>';
+
+            $this->db->where('patient_id', $patient->id);
+            $patient_points = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+
+            if ($patient_points) {
+                echo '<div class="test-item success">✅ Patient a un enregistrement de points</div>';
+                echo '<pre>' . print_r($patient_points, true) . '</pre>';
+            } else {
+                echo '<div class="test-item warning">⚠️ Patient n\'a PAS d\'enregistrement de points (sera créé automatiquement)</div>';
+
+                // Try to create it
+                try {
+                    if (method_exists($this->dietetic_gamification_model, 'get_patient_points')) {
+                        $points = $this->dietetic_gamification_model->get_patient_points($patient->id);
+                        echo '<div class="test-item success">✅ Enregistrement créé automatiquement</div>';
+                        echo '<pre>' . print_r($points, true) . '</pre>';
+                    }
+                } catch (Exception $e) {
+                    echo '<div class="test-item error">❌ Erreur lors de la création: ' . $e->getMessage() . '</div>';
+                }
+            }
+            echo '</div>';
+        }
+
+        // TEST 5: Test award_points() method
+        if ($is_ready && $patient) {
+            echo '<div class="test-section">';
+            echo '<h2>TEST 5: Test de la Méthode award_points()</h2>';
+
+            try {
+                // Get points before
+                $this->db->where('patient_id', $patient->id);
+                $before = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+                $points_before = $before ? $before->total_points : 0;
+
+                echo '<div class="test-item info">Points avant: ' . $points_before . '</div>';
+
+                // Award 1 point for testing
+                $result = $this->dietetic_gamification_model->award_points(
+                    $patient->id,
+                    1,
+                    'diagnostic_test',
+                    'Test diagnostic du système'
+                );
+
+                // Get points after
+                $this->db->where('patient_id', $patient->id);
+                $after = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+                $points_after = $after ? $after->total_points : 0;
+
+                echo '<div class="test-item info">Points après: ' . $points_after . '</div>';
+
+                if ($result && $points_after > $points_before) {
+                    echo '<div class="test-item success">✅ Attribution de points FONCTIONNE</div>';
+                } else {
+                    echo '<div class="test-item error">❌ Attribution de points ÉCHOUE</div>';
+                }
+            } catch (Exception $e) {
+                echo '<div class="test-item error">❌ Erreur: ' . $e->getMessage() . '</div>';
+                echo '<pre>' . $e->getTraceAsString() . '</pre>';
+            }
+            echo '</div>';
+        }
+
+        // TEST 6: Test API toggle_meal with full error capture
+        echo '<div class="test-section">';
+        echo '<h2>TEST 6: Simulation API toggle_meal()</h2>';
+
+        if ($patient) {
+            ob_start();
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+
+            try {
+                // Simulate the exact flow
+                $test_meal = 'breakfast';
+                $test_checked = true;
+
+                echo '<div class="test-item info">Simulation: Validation du petit-déjeuner...</div>';
+
+                // Test the daily tracking update
+                $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $test_meal, $test_checked);
+
+                echo '<div class="test-item ' . ($success ? 'success' : 'error') . '">';
+                echo ($success ? '✅' : '❌') . ' Toggle meal DB: ' . ($success ? 'OK' : 'FAIL');
+                echo '</div>';
+
+                if ($success && $test_checked && $is_ready) {
+                    echo '<div class="test-item info">Tentative d\'attribution de points...</div>';
+
+                    try {
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            5,
+                            'meal_validated',
+                            'Petit-déjeuner validé (test diagnostic)'
+                        );
+                        echo '<div class="test-item success">✅ Points attribués avec succès</div>';
+                    } catch (Exception $e) {
+                        echo '<div class="test-item error">❌ Erreur attribution: ' . $e->getMessage() . '</div>';
+                        echo '<pre>' . $e->getTraceAsString() . '</pre>';
+                    }
+                }
+
+            } catch (Exception $e) {
+                echo '<div class="test-item error">❌ Exception: ' . $e->getMessage() . '</div>';
+                echo '<pre>' . $e->getTraceAsString() . '</pre>';
+            }
+
+            $output = ob_get_clean();
+            echo $output;
+        } else {
+            echo '<div class="test-item warning">⚠️ Pas de patient pour tester</div>';
+        }
+        echo '</div>';
+
+        // TEST 7: PHP Error Log Check
+        echo '<div class="test-section">';
+        echo '<h2>TEST 7: Dernières Erreurs PHP</h2>';
+
+        $error_log = ini_get('error_log');
+        echo '<div class="test-item info">Error log path: ' . ($error_log ? $error_log : 'default') . '</div>';
+
+        if ($error_log && file_exists($error_log)) {
+            $last_lines = shell_exec('tail -50 ' . escapeshellarg($error_log));
+            echo '<pre>' . htmlspecialchars($last_lines) . '</pre>';
+        } else {
+            echo '<div class="test-item warning">⚠️ Impossible d\'accéder au error log</div>';
+        }
+        echo '</div>';
+
+        // SUMMARY
+        echo '<div class="test-section">';
+        echo '<h2>📊 RÉSUMÉ DU DIAGNOSTIC</h2>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Tables:</strong> ' . ($all_tables_exist ? '<span class="success">✅ Toutes présentes</span>' : '<span class="error">❌ Manquantes</span>');
+        echo '</div>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Gamification Ready:</strong> ' . ($is_ready ? '<span class="success">✅ OUI</span>' : '<span class="error">❌ NON</span>');
+        echo '</div>';
+
+        echo '<div class="test-item">';
+        echo '<strong>Recommandation:</strong> ';
+        if (!$all_tables_exist) {
+            echo '<span class="error">Exécutez la migration SQL depuis Admin → Diététique → Notifications → Migrations</span>';
+        } elseif (!$is_ready) {
+            echo '<span class="warning">Tables présentes mais système pas prêt - Vérifiez les erreurs ci-dessus</span>';
+        } else {
+            echo '<span class="success">Système opérationnel - Les erreurs viennent d\'ailleurs</span>';
+        }
+        echo '</div>';
+        echo '</div>';
+
+        echo '</body></html>';
+        exit;
     }
 
     /**
