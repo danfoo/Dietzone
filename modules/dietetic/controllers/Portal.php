@@ -178,6 +178,37 @@ class Portal extends App_Controller
         }
     }
 
+    /**
+     * Check if gamification system is ready to use
+     *
+     * @return bool True if gamification tables exist and model can be loaded
+     */
+    private function is_gamification_ready()
+    {
+        try {
+            // Check if all required tables exist
+            $required_tables = [
+                db_prefix() . 'dietic_badge_definitions',
+                db_prefix() . 'dietic_patient_points',
+                db_prefix() . 'dietic_patient_badges',
+                db_prefix() . 'dietic_points_history'
+            ];
+
+            foreach ($required_tables as $table) {
+                if (!$this->db->table_exists($table)) {
+                    return false;
+                }
+            }
+
+            // Try to load the model
+            $this->load->model('dietetic/dietetic_gamification_model');
+            return true;
+        } catch (Exception $e) {
+            log_activity('Gamification readiness check failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function index()
     {
         // Check if client is logged in
@@ -5205,25 +5236,21 @@ class Portal extends App_Controller
                 $field = $meal . '_checked';
 
                 // Award points if meal was checked (validated)
-                if ($checked) {
+                if ($checked && $this->is_gamification_ready()) {
                     try {
-                        // Check if gamification tables exist
-                        if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
-                            $this->load->model('dietetic/dietetic_gamification_model');
-                            $meal_names = [
-                                'breakfast' => 'Petit-déjeuner',
-                                'lunch' => 'Déjeuner',
-                                'dinner' => 'Dîner'
-                            ];
-                            $this->dietetic_gamification_model->award_points(
-                                $patient->id,
-                                5,
-                                'meal_validated',
-                                $meal_names[$meal] . ' validé'
-                            );
-                            // Check for badge unlocks
-                            $this->dietetic_gamification_model->check_and_award_badges($patient->id);
-                        }
+                        $meal_names = [
+                            'breakfast' => 'Petit-déjeuner',
+                            'lunch' => 'Déjeuner',
+                            'dinner' => 'Dîner'
+                        ];
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            5,
+                            'meal_validated',
+                            $meal_names[$meal] . ' validé'
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
                     } catch (Exception $e) {
                         // Silently log gamification errors - don't break the main flow
                         log_activity('Gamification error in toggle_meal: ' . $e->getMessage());
@@ -6495,10 +6522,8 @@ class Portal extends App_Controller
 
             if ($entry_id) {
                 // Award points for hydration tracking
-                try {
-                    // Check if gamification tables exist
-                    if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
-                        $this->load->model('dietetic/dietetic_gamification_model');
+                if ($this->is_gamification_ready()) {
+                    try {
                         $this->dietetic_gamification_model->award_points(
                             $patient->id,
                             3,
@@ -6508,10 +6533,10 @@ class Portal extends App_Controller
                         );
                         // Check for badge unlocks
                         $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in api_add_hydration: ' . $e->getMessage());
                     }
-                } catch (Exception $e) {
-                    // Silently log gamification errors - don't break the main flow
-                    log_activity('Gamification error in api_add_hydration: ' . $e->getMessage());
                 }
 
                 // Get new total
@@ -6805,10 +6830,8 @@ class Portal extends App_Controller
 
             if ($result) {
                 // Award points for activity
-                try {
-                    // Check if gamification tables exist
-                    if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
-                        $this->load->model('dietetic/dietetic_gamification_model');
+                if ($this->is_gamification_ready()) {
+                    try {
                         $this->dietetic_gamification_model->award_points(
                             $patient->id,
                             15,
@@ -6818,10 +6841,10 @@ class Portal extends App_Controller
                         );
                         // Check for badge unlocks
                         $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in add_activity: ' . $e->getMessage());
                     }
-                } catch (Exception $e) {
-                    // Silently log gamification errors - don't break the main flow
-                    log_activity('Gamification error in add_activity: ' . $e->getMessage());
                 }
 
                 if ($redirect_to_dashboard) {
