@@ -5203,6 +5203,8 @@ class Portal extends App_Controller
     public function api_toggle_meal()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'error' => 'Not authenticated']);
@@ -6483,6 +6485,8 @@ class Portal extends App_Controller
         ob_clean();
 
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         if (!is_client_logged_in()) {
             echo json_encode(['success' => false, 'message' => 'Non authentifié']);
@@ -6782,6 +6786,8 @@ class Portal extends App_Controller
 
         if (!$redirect_to_dashboard) {
             header('Content-Type: application/json');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
         }
 
         $patient = $this->get_logged_in_patient();
