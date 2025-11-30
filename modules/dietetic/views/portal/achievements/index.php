@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $this->load->view('dietetic/portal/portal_header', ['patient' => $patient, 'client' => $client, 'title' => $title]); ?>
+<?php $this->load->view('dietetic/portal/includes/portal_header', ['patient' => $patient, 'client' => $client, 'title' => $title]); ?>
 
 <style>
 /* Modern Achievements Page Styles */
@@ -7,7 +7,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     min-height: 100vh;
 }
 
@@ -340,23 +340,108 @@
     }
 }
 
-/* Tooltip */
+/* Badge Modal/Tooltip */
+.badge-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.badge-modal-overlay.active {
+    display: block;
+}
+
 .badge-tooltip {
     position: fixed;
-    background: rgba(0,0,0,0.9);
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    z-index: 1000;
-    max-width: 250px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    z-index: 9999;
+    max-width: 90%;
+    width: 400px;
+    display: none;
+    animation: popIn 0.3s;
 }
 
 .badge-tooltip.show {
-    opacity: 1;
+    display: block;
+}
+
+@keyframes popIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.badge-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.badge-modal-icon {
+    font-size: 48px;
+}
+
+.badge-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.badge-modal-description {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.badge-modal-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.badge-modal-points {
+    font-size: 14px;
+    font-weight: 600;
+    color: #01807B;
+}
+
+.badge-modal-status {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.badge-modal-status.unlocked {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-modal-status.locked {
+    background: #f8d7da;
+    color: #721c24;
 }
 </style>
 
@@ -365,7 +450,7 @@
     <div class="achievements-header">
         <div class="level-card">
             <div class="level-icon" style="background: <?php echo $current_level_info['color']; ?>">
-                <?php echo $current_level_info['icon']; ?>
+                <i class="<?php echo $current_level_info['icon']; ?>"></i>
             </div>
             <div class="level-info">
                 <h1 class="level-title"><?php echo $current_level_info['name']; ?></h1>
@@ -423,8 +508,8 @@
         </h2>
 
         <?php
-        // Group badges by category
-        $categories = [
+        // Category names and icons
+        $categories_info = [
             'streak' => ['name' => 'Régularité', 'icon' => '🔥'],
             'weight_loss' => ['name' => 'Perte de Poids', 'icon' => '⚖️'],
             'nutrition' => ['name' => 'Nutrition', 'icon' => '🥗'],
@@ -433,12 +518,11 @@
             'goals' => ['name' => 'Objectifs', 'icon' => '🎯']
         ];
 
-        foreach ($categories as $cat_key => $cat_info):
-            $cat_badges = array_filter($all_badges, function($b) use ($cat_key) {
-                return $b->category == $cat_key;
-            });
-
+        // $all_badges est déjà groupé par catégorie par get_all_badges_with_progress()
+        foreach ($all_badges as $cat_key => $cat_badges):
             if (empty($cat_badges)) continue;
+
+            $cat_info = isset($categories_info[$cat_key]) ? $categories_info[$cat_key] : ['name' => ucfirst($cat_key), 'icon' => '📋'];
         ?>
             <div class="category-badges">
                 <div class="category-header">
@@ -446,30 +530,30 @@
                 </div>
                 <div class="badges-grid">
                     <?php foreach ($cat_badges as $badge):
-                        $is_unlocked = isset($badge->unlocked_at);
-                        $is_new = $is_unlocked && (strtotime($badge->unlocked_at) > strtotime('-7 days'));
+                        $is_unlocked = $badge['unlocked'] ?? false;
+                        $is_new = $is_unlocked && isset($badge['unlocked_at']) && (strtotime($badge['unlocked_at']) > strtotime('-7 days'));
                     ?>
                         <div class="badge-card <?php echo $is_unlocked ? 'unlocked' : 'locked'; ?>"
-                             data-badge-id="<?php echo $badge->id; ?>"
+                             data-badge-id="<?php echo $badge['id']; ?>"
                              onclick="showBadgeTooltip(this, event)">
                             <?php if ($is_new): ?>
                                 <div class="new-badge">NEW</div>
                             <?php endif; ?>
-                            <div class="badge-icon" style="background: <?php echo $badge->color; ?>">
-                                <?php echo $badge->icon; ?>
+                            <div class="badge-icon" style="background: <?php echo $badge['color']; ?>">
+                                <i class="<?php echo $badge['icon']; ?>"></i>
                             </div>
-                            <div class="badge-name"><?php echo htmlspecialchars($badge->name); ?></div>
-                            <div class="badge-description"><?php echo htmlspecialchars($badge->description); ?></div>
+                            <div class="badge-name"><?php echo htmlspecialchars($badge['name']); ?></div>
+                            <div class="badge-description"><?php echo htmlspecialchars($badge['description']); ?></div>
                             <div class="badge-points">
                                 <?php if ($is_unlocked): ?>
                                     <i class="fa fa-check-circle"></i> Débloqué
                                 <?php else: ?>
-                                    +<?php echo $badge->points; ?> points
+                                    +<?php echo $badge['points']; ?> points
                                 <?php endif; ?>
                             </div>
-                            <?php if (!$is_unlocked && isset($badge->progress)): ?>
+                            <?php if (!$is_unlocked && isset($badge['progress'])): ?>
                                 <div class="badge-progress">
-                                    <?php echo $badge->progress; ?>
+                                    <?php echo $badge['progress']; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -521,19 +605,77 @@
     </div>
 </div>
 
-<div class="badge-tooltip" id="badgeTooltip"></div>
+<!-- Badge Modal Overlay -->
+<div class="badge-modal-overlay" id="badgeModalOverlay" onclick="closeBadgeModal()"></div>
+
+<!-- Badge Modal -->
+<div class="badge-tooltip" id="badgeTooltip">
+    <div class="badge-modal-header">
+        <div class="badge-modal-icon" id="modalIcon"></div>
+        <div>
+            <h3 class="badge-modal-title" id="modalTitle"></h3>
+        </div>
+    </div>
+    <div class="badge-modal-description" id="modalDescription"></div>
+    <div class="badge-modal-meta">
+        <div class="badge-modal-points" id="modalPoints"></div>
+        <div class="badge-modal-status" id="modalStatus"></div>
+    </div>
+</div>
 
 <script>
 function showBadgeTooltip(element, event) {
-    // This is a simple click handler - could be enhanced with detailed modal
-    const badgeCard = element;
-    const isUnlocked = badgeCard.classList.contains('unlocked');
+    event.preventDefault();
+    event.stopPropagation();
 
-    if (!isUnlocked) {
-        // Could show a modal with progress details
-        console.log('Badge locked - show progress modal');
+    const badgeCard = element;
+    const badgeData = {
+        name: badgeCard.querySelector('.badge-name')?.textContent || 'Badge',
+        description: badgeCard.querySelector('.badge-description')?.textContent || '',
+        icon: badgeCard.querySelector('.badge-icon i')?.className || 'fa fa-star',
+        color: badgeCard.querySelector('.badge-icon')?.style.background || '#667eea',
+        points: badgeCard.querySelector('.badge-points')?.textContent || '',
+        unlocked: badgeCard.classList.contains('unlocked')
+    };
+
+    const modal = document.getElementById('badgeTooltip');
+    const overlay = document.getElementById('badgeModalOverlay');
+    const icon = document.getElementById('modalIcon');
+    const title = document.getElementById('modalTitle');
+    const description = document.getElementById('modalDescription');
+    const points = document.getElementById('modalPoints');
+    const status = document.getElementById('modalStatus');
+
+    icon.innerHTML = '<i class="' + badgeData.icon + '" style="color: ' + badgeData.color + ';"></i>';
+    title.textContent = badgeData.name;
+    description.textContent = badgeData.description;
+    points.textContent = badgeData.points;
+
+    if (badgeData.unlocked) {
+        status.textContent = 'Débloqué ✓';
+        status.className = 'badge-modal-status unlocked';
+    } else {
+        status.textContent = 'Verrouillé';
+        status.className = 'badge-modal-status locked';
     }
+
+    overlay.classList.add('active');
+    modal.classList.add('show');
 }
+
+function closeBadgeModal() {
+    const modal = document.getElementById('badgeTooltip');
+    const overlay = document.getElementById('badgeModalOverlay');
+    modal.classList.remove('show');
+    overlay.classList.remove('active');
+}
+
+// Close with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBadgeModal();
+    }
+});
 
 // Smooth scroll animations
 document.addEventListener('DOMContentLoaded', function() {
@@ -555,4 +697,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php $this->load->view('dietetic/portal/portal_footer'); ?>
+<?php $this->load->view('dietetic/portal/includes/portal_footer'); ?>

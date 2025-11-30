@@ -108,6 +108,28 @@ class Dietetic_gamification_model extends App_Model
     }
 
     /**
+     * Get all badges with progress (alias pour get_patient_badge_wall)
+     * Retourne tous les badges avec leur statut de déverrouillage et progression
+     */
+    public function get_all_badges_with_progress($patient_id)
+    {
+        // Récupérer le mur de badges (méthode existante)
+        $badge_wall = $this->get_patient_badge_wall($patient_id);
+
+        // Grouper par catégorie pour l'affichage
+        $badges_by_category = [];
+        foreach ($badge_wall as $badge) {
+            $category = $badge['category'];
+            if (!isset($badges_by_category[$category])) {
+                $badges_by_category[$category] = [];
+            }
+            $badges_by_category[$category][] = $badge;
+        }
+
+        return $badges_by_category;
+    }
+
+    /**
      * Get badge unlock date
      */
     private function get_badge_unlock_date($patient_id, $badge_id)
@@ -341,11 +363,19 @@ class Dietetic_gamification_model extends App_Model
     }
 
     /**
-     * Get level information
+     * Get level information (public pour accès depuis contrôleur)
      */
-    private function get_level_info($level_key)
+    public function get_level_info($level_key)
     {
         return isset($this->levels[$level_key]) ? $this->levels[$level_key] : $this->levels['debutant'];
+    }
+
+    /**
+     * Get next level information (wrapper public pour get_next_level)
+     */
+    public function get_next_level_info($current_level)
+    {
+        return $this->get_next_level($current_level);
     }
 
     /**
@@ -400,7 +430,7 @@ class Dietetic_gamification_model extends App_Model
         $new_badges = 0;
 
         // Check streak badges
-        $streak = $this->dietetic_daily_tracking_model->get_current_streak($patient_id);
+        $streak = $this->dietetic_daily_tracking_model->calculate_streak($patient_id);
         $new_badges += $this->check_streak_badges($patient_id, $streak);
 
         // Check weight loss badges
@@ -493,9 +523,13 @@ class Dietetic_gamification_model extends App_Model
     private function check_nutrition_badges($patient_id)
     {
         // Count days with meals logged
-        $this->db->select('COUNT(DISTINCT DATE(created_at)) as days_count');
+        $this->db->select('COUNT(DISTINCT tracking_date) as days_count');
         $this->db->where('patient_id', $patient_id);
-        $this->db->where('meals_validated >', 0);
+        $this->db->group_start();
+        $this->db->where('breakfast_checked', 1);
+        $this->db->or_where('lunch_checked', 1);
+        $this->db->or_where('dinner_checked', 1);
+        $this->db->group_end();
         $result = $this->db->get(db_prefix() . 'dietic_daily_tracking')->row();
 
         $days_logged = $result ? $result->days_count : 0;
@@ -525,9 +559,9 @@ class Dietetic_gamification_model extends App_Model
     private function check_hydration_badges($patient_id)
     {
         // Count days with water logged
-        $this->db->select('COUNT(DISTINCT DATE(created_at)) as days_count');
+        $this->db->select('COUNT(DISTINCT tracking_date) as days_count');
         $this->db->where('patient_id', $patient_id);
-        $this->db->where('water_intake >', 0);
+        $this->db->where('water_glasses >', 0);
         $result = $this->db->get(db_prefix() . 'dietic_daily_tracking')->row();
 
         $days_logged = $result ? $result->days_count : 0;
