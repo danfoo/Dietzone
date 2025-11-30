@@ -510,13 +510,6 @@ body {
     </div>
 </div>
 
-<!-- Actions (Retour) -->
-<div class="article-actions">
-    <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="btn-back">
-        <i class="fa fa-arrow-left"></i> Retour au blog
-    </a>
-</div>
-
 <div class="article-container">
     <!-- Contenu de l'article -->
     <div class="section-card">
@@ -607,6 +600,13 @@ body {
             </div>
         </div>
     <?php endif; ?>
+
+    <!-- Actions (Retour) - En bas de page -->
+    <div class="article-actions">
+        <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="btn-back">
+            <i class="fa fa-arrow-left"></i> Retour au blog
+        </a>
+    </div>
 </div>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>

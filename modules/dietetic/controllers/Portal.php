@@ -303,6 +303,19 @@ class Portal extends App_Controller
             $data['tracking_completion'] = 0;
         }
 
+        // Get recent blog articles for carousel (if blog enabled)
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_blog_articles')) {
+                $this->load->model('dietetic/dietetic_blog_model');
+                // Get 6 most recent published articles
+                $data['blog_articles'] = $this->dietetic_blog_model->get_published(6, 0);
+            } else {
+                $data['blog_articles'] = [];
+            }
+        } catch (Exception $e) {
+            $data['blog_articles'] = [];
+        }
+
         $this->load->view('portal_dashboard', $data);
     }
 
