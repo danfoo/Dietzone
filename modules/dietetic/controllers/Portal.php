@@ -7104,10 +7104,17 @@ class Portal extends App_Controller
      */
     public function blog()
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
