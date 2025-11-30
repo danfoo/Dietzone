@@ -7154,9 +7154,8 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/index');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/index', $data);
     }
 
     /**
@@ -7164,10 +7163,17 @@ class Portal extends App_Controller
      */
     public function blog_article($slug)
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
@@ -7202,9 +7208,8 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/article');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/article', $data);
     }
 
     /**
@@ -7212,10 +7217,17 @@ class Portal extends App_Controller
      */
     public function blog_search()
     {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
         $patient = $this->get_logged_in_patient();
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            redirect(site_url('clients/login'));
+            return;
         }
 
         $this->load->model('dietetic/dietetic_blog_model');
@@ -7238,9 +7250,8 @@ class Portal extends App_Controller
         $this->load->model('clients_model');
         $data['client'] = $this->clients_model->get($patient->client_id);
 
-        $this->data($data);
-        $this->view('portal/blog/search');
-        $this->layout();
+        // Load view directly - the view already includes portal_header and portal_footer
+        $this->load->view('dietetic/portal/blog/search', $data);
     }
 }
 
