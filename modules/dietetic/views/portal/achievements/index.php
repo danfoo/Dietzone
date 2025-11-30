@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $this->load->view('dietetic/portal/portal_header', ['patient' => $patient, 'client' => $client, 'title' => $title]); ?>
+<?php $this->load->view('dietetic/portal/includes/portal_header', ['patient' => $patient, 'client' => $client, 'title' => $title]); ?>
 
 <style>
 /* Modern Achievements Page Styles */
@@ -555,4 +555,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php $this->load->view('dietetic/portal/portal_footer'); ?>
+<?php $this->load->view('dietetic/portal/includes/portal_footer'); ?>
