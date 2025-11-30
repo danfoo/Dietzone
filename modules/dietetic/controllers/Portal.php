@@ -5203,6 +5203,25 @@ class Portal extends App_Controller
             if ($success) {
                 $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
                 $field = $meal . '_checked';
+
+                // Award points if meal was checked (validated)
+                if ($checked) {
+                    $this->load->model('dietetic/dietetic_gamification_model');
+                    $meal_names = [
+                        'breakfast' => 'Petit-déjeuner',
+                        'lunch' => 'Déjeuner',
+                        'dinner' => 'Dîner'
+                    ];
+                    $this->dietetic_gamification_model->award_points(
+                        $patient->id,
+                        5,
+                        'meal_validated',
+                        $meal_names[$meal] . ' validé'
+                    );
+                    // Check for badge unlocks
+                    $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                }
+
                 echo json_encode([
                     'success' => true,
                     'checked' => (bool)$tracking->$field
@@ -6467,6 +6486,18 @@ class Portal extends App_Controller
             $entry_id = $this->db->insert_id();
 
             if ($entry_id) {
+                // Award points for hydration tracking
+                $this->load->model('dietetic/dietetic_gamification_model');
+                $this->dietetic_gamification_model->award_points(
+                    $patient->id,
+                    3,
+                    'hydration_logged',
+                    "Hydratation enregistrée: {$quantity_ml}ml",
+                    $entry_id
+                );
+                // Check for badge unlocks
+                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+
                 // Get new total
                 $this->db->select_sum('quantity_ml');
                 $this->db->where('patient_id', $patient->id);
@@ -6757,6 +6788,18 @@ class Portal extends App_Controller
             $result = $this->dietetic_activities_model->add_patient_activity($data);
 
             if ($result) {
+                // Award points for activity
+                $this->load->model('dietetic/dietetic_gamification_model');
+                $this->dietetic_gamification_model->award_points(
+                    $patient->id,
+                    15,
+                    'activity_logged',
+                    "Activité sportive: {$duration_minutes} min - {$kcal_burned} kcal",
+                    $result
+                );
+                // Check for badge unlocks
+                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+
                 if ($redirect_to_dashboard) {
                     set_alert('success', 'Activité ajoutée avec succès');
                     redirect(site_url('dietetic/portal'));
@@ -7271,6 +7314,60 @@ class Portal extends App_Controller
 
         // Load view directly - the view already includes portal_header and portal_footer
         $this->load->view('dietetic/portal/blog/search', $data);
+    }
+
+    /**
+     * Display achievements and badges page
+     */
+    public function achievements()
+    {
+        // Check if patient is logged in
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $patient = $this->get_logged_in_patient();
+
+        if (!$patient) {
+            redirect(site_url('clients/login'));
+            return;
+        }
+
+        $this->load->model('dietetic/dietetic_gamification_model');
+
+        // Get all badge definitions grouped by category
+        $all_badges = $this->dietetic_gamification_model->get_all_badges_with_progress($patient->id);
+
+        // Get patient badges (unlocked)
+        $patient_badges = $this->dietetic_gamification_model->get_patient_badges($patient->id);
+
+        // Get patient points and level
+        $patient_points = $this->dietetic_gamification_model->get_patient_points($patient->id);
+
+        // Get points history
+        $points_history = $this->dietetic_gamification_model->get_points_history($patient->id, 50);
+
+        // Get level info
+        $current_level_info = $this->dietetic_gamification_model->get_level_info($patient_points->current_level);
+        $next_level_info = $this->dietetic_gamification_model->get_next_level_info($patient_points->current_level);
+
+        $data['all_badges'] = $all_badges;
+        $data['patient_badges'] = $patient_badges;
+        $data['patient_points'] = $patient_points;
+        $data['points_history'] = $points_history;
+        $data['current_level_info'] = $current_level_info;
+        $data['next_level_info'] = $next_level_info;
+        $data['patient'] = $patient;
+        $data['title'] = 'Mes Succès';
+        $data['active_page'] = 'achievements';
+
+        // Get client info
+        $this->load->model('clients_model');
+        $data['client'] = $this->clients_model->get($patient->client_id);
+
+        // Load view
+        $this->load->view('dietetic/portal/achievements/index', $data);
     }
 }
 

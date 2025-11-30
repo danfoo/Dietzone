@@ -383,7 +383,7 @@ foreach ($badge_wall as $badge) {
                 <span class="badge-new"><?php echo $unseen_count; ?></span>
             <?php endif; ?>
         </div>
-        <a href="#" class="view-all-btn" onclick="showAllBadges(); return false;">
+        <a href="<?php echo site_url('dietetic/portal/achievements'); ?>" class="view-all-btn">
             Voir tout <i class="fa fa-chevron-right"></i>
         </a>
     </div>
