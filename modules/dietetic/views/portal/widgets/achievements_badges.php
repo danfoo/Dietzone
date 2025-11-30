@@ -167,8 +167,10 @@ foreach ($badge_wall as $badge) {
 .badges-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 16px;
+    max-height: 200px;
+    overflow: hidden;
 }
 
 .badge-item {
@@ -178,7 +180,7 @@ foreach ($badge_wall as $badge) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: 8px;
     cursor: pointer;
     transition: all 0.3s;
     position: relative;
@@ -229,8 +231,8 @@ foreach ($badge_wall as $badge) {
 }
 
 .badge-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
 .badge-item.unlocked .badge-icon {
@@ -259,7 +261,7 @@ foreach ($badge_wall as $badge) {
 }
 
 .badge-name {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     text-align: center;
     color: #2c3e50;
@@ -313,26 +315,27 @@ foreach ($badge_wall as $badge) {
 /* Badge Modal/Tooltip */
 .badge-tooltip {
     position: fixed;
-    bottom: 20px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     background: white;
-    padding: 16px 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    padding: 20px 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     z-index: 1000;
     max-width: 90%;
+    width: 320px;
     display: none;
-    animation: slideUp 0.3s;
+    animation: popIn 0.3s;
 }
 
-@keyframes slideUp {
+@keyframes popIn {
     from {
-        transform: translate(-50%, 20px);
+        transform: translate(-50%, -50%) scale(0.8);
         opacity: 0;
     }
     to {
-        transform: translate(-50%, 0);
+        transform: translate(-50%, -50%) scale(1);
         opacity: 1;
     }
 }
@@ -369,6 +372,32 @@ foreach ($badge_wall as $badge) {
     font-size: 12px;
     color: #01807B;
     font-weight: 600;
+}
+
+/* Overlay pour le modal */
+.badge-tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.badge-tooltip-overlay.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 </style>
 
@@ -477,6 +506,9 @@ foreach ($badge_wall as $badge) {
     </div>
 </div>
 
+<!-- Badge Tooltip Overlay -->
+<div id="badgeTooltipOverlay" class="badge-tooltip-overlay" onclick="closeBadgeTooltip()"></div>
+
 <!-- Badge Tooltip -->
 <div id="badgeTooltip" class="badge-tooltip">
     <div class="badge-tooltip-header">
@@ -490,10 +522,9 @@ foreach ($badge_wall as $badge) {
 </div>
 
 <script>
-let tooltipTimeout;
-
 function showBadgeDetail(badge) {
     const tooltip = document.getElementById('badgeTooltip');
+    const overlay = document.getElementById('badgeTooltipOverlay');
     const icon = document.getElementById('tooltipIcon');
     const title = document.getElementById('tooltipTitle');
     const description = document.getElementById('tooltipDescription');
@@ -510,25 +541,21 @@ function showBadgeDetail(badge) {
         points.innerHTML = '<i class="fa fa-lock"></i> ' + badge.points + ' points à gagner';
     }
 
+    overlay.classList.add('active');
     tooltip.classList.add('active');
-
-    // Auto-hide after 3 seconds
-    clearTimeout(tooltipTimeout);
-    tooltipTimeout = setTimeout(() => {
-        tooltip.classList.remove('active');
-    }, 3000);
 }
 
-function showAllBadges() {
-    // TODO: Navigate to full badges page or open modal
-    alert('Page complète des badges à venir !');
-}
-
-// Close tooltip on click outside
-document.addEventListener('click', function(e) {
+function closeBadgeTooltip() {
     const tooltip = document.getElementById('badgeTooltip');
-    if (!e.target.closest('.badge-item') && !e.target.closest('.badge-tooltip')) {
-        tooltip.classList.remove('active');
+    const overlay = document.getElementById('badgeTooltipOverlay');
+    tooltip.classList.remove('active');
+    overlay.classList.remove('active');
+}
+
+// Close tooltip with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBadgeTooltip();
     }
 });
 </script>
