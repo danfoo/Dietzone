@@ -109,7 +109,7 @@
                         <a href="<?php echo site_url('dietetic/portal/blog_article/' . $article->slug); ?>" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                             <div class="blog-card">
                                 <?php if ($article->featured_image) { ?>
-                                    <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $article->featured_image); ?>" alt="<?php echo htmlspecialchars($article->title); ?>" class="blog-card-image">
+                                    <img src="<?php echo base_url('uploads/blog/' . $article->featured_image); ?>" alt="<?php echo htmlspecialchars($article->title); ?>" class="blog-card-image">
                                 <?php } else { ?>
                                     <div class="blog-card-image"></div>
                                 <?php } ?>

@@ -77,7 +77,7 @@
                                     <label for="featured_image"><?php echo _l('blog_article_featured_image'); ?></label>
                                     <?php if (isset($article) && $article->featured_image) { ?>
                                         <div class="mb-2">
-                                            <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $article->featured_image); ?>" class="img-responsive" style="max-width: 100%;">
+                                            <img src="<?php echo base_url('uploads/blog/' . $article->featured_image); ?>" class="img-responsive" style="max-width: 100%;">
                                         </div>
                                     <?php } ?>
                                     <input type="file" id="featured_image" name="featured_image" class="form-control">

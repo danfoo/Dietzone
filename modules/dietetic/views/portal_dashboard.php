@@ -3382,7 +3382,7 @@ if (!$current_weight || !$target_weight) {
             <?php foreach ($blog_articles as $article) { ?>
                 <a href="<?php echo site_url('dietetic/portal/blog_article/' . $article->slug); ?>" class="blog-card-carousel">
                     <?php if ($article->featured_image) : ?>
-                        <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $article->featured_image); ?>"
+                        <img src="<?php echo base_url('uploads/blog/' . $article->featured_image); ?>"
                              alt="<?php echo htmlspecialchars($article->title); ?>"
                              class="blog-card-image">
                     <?php else : ?>

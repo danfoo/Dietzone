@@ -407,17 +407,19 @@ SHOW TABLES LIKE '%dietic_blog%';
 
 **Vérifier les permissions du dossier :**
 ```bash
-chmod 755 modules/dietetic/uploads/blog/
+chmod 755 uploads/blog/
 ```
 
 **Chemin d'accès :**
 ```php
 // URL correcte :
-module_dir_url('dietetic', 'uploads/blog/' . $filename)
+base_url('uploads/blog/' . $filename)
 
 // Chemin physique :
-module_dir_path('dietetic', 'uploads/blog/' . $filename)
+FCPATH . 'uploads/blog/' . $filename
 ```
+
+**Note importante :** Les images sont stockées dans le dossier `uploads/blog/` de Perfex (et non dans le module) pour éviter de les perdre lors des mises à jour du module.
 
 ### Les catégories n'apparaissent pas
 

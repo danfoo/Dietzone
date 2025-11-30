@@ -474,7 +474,7 @@ body {
 <!-- Hero Image avec Overlay -->
 <div class="article-hero">
     <?php if ($article->featured_image) : ?>
-        <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $article->featured_image); ?>"
+        <img src="<?php echo base_url('uploads/blog/' . $article->featured_image); ?>"
              alt="<?php echo htmlspecialchars($article->title); ?>"
              class="article-hero-image">
     <?php else : ?>
@@ -567,7 +567,7 @@ body {
                                style="text-decoration: none; color: inherit; display: block;">
                                 <div class="related-article-card">
                                     <?php if ($rel->featured_image) : ?>
-                                        <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $rel->featured_image); ?>"
+                                        <img src="<?php echo base_url('uploads/blog/' . $rel->featured_image); ?>"
                                              alt="<?php echo htmlspecialchars($rel->title); ?>"
                                              class="related-article-image">
                                     <?php else : ?>
