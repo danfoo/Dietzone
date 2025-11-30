@@ -168,9 +168,8 @@ foreach ($badge_wall as $badge) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-bottom: 16px;
-    max-height: 200px;
-    overflow: hidden;
+    margin-bottom: 20px;
+    min-height: 300px;
 }
 
 .badge-item {
@@ -205,8 +204,8 @@ foreach ($badge_wall as $badge) {
 
 .badge-new {
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: 7px;
+    right: 8px;
     background: #FF6B6B;
     color: white;
     width: 24px;
@@ -215,7 +214,7 @@ foreach ($badge_wall as $badge) {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 7px;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
     animation: pulse 2s infinite;
