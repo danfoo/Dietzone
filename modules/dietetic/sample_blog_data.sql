@@ -1,8 +1,18 @@
--- Sample Blog Articles for Dietzone
--- These articles provide valuable nutrition content for demo purposes
+-- ================================================================
+-- ARTICLES DE DÉMONSTRATION - SYSTÈME BLOG/CONSEILS
+-- ================================================================
+-- IMPORTANT: Définissez votre ID staff AVANT d'exécuter ce script
+-- ================================================================
 
--- Note: Replace {STAFF_ID} with actual staff ID when executing
--- Example: SET @author_id = 1; (then replace {STAFF_ID} with @author_id)
+-- ⚠️ MODIFIEZ CETTE LIGNE avec votre ID staff (trouvez-le dans tblstaff)
+-- Pour trouver votre ID: SELECT staffid, CONCAT(firstname, ' ', lastname) FROM tblstaff;
+SET @author_id = 1;  -- ← CHANGEZ CE NOMBRE !
+
+-- ================================================================
+-- Si vous ne connaissez pas votre staff_id, exécutez d'abord:
+-- SELECT staffid, CONCAT(firstname, ' ', lastname) as nom FROM tblstaff;
+-- Puis remplacez le 1 ci-dessus par votre staffid
+-- ================================================================
 
 -- Article 1: Nutrition
 INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `category`, `tags`, `author_id`, `status`, `views_count`, `published_at`, `created_at`) VALUES
@@ -37,7 +47,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p><em>Consultez votre diététicien pour un plan nutritionnel personnalisé.</em></p>',
     'nutrition',
     'protéines, alimentation, nutrition, santé',
-    1,
+    @author_id,
     'published',
     127,
     NOW(),
@@ -80,7 +90,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p>Ce smoothie bowl est riche en antioxydants, fibres et acides gras essentiels. Parfait pour un petit-déjeuner nutritif qui vous donnera de l\'énergie pour toute la matinée !</p>',
     'recettes-sante',
     'recette, smoothie bowl, petit-déjeuner, healthy',
-    1,
+    @author_id,
     'published',
     89,
     DATE_SUB(NOW(), INTERVAL 2 DAY),
@@ -114,7 +124,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p>La clé d\'une perte de poids réussie réside dans une approche équilibrée, progressive et personnalisée. N\'hésitez pas à consulter un diététicien pour un accompagnement adapté.</p>',
     'perte-de-poids',
     'perte de poids, erreurs, conseils, régime',
-    1,
+    @author_id,
     'published',
     203,
     DATE_SUB(NOW(), INTERVAL 5 DAY),
@@ -159,7 +169,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p><strong>Astuce :</strong> Une tisane de camomille avec une poignée d\'amandes 1h avant le coucher peut significativement améliorer votre sommeil !</p>',
     'bien-etre',
     'sommeil, alimentation, bien-être, santé',
-    1,
+    @author_id,
     'published',
     156,
     DATE_SUB(NOW(), INTERVAL 7 DAY),
@@ -225,7 +235,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p><em>Note : Consultez toujours un professionnel avant de commencer une supplémentation.</em></p>',
     'sport-activite',
     'sport, nutrition sportive, entraînement, performance',
-    1,
+    @author_id,
     'published',
     178,
     DATE_SUB(NOW(), INTERVAL 10 DAY),
@@ -253,7 +263,7 @@ INSERT INTO `tbldietic_blog_articles` (`title`, `slug`, `excerpt`, `content`, `c
 <p><em>Article en cours de rédaction... Plus de contenu à venir !</em></p>',
     'nutrition',
     'superaliments, nutrition, santé',
-    1,
+    @author_id,
     'draft',
     0,
     NULL,
