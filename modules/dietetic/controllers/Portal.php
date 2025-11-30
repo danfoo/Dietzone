@@ -7133,7 +7133,7 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_blog_model');
 
         // Pagination
-        $per_page = 12;
+        $per_page = 10;
         $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
         $offset = ($page - 1) * $per_page;
 
@@ -7142,10 +7142,16 @@ class Portal extends App_Controller
 
         // Get articles
         $articles = $this->dietetic_blog_model->get_published($per_page, $offset, $category);
-        $total_articles = $this->dietetic_blog_model->get_count([
-            'status' => 'published',
-            'published_at <=' => date('Y-m-d H:i:s')
-        ]);
+
+        // Count total articles (filtered by category if applicable)
+        if ($category) {
+            $total_articles = count($this->dietetic_blog_model->get_published(999999, 0, $category));
+        } else {
+            $total_articles = $this->dietetic_blog_model->get_count([
+                'status' => 'published',
+                'published_at <=' => date('Y-m-d H:i:s')
+            ]);
+        }
 
         // Get categories
         $categories = $this->dietetic_blog_model->get_all_categories();
@@ -7247,7 +7253,7 @@ class Portal extends App_Controller
 
         $query = $this->input->get('q', true);
 
-        $per_page = 12;
+        $per_page = 10;
         $page = $this->input->get('page', true) ? (int)$this->input->get('page', true) : 1;
         $offset = ($page - 1) * $per_page;
 
