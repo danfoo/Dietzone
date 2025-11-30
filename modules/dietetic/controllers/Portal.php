@@ -104,6 +104,7 @@ class Portal extends App_Controller
             // Gamification
             'achievements',
             'gamification_diagnostic',
+            'test_api_php',
             // Profile methods
             'profile',
             'update_password',
@@ -7631,6 +7632,270 @@ class Portal extends App_Controller
         echo '</div>';
 
         echo '</body></html>';
+        exit;
+    }
+
+    /**
+     * TEST API WITH PHP FORMS (NO JAVASCRIPT)
+     * Access: /dietetic/portal/test_api_php
+     */
+    public function test_api_php()
+    {
+        if (!is_client_logged_in()) {
+            die('Please login as patient first');
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            die('Patient not found');
+        }
+
+        // Handle form submissions
+        $result = null;
+        $test_type = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $test_type = $this->input->post('test_type');
+
+            switch ($test_type) {
+                case 'toggle_meal':
+                    $meal = $this->input->post('meal');
+                    $checked = $this->input->post('checked') === '1';
+
+                    $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $meal, $checked);
+
+                    if ($success && $checked && $this->is_gamification_ready()) {
+                        try {
+                            $meal_names = [
+                                'breakfast' => 'Petit-déjeuner',
+                                'lunch' => 'Déjeuner',
+                                'dinner' => 'Dîner'
+                            ];
+                            $this->dietetic_gamification_model->award_points(
+                                $patient->id,
+                                5,
+                                'meal_validated',
+                                $meal_names[$meal] . ' validé (test PHP)'
+                            );
+                            $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                            $result = ['success' => true, 'message' => 'Repas validé + 5 points attribués'];
+                        } catch (Exception $e) {
+                            $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                        }
+                    } else {
+                        $result = ['success' => $success, 'message' => $success ? 'Repas validé (pas de points)' : 'Échec validation'];
+                    }
+                    break;
+
+                case 'add_hydration':
+                    $quantity_ml = (int)$this->input->post('quantity_ml');
+
+                    if ($quantity_ml > 0 && $quantity_ml <= 2000) {
+                        $data = [
+                            'patient_id' => $patient->id,
+                            'quantity_ml' => $quantity_ml,
+                            'tracking_date' => date('Y-m-d'),
+                            'tracking_time' => date('H:i:s'),
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+
+                        $this->db->insert(db_prefix() . 'dietic_hydration_tracking', $data);
+                        $entry_id = $this->db->insert_id();
+
+                        if ($entry_id && $this->is_gamification_ready()) {
+                            try {
+                                $this->dietetic_gamification_model->award_points(
+                                    $patient->id,
+                                    3,
+                                    'hydration_logged',
+                                    "Hydratation: {$quantity_ml}ml (test PHP)",
+                                    $entry_id
+                                );
+                                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                                $result = ['success' => true, 'message' => "Hydratation enregistrée ({$quantity_ml}ml) + 3 points"];
+                            } catch (Exception $e) {
+                                $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                            }
+                        } else {
+                            $result = ['success' => $entry_id > 0, 'message' => $entry_id ? 'Hydratation enregistrée (pas de points)' : 'Échec enregistrement'];
+                        }
+                    } else {
+                        $result = ['success' => false, 'message' => 'Quantité invalide (1-2000ml)'];
+                    }
+                    break;
+
+                case 'add_activity':
+                    // Load model
+                    if (!isset($this->dietetic_activities_model)) {
+                        $this->load->model('dietetic/dietetic_activities_model');
+                    }
+
+                    $activity_data = [
+                        'patient_id' => $patient->id,
+                        'activity_id' => 1, // Default activity
+                        'duration_minutes' => (int)$this->input->post('duration_minutes'),
+                        'kcal_burned' => (int)$this->input->post('kcal_burned'),
+                        'activity_date' => date('Y-m-d'),
+                        'activity_time' => date('H:i:s'),
+                        'notes' => 'Test PHP',
+                        'created_at' => date('Y-m-d H:i:s')
+                    ];
+
+                    $activity_result = $this->dietetic_activities_model->add_patient_activity($activity_data);
+
+                    if ($activity_result && $this->is_gamification_ready()) {
+                        try {
+                            $this->dietetic_gamification_model->award_points(
+                                $patient->id,
+                                15,
+                                'activity_logged',
+                                "Activité: {$activity_data['duration_minutes']}min (test PHP)",
+                                $activity_result
+                            );
+                            $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                            $result = ['success' => true, 'message' => 'Activité ajoutée + 15 points'];
+                        } catch (Exception $e) {
+                            $result = ['success' => false, 'message' => 'Erreur gamification: ' . $e->getMessage()];
+                        }
+                    } else {
+                        $result = ['success' => $activity_result > 0, 'message' => $activity_result ? 'Activité ajoutée (pas de points)' : 'Échec ajout'];
+                    }
+                    break;
+            }
+        }
+
+        // Get current points
+        if ($this->is_gamification_ready()) {
+            $this->db->where('patient_id', $patient->id);
+            $patient_points = $this->db->get(db_prefix() . 'dietic_patient_points')->row();
+            $current_points = $patient_points ? $patient_points->total_points : 0;
+        } else {
+            $current_points = 'N/A (gamification not ready)';
+        }
+
+        // Display HTML page
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Test API PHP - Sans JavaScript</title>
+            <style>
+                body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+                .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+                h2 { color: #555; margin-top: 30px; }
+                .info-box { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; }
+                .result { padding: 15px; margin: 20px 0; border-radius: 5px; font-weight: bold; }
+                .result.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+                .result.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+                .form-section { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 5px; border: 1px solid #ddd; }
+                .form-group { margin: 15px 0; }
+                label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+                input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+                button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+                button:hover { background: #45a049; }
+                .points-display { font-size: 24px; color: #4CAF50; font-weight: bold; text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🧪 TEST API GAMIFICATION - PHP PUR (SANS JAVASCRIPT)</h1>
+
+                <div class="info-box">
+                    <strong>Patient ID:</strong> <?php echo $patient->id; ?><br>
+                    <strong>Gamification Ready:</strong> <?php echo $this->is_gamification_ready() ? '✅ OUI' : '❌ NON'; ?>
+                </div>
+
+                <div class="points-display">
+                    🏆 Points Actuels: <?php echo $current_points; ?>
+                </div>
+
+                <?php if ($result): ?>
+                    <div class="result <?php echo $result['success'] ? 'success' : 'error'; ?>">
+                        <?php echo $result['success'] ? '✅' : '❌'; ?> <?php echo htmlspecialchars($result['message']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- TEST 1: Toggle Meal -->
+                <div class="form-section">
+                    <h2>TEST 1: Valider un Repas (+5 points)</h2>
+                    <form method="POST">
+                        <input type="hidden" name="test_type" value="toggle_meal">
+                        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                        <div class="form-group">
+                            <label>Repas:</label>
+                            <select name="meal" required>
+                                <option value="breakfast">Petit-déjeuner</option>
+                                <option value="lunch">Déjeuner</option>
+                                <option value="dinner">Dîner</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Action:</label>
+                            <select name="checked" required>
+                                <option value="1">Valider (cocher)</option>
+                                <option value="0">Invalider (décocher)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit">🍽️ Tester Validation Repas</button>
+                    </form>
+                </div>
+
+                <!-- TEST 2: Add Hydration -->
+                <div class="form-section">
+                    <h2>TEST 2: Ajouter Hydratation (+3 points)</h2>
+                    <form method="POST">
+                        <input type="hidden" name="test_type" value="add_hydration">
+                        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                        <div class="form-group">
+                            <label>Quantité (ml):</label>
+                            <input type="number" name="quantity_ml" min="1" max="2000" value="250" required>
+                        </div>
+
+                        <button type="submit">💧 Tester Hydratation</button>
+                    </form>
+                </div>
+
+                <!-- TEST 3: Add Activity -->
+                <div class="form-section">
+                    <h2>TEST 3: Ajouter Activité (+15 points)</h2>
+                    <form method="POST">
+                        <input type="hidden" name="test_type" value="add_activity">
+                        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                        <div class="form-group">
+                            <label>Durée (minutes):</label>
+                            <input type="number" name="duration_minutes" min="1" value="30" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Calories brûlées:</label>
+                            <input type="number" name="kcal_burned" min="1" value="150" required>
+                        </div>
+
+                        <button type="submit">🏃 Tester Activité</button>
+                    </form>
+                </div>
+
+                <div class="info-box" style="margin-top: 30px;">
+                    <strong>ℹ️ Comment utiliser :</strong><br>
+                    1. Cliquez sur un bouton de test<br>
+                    2. La page se recharge avec le résultat<br>
+                    3. Vérifiez que les points augmentent<br>
+                    4. Pas d'erreur = Backend fonctionne ✅<br>
+                    5. Erreur = Problème serveur à identifier 🐛
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
         exit;
     }
 
