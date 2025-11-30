@@ -1,6 +1,7 @@
 /**
  * Force l'ajout du menu Blog & Conseils dans la sidebar
  * Ce script contourne le système de hooks en ajoutant directement le menu dans le DOM
+ * Structure IDENTIQUE à force_recipes_menu.js pour garantir le fonctionnement
  */
 (function() {
     'use strict';
@@ -46,19 +47,24 @@
             return;
         }
 
-        // Créer le menu Blog & Conseils
+        // Créer le menu Blog & Conseils - STRUCTURE IDENTIQUE à force_recipes_menu.js
         var li = document.createElement('li');
         li.className = 'menu-item-dietetic-blog';
 
         var a = document.createElement('a');
         a.href = admin_url + 'dietetic/blog';
 
+        // ICÔNE - Même structure que recipes
         var icon = document.createElement('i');
-        icon.className = 'fa fa-newspaper-o';
-        icon.style.marginRight = '8px';
+        icon.className = 'fa fa-newspaper-o menu-icon';
 
+        var span = document.createElement('span');
+        span.textContent = 'Blog & Conseils';
+
+        // Assemblage - Même ordre que recipes
         a.appendChild(icon);
-        a.appendChild(document.createTextNode('Blog & Conseils'));
+        a.appendChild(document.createTextNode(' '));
+        a.appendChild(span);
         li.appendChild(a);
 
         // Trouver la position après "Recettes" (Bibliothèque de Recettes)
