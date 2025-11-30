@@ -129,6 +129,71 @@ $this->load->view('portal/includes/portal_header');
     background-clip: text;
 }
 
+/* Enhanced Stat Cards */
+.enhanced-stat-card {
+    position: relative;
+    padding-bottom: 20px !important;
+    min-height: 140px !important;
+}
+
+.stat-category {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.stat-category i {
+    font-size: 11px;
+}
+
+.stat-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 0 0 12px 12px;
+    transition: all 0.3s ease;
+}
+
+.enhanced-stat-card:hover .stat-indicator {
+    height: 6px;
+}
+
+/* BMI Category Colors */
+.enhanced-stat-card[data-category="underweight"] {
+    border-top: 3px solid #3498db;
+}
+
+.enhanced-stat-card[data-category="normal"] {
+    border-top: 3px solid #48bb78;
+}
+
+.enhanced-stat-card[data-category="overweight"] {
+    border-top: 3px solid #f39c12;
+}
+
+.enhanced-stat-card[data-category="obese"] {
+    border-top: 3px solid #e74c3c;
+}
+
+/* Progress Status Colors */
+.enhanced-stat-card[data-status="excellent"] {
+    border-top: 3px solid #48bb78;
+}
+
+.enhanced-stat-card[data-status="attention"] {
+    border-top: 3px solid #e74c3c;
+}
+
 /* Hydration Section - Compact Version */
 .hydration-card-compact {
     background: white;
@@ -3076,23 +3141,78 @@ if (!$current_weight || !$target_weight) {
 
 <!-- Other Stats Cards -->
 <div class="stats-grid">
-    <div class="stat-card bmi">
-        <div class="stat-icon">
+    <?php
+    // Calculate BMI category
+    $bmi = $patient->latest_measurement && $patient->latest_measurement->bmi ? $patient->latest_measurement->bmi : null;
+    $bmi_category = 'normal';
+    $bmi_label = 'Normal';
+    $bmi_color = '#48bb78';
+    $bmi_icon = 'fa-check-circle';
+
+    if ($bmi !== null) {
+        if ($bmi < 18.5) {
+            $bmi_category = 'underweight';
+            $bmi_label = 'Insuffisance pondérale';
+            $bmi_color = '#3498db';
+            $bmi_icon = 'fa-arrow-down';
+        } elseif ($bmi >= 18.5 && $bmi < 25) {
+            $bmi_category = 'normal';
+            $bmi_label = 'Poids normal';
+            $bmi_color = '#48bb78';
+            $bmi_icon = 'fa-check-circle';
+        } elseif ($bmi >= 25 && $bmi < 30) {
+            $bmi_category = 'overweight';
+            $bmi_label = 'Surpoids';
+            $bmi_color = '#f39c12';
+            $bmi_icon = 'fa-exclamation-triangle';
+        } else {
+            $bmi_category = 'obese';
+            $bmi_label = 'Obésité';
+            $bmi_color = '#e74c3c';
+            $bmi_icon = 'fa-exclamation-circle';
+        }
+    }
+    ?>
+
+    <div class="stat-card bmi enhanced-stat-card" data-category="<?php echo $bmi_category; ?>">
+        <div class="stat-icon" style="color: <?php echo $bmi_color; ?>;">
             <i class="fa fa-heartbeat"></i>
         </div>
-        <div class="stat-value"><?php echo $patient->latest_measurement && $patient->latest_measurement->bmi ? number_format($patient->latest_measurement->bmi, 1) : '-'; ?></div>
+        <div class="stat-value" style="background: linear-gradient(135deg, <?php echo $bmi_color; ?> 0%, <?php echo $bmi_color; ?>dd 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            <?php echo $bmi ? number_format($bmi, 1) : '-'; ?>
+        </div>
         <div class="stat-label">IMC</div>
+        <?php if ($bmi !== null) { ?>
+        <div class="stat-category">
+            <i class="fa <?php echo $bmi_icon; ?>"></i>
+            <span><?php echo $bmi_label; ?></span>
+        </div>
+        <div class="stat-indicator" style="background: <?php echo $bmi_color; ?>;"></div>
+        <?php } ?>
     </div>
 
     <?php if ($weight_progress->weight_change !== null) { ?>
-    <div class="stat-card progress">
-        <div class="stat-icon">
+    <?php
+    // Calculate progression status
+    $is_loss = $weight_progress->weight_change < 0;
+    $progress_color = $is_loss ? '#48bb78' : '#e74c3c';
+    $progress_icon = $is_loss ? 'fa-arrow-down' : 'fa-arrow-up';
+    $progress_label = $is_loss ? 'Perte de poids' : 'Gain de poids';
+    $progress_status = $is_loss ? 'excellent' : 'attention';
+    ?>
+    <div class="stat-card progress enhanced-stat-card" data-status="<?php echo $progress_status; ?>">
+        <div class="stat-icon" style="color: <?php echo $progress_color; ?>;">
             <i class="fa fa-line-chart"></i>
         </div>
-        <div class="stat-value <?php echo $weight_progress->weight_change < 0 ? 'text-success' : ''; ?>">
-            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?>
+        <div class="stat-value" style="background: linear-gradient(135deg, <?php echo $progress_color; ?> 0%, <?php echo $progress_color; ?>dd 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
         </div>
         <div class="stat-label">Progression</div>
+        <div class="stat-category">
+            <i class="fa <?php echo $progress_icon; ?>"></i>
+            <span><?php echo $progress_label; ?></span>
+        </div>
+        <div class="stat-indicator" style="background: <?php echo $progress_color; ?>;"></div>
     </div>
     <?php } ?>
 </div>
@@ -3346,26 +3466,6 @@ if (!$current_weight || !$target_weight) {
     </div>
 </div>
 
-<!-- Weight Evolution Chart -->
-<div class="weight-progress-card">
-    <?php if (!empty($weight_evolution) && count($weight_evolution) > 1) { ?>
-        <h4 class="weight-chart-title"><i class="fa fa-line-chart"></i> Évolution du Poids</h4>
-        <canvas id="weightEvolutionChart" height="100"></canvas>
-    <?php } elseif ($weight_progress->weight_change !== null) { ?>
-        <div class="weight-progress-icon">
-            <i class="fa fa-<?php echo $weight_progress->weight_change < 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
-        </div>
-        <div class="weight-progress-value">
-            <?php echo ($weight_progress->weight_change > 0 ? '+' : '') . number_format($weight_progress->weight_change, 1); ?> kg
-        </div>
-        <div class="weight-progress-label">Évolution du poids</div>
-    <?php } else { ?>
-        <div class="weight-progress-icon">
-            <i class="fa fa-balance-scale"></i>
-        </div>
-        <div class="weight-progress-empty">Aucune évolution disponible</div>
-    <?php } ?>
-</div>
 
 <!-- Blog Carousel Section - Conseils -->
 <?php if (!empty($blog_articles)) { ?>
