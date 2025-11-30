@@ -5206,20 +5206,28 @@ class Portal extends App_Controller
 
                 // Award points if meal was checked (validated)
                 if ($checked) {
-                    $this->load->model('dietetic/dietetic_gamification_model');
-                    $meal_names = [
-                        'breakfast' => 'Petit-déjeuner',
-                        'lunch' => 'Déjeuner',
-                        'dinner' => 'Dîner'
-                    ];
-                    $this->dietetic_gamification_model->award_points(
-                        $patient->id,
-                        5,
-                        'meal_validated',
-                        $meal_names[$meal] . ' validé'
-                    );
-                    // Check for badge unlocks
-                    $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    try {
+                        // Check if gamification tables exist
+                        if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
+                            $this->load->model('dietetic/dietetic_gamification_model');
+                            $meal_names = [
+                                'breakfast' => 'Petit-déjeuner',
+                                'lunch' => 'Déjeuner',
+                                'dinner' => 'Dîner'
+                            ];
+                            $this->dietetic_gamification_model->award_points(
+                                $patient->id,
+                                5,
+                                'meal_validated',
+                                $meal_names[$meal] . ' validé'
+                            );
+                            // Check for badge unlocks
+                            $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                        }
+                    } catch (Exception $e) {
+                        // Silently log gamification errors - don't break the main flow
+                        log_activity('Gamification error in toggle_meal: ' . $e->getMessage());
+                    }
                 }
 
                 echo json_encode([
@@ -6487,16 +6495,24 @@ class Portal extends App_Controller
 
             if ($entry_id) {
                 // Award points for hydration tracking
-                $this->load->model('dietetic/dietetic_gamification_model');
-                $this->dietetic_gamification_model->award_points(
-                    $patient->id,
-                    3,
-                    'hydration_logged',
-                    "Hydratation enregistrée: {$quantity_ml}ml",
-                    $entry_id
-                );
-                // Check for badge unlocks
-                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                try {
+                    // Check if gamification tables exist
+                    if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
+                        $this->load->model('dietetic/dietetic_gamification_model');
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            3,
+                            'hydration_logged',
+                            "Hydratation enregistrée: {$quantity_ml}ml",
+                            $entry_id
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    }
+                } catch (Exception $e) {
+                    // Silently log gamification errors - don't break the main flow
+                    log_activity('Gamification error in api_add_hydration: ' . $e->getMessage());
+                }
 
                 // Get new total
                 $this->db->select_sum('quantity_ml');
@@ -6789,16 +6805,24 @@ class Portal extends App_Controller
 
             if ($result) {
                 // Award points for activity
-                $this->load->model('dietetic/dietetic_gamification_model');
-                $this->dietetic_gamification_model->award_points(
-                    $patient->id,
-                    15,
-                    'activity_logged',
-                    "Activité sportive: {$duration_minutes} min - {$kcal_burned} kcal",
-                    $result
-                );
-                // Check for badge unlocks
-                $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                try {
+                    // Check if gamification tables exist
+                    if ($this->db->table_exists(db_prefix() . 'dietic_patient_points')) {
+                        $this->load->model('dietetic/dietetic_gamification_model');
+                        $this->dietetic_gamification_model->award_points(
+                            $patient->id,
+                            15,
+                            'activity_logged',
+                            "Activité sportive: {$duration_minutes} min - {$kcal_burned} kcal",
+                            $result
+                        );
+                        // Check for badge unlocks
+                        $this->dietetic_gamification_model->check_and_award_badges($patient->id);
+                    }
+                } catch (Exception $e) {
+                    // Silently log gamification errors - don't break the main flow
+                    log_activity('Gamification error in add_activity: ' . $e->getMessage());
+                }
 
                 if ($redirect_to_dashboard) {
                     set_alert('success', 'Activité ajoutée avec succès');
