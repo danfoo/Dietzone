@@ -2668,23 +2668,13 @@ body {
 .blog-carousel-section {
     background: white;
     border-radius: 16px;
-    padding: 24px 28px;
-    border: 2px solid #f1f3f5;
+    padding: 16px;
     margin-top: 24px;
     margin-bottom: 24px;
-    transition: all 0.3s;
-}
-
-.blog-carousel-section:hover {
-    border-color: #01807B;
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.12);
 }
 
 .blog-carousel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .blog-carousel-title {
@@ -2701,142 +2691,108 @@ body {
     font-size: 20px;
 }
 
-.blog-view-all {
-    padding: 8px 16px;
-    background: #01807B;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.3s;
-}
-
-.blog-view-all:hover {
-    background: #026660;
-    text-decoration: none;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
-}
-
 .blog-carousel-container {
     position: relative;
     overflow: hidden;
+    touch-action: pan-y pinch-zoom;
 }
 
 .blog-carousel-track {
     display: flex;
-    gap: 16px;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding-bottom: 10px;
 }
 
 .blog-card-carousel {
-    flex: 0 0 calc(33.333% - 12px);
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    flex: 0 0 calc(33.333% - 8px);
+    position: relative;
     border-radius: 12px;
-    padding: 20px;
-    border: 2px solid #e9ecef;
-    transition: all 0.3s;
+    overflow: hidden;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    height: 200px;
+    transition: all 0.3s;
 }
 
 .blog-card-carousel:hover {
-    border-color: #01807B;
     transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     text-decoration: none;
 }
 
-.blog-card-category {
-    display: inline-flex;
+.blog-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.blog-card-carousel:hover .blog-card-image {
+    transform: scale(1.05);
+}
+
+.blog-card-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #01807B 0%, #026660 100%);
+    display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    background: rgba(1, 128, 123, 0.1);
-    color: #01807B;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-    align-self: flex-start;
+    justify-content: center;
+    font-size: 48px;
+    color: rgba(255,255,255,0.3);
+}
+
+.blog-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+    padding: 40px 16px 16px;
+    color: white;
 }
 
 .blog-card-title-carousel {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: #212529;
-    line-height: 1.4;
-    margin-bottom: 12px;
+    color: white;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    flex: 1;
 }
 
-.blog-card-footer-carousel {
+.blog-view-all-bottom {
     display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.blog-view-all {
+    color: #01807B;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding-top: 12px;
-    border-top: 1px solid #e9ecef;
-    font-size: 11px;
-    color: #6c757d;
+    gap: 6px;
+    transition: all 0.2s;
 }
 
-.blog-carousel-nav {
-    display: flex;
+.blog-view-all:hover {
+    color: #026660;
+    text-decoration: none;
     gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.blog-nav-btn {
-    width: 44px;
-    height: 44px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    color: #6c757d;
-    font-size: 18px;
-}
-
-.blog-nav-btn:hover:not(:disabled) {
-    background: #01807B;
-    border-color: #01807B;
-    color: white;
-    transform: scale(1.1);
-}
-
-.blog-nav-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
 }
 
 .blog-carousel-dots {
     display: flex;
     gap: 8px;
     justify-content: center;
-    margin-top: 16px;
+    margin-top: 12px;
 }
 
 .blog-carousel-dot {
@@ -2869,33 +2825,26 @@ body {
 
 @media (max-width: 992px) {
     .blog-card-carousel {
-        flex: 0 0 calc(50% - 8px);
+        flex: 0 0 calc(50% - 6px);
     }
 }
 
 @media (max-width: 576px) {
     .blog-card-carousel {
-        flex: 0 0 calc(50% - 8px); /* 2 cartes sur mobile */
+        flex: 0 0 calc(50% - 6px);
+        height: 180px;
     }
 
-    .blog-carousel-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .blog-view-all {
-        width: 100%;
-        justify-content: center;
+    .blog-carousel-section {
+        padding: 12px;
     }
 
     .blog-card-title-carousel {
-        font-size: 14px;
+        font-size: 13px;
     }
 
-    .blog-card-category {
-        font-size: 10px;
-        padding: 3px 8px;
+    .blog-card-overlay {
+        padding: 30px 12px 12px;
     }
 }
 </style>
@@ -3426,51 +3375,41 @@ if (!$current_weight || !$target_weight) {
             <i class="fa fa-file-text-o"></i>
             Conseils & Actualités
         </div>
-        <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="blog-view-all">
-            <span>Voir tout</span>
-            <i class="fa fa-arrow-right"></i>
-        </a>
     </div>
 
-    <div class="blog-carousel-container">
+    <div class="blog-carousel-container" id="blogCarouselContainer">
         <div class="blog-carousel-track" id="blogCarouselTrack">
             <?php foreach ($blog_articles as $article) { ?>
                 <a href="<?php echo site_url('dietetic/portal/blog_article/' . $article->slug); ?>" class="blog-card-carousel">
-                    <?php if ($article->category && isset($article->category_details)) { ?>
-                        <span class="blog-card-category">
-                            <i class="fa <?php echo $article->category_details->icon; ?>"></i>
-                            <?php echo htmlspecialchars($article->category_details->name); ?>
-                        </span>
-                    <?php } ?>
+                    <?php if ($article->featured_image) : ?>
+                        <img src="<?php echo module_dir_url('dietetic', 'uploads/blog/' . $article->featured_image); ?>"
+                             alt="<?php echo htmlspecialchars($article->title); ?>"
+                             class="blog-card-image">
+                    <?php else : ?>
+                        <div class="blog-card-placeholder">
+                            <i class="fa fa-file-text-o"></i>
+                        </div>
+                    <?php endif; ?>
 
-                    <div class="blog-card-title-carousel">
-                        <?php echo htmlspecialchars($article->title); ?>
-                    </div>
-
-                    <div class="blog-card-footer-carousel">
-                        <span>
-                            <i class="fa fa-calendar"></i> <?php echo date('d M Y', strtotime($article->published_at)); ?>
-                        </span>
-                        <span>
-                            <i class="fa fa-eye"></i> <?php echo $article->views_count; ?>
-                        </span>
+                    <div class="blog-card-overlay">
+                        <div class="blog-card-title-carousel">
+                            <?php echo htmlspecialchars($article->title); ?>
+                        </div>
                     </div>
                 </a>
             <?php } ?>
         </div>
     </div>
 
-    <div class="blog-carousel-nav">
-        <button class="blog-nav-btn" id="blogPrevBtn" onclick="blogCarouselPrev()">
-            <i class="fa fa-chevron-left"></i>
-        </button>
-        <button class="blog-nav-btn" id="blogNextBtn" onclick="blogCarouselNext()">
-            <i class="fa fa-chevron-right"></i>
-        </button>
-    </div>
-
     <div class="blog-carousel-dots" id="blogCarouselDots">
         <!-- Dots will be generated by JavaScript -->
+    </div>
+
+    <div class="blog-view-all-bottom">
+        <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="blog-view-all">
+            <span>Voir tout</span>
+            <i class="fa fa-arrow-right"></i>
+        </a>
     </div>
 </div>
 <?php } ?>
@@ -4529,11 +4468,13 @@ function updateCaloriesPreview() {
 }
 
 // ============================================
-// BLOG CAROUSEL - Responsive navigation
+// BLOG CAROUSEL - Swipe navigation
 // ============================================
 
 let blogCurrentIndex = 0;
 let blogCardsPerView = 3;
+let blogTouchStartX = 0;
+let blogTouchEndX = 0;
 
 // Calculate how many cards to show based on screen size
 function updateBlogCardsPerView() {
@@ -4551,9 +4492,10 @@ function initBlogCarousel() {
     updateBlogCardsPerView();
 
     const track = document.getElementById('blogCarouselTrack');
+    const container = document.getElementById('blogCarouselContainer');
     const dotsContainer = document.getElementById('blogCarouselDots');
 
-    if (!track || !dotsContainer) {
+    if (!track || !dotsContainer || !container) {
         return;
     }
 
@@ -4569,7 +4511,71 @@ function initBlogCarousel() {
         dotsContainer.appendChild(dot);
     }
 
+    // Add swipe/touch events
+    container.addEventListener('touchstart', blogHandleTouchStart, false);
+    container.addEventListener('touchmove', blogHandleTouchMove, false);
+    container.addEventListener('touchend', blogHandleTouchEnd, false);
+
+    // Add mouse drag events for desktop
+    let isDragging = false;
+    let startX = 0;
+
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.pageX;
+        container.style.cursor = 'grabbing';
+    });
+
+    container.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+    });
+
+    container.addEventListener('mouseup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        container.style.cursor = 'grab';
+
+        const endX = e.pageX;
+        const diff = startX - endX;
+
+        if (Math.abs(diff) > 50) { // Threshold pour trigger le swipe
+            if (diff > 0) {
+                blogCarouselNext();
+            } else {
+                blogCarouselPrev();
+            }
+        }
+    });
+
+    container.addEventListener('mouseleave', () => {
+        isDragging = false;
+        container.style.cursor = 'grab';
+    });
+
     updateBlogCarousel();
+}
+
+function blogHandleTouchStart(e) {
+    blogTouchStartX = e.changedTouches[0].screenX;
+}
+
+function blogHandleTouchMove(e) {
+    blogTouchEndX = e.changedTouches[0].screenX;
+}
+
+function blogHandleTouchEnd() {
+    const diff = blogTouchStartX - blogTouchEndX;
+
+    if (Math.abs(diff) > 50) { // Threshold pour trigger le swipe
+        if (diff > 0) {
+            // Swipe left - next
+            blogCarouselNext();
+        } else {
+            // Swipe right - prev
+            blogCarouselPrev();
+        }
+    }
 }
 
 function blogCarouselNext() {
@@ -4599,8 +4605,6 @@ function blogGoToPage(pageIndex) {
 
 function updateBlogCarousel() {
     const track = document.getElementById('blogCarouselTrack');
-    const prevBtn = document.getElementById('blogPrevBtn');
-    const nextBtn = document.getElementById('blogNextBtn');
     const dots = document.querySelectorAll('.blog-carousel-dot');
 
     if (!track) return;
@@ -4609,13 +4613,8 @@ function updateBlogCarousel() {
     const totalPages = Math.ceil(totalCards / blogCardsPerView);
 
     // Calculate the offset
-    const cardWidth = 100 / blogCardsPerView;
     const offset = -(blogCurrentIndex * 100);
     track.style.transform = `translateX(${offset}%)`;
-
-    // Update button states
-    if (prevBtn) prevBtn.disabled = blogCurrentIndex === 0;
-    if (nextBtn) nextBtn.disabled = blogCurrentIndex >= totalPages - 1;
 
     // Update dots
     dots.forEach((dot, index) => {
