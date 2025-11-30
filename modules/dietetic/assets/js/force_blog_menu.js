@@ -54,14 +54,11 @@
         a.href = admin_url + 'dietetic/blog';
 
         var icon = document.createElement('i');
-        icon.className = 'fa fa-newspaper-o menu-icon';
-
-        var span = document.createElement('span');
-        span.textContent = 'Blog & Conseils';
+        icon.className = 'fa fa-newspaper-o';
+        icon.style.marginRight = '8px';
 
         a.appendChild(icon);
-        a.appendChild(document.createTextNode(' '));
-        a.appendChild(span);
+        a.appendChild(document.createTextNode('Blog & Conseils'));
         li.appendChild(a);
 
         // Trouver la position après "Recettes" (Bibliothèque de Recettes)
