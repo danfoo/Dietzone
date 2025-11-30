@@ -54,9 +54,9 @@
         var a = document.createElement('a');
         a.href = admin_url + 'dietetic/blog';
 
-        // ICÔNE - Même structure que recipes
+        // ICÔNE - Utiliser une icône Font Awesome 4.x standard
         var icon = document.createElement('i');
-        icon.className = 'fa fa-newspaper-o menu-icon';
+        icon.className = 'fa fa-file-text-o menu-icon'; // Changé de newspaper-o à file-text-o
 
         var span = document.createElement('span');
         span.textContent = 'Blog & Conseils';
