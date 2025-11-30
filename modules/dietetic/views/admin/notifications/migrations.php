@@ -699,6 +699,66 @@ var csrf_hash_name = '<?php echo $this->security->get_csrf_hash(); ?>';
                         </div>
                     </div>
                 </div>
+
+                <!-- Migration 9: Gamification System -->
+                <div class="migration-card" data-migration="achievements_badges" style="border: 2px solid #FFD700;">
+                    <div class="migration-card-header" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);">
+                        <h3>
+                            <i class="fa fa-trophy"></i>
+                            🎮 Système de Gamification - Badges & Points
+                        </h3>
+                        <span class="migration-status pending" id="status-achievements_badges">En attente</span>
+                    </div>
+                    <div class="migration-card-body">
+                        <div class="migration-description">
+                            <strong>Système complet de gamification :</strong> Badges, Points, Niveaux et Achievements pour motiver les patients.
+                            Encourage l'engagement quotidien avec un système de récompenses visuelles et progressives.
+                        </div>
+                        <div class="migration-tables">
+                            <h4>Tables créées :</h4>
+                            <ul>
+                                <li><code>tbldietic_badge_definitions</code> - 20 badges prédéfinis (streak, poids, nutrition, hydratation, activité)</li>
+                                <li><code>tbldietic_patient_badges</code> - Badges débloqués par patient</li>
+                                <li><code>tbldietic_patient_points</code> - Points et niveaux (Débutant → Diamant)</li>
+                                <li><code>tbldietic_points_history</code> - Historique des points gagnés</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-success" style="margin-top: 15px; background: #d5f4e6; border-left: 4px solid #0e6655; padding: 10px;">
+                            <i class="fa fa-check-circle"></i>
+                            <strong>Inclus :</strong>
+                            <ul style="margin: 10px 0 0 20px;">
+                                <li>🏆 20 badges répartis en 6 catégories</li>
+                                <li>⭐ 6 niveaux progressifs (Débutant → Diamant)</li>
+                                <li>💰 Système de points avec attribution automatique</li>
+                                <li>🎨 Interface visuelle moderne (badge wall)</li>
+                                <li>🔔 Notifications push au déblocage</li>
+                                <li>📊 Stats temps réel (jour/semaine/mois)</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info" style="margin-top: 10px; background: #e3f2fd; border-left: 4px solid #2196F3; padding: 10px;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Après installation :</strong>
+                            <ol style="margin: 10px 0 0 20px;">
+                                <li>Le widget "Mes Succès" sera disponible pour le dashboard patient</li>
+                                <li>Les badges seront attribués automatiquement selon les actions</li>
+                                <li>Consultez <code>GAMIFICATION_INTEGRATION_GUIDE.md</code> pour l'intégration</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="migration-card-footer">
+                        <div class="migration-meta">
+                            <i class="fa fa-file-code-o"></i> add_achievements_badges.sql
+                        </div>
+                        <div class="migration-actions">
+                            <button class="btn-check" onclick="checkMigration('achievements_badges')">
+                                <i class="fa fa-search"></i> Vérifier
+                            </button>
+                            <button class="btn-migrate" onclick="runMigration('achievements_badges')" style="background: #FFD700; color: #2c3e50;">
+                                <i class="fa fa-trophy"></i> Installer
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Back Link -->
@@ -759,6 +819,11 @@ const migrations = {
         name: 'Suivi d\'Activités Sportives',
         file: 'add_activity_tracking.php',
         tables: ['dietic_activities', 'dietic_patient_activities']
+    },
+    achievements_badges: {
+        name: 'Système de Gamification',
+        file: 'add_achievements_badges.sql',
+        tables: ['dietic_badge_definitions', 'dietic_patient_badges', 'dietic_patient_points', 'dietic_points_history']
     }
 };
 

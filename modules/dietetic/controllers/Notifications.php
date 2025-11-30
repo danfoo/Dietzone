@@ -978,6 +978,16 @@ class Notifications extends AdminController
                 $message = $installed ? 'Installé' : 'Manquant';
                 break;
 
+            case 'achievements_badges':
+                // Check if gamification tables exist
+                $table1 = $this->db->table_exists(db_prefix() . 'dietic_badge_definitions');
+                $table2 = $this->db->table_exists(db_prefix() . 'dietic_patient_badges');
+                $table3 = $this->db->table_exists(db_prefix() . 'dietic_patient_points');
+                $table4 = $this->db->table_exists(db_prefix() . 'dietic_points_history');
+                $installed = $table1 && $table2 && $table3 && $table4;
+                $message = $installed ? 'Installé' : 'Manquant';
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -1021,7 +1031,8 @@ class Notifications extends AdminController
                 'firebase_v1' => 'add_firebase_v1_api_support.sql',
                 'statistics_notes' => 'add_statistics_notes.php',
                 'hydration_tracking' => 'add_hydration_tracking.php',
-                'activity_tracking' => 'add_activity_tracking.php'
+                'activity_tracking' => 'add_activity_tracking.php',
+                'achievements_badges' => 'add_achievements_badges.sql'
             ];
 
             if (!isset($migration_files[$migration])) {
