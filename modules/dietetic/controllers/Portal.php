@@ -97,6 +97,10 @@ class Portal extends App_Controller
             // Legal pages
             'privacy',
             'terms',
+            // Blog methods
+            'blog',
+            'blog_article',
+            'blog_search',
             // Profile methods
             'profile',
             'update_password',
