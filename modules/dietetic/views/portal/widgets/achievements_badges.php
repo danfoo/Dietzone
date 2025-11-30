@@ -169,7 +169,7 @@ foreach ($badge_wall as $badge) {
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin-bottom: 20px;
-    min-height: 300px;
+    max-height: 300px;
 }
 
 .badge-item {
