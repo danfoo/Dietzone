@@ -3,44 +3,127 @@
  * Widget d'Analyse Nutritionnelle Avancée
  *
  * Affiche les calculs scientifiques de besoins nutritionnels du patient
+ * Version avec gestion d'erreurs robuste
  */
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-// Load nutrition calculator
-$CI = &get_instance();
-$CI->load->library('dietetic/dietetic_nutrition_calculator');
+// ==================== VÉRIFICATIONS DE DONNÉES ====================
 
-// Prepare patient data for analysis
-$patient_analysis_data = [
-    'weight' => $patient->current_weight ?? $patient->weight,
-    'height' => $patient->height,
-    'age' => $patient->age ?? 30, // Calculé à partir de la date de naissance si disponible
-    'gender' => $patient->gender,
-    'activity_level' => $patient->activity_level ?? Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
-    'goal' => $patient->goal ?? Dietetic_nutrition_calculator::GOAL_MAINTENANCE
-];
-
-// Calculer l'âge si date de naissance disponible
-if (isset($patient->birth_date) && $patient->birth_date) {
-    $birth_date = new DateTime($patient->birth_date);
-    $today = new DateTime();
-    $patient_analysis_data['age'] = $birth_date->diff($today)->y;
+// Vérifier que les données minimales existent
+if (!isset($patient->weight) || !isset($patient->height) || $patient->height <= 0) {
+    ?>
+    <div class="alert alert-warning" style="margin-top: 20px;">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>Analyse nutritionnelle indisponible</strong><br>
+        Les données minimales requises (poids et taille) ne sont pas disponibles pour ce patient.
+        Veuillez compléter le profil du patient pour activer l'analyse nutritionnelle.
+    </div>
+    <?php
+    return;
 }
 
-// Ajouter les mesures corporelles si disponibles
-if (isset($patient->waist_circumference)) {
-    $patient_analysis_data['waist'] = $patient->waist_circumference;
-}
-if (isset($patient->neck_circumference)) {
-    $patient_analysis_data['neck'] = $patient->neck_circumference;
-}
-if (isset($patient->hip_circumference)) {
-    $patient_analysis_data['hip'] = $patient->hip_circumference;
+// ==================== PRÉPARATION DES DONNÉES ====================
+
+try {
+    // Load nutrition calculator
+    $CI = &get_instance();
+    $CI->load->library('dietetic/dietetic_nutrition_calculator');
+
+    // Prepare patient data with safe defaults
+    $weight = !empty($patient->current_weight) ? floatval($patient->current_weight) : floatval($patient->weight);
+    $height = floatval($patient->height);
+
+    // Calculer l'âge (par défaut 30 ans si date de naissance non disponible)
+    $age = 30;
+    if (!empty($patient->birth_date) && $patient->birth_date != '0000-00-00') {
+        try {
+            $birth_date = new DateTime($patient->birth_date);
+            $today = new DateTime();
+            $age = $birth_date->diff($today)->y;
+        } catch (Exception $e) {
+            $age = 30; // Valeur par défaut
+        }
+    }
+
+    // Sexe (par défaut male si non défini)
+    $gender = !empty($patient->gender) ? $patient->gender : 'male';
+
+    // Niveau d'activité (par défaut modéré)
+    $activity_level_map = [
+        'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
+        'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
+        'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
+        'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
+        'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE,
+    ];
+
+    $patient_activity = !empty($patient->activity_level) ? $patient->activity_level : 'moderate';
+    $activity_level = isset($activity_level_map[$patient_activity])
+        ? $activity_level_map[$patient_activity]
+        : Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
+
+    // Objectif (par défaut maintien)
+    $goal_map = [
+        'weight_loss' => Dietetic_nutrition_calculator::GOAL_WEIGHT_LOSS,
+        'weight_gain' => Dietetic_nutrition_calculator::GOAL_WEIGHT_GAIN,
+        'maintenance' => Dietetic_nutrition_calculator::GOAL_MAINTENANCE,
+        'muscle_gain' => Dietetic_nutrition_calculator::GOAL_MUSCLE_GAIN,
+    ];
+
+    $patient_goal = !empty($patient->goal) ? $patient->goal : 'maintenance';
+    $goal = isset($goal_map[$patient_goal])
+        ? $goal_map[$patient_goal]
+        : Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
+
+    // Prepare analysis data
+    $patient_analysis_data = [
+        'weight' => $weight,
+        'height' => $height,
+        'age' => $age,
+        'gender' => $gender,
+        'activity_level' => $activity_level,
+        'goal' => $goal
+    ];
+
+    // Ajouter les mesures corporelles si disponibles
+    if (!empty($patient->waist_circumference) && $patient->waist_circumference > 0) {
+        $patient_analysis_data['waist'] = floatval($patient->waist_circumference);
+    }
+    if (!empty($patient->neck_circumference) && $patient->neck_circumference > 0) {
+        $patient_analysis_data['neck'] = floatval($patient->neck_circumference);
+    }
+    if (!empty($patient->hip_circumference) && $patient->hip_circumference > 0) {
+        $patient_analysis_data['hip'] = floatval($patient->hip_circumference);
+    }
+
+    // Effectuer l'analyse complète
+    $nutrition_analysis = $CI->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
+
+} catch (Exception $e) {
+    ?>
+    <div class="alert alert-danger" style="margin-top: 20px;">
+        <i class="fa fa-exclamation-circle"></i>
+        <strong>Erreur lors de l'analyse nutritionnelle</strong><br>
+        <?php echo htmlspecialchars($e->getMessage()); ?>
+    </div>
+    <?php
+    return;
 }
 
-// Effectuer l'analyse complète
-$nutrition_analysis = $CI->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
+// Vérifier que l'analyse a réussi
+if (empty($nutrition_analysis)) {
+    ?>
+    <div class="alert alert-warning" style="margin-top: 20px;">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>Analyse nutritionnelle non disponible</strong><br>
+        Impossible de calculer l'analyse nutritionnelle avec les données actuelles.
+    </div>
+    <?php
+    return;
+}
+
+// ==================== AFFICHAGE ====================
 ?>
 
 <style>
@@ -494,7 +577,7 @@ $nutrition_analysis = $CI->dietetic_nutrition_calculator->complete_nutrition_ana
 
         <!-- Column 3: Body Composition & Water -->
         <div class="col-md-4">
-            <?php if ($nutrition_analysis['body_composition']): ?>
+            <?php if (!empty($nutrition_analysis['body_composition'])): ?>
             <!-- Body Composition Card -->
             <div class="nutrition-card">
                 <div class="nutrition-card-header">
