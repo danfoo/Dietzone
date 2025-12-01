@@ -1,0 +1,140 @@
+═══════════════════════════════════════════════════════════════
+  📦 GUIDE DE DÉPLOIEMENT FTP - NOTIFICATIONS PUSH
+═══════════════════════════════════════════════════════════════
+
+🎯 OBJECTIF : Transférer les fichiers depuis Git vers app.dietsenegal.net
+
+═══════════════════════════════════════════════════════════════
+  1️⃣ FICHIER CRITIQUE - SERVICE WORKER (PRIORITÉ MAXIMALE)
+═══════════════════════════════════════════════════════════════
+
+[ ] firebase-messaging-sw.js
+    Source locale : /home/user/Dietzone/firebase-messaging-sw.js
+    Destination FTP : /public_html/firebase-messaging-sw.js
+                      (ou /httpdocs/ ou /www/ selon hébergeur)
+
+    ⚠️  ATTENTION : Ce fichier DOIT être à la RACINE du site !
+    ⚠️  Sans lui, AUCUNE notification ne fonctionnera !
+
+[ ] test-sw.js (optionnel, pour diagnostic)
+    Source locale : /home/user/Dietzone/test-sw.js
+    Destination FTP : /public_html/test-sw.js
+
+═══════════════════════════════════════════════════════════════
+  2️⃣ CONTRÔLEURS (PHP Backend)
+═══════════════════════════════════════════════════════════════
+
+[ ] modules/dietetic/controllers/Notifications.php
+    Changements : Corrections AJAX (stats, send_test_push)
+
+[ ] modules/dietetic/controllers/Setup.php
+    Changements : Ajout méthode diagnose_push()
+
+═══════════════════════════════════════════════════════════════
+  3️⃣ BIBLIOTHÈQUE FIREBASE
+═══════════════════════════════════════════════════════════════
+
+[ ] modules/dietetic/libraries/Firebase_cloud_messaging.php
+    Changements : Logging amélioré, gestion erreurs v1/legacy
+
+═══════════════════════════════════════════════════════════════
+  4️⃣ VUES ADMIN (2 NOUVEAUX FICHIERS)
+═══════════════════════════════════════════════════════════════
+
+[ ] modules/dietetic/views/admin/notifications/test_push.php
+    ⭐ NOUVEAU FICHIER - Interface test notifications
+
+    Note : Créer le dossier si nécessaire :
+    modules/dietetic/views/admin/notifications/
+
+[ ] modules/dietetic/views/admin/setup/diagnose_push.php
+    ⭐ NOUVEAU FICHIER - Page diagnostic complète
+
+    Note : Créer le dossier si nécessaire :
+    modules/dietetic/views/admin/setup/
+
+═══════════════════════════════════════════════════════════════
+  5️⃣ VUES PORTAIL PATIENT
+═══════════════════════════════════════════════════════════════
+
+[ ] modules/dietetic/views/portal/includes/portal_footer.php
+    Changements : Cache-busting (?v=3), logging amélioré
+
+[ ] modules/dietetic/views/portal/notifications/preferences.php
+    Changements : Instructions déblocage navigateur
+
+═══════════════════════════════════════════════════════════════
+  ✅ VÉRIFICATIONS APRÈS TRANSFERT
+═══════════════════════════════════════════════════════════════
+
+1. [ ] Service Worker accessible
+       URL : https://app.dietsenegal.net/firebase-messaging-sw.js
+       Résultat attendu : Code JavaScript visible (pas de 404)
+
+2. [ ] Page de diagnostic fonctionne
+       URL : https://app.dietsenegal.net/admin/dietetic/setup/diagnose_push
+       Résultat attendu : "✓ EXISTE" pour Service Worker v3
+
+3. [ ] Page de test fonctionne
+       URL : https://app.dietsenegal.net/admin/dietetic/notifications/test_push
+       Résultat attendu : Interface de test visible (pas d'erreur 500)
+
+4. [ ] Portail patient fonctionne
+       URL : https://app.dietsenegal.net/dietetic/portal/notification_preferences
+       Action : Cliquer sur "Activer les Notifications"
+       Résultat attendu : Popup du navigateur pour autoriser
+
+5. [ ] Console navigateur (F12)
+       Ouvrir : https://app.dietsenegal.net/dietetic/portal
+       Console : Chercher "[SW] ✅ Firebase Service Worker v3 loaded"
+
+═══════════════════════════════════════════════════════════════
+  🐛 DÉPANNAGE
+═══════════════════════════════════════════════════════════════
+
+❌ Problème : Service Worker 404
+   Solution : Vérifier que firebase-messaging-sw.js est bien à la RACINE
+             (même niveau que index.php, pas dans un sous-dossier)
+
+❌ Problème : Page diagnostic dit "✗ MANQUANT"
+   Solution : Vider le cache du navigateur (Ctrl+Shift+R)
+             Vérifier les permissions du fichier (644 recommandé)
+
+❌ Problème : Erreur 500 sur test_push
+   Solution : Vérifier que le fichier test_push.php existe bien dans
+             modules/dietetic/views/admin/notifications/
+
+❌ Problème : "Permission non accordée"
+   Solution : C'est normal si c'est la première fois
+             Cliquer à nouveau sur le bouton
+             Autoriser dans le popup du navigateur
+
+═══════════════════════════════════════════════════════════════
+  📊 STATISTIQUES
+═══════════════════════════════════════════════════════════════
+
+Total fichiers à transférer : 8 fichiers
+    - 2 fichiers à la racine
+    - 2 contrôleurs
+    - 1 bibliothèque
+    - 2 vues admin (NOUVELLES)
+    - 2 vues portail
+
+Commits Git concernés : 16 commits
+Branche : claude/continue-dietzone-project-01L3pYt7FVJPgsDXMSfycaZr
+
+═══════════════════════════════════════════════════════════════
+  🎯 ORDRE RECOMMANDÉ DE TRANSFERT
+═══════════════════════════════════════════════════════════════
+
+1. firebase-messaging-sw.js (RACINE) ← Commencer par celui-ci
+2. Contrôleurs (Notifications.php, Setup.php)
+3. Bibliothèque (Firebase_cloud_messaging.php)
+4. Vues admin (test_push.php, diagnose_push.php)
+5. Vues portail (portal_footer.php, preferences.php)
+6. test-sw.js (RACINE - optionnel)
+
+═══════════════════════════════════════════════════════════════
+
+Date de création : 2025-12-01
+Version Service Worker déployée : v3
