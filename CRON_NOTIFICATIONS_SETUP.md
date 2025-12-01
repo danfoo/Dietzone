@@ -143,8 +143,8 @@ Les 5 tables suivantes sont requises et gérées automatiquement :
 | `tbldietic_notification_preferences` | Préférences notification par patient | Config |
 | `tbldietic_notification_logs` | Historique notifications envoyées | Logs |
 | `tbldietic_milestones` | Jalons atteints par patients | Tracking |
-| `tbldietic_notification_settings` | Paramètres globaux (SMS/WhatsApp) | Config |
-| `tbldietic_patient_fcm_tokens` | Tokens Firebase push notifications | Auth |
+| `tbldietic_notification_settings` | Paramètres globaux (SMS/WhatsApp/Firebase) | Config |
+| `tbldietic_fcm_tokens` | Tokens Firebase push notifications | Auth |
 
 **Migration SQL** : `modules/dietetic/migrations/add_notifications_system.sql`
 

@@ -57,7 +57,7 @@ class Setup extends AdminController
             'tbldietic_notification_logs',
             'tbldietic_milestones',
             'tbldietic_notification_settings',
-            'tbldietic_patient_fcm_tokens',
+            'tbldietic_fcm_tokens',
         ];
 
         $tables_status = [];

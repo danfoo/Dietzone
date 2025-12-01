@@ -30,7 +30,7 @@ $required_tables = [
     'tbldietic_notification_logs',
     'tbldietic_milestones',
     'tbldietic_notification_settings',
-    'tbldietic_patient_fcm_tokens',
+    'tbldietic_fcm_tokens',
 ];
 
 echo "1. Vérification des tables...\n\n";
