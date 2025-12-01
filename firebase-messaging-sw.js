@@ -1,104 +1,84 @@
-// Firebase Cloud Messaging Service Worker
-// This file must be at the root of your site
+// Firebase Cloud Messaging Service Worker - MINIMAL VERSION
+// Version: 2025-12-01-v2 (for cache busting)
 
-// Give the service worker access to Firebase Messaging
-// Note: Firebase SDK will be imported dynamically
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+console.log('[SW] Loading Firebase Service Worker v2...');
 
-// Initialize Firebase in the service worker
-// Config will be loaded from the main thread
-let firebaseConfig = null;
-let messaging = null;
+// Import Firebase scripts
+try {
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+    console.log('[SW] ✅ Firebase scripts imported successfully');
+} catch (error) {
+    console.error('[SW] ❌ Error importing Firebase scripts:', error);
+}
 
-// Listen for messages from the main thread to initialize Firebase
+console.log('[SW] Service Worker file loaded');
+
+// Skip waiting to activate immediately
+self.addEventListener('install', (event) => {
+    console.log('[SW] Install event');
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('[SW] Activate event');
+    event.waitUntil(clients.claim());
+});
+
+// Initialize Firebase when config is received
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'FIREBASE_CONFIG') {
-        firebaseConfig = event.data.config;
+        console.log('[SW] Received Firebase config');
 
-        if (firebaseConfig && !messaging) {
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-            messaging = firebase.messaging();
-
-            console.log('[SW] Firebase initialized with config');
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(event.data.config);
+                console.log('[SW] ✅ Firebase initialized');
+            }
+        } catch (error) {
+            console.error('[SW] ❌ Firebase init error:', error);
         }
     }
 });
 
-// Handle background messages
+// Handle push notifications
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push received:', event);
+    console.log('[SW] Push received');
 
     if (!event.data) {
-        console.log('[SW] No data in push event');
         return;
     }
 
     try {
-        const data = event.data.json();
-        const notification = data.notification || {};
-        const notificationData = data.data || {};
+        const payload = event.data.json();
+        const notification = payload.notification || {};
+        const data = payload.data || {};
 
-        const notificationTitle = notification.title || 'DietZone';
-        const notificationOptions = {
-            body: notification.body || 'Vous avez une nouvelle notification',
+        const title = notification.title || 'DietSenegal';
+        const options = {
+            body: notification.body || '',
             icon: notification.icon || '/uploads/company/favicon.png',
-            badge: notification.badge || '/uploads/company/favicon.png',
-            tag: notificationData.type || 'dietzone-notification',
-            data: {
-                url: notification.click_action || notificationData.click_action || '/dietetic/portal',
-                ...notificationData
-            },
-            requireInteraction: false,
-            silent: false
+            data: { url: data.click_action || '/dietetic/portal' }
         };
 
-        if (notification.image) {
-            notificationOptions.image = notification.image;
-        }
-
         event.waitUntil(
-            self.registration.showNotification(notificationTitle, notificationOptions)
+            self.registration.showNotification(title, options)
         );
     } catch (error) {
-        console.error('[SW] Error handling push:', error);
+        console.error('[SW] Push error:', error);
     }
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW] Notification clicked:', event);
-
+    console.log('[SW] Notification clicked');
     event.notification.close();
 
-    const urlToOpen = event.notification.data?.url || '/dietetic/portal';
+    const url = event.notification.data?.url || '/dietetic/portal';
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then((clientList) => {
-                // Check if there's already a window open with this URL
-                for (let i = 0; i < clientList.length; i++) {
-                    const client = clientList[i];
-                    const clientUrl = new URL(client.url);
-                    const targetUrl = new URL(urlToOpen, self.location.origin);
-
-                    if (clientUrl.pathname === targetUrl.pathname && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-
-                // If no window is open, open a new one
-                if (clients.openWindow) {
-                    return clients.openWindow(urlToOpen);
-                }
-            })
+        clients.openWindow(url)
     );
 });
 
-// Handle notification close
-self.addEventListener('notificationclose', (event) => {
-    console.log('[SW] Notification closed:', event);
-});
-
-console.log('[SW] Firebase Messaging Service Worker loaded');
+console.log('[SW] ✅ Service Worker ready v2');

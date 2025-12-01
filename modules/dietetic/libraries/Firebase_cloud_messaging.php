@@ -206,7 +206,12 @@ class Firebase_cloud_messaging
 
         $response_data = json_decode($response, true);
 
+        // Enhanced logging
+        log_activity('[FCM v1] HTTP Code: ' . $http_code);
+        log_activity('[FCM v1] Response: ' . substr($response, 0, 500));
+
         if ($http_code === 200 && isset($response_data['name'])) {
+            log_activity('[FCM v1] ✓ SUCCESS - Message ID: ' . $response_data['name']);
             return [
                 'success' => true,
                 'message_id' => $response_data['name']
@@ -217,9 +222,13 @@ class Firebase_cloud_messaging
             if (isset($response_data['error']['message'])) {
                 $error_message = $response_data['error']['message'];
 
+                log_activity('[FCM v1] ✗ ERROR: ' . $error_message);
+
                 // Handle invalid token
                 if (strpos($error_message, 'not a valid FCM registration token') !== false ||
-                    strpos($error_message, 'Requested entity was not found') !== false) {
+                    strpos($error_message, 'Requested entity was not found') !== false ||
+                    strpos($error_message, 'registration-token-not-registered') !== false) {
+                    log_activity('[FCM v1] Deactivating invalid token: ' . substr($token, 0, 20) . '...');
                     $this->deactivate_token($token);
                 }
             }
@@ -292,7 +301,12 @@ class Firebase_cloud_messaging
 
         $response_data = json_decode($response, true);
 
+        // Enhanced logging
+        log_activity('[FCM Legacy] HTTP Code: ' . $http_code);
+        log_activity('[FCM Legacy] Response: ' . substr($response, 0, 500));
+
         if ($http_code === 200 && isset($response_data['success'])) {
+            log_activity('[FCM Legacy] ✓ SUCCESS - Success: ' . $response_data['success'] . ', Failure: ' . ($response_data['failure'] ?? 0));
             return [
                 'success' => true,
                 'success_count' => $response_data['success'] ?? 0,
@@ -300,9 +314,12 @@ class Firebase_cloud_messaging
             ];
         }
 
+        $error_msg = $response_data['error'] ?? 'Unknown error';
+        log_activity('[FCM Legacy] ✗ ERROR: ' . $error_msg);
+
         return [
             'success' => false,
-            'error' => 'FCM Error: ' . ($response_data['error'] ?? 'Unknown error'),
+            'error' => 'FCM Error: ' . $error_msg,
             'http_code' => $http_code,
             'response' => $response_data
         ];

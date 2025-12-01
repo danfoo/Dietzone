@@ -89,7 +89,7 @@ class Dietetic_notifications_model extends App_Model
             'channel_email' => 1,
             'channel_sms' => $sms_configured ? 1 : 0, // Enable SMS if configured
             'channel_whatsapp' => $whatsapp_configured ? 1 : 0, // Enable WhatsApp if configured
-            'channel_push' => 1,
+            'channel_push' => 0, // Disabled by default - Enable after Firebase configuration
             'created_at' => date('Y-m-d H:i:s')
         ];
 

@@ -661,31 +661,40 @@
 
         // Initialize Firebase Push Notifications
         function initFirebasePush() {
+            console.log('🚀 [INIT] Initializing Firebase Push Notifications...');
+
             // Check if browser supports notifications
             if (!('Notification' in window)) {
-                console.log('This browser does not support notifications');
+                console.error('❌ [INIT] This browser does not support notifications');
                 return;
             }
 
             // Check if service workers are supported
             if (!('serviceWorker' in navigator)) {
-                console.log('Service Workers are not supported');
+                console.error('❌ [INIT] Service Workers are not supported');
                 return;
             }
 
+            console.log('✅ [INIT] Browser supports notifications and service workers');
+
             // Fetch Firebase config from server
+            console.log('📡 [INIT] Fetching Firebase config from server...');
             fetch('<?php echo site_url("dietetic/portal/get_firebase_config"); ?>')
                 .then(response => response.json())
                 .then(data => {
+                    console.log('📡 [INIT] Server response:', data);
+
                     if (data.success && data.config) {
-                        console.log('Firebase config received');
+                        console.log('✅ [INIT] Firebase config received');
+                        console.log('📋 [INIT] Config keys:', Object.keys(data.config));
 
                         // Initialize Firebase
                         if (!firebase.apps.length) {
                             firebaseApp = firebase.initializeApp(data.config);
                             messaging = firebase.messaging();
 
-                            console.log('Firebase initialized successfully');
+                            console.log('✅ [INIT] Firebase initialized successfully');
+                            console.log('✅ [INIT] Messaging instance created');
 
                             // Setup foreground message handler AFTER Firebase is ready
                             handleForegroundMessages();
@@ -693,38 +702,44 @@
                             // Register service worker first, then handle messaging
                             registerServiceWorker()
                                 .then(() => {
-                                    console.log('Service Worker ready for messaging');
+                                    console.log('✅ [INIT] Service Worker ready for messaging');
 
                                     // Request permission if user previously granted it
                                     if (Notification.permission === 'granted') {
+                                        console.log('✅ [INIT] Permission already granted, getting token...');
                                         getFirebaseToken();
+                                    } else {
+                                        console.log('⚠️ [INIT] Permission not granted yet, status:', Notification.permission);
                                     }
                                 })
                                 .catch(error => {
-                                    console.error('Failed to register service worker:', error);
+                                    console.error('❌ [INIT] Failed to register service worker:', error);
                                 });
+                        } else {
+                            console.log('⚠️ [INIT] Firebase already initialized');
                         }
                     } else {
-                        console.log('Firebase push notifications not configured:', data.message);
+                        console.error('❌ [INIT] Firebase push notifications not configured');
+                        console.error('❌ [INIT] Server message:', data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching Firebase config:', error);
+                    console.error('❌ [INIT] Error fetching Firebase config:', error);
                 });
         }
 
         // Register service worker
         function registerServiceWorker() {
-            // Service Worker at module root for wider scope
-            const swPath = '<?php echo module_dir_url("dietetic", "firebase-messaging-sw.js"); ?>';
-            const scope = '<?php echo base_url("modules/dietetic/"); ?>';
+            // CRITICAL: Service Worker MUST be at site root for Firebase push notifications
+            // Firebase requires the SW to be at '/' scope to receive push events
+            const swPath = '<?php echo base_url("firebase-messaging-sw.js"); ?>';
 
-            return navigator.serviceWorker.register(swPath, { scope: scope })
+            return navigator.serviceWorker.register(swPath)
                 .then(function(registration) {
-                    console.log('Service Worker registered successfully with scope:', scope);
+                    console.log('✅ Service Worker registered successfully at root scope');
                     console.log('Registration:', registration);
 
-                    // Store registration globally
+                    // Store registration globally (will be passed to getToken later)
                     swRegistration = registration;
 
                     // Wait for service worker to be active
@@ -732,21 +747,49 @@
                         // Pass Firebase config to service worker
                         if (registration.active) {
                             registration.active.postMessage({
-                                type: 'INIT_FIREBASE',
+                                type: 'FIREBASE_CONFIG',  // Changed from 'INIT_FIREBASE' to match SW listener
                                 config: firebaseApp.options
                             });
+                            console.log('✅ Firebase config sent to Service Worker');
                         }
                         return registration;
                     });
                 })
                 .catch(function(error) {
-                    console.error('Service Worker registration failed:', error);
+                    console.error('❌ Service Worker registration failed:', error);
                     throw error;
                 });
         }
 
         // Request notification permission and get FCM token
         function requestNotificationPermission() {
+            console.log('🔔 [PUSH] requestNotificationPermission called');
+            console.log('🔔 [PUSH] Current permission:', Notification.permission);
+            console.log('🔔 [PUSH] Firebase app initialized:', !!firebaseApp);
+            console.log('🔔 [PUSH] Messaging initialized:', !!messaging);
+            console.log('🔔 [PUSH] SW Registration exists:', !!swRegistration);
+
+            // Check if Firebase is initialized
+            if (!firebaseApp || !messaging) {
+                console.error('❌ [PUSH] Firebase not initialized yet, waiting...');
+                return new Promise((resolve, reject) => {
+                    // Wait a bit for Firebase to initialize
+                    setTimeout(() => {
+                        if (firebaseApp && messaging) {
+                            console.log('✅ [PUSH] Firebase ready after wait');
+                            proceedWithPermission().then(resolve).catch(reject);
+                        } else {
+                            console.error('❌ [PUSH] Firebase still not ready');
+                            reject(new Error('Firebase not initialized. Please refresh the page.'));
+                        }
+                    }, 1000);
+                });
+            }
+
+            return proceedWithPermission();
+        }
+
+        function proceedWithPermission() {
             // Ensure service worker is registered first
             const swPromise = swRegistration
                 ? Promise.resolve(swRegistration)
@@ -754,45 +797,59 @@
 
             return swPromise
                 .then(() => {
+                    console.log('✅ [PUSH] Service worker ready, requesting permission...');
                     return Notification.requestPermission();
                 })
                 .then(permission => {
-                    console.log('Notification permission:', permission);
+                    console.log('🔔 [PUSH] Permission result:', permission);
 
                     if (permission === 'granted') {
+                        console.log('✅ [PUSH] Permission granted! Getting FCM token...');
                         return getFirebaseToken();
+                    } else if (permission === 'denied') {
+                        console.log('❌ [PUSH] Permission denied by user');
+                        return null;
                     } else {
-                        console.log('Notification permission denied');
+                        console.log('⚠️ [PUSH] Permission default (dismissed)');
                         return null;
                     }
                 })
                 .catch(error => {
-                    console.error('Error requesting permission:', error);
+                    console.error('❌ [PUSH] Error requesting permission:', error);
                     return null;
                 });
         }
 
         // Get Firebase Cloud Messaging token
         function getFirebaseToken() {
+            console.log('🎫 [FCM] getFirebaseToken called');
+            console.log('🎫 [FCM] Messaging available:', !!messaging);
+            console.log('🎫 [FCM] SW Registration available:', !!swRegistration);
+
             if (!messaging) {
-                console.log('Firebase messaging not initialized');
+                console.error('❌ [FCM] Firebase messaging not initialized');
                 return Promise.resolve(null);
             }
 
             if (!swRegistration) {
-                console.error('Service Worker not registered yet');
+                console.error('❌ [FCM] Service Worker not registered yet');
                 return Promise.resolve(null);
             }
 
+            const vapidKey = '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>';
+            console.log('🎫 [FCM] VAPID key length:', vapidKey ? vapidKey.length : 0);
+
             const tokenOptions = {
-                vapidKey: '<?php echo $this->config->item("firebase_vapid_key") ?: ""; ?>',
+                vapidKey: vapidKey,
                 serviceWorkerRegistration: swRegistration
             };
+
+            console.log('🎫 [FCM] Requesting token from Firebase...');
 
             return messaging.getToken(tokenOptions)
                 .then(token => {
                     if (token) {
-                        console.log('FCM Token:', token);
+                        console.log('✅ [FCM] Token received:', token.substring(0, 20) + '...');
                         fcmToken = token;
 
                         // Save token to server
@@ -800,12 +857,16 @@
 
                         return token;
                     } else {
-                        console.log('No registration token available');
+                        console.warn('⚠️ [FCM] No registration token available. Possible reasons:');
+                        console.warn('  - Notifications blocked');
+                        console.warn('  - Service worker not active');
+                        console.warn('  - VAPID key missing/invalid');
                         return null;
                     }
                 })
                 .catch(error => {
-                    console.error('Error getting FCM token:', error);
+                    console.error('❌ [FCM] Error getting token:', error);
+                    console.error('❌ [FCM] Error details:', error.code, error.message);
                     return null;
                 });
         }

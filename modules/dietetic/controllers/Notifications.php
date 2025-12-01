@@ -556,7 +556,15 @@ class Notifications extends AdminController
             // Count patients with at least one active token
             $this->db->select('DISTINCT patient_id');
             $this->db->where('is_active', 1);
-            $total_patients = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+            $patients_with_tokens = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Total devices = same as total tokens (each token = 1 device)
+            $total_devices = $total_tokens;
+
+            // Count notifications sent today via push channel
+            $this->db->where('channel', 'push');
+            $this->db->where('DATE(sent_at) =', date('Y-m-d'));
+            $sent_today = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
 
             // Get API version
             $use_v1 = $this->dietetic_notifications_model->get_setting('firebase_use_v1_api');
@@ -569,9 +577,11 @@ class Notifications extends AdminController
 
             echo json_encode([
                 'success' => true,
-                'data' => [
+                'stats' => [
                     'total_tokens' => $total_tokens,
-                    'total_patients' => $total_patients,
+                    'patients_with_tokens' => $patients_with_tokens,
+                    'total_devices' => $total_devices,
+                    'sent_today' => $sent_today,
                     'api_version' => $api_version
                 ]
             ]);
@@ -714,16 +724,22 @@ class Notifications extends AdminController
             if ($success_count > 0) {
                 echo json_encode([
                     'success' => true,
+                    'title' => $title,
                     'message' => sprintf(
                         'Notification envoyée avec succès à %d appareil(s)%s',
                         $success_count,
                         $error_count > 0 ? ' (' . $error_count . ' échec(s))' : ''
-                    )
+                    ),
+                    'devices_count' => $success_count,
+                    'total_sent' => count($tokens)
                 ]);
             } else {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Échec de l\'envoi de la notification: ' . implode(', ', $errors)
+                    'title' => $title,
+                    'message' => 'Échec de l\'envoi de la notification: ' . implode(', ', $errors),
+                    'devices_count' => 0,
+                    'errors' => $errors
                 ]);
             }
 

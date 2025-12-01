@@ -662,7 +662,38 @@ $this->load->view('portal/includes/portal_header');
             } else if (permission === 'denied') {
                 btn.prop('disabled', true).html('<i class="fa fa-ban"></i> Bloqué');
                 statusDiv.show().css('background', '#fff5f5').css('color', '#c53030').css('border', '1px solid #fc8181');
-                statusText.html('Les notifications ont été bloquées. Veuillez les activer dans les paramètres de votre navigateur.');
+
+                // Detect browser for specific instructions
+                const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+                const isFirefox = /Firefox/.test(navigator.userAgent);
+                const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+                const isEdge = /Edg/.test(navigator.userAgent);
+
+                let instructions = '';
+                if (isChrome || isEdge) {
+                    instructions = '<strong>Comment débloquer (Chrome/Edge) :</strong><br>' +
+                        '1. Cliquez sur l\'icône <i class="fa fa-lock"></i> ou <i class="fa fa-info-circle"></i> à gauche de l\'URL<br>' +
+                        '2. Trouvez "Notifications" et sélectionnez "Autoriser"<br>' +
+                        '3. Rechargez la page et cliquez à nouveau sur "Activer les Notifications"';
+                } else if (isFirefox) {
+                    instructions = '<strong>Comment débloquer (Firefox) :</strong><br>' +
+                        '1. Cliquez sur l\'icône <i class="fa fa-shield"></i> à gauche de l\'URL<br>' +
+                        '2. Cliquez sur la flèche à côté de "Notifications bloquées"<br>' +
+                        '3. Sélectionnez "Autoriser temporairement" ou "Autoriser"<br>' +
+                        '4. Rechargez la page';
+                } else if (isSafari) {
+                    instructions = '<strong>Comment débloquer (Safari) :</strong><br>' +
+                        '1. Menu Safari > Préférences > Sites web<br>' +
+                        '2. Cliquez sur "Notifications"<br>' +
+                        '3. Trouvez ce site et changez "Refuser" en "Autoriser"<br>' +
+                        '4. Rechargez la page';
+                } else {
+                    instructions = '<strong>Comment débloquer :</strong><br>' +
+                        'Cliquez sur l\'icône à gauche de l\'URL dans la barre d\'adresse, ' +
+                        'trouvez "Notifications" et changez en "Autoriser", puis rechargez la page.';
+                }
+
+                statusText.html('❌ <strong>Les notifications sont bloquées.</strong><br><br>' + instructions);
             } else {
                 btn.html('<i class="fa fa-bell"></i> Activer les Notifications');
             }
@@ -690,9 +721,51 @@ $this->load->view('portal/includes/portal_header');
 
                             showAlert('success', 'Notifications push activées avec succès!');
                         } else {
-                            btn.html(originalHtml).prop('disabled', false);
-                            $('#pushStatus').show().css('background', '#fffaf0').css('color', '#744210').css('border', '1px solid #f6ad55');
-                            $('#pushStatusText').text('Permission refusée. Vous pouvez la réactiver plus tard.');
+                            // Check if permission was denied
+                            const currentPermission = Notification.permission;
+
+                            if (currentPermission === 'denied') {
+                                // User clicked "Block" - show instructions
+                                btn.prop('disabled', true).html('<i class="fa fa-ban"></i> Bloqué');
+                                $('#pushStatus').show().css('background', '#fff5f5').css('color', '#c53030').css('border', '1px solid #fc8181');
+
+                                // Detect browser for specific instructions
+                                const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+                                const isFirefox = /Firefox/.test(navigator.userAgent);
+                                const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+                                const isEdge = /Edg/.test(navigator.userAgent);
+
+                                let instructions = '';
+                                if (isChrome || isEdge) {
+                                    instructions = '<strong>📋 Comment débloquer (Chrome/Edge) :</strong><br>' +
+                                        '1. Cliquez sur l\'icône 🔒 ou ℹ️ à gauche de l\'URL dans la barre d\'adresse<br>' +
+                                        '2. Trouvez "Notifications" et sélectionnez "Autoriser"<br>' +
+                                        '3. Rechargez cette page (F5) et cliquez à nouveau sur "Activer les Notifications"';
+                                } else if (isFirefox) {
+                                    instructions = '<strong>📋 Comment débloquer (Firefox) :</strong><br>' +
+                                        '1. Cliquez sur l\'icône 🛡️ à gauche de l\'URL<br>' +
+                                        '2. Cliquez sur la flèche à côté de "Notifications bloquées"<br>' +
+                                        '3. Sélectionnez "Autoriser temporairement" ou "Autoriser"<br>' +
+                                        '4. Rechargez cette page (F5)';
+                                } else if (isSafari) {
+                                    instructions = '<strong>📋 Comment débloquer (Safari) :</strong><br>' +
+                                        '1. Menu Safari > Préférences (Cmd+,)<br>' +
+                                        '2. Onglet "Sites web" > "Notifications"<br>' +
+                                        '3. Trouvez ce site et changez "Refuser" en "Autoriser"<br>' +
+                                        '4. Rechargez cette page';
+                                } else {
+                                    instructions = '<strong>📋 Comment débloquer :</strong><br>' +
+                                        'Cliquez sur l\'icône à gauche de l\'URL dans la barre d\'adresse, ' +
+                                        'trouvez "Notifications" et changez en "Autoriser", puis rechargez la page.';
+                                }
+
+                                $('#pushStatusText').html('❌ <strong>Vous avez bloqué les notifications.</strong><br><br>' + instructions);
+                            } else {
+                                // User dismissed or other reason
+                                btn.html(originalHtml).prop('disabled', false);
+                                $('#pushStatus').show().css('background', '#fffaf0').css('color', '#744210').css('border', '1px solid #f6ad55');
+                                $('#pushStatusText').text('⚠️ Permission non accordée. Cliquez à nouveau sur le bouton pour réessayer.');
+                            }
                         }
                     })
                     .catch(error => {
