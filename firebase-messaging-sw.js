@@ -1,71 +1,71 @@
-// Firebase Cloud Messaging Service Worker
-// This file MUST be at the root of your site
+// Firebase Cloud Messaging Service Worker - MINIMAL VERSION
+// Version: 2025-12-01-v2 (for cache busting)
+
+console.log('[SW] Loading Firebase Service Worker v2...');
 
 // Import Firebase scripts
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+try {
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+    console.log('[SW] ✅ Firebase scripts imported successfully');
+} catch (error) {
+    console.error('[SW] ❌ Error importing Firebase scripts:', error);
+}
 
-console.log('[SW] Firebase Messaging Service Worker loaded');
+console.log('[SW] Service Worker file loaded');
 
-// Firebase config - will be received from main thread
-let isFirebaseInitialized = false;
+// Skip waiting to activate immediately
+self.addEventListener('install', (event) => {
+    console.log('[SW] Install event');
+    self.skipWaiting();
+});
 
-// Listen for config from main thread
+self.addEventListener('activate', (event) => {
+    console.log('[SW] Activate event');
+    event.waitUntil(clients.claim());
+});
+
+// Initialize Firebase when config is received
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'FIREBASE_CONFIG') {
         console.log('[SW] Received Firebase config');
 
         try {
-            if (!isFirebaseInitialized) {
+            if (!firebase.apps.length) {
                 firebase.initializeApp(event.data.config);
-                isFirebaseInitialized = true;
                 console.log('[SW] ✅ Firebase initialized');
             }
         } catch (error) {
-            console.error('[SW] ❌ Error initializing Firebase:', error);
+            console.error('[SW] ❌ Firebase init error:', error);
         }
     }
 });
 
 // Handle push notifications
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push event received');
+    console.log('[SW] Push received');
 
     if (!event.data) {
-        console.log('[SW] Push event has no data');
         return;
     }
 
     try {
         const payload = event.data.json();
-        console.log('[SW] Push payload:', payload);
-
-        // Extract notification from FCM payload
         const notification = payload.notification || {};
         const data = payload.data || {};
 
         const title = notification.title || 'DietSenegal';
         const options = {
-            body: notification.body || 'Nouvelle notification',
-            icon: notification.icon || data.icon || '/uploads/company/favicon.png',
-            badge: '/uploads/company/favicon.png',
-            tag: 'dietzone',
-            data: {
-                url: data.click_action || '/dietetic/portal'
-            }
+            body: notification.body || '',
+            icon: notification.icon || '/uploads/company/favicon.png',
+            data: { url: data.click_action || '/dietetic/portal' }
         };
-
-        if (notification.image) {
-            options.image = notification.image;
-        }
-
-        console.log('[SW] Showing notification:', title);
 
         event.waitUntil(
             self.registration.showNotification(title, options)
         );
     } catch (error) {
-        console.error('[SW] Error in push handler:', error);
+        console.error('[SW] Push error:', error);
     }
 });
 
@@ -77,19 +77,8 @@ self.addEventListener('notificationclick', (event) => {
     const url = event.notification.data?.url || '/dietetic/portal';
 
     event.waitUntil(
-        clients.matchAll({ type: 'window' }).then((clientList) => {
-            // Focus existing window if found
-            for (const client of clientList) {
-                if (client.url === url && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            // Otherwise open new window
-            if (clients.openWindow) {
-                return clients.openWindow(url);
-            }
-        })
+        clients.openWindow(url)
     );
 });
 
-console.log('[SW] Service Worker ready');
+console.log('[SW] ✅ Service Worker ready v2');
