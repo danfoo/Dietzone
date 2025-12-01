@@ -316,7 +316,8 @@ class Dietetic_pdf extends App_pdf
      */
     public function generate_nutrition_analysis_pdf($patient, $nutrition_analysis, $recommendations = [])
     {
-        $pdf = new App_pdf();
+        // Use $this instead of new App_pdf() since App_pdf is abstract
+        $pdf = $this;
 
         // Set document properties
         $client_name = (isset($patient->client) && isset($patient->client->company))
