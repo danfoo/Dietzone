@@ -333,6 +333,128 @@ class Patients extends AdminController
     }
 
     /**
+     * DEBUG VERSION - Download nutrition analysis PDF with error display
+     */
+    public function download_nutrition_analysis_pdf_debug($id)
+    {
+        // Enable error display
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
+        echo "<h2>DEBUG MODE - PDF Generation</h2>";
+        echo "<pre>";
+
+        try {
+            echo "Step 1: Loading patient data...\n";
+            $patient = $this->dietetic_patients_model->get($id);
+
+            if (!$patient) {
+                die("ERROR: Patient not found!");
+            }
+            echo "✓ Patient loaded: " . $patient->client->company . "\n\n";
+
+            echo "Step 2: Loading nutrition calculator...\n";
+            $this->load->library('dietetic/dietetic_nutrition_calculator');
+            echo "✓ Calculator loaded\n\n";
+
+            echo "Step 3: Getting patient weight...\n";
+            $current_weight = null;
+            if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+                $current_weight = floatval($patient->latest_measurement->weight);
+                echo "✓ Weight from latest_measurement: " . $current_weight . " kg\n";
+            } elseif (!empty($patient->initial_weight)) {
+                $current_weight = floatval($patient->initial_weight);
+                echo "✓ Weight from initial_weight: " . $current_weight . " kg\n";
+            } else {
+                die("ERROR: No weight data found!");
+            }
+            echo "\n";
+
+            echo "Step 4: Checking minimum data...\n";
+            if (!$current_weight || empty($patient->height) || $patient->height <= 0) {
+                die("ERROR: Missing minimum data (weight or height)!");
+            }
+            echo "✓ Minimum data OK (Weight: " . $current_weight . " kg, Height: " . $patient->height . " cm)\n\n";
+
+            echo "Step 5: Calculating age...\n";
+            $age = 30;
+            if (!empty($patient->birth_date) && $patient->birth_date != '0000-00-00') {
+                $birth_date = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $birth_date->diff($today)->y;
+            }
+            echo "✓ Age: " . $age . " years\n\n";
+
+            echo "Step 6: Preparing analysis data...\n";
+            $gender = !empty($patient->gender) ? $patient->gender : 'male';
+
+            $activity_level_map = [
+                'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
+                'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
+                'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
+                'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
+                'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE
+            ];
+            $activity_level = isset($activity_level_map[$patient->activity_level])
+                ? $activity_level_map[$patient->activity_level]
+                : Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
+
+            $goal_map = [
+                'weight_loss' => Dietetic_nutrition_calculator::GOAL_WEIGHT_LOSS,
+                'weight_gain' => Dietetic_nutrition_calculator::GOAL_WEIGHT_GAIN,
+                'maintenance' => Dietetic_nutrition_calculator::GOAL_MAINTENANCE,
+                'muscle_gain' => Dietetic_nutrition_calculator::GOAL_MUSCLE_GAIN
+            ];
+            $patient_goal = !empty($patient->goal) ? $patient->goal : 'maintenance';
+            $goal = isset($goal_map[$patient_goal])
+                ? $goal_map[$patient_goal]
+                : Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
+
+            echo "✓ Gender: " . $gender . "\n";
+            echo "✓ Activity level: " . $activity_level . "\n";
+            echo "✓ Goal: " . $goal . "\n\n";
+
+            echo "Step 7: Performing nutrition analysis...\n";
+            $patient_analysis_data = [
+                'weight' => $current_weight,
+                'height' => floatval($patient->height),
+                'age' => $age,
+                'gender' => $gender,
+                'activity_level' => $activity_level,
+                'goal' => $goal
+            ];
+
+            $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
+            echo "✓ Nutrition analysis completed\n";
+            echo "  BMR: " . $nutrition_analysis['bmr']['value'] . " kcal\n";
+            echo "  TDEE: " . $nutrition_analysis['tdee']['value'] . " kcal\n\n";
+
+            echo "Step 8: Generating recommendations...\n";
+            $recommendations = $this->_generate_nutrition_recommendations($patient, $nutrition_analysis);
+            echo "✓ Recommendations generated (" . count($recommendations['recommendations']) . " items)\n\n";
+
+            echo "Step 9: Loading PDF library...\n";
+            $this->load->library('dietetic/dietetic_pdf');
+            echo "✓ PDF library loaded\n\n";
+
+            echo "Step 10: Generating PDF...\n";
+            $this->dietetic_pdf->generate_nutrition_analysis_pdf($patient, $nutrition_analysis, $recommendations);
+
+            echo "✓ PDF GENERATION SUCCESS!\n";
+        } catch (Exception $e) {
+            echo "\n\n=== EXCEPTION CAUGHT ===\n";
+            echo "Message: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+            echo "Trace:\n" . $e->getTraceAsString() . "\n";
+        }
+
+        echo "</pre>";
+        die();
+    }
+
+    /**
      * Generate nutrition recommendations for PDF
      * (Similar to nutrition_recommendations widget)
      */
