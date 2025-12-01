@@ -617,7 +617,7 @@ class Dietetic_pdf extends App_pdf
         $pdf->SetY(-20);
         $pdf->SetFont('Arial', 'I', 8);
         $pdf->SetTextColor(127, 140, 141);
-        $pdf->Cell(0, 10, get_option('companyname') . ' | Genere le ' . date('d/m/Y à H:i'), 0, 0, 'C');
+        $pdf->Cell(0, 10, get_option('companyname') . ' | Genere le ' . date('d/m/Y a H:i'), 0, 0, 'C');
 
         // Output
         $filename = 'analyse_nutritionnelle_' . $patient->id . '_' . date('Ymd') . '.pdf';
