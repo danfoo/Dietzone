@@ -515,14 +515,14 @@ class Dietetic_pdf extends App_pdf
             $pdf->Cell($col_width, 6, 'LIPIDES', 0, 1, 'C');
 
             $pdf->SetFont('helvetica', 'B', 20);
-            $pdf->Cell($col_width, 10, number_format($macros['protein_grams'], 0) . 'g', 0, 0, 'C');
-            $pdf->Cell($col_width, 10, number_format($macros['carbs_grams'], 0) . 'g', 0, 0, 'C');
-            $pdf->Cell($col_width, 10, number_format($macros['fat_grams'], 0) . 'g', 0, 1, 'C');
+            $pdf->Cell($col_width, 10, number_format($macros['protein']['grams'], 0) . 'g', 0, 0, 'C');
+            $pdf->Cell($col_width, 10, number_format($macros['carbs']['grams'], 0) . 'g', 0, 0, 'C');
+            $pdf->Cell($col_width, 10, number_format($macros['fats']['grams'], 0) . 'g', 0, 1, 'C');
 
             $pdf->SetFont('helvetica', '', 9);
-            $pdf->Cell($col_width, 5, '(' . $macros['protein_percentage'] . '% - ' . number_format($macros['protein_calories'], 0) . ' kcal)', 0, 0, 'C');
-            $pdf->Cell($col_width, 5, '(' . $macros['carbs_percentage'] . '% - ' . number_format($macros['carbs_calories'], 0) . ' kcal)', 0, 0, 'C');
-            $pdf->Cell($col_width, 5, '(' . $macros['fat_percentage'] . '% - ' . number_format($macros['fat_calories'], 0) . ' kcal)', 0, 1, 'C');
+            $pdf->Cell($col_width, 5, '(' . $macros['protein']['percentage'] . '% - ' . number_format($macros['protein']['calories'], 0) . ' kcal)', 0, 0, 'C');
+            $pdf->Cell($col_width, 5, '(' . $macros['carbs']['percentage'] . '% - ' . number_format($macros['carbs']['calories'], 0) . ' kcal)', 0, 0, 'C');
+            $pdf->Cell($col_width, 5, '(' . $macros['fats']['percentage'] . '% - ' . number_format($macros['fats']['calories'], 0) . ' kcal)', 0, 1, 'C');
 
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(5);
