@@ -732,7 +732,8 @@
         function registerServiceWorker() {
             // CRITICAL: Service Worker MUST be at site root for Firebase push notifications
             // Firebase requires the SW to be at '/' scope to receive push events
-            const swPath = '<?php echo base_url("firebase-messaging-sw.js"); ?>';
+            // Add version parameter to bypass cache (v3 = fixed importScripts)
+            const swPath = '<?php echo base_url("firebase-messaging-sw.js?v=3"); ?>';
 
             return navigator.serviceWorker.register(swPath)
                 .then(function(registration) {
