@@ -351,6 +351,63 @@ $this->load->view('portal/includes/portal_header');
                     <small style="color: #718096; font-size: 13px;">Exemple: 10:00,14:00,18:00 pour 3 rappels par jour</small>
                 </div>
             </div>
+
+            <!-- Breakfast Reminder -->
+            <div class="preference-item">
+                <div class="preference-info">
+                    <h4>🥐 Rappel Petit Dejeuner</h4>
+                    <p>Recevez un rappel pour ne pas oublier votre petit dejeuner</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="reminder_breakfast" id="reminder_breakfast" <?php echo isset($preferences->reminder_breakfast) && $preferences->reminder_breakfast ? 'checked' : ''; ?>>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div id="breakfast_details" class="preference-details <?php echo !isset($preferences->reminder_breakfast) || !$preferences->reminder_breakfast ? 'hidden' : ''; ?>">
+                <div class="form-group">
+                    <label>Heure du petit dejeuner</label>
+                    <input type="time" name="reminder_breakfast_time" value="<?php echo isset($preferences->reminder_breakfast_time) ? $preferences->reminder_breakfast_time : '08:00:00'; ?>">
+                </div>
+            </div>
+
+            <!-- Lunch Reminder -->
+            <div class="preference-item">
+                <div class="preference-info">
+                    <h4>🍽️ Rappel Dejeuner</h4>
+                    <p>Recevez un rappel pour votre dejeuner</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="reminder_lunch" id="reminder_lunch" <?php echo isset($preferences->reminder_lunch) && $preferences->reminder_lunch ? 'checked' : ''; ?>>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div id="lunch_details" class="preference-details <?php echo !isset($preferences->reminder_lunch) || !$preferences->reminder_lunch ? 'hidden' : ''; ?>">
+                <div class="form-group">
+                    <label>Heure du dejeuner</label>
+                    <input type="time" name="reminder_lunch_time" value="<?php echo isset($preferences->reminder_lunch_time) ? $preferences->reminder_lunch_time : '12:30:00'; ?>">
+                </div>
+            </div>
+
+            <!-- Dinner Reminder -->
+            <div class="preference-item">
+                <div class="preference-info">
+                    <h4>🍲 Rappel Diner</h4>
+                    <p>Recevez un rappel pour votre diner</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="reminder_dinner" id="reminder_dinner" <?php echo isset($preferences->reminder_dinner) && $preferences->reminder_dinner ? 'checked' : ''; ?>>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div id="dinner_details" class="preference-details <?php echo !isset($preferences->reminder_dinner) || !$preferences->reminder_dinner ? 'hidden' : ''; ?>">
+                <div class="form-group">
+                    <label>Heure du diner</label>
+                    <input type="time" name="reminder_dinner_time" value="<?php echo isset($preferences->reminder_dinner_time) ? $preferences->reminder_dinner_time : '19:00:00'; ?>">
+                </div>
+            </div>
         </div>
 
         <!-- Events Notifications -->
@@ -497,6 +554,33 @@ $this->load->view('portal/includes/portal_header');
                 $('#water_details').removeClass('hidden');
             } else {
                 $('#water_details').addClass('hidden');
+            }
+        });
+
+        // Toggle breakfast reminder details
+        $('#reminder_breakfast').change(function() {
+            if ($(this).is(':checked')) {
+                $('#breakfast_details').removeClass('hidden');
+            } else {
+                $('#breakfast_details').addClass('hidden');
+            }
+        });
+
+        // Toggle lunch reminder details
+        $('#reminder_lunch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#lunch_details').removeClass('hidden');
+            } else {
+                $('#lunch_details').addClass('hidden');
+            }
+        });
+
+        // Toggle dinner reminder details
+        $('#reminder_dinner').change(function() {
+            if ($(this).is(':checked')) {
+                $('#dinner_details').removeClass('hidden');
+            } else {
+                $('#dinner_details').addClass('hidden');
             }
         });
 
