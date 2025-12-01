@@ -225,6 +225,14 @@ html {
                                 </p>
                             </div>
                             <div class="col-md-3 text-right">
+                                <!-- Download PDF Button -->
+                                <a href="<?php echo admin_url('dietetic/patients/download_nutrition_analysis_pdf/' . $patient->id); ?>"
+                                   class="btn btn-lg"
+                                   style="margin-top: 15px; margin-right: 10px; background: white; color: #e74c3c; border: 2px solid white; font-weight: 600;"
+                                   title="Télécharger l'analyse nutritionnelle en PDF">
+                                    <i class="fa fa-file-pdf-o"></i> PDF
+                                </a>
+
                                 <?php if (dietetic_has_permission('edit')) { ?>
                                     <a href="<?php echo admin_url('dietetic/patients/edit/' . $patient->id); ?>" class="btn btn-lg" style="margin-top: 15px; background: white; color: #01807B; border: 2px solid white; font-weight: 600;">
                                         <i class="fa fa-pencil"></i> <?php echo _l('edit'); ?>
