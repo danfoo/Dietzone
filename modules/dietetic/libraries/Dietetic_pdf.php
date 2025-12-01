@@ -16,6 +16,32 @@ class Dietetic_pdf extends App_pdf
     }
 
     /**
+     * Prepare PDF - Required abstract method from App_pdf
+     */
+    public function prepare($data)
+    {
+        // No specific preparation needed for dietetic PDFs
+        return $data;
+    }
+
+    /**
+     * Get file path - Required abstract method from App_pdf
+     */
+    public function file_path()
+    {
+        // Return empty as we output directly to browser
+        return '';
+    }
+
+    /**
+     * Get type - Required abstract method from App_pdf
+     */
+    public function type()
+    {
+        return 'dietetic';
+    }
+
+    /**
      * Generate meal plan PDF
      *
      * @param array $data
