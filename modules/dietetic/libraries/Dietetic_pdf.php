@@ -18,10 +18,10 @@ class Dietetic_pdf extends App_pdf
     /**
      * Prepare PDF - Required abstract method from App_pdf
      */
-    public function prepare($data)
+    public function prepare()
     {
         // No specific preparation needed for dietetic PDFs
-        return $data;
+        return $this;
     }
 
     /**
