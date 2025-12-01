@@ -10,8 +10,16 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 // ==================== VÉRIFICATIONS DE DONNÉES ====================
 
+// Déterminer le poids actuel : dernière mesure OU poids initial
+$current_weight = null;
+if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+    $current_weight = floatval($patient->latest_measurement->weight);
+} elseif (!empty($patient->initial_weight)) {
+    $current_weight = floatval($patient->initial_weight);
+}
+
 // Vérifier que les données minimales existent
-if (!isset($patient->weight) || !isset($patient->height) || $patient->height <= 0) {
+if (!$current_weight || empty($patient->height) || $patient->height <= 0) {
     ?>
     <div class="alert alert-warning" style="margin-top: 20px;">
         <i class="fa fa-exclamation-triangle"></i>
@@ -31,7 +39,7 @@ try {
     $CI->load->library('dietetic/dietetic_nutrition_calculator');
 
     // Prepare patient data with safe defaults
-    $weight = !empty($patient->current_weight) ? floatval($patient->current_weight) : floatval($patient->weight);
+    $weight = $current_weight;
     $height = floatval($patient->height);
 
     // Calculer l'âge (par défaut 30 ans si date de naissance non disponible)
@@ -86,15 +94,17 @@ try {
         'goal' => $goal
     ];
 
-    // Ajouter les mesures corporelles si disponibles
-    if (!empty($patient->waist_circumference) && $patient->waist_circumference > 0) {
-        $patient_analysis_data['waist'] = floatval($patient->waist_circumference);
-    }
-    if (!empty($patient->neck_circumference) && $patient->neck_circumference > 0) {
-        $patient_analysis_data['neck'] = floatval($patient->neck_circumference);
-    }
-    if (!empty($patient->hip_circumference) && $patient->hip_circumference > 0) {
-        $patient_analysis_data['hip'] = floatval($patient->hip_circumference);
+    // Ajouter les mesures corporelles si disponibles (depuis latest_measurement)
+    if (!empty($patient->latest_measurement)) {
+        if (!empty($patient->latest_measurement->waist) && $patient->latest_measurement->waist > 0) {
+            $patient_analysis_data['waist'] = floatval($patient->latest_measurement->waist);
+        }
+        if (!empty($patient->latest_measurement->neck) && $patient->latest_measurement->neck > 0) {
+            $patient_analysis_data['neck'] = floatval($patient->latest_measurement->neck);
+        }
+        if (!empty($patient->latest_measurement->hips) && $patient->latest_measurement->hips > 0) {
+            $patient_analysis_data['hip'] = floatval($patient->latest_measurement->hips);
+        }
     }
 
     // Effectuer l'analyse complète

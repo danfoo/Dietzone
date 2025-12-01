@@ -10,15 +10,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 // ==================== VÉRIFICATIONS DE DONNÉES ====================
 
+// Déterminer le poids actuel : dernière mesure OU poids initial
+$current_weight = null;
+if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+    $current_weight = floatval($patient->latest_measurement->weight);
+} elseif (!empty($patient->initial_weight)) {
+    $current_weight = floatval($patient->initial_weight);
+}
+
 // Vérifier que les données minimales existent
-if (!isset($patient->weight) || !isset($patient->height) || $patient->height <= 0) {
+if (!$current_weight || empty($patient->height) || $patient->height <= 0) {
     // Pas d'affichage si données insuffisantes (déjà affiché dans nutrition_analysis)
     return;
 }
 
 try {
     // Get patient data with safe defaults
-    $weight = !empty($patient->current_weight) ? floatval($patient->current_weight) : floatval($patient->weight);
+    $weight = $current_weight;
     $height = floatval($patient->height);
     $bmi = dietetic_calculate_bmi($weight, $height);
 
