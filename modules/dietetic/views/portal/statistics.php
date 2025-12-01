@@ -679,6 +679,28 @@ textarea.form-control {
         </select>
     </div>
 
+    <!-- Calorie Goal Card -->
+    <div id="calorieGoalCard" class="chart-card" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <div class="chart-card-title" style="margin-bottom: 0;">
+                <i class="fa fa-bullseye"></i>
+                Mon Objectif Calorique
+            </div>
+        </div>
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 48px; font-weight: 800; color: #01807B; margin-bottom: 10px;" id="calorieGoalValue">
+                -- kcal
+            </div>
+            <div style="font-size: 16px; color: #6c757d; font-weight: 500;" id="calorieGoalText">
+                Par jour
+            </div>
+            <div style="margin-top: 16px; padding: 12px 20px; background: linear-gradient(90deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%); border-radius: 8px; display: inline-block;">
+                <i class="fa fa-flag" style="color: #F3911D; margin-right: 8px;"></i>
+                <span style="font-weight: 600; color: #2c3e50;" id="patientGoal">--</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading State -->
     <div id="loadingState" class="loading">
         <i class="fa fa-spinner fa-spin"></i>
@@ -814,6 +836,7 @@ Chart.defaults.plugins.tooltip.cornerRadius = 8;
 
 // Load data on page load
 document.addEventListener('DOMContentLoaded', function() {
+    loadCalorieGoal();
     loadStatistics(currentPeriod);
 
     // Period filter select
@@ -831,6 +854,24 @@ document.addEventListener('DOMContentLoaded', function() {
         addNoteBtn.addEventListener('click', openNoteModal);
     }
 });
+
+async function loadCalorieGoal() {
+    try {
+        const response = await fetch('<?php echo site_url('dietetic/portal/api_get_calorie_goal'); ?>');
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('calorieGoalValue').textContent = data.calorie_goal.toLocaleString('fr-FR') + ' kcal';
+            document.getElementById('patientGoal').textContent = data.goal;
+            document.getElementById('calorieGoalCard').style.display = 'block';
+        } else {
+            // Don't show card if there's an error or insufficient data
+            console.log('Could not load calorie goal:', data.message);
+        }
+    } catch (error) {
+        console.error('Error loading calorie goal:', error);
+    }
+}
 
 async function loadStatistics(period) {
     // Show loading

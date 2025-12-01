@@ -125,6 +125,7 @@ class Portal extends App_Controller
             'api_get_evolution_data',
             'api_add_statistic_note',
             'api_delete_statistic_note',
+            'api_get_calorie_goal',
             // Hydration tracking API methods
             'api_get_hydration_data',
             'api_add_hydration',
@@ -6367,6 +6368,106 @@ class Portal extends App_Controller
 
         } catch (Exception $e) {
             log_activity('Error deleting statistic note: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * API: Get patient's calorie goal
+     * Returns: daily calorie goal and objective
+     */
+    public function api_get_calorie_goal()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifie']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient non trouve']);
+            return;
+        }
+
+        try {
+            // Load nutrition calculator
+            $this->load->library('dietetic/dietetic_nutrition_calculator');
+
+            // Get current weight
+            $current_weight = null;
+            if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+                $current_weight = floatval($patient->latest_measurement->weight);
+            } elseif (!empty($patient->initial_weight)) {
+                $current_weight = floatval($patient->initial_weight);
+            }
+
+            if (!$current_weight || !$patient->height || !$patient->date_of_birth) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Donnees insuffisantes pour calculer l objectif calorique'
+                ]);
+                return;
+            }
+
+            // Calculate age
+            $dob = new DateTime($patient->date_of_birth);
+            $now = new DateTime();
+            $age = $dob->diff($now)->y;
+
+            // Get activity level and goal
+            $activity_level = floatval($patient->activity_level ?: 1.55);
+            $goal = $patient->goal ?: 'weight_loss';
+
+            // Prepare analysis data
+            $patient_data = [
+                'weight' => $current_weight,
+                'height' => floatval($patient->height),
+                'age' => $age,
+                'gender' => $patient->gender,
+                'activity_level' => $activity_level,
+                'goal' => $goal
+            ];
+
+            // Calculate nutrition analysis
+            $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_data);
+
+            // Get calorie goal
+            $calorie_goal = $nutrition_analysis['calorie_needs']['calories'];
+
+            // Convert goal to readable text
+            $goal_text = 'Maintien du poids';
+            switch ($goal) {
+                case 'weight_loss':
+                    $goal_text = 'Perte de poids';
+                    break;
+                case 'weight_gain':
+                    $goal_text = 'Prise de poids';
+                    break;
+                case 'muscle_gain':
+                    $goal_text = 'Prise de muscle';
+                    break;
+                case 'maintenance':
+                default:
+                    $goal_text = 'Maintien du poids';
+                    break;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'calorie_goal' => $calorie_goal,
+                'goal' => $goal_text,
+                'goal_code' => $goal
+            ]);
+
+        } catch (Exception $e) {
+            log_activity('Error getting calorie goal for patient ' . $patient->id . ': ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => 'Erreur serveur: ' . $e->getMessage()
