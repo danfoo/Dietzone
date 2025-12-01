@@ -115,7 +115,7 @@ class Setup extends AdminController
     }
 
     /**
-     * Diagnostic des notifications push Firebase
+     * Diagnostic des notifications push Firebase (HTML)
      * Accès: /admin/dietetic/setup/diagnose_push
      */
     public function diagnose_push()
@@ -124,21 +124,81 @@ class Setup extends AdminController
             access_denied('Diagnose Push Notifications');
         }
 
-        // Exécuter le script de diagnostic
-        ob_start();
-        include(FCPATH . 'modules/dietetic/diagnose_push_notifications.php');
-        $output = ob_get_clean();
+        $this->load->model('dietetic/dietetic_notifications_model');
 
-        // Convertir la sortie en HTML
-        $html_output = '<pre style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 5px; font-family: monospace; font-size: 13px; line-height: 1.6;">';
-        $html_output .= htmlspecialchars($output);
-        $html_output .= '</pre>';
-
-        // Afficher dans une page admin
         $data['title'] = 'Diagnostic Push Notifications Firebase';
-        $data['output'] = $html_output;
 
-        $this->load->view('admin/setup/notifications_setup', $data);
+        // 1. Check Service Worker file
+        $sw_path = FCPATH . 'firebase-messaging-sw.js';
+        $data['sw_exists'] = file_exists($sw_path);
+        $data['sw_path'] = $sw_path;
+
+        if ($data['sw_exists']) {
+            $data['sw_size'] = filesize($sw_path);
+            $data['sw_modified'] = date('d/m/Y H:i:s', filemtime($sw_path));
+            $sw_content = file_get_contents($sw_path);
+            $data['sw_content'] = $sw_content;
+            $data['sw_has_v3'] = strpos($sw_content, 'v3') !== false;
+            $data['sw_preview'] = implode("\n", array_slice(explode("\n", $sw_content), 0, 15));
+        }
+
+        // 2. Firebase Configuration
+        $firebase_keys = [
+            'push_enabled', 'firebase_api_key', 'firebase_project_id',
+            'firebase_messaging_sender_id', 'firebase_app_id', 'firebase_vapid_key',
+            'firebase_use_v1_api', 'firebase_service_account_json'
+        ];
+
+        $data['firebase_config'] = [];
+        foreach ($firebase_keys as $key) {
+            $value = $this->dietetic_notifications_model->get_setting($key);
+            $data['firebase_config'][$key] = [
+                'value' => $value,
+                'has_value' => !empty($value)
+            ];
+        }
+
+        // 3. FCM Tokens Stats
+        $this->db->where('is_active', 1);
+        $data['total_tokens'] = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+        $this->db->select('DISTINCT patient_id');
+        $this->db->where('is_active', 1);
+        $data['patients_with_tokens'] = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+        // Latest tokens
+        $this->db->select('t.*, p.id as patient_id, c.company as patient_name');
+        $this->db->from(db_prefix() . 'dietic_fcm_tokens t');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = t.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->where('t.is_active', 1);
+        $this->db->order_by('t.created_at', 'DESC');
+        $this->db->limit(5);
+        $data['latest_tokens'] = $this->db->get()->result_array();
+
+        // 4. Notification Logs
+        $this->db->where('channel', 'push');
+        $data['total_push'] = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
+
+        $this->db->where('channel', 'push');
+        $this->db->where('status', 'sent');
+        $data['sent_push'] = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
+
+        $this->db->where('channel', 'push');
+        $this->db->where('status', 'failed');
+        $data['failed_push'] = $this->db->count_all_results(db_prefix() . 'dietic_notification_logs');
+
+        // Latest push notifications
+        $this->db->select('l.*, c.company as patient_name');
+        $this->db->from(db_prefix() . 'dietic_notification_logs l');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = l.patient_id', 'left');
+        $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+        $this->db->where('l.channel', 'push');
+        $this->db->order_by('l.sent_at', 'DESC');
+        $this->db->limit(10);
+        $data['latest_push'] = $this->db->get()->result_array();
+
+        $this->load->view('admin/setup/diagnose_push', $data);
     }
 
     /**
