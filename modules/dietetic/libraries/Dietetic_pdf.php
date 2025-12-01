@@ -409,7 +409,7 @@ class Dietetic_pdf extends App_pdf
             $pdf->SetFont('Arial', 'I', 9);
             $pdf->SetTextColor(127, 140, 141);
             $activity_labels = [
-                'sedentary' => 'Sedentaire (peu ou pas d\'exercice)',
+                'sedentary' => 'Sedentaire (peu ou pas d exercice)',
                 'light' => 'Legerement actif (exercice 1-3j/semaine)',
                 'moderate' => 'Moderement actif (exercice 3-5j/semaine)',
                 'active' => 'Tres actif (exercice 6-7j/semaine)',
@@ -418,7 +418,7 @@ class Dietetic_pdf extends App_pdf
             $activity_text = isset($activity_labels[$nutrition_analysis['tdee']['activity_level']])
                 ? $activity_labels[$nutrition_analysis['tdee']['activity_level']]
                 : 'Moderement actif';
-            $pdf->Cell(0, 5, 'Niveau d\'activite : ' . $activity_text, 0, 1);
+            $pdf->Cell(0, 5, 'Niveau d activite : ' . $activity_text, 0, 1);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(5);
         }

@@ -213,114 +213,123 @@ class Patients extends AdminController
      */
     public function download_nutrition_analysis_pdf($id)
     {
-        // Get patient data
-        $patient = $this->dietetic_patients_model->get($id);
+        try {
+            // Get patient data
+            $patient = $this->dietetic_patients_model->get($id);
 
-        if (!$patient) {
-            show_404();
-        }
-
-        // Load nutrition calculator
-        $this->load->library('dietetic/dietetic_nutrition_calculator');
-
-        // Get current weight
-        $current_weight = null;
-        if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
-            $current_weight = floatval($patient->latest_measurement->weight);
-        } elseif (!empty($patient->initial_weight)) {
-            $current_weight = floatval($patient->initial_weight);
-        }
-
-        // Check if we have minimum data
-        if (!$current_weight || empty($patient->height) || $patient->height <= 0) {
-            set_alert('danger', 'Impossible de générer le PDF : données minimales manquantes (poids et taille).');
-            redirect(admin_url('dietetic/patients/view/' . $id));
-            return;
-        }
-
-        // Calculate age
-        $age = 30;
-        if (!empty($patient->birth_date) && $patient->birth_date != '0000-00-00') {
-            try {
-                $birth_date = new DateTime($patient->birth_date);
-                $today = new DateTime();
-                $age = $birth_date->diff($today)->y;
-            } catch (Exception $e) {
-                $age = 30;
+            if (!$patient) {
+                show_404();
             }
+
+            // Load nutrition calculator
+            $this->load->library('dietetic/dietetic_nutrition_calculator');
+
+            // Get current weight
+            $current_weight = null;
+            if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+                $current_weight = floatval($patient->latest_measurement->weight);
+            } elseif (!empty($patient->initial_weight)) {
+                $current_weight = floatval($patient->initial_weight);
+            }
+
+            // Check if we have minimum data
+            if (!$current_weight || empty($patient->height) || $patient->height <= 0) {
+                set_alert('danger', 'Impossible de generer le PDF : donnees minimales manquantes (poids et taille).');
+                redirect(admin_url('dietetic/patients/view/' . $id));
+                return;
+            }
+
+            // Calculate age
+            $age = 30;
+            if (!empty($patient->birth_date) && $patient->birth_date != '0000-00-00') {
+                try {
+                    $birth_date = new DateTime($patient->birth_date);
+                    $today = new DateTime();
+                    $age = $birth_date->diff($today)->y;
+                } catch (Exception $e) {
+                    $age = 30;
+                }
+            }
+
+            // Get gender
+            $gender = !empty($patient->gender) ? $patient->gender : 'male';
+
+            // Get activity level
+            $activity_level_map = [
+                'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
+                'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
+                'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
+                'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
+                'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE
+            ];
+            $activity_level = isset($activity_level_map[$patient->activity_level])
+                ? $activity_level_map[$patient->activity_level]
+                : Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
+
+            // Get goal
+            $goal_map = [
+                'weight_loss' => Dietetic_nutrition_calculator::GOAL_WEIGHT_LOSS,
+                'weight_gain' => Dietetic_nutrition_calculator::GOAL_WEIGHT_GAIN,
+                'maintenance' => Dietetic_nutrition_calculator::GOAL_MAINTENANCE,
+                'muscle_gain' => Dietetic_nutrition_calculator::GOAL_MUSCLE_GAIN
+            ];
+            $patient_goal = !empty($patient->goal) ? $patient->goal : 'maintenance';
+            $goal = isset($goal_map[$patient_goal])
+                ? $goal_map[$patient_goal]
+                : Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
+
+            // Prepare analysis data
+            $patient_analysis_data = [
+                'weight' => $current_weight,
+                'height' => floatval($patient->height),
+                'age' => $age,
+                'gender' => $gender,
+                'activity_level' => $activity_level,
+                'goal' => $goal
+            ];
+
+            // Add body measurements if available
+            // Priority 1: from latest_measurement
+            // Priority 2: from patient profile (_circumference fields)
+
+            // Waist
+            if (!empty($patient->latest_measurement->waist) && $patient->latest_measurement->waist > 0) {
+                $patient_analysis_data['waist'] = floatval($patient->latest_measurement->waist);
+            } elseif (!empty($patient->waist_circumference) && $patient->waist_circumference > 0) {
+                $patient_analysis_data['waist'] = floatval($patient->waist_circumference);
+            }
+
+            // Neck
+            if (!empty($patient->latest_measurement->neck) && $patient->latest_measurement->neck > 0) {
+                $patient_analysis_data['neck'] = floatval($patient->latest_measurement->neck);
+            } elseif (!empty($patient->neck_circumference) && $patient->neck_circumference > 0) {
+                $patient_analysis_data['neck'] = floatval($patient->neck_circumference);
+            }
+
+            // Hip (for females)
+            if (!empty($patient->latest_measurement->hips) && $patient->latest_measurement->hips > 0) {
+                $patient_analysis_data['hip'] = floatval($patient->latest_measurement->hips);
+            } elseif (!empty($patient->hip_circumference) && $patient->hip_circumference > 0) {
+                $patient_analysis_data['hip'] = floatval($patient->hip_circumference);
+            }
+
+            // Perform complete nutrition analysis
+            $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
+
+            // Generate recommendations
+            $recommendations = $this->_generate_nutrition_recommendations($patient, $nutrition_analysis);
+
+            // Load PDF library and generate
+            $this->load->library('dietetic/dietetic_pdf');
+            $this->dietetic_pdf->generate_nutrition_analysis_pdf($patient, $nutrition_analysis, $recommendations);
+        } catch (Exception $e) {
+            // Log the error
+            log_activity('PDF Generation Error for patient ' . $id . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
+            // Show error to user
+            set_alert('danger', 'Erreur lors de la generation du PDF : ' . $e->getMessage());
+            redirect(admin_url('dietetic/patients/view/' . $id));
         }
-
-        // Get gender
-        $gender = !empty($patient->gender) ? $patient->gender : 'male';
-
-        // Get activity level
-        $activity_level_map = [
-            'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
-            'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
-            'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
-            'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
-            'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE
-        ];
-        $activity_level = isset($activity_level_map[$patient->activity_level])
-            ? $activity_level_map[$patient->activity_level]
-            : Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
-
-        // Get goal
-        $goal_map = [
-            'weight_loss' => Dietetic_nutrition_calculator::GOAL_WEIGHT_LOSS,
-            'weight_gain' => Dietetic_nutrition_calculator::GOAL_WEIGHT_GAIN,
-            'maintenance' => Dietetic_nutrition_calculator::GOAL_MAINTENANCE,
-            'muscle_gain' => Dietetic_nutrition_calculator::GOAL_MUSCLE_GAIN
-        ];
-        $patient_goal = !empty($patient->goal) ? $patient->goal : 'maintenance';
-        $goal = isset($goal_map[$patient_goal])
-            ? $goal_map[$patient_goal]
-            : Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
-
-        // Prepare analysis data
-        $patient_analysis_data = [
-            'weight' => $current_weight,
-            'height' => floatval($patient->height),
-            'age' => $age,
-            'gender' => $gender,
-            'activity_level' => $activity_level,
-            'goal' => $goal
-        ];
-
-        // Add body measurements if available
-        // Priority 1: from latest_measurement
-        // Priority 2: from patient profile (_circumference fields)
-
-        // Waist
-        if (!empty($patient->latest_measurement->waist) && $patient->latest_measurement->waist > 0) {
-            $patient_analysis_data['waist'] = floatval($patient->latest_measurement->waist);
-        } elseif (!empty($patient->waist_circumference) && $patient->waist_circumference > 0) {
-            $patient_analysis_data['waist'] = floatval($patient->waist_circumference);
-        }
-
-        // Neck
-        if (!empty($patient->latest_measurement->neck) && $patient->latest_measurement->neck > 0) {
-            $patient_analysis_data['neck'] = floatval($patient->latest_measurement->neck);
-        } elseif (!empty($patient->neck_circumference) && $patient->neck_circumference > 0) {
-            $patient_analysis_data['neck'] = floatval($patient->neck_circumference);
-        }
-
-        // Hip (for females)
-        if (!empty($patient->latest_measurement->hips) && $patient->latest_measurement->hips > 0) {
-            $patient_analysis_data['hip'] = floatval($patient->latest_measurement->hips);
-        } elseif (!empty($patient->hip_circumference) && $patient->hip_circumference > 0) {
-            $patient_analysis_data['hip'] = floatval($patient->hip_circumference);
-        }
-
-        // Perform complete nutrition analysis
-        $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
-
-        // Generate recommendations
-        $recommendations = $this->_generate_nutrition_recommendations($patient, $nutrition_analysis);
-
-        // Load PDF library and generate
-        $this->load->library('dietetic/dietetic_pdf');
-        $this->dietetic_pdf->generate_nutrition_analysis_pdf($patient, $nutrition_analysis, $recommendations);
     }
 
     /**
