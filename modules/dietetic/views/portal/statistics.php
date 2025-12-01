@@ -861,11 +861,44 @@ async function loadCalorieGoal() {
         const data = await response.json();
 
         if (data.success) {
+            // Show calorie goal
             document.getElementById('calorieGoalValue').textContent = data.calorie_goal.toLocaleString('fr-FR') + ' kcal';
             document.getElementById('patientGoal').textContent = data.goal;
             document.getElementById('calorieGoalCard').style.display = 'block';
+        } else if (data.incomplete_profile) {
+            // Show incomplete profile message
+            const card = document.getElementById('calorieGoalCard');
+            const missingFields = data.missing_fields.join(', ');
+
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <div class="chart-card-title" style="margin-bottom: 0;">
+                        <i class="fa fa-exclamation-circle" style="color: #F3911D;"></i>
+                        Profil incomplet
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 18px; color: #6c757d; margin-bottom: 20px; line-height: 1.6;">
+                        Pour voir votre objectif calorique personnalisé, veuillez compléter votre profil.
+                    </div>
+                    <div style="background: linear-gradient(90deg, rgba(243, 145, 29, 0.1) 0%, rgba(1, 128, 123, 0.1) 100%);
+                                border-radius: 8px; padding: 16px; margin-bottom: 20px; display: inline-block;">
+                        <i class="fa fa-info-circle" style="color: #F3911D; margin-right: 8px;"></i>
+                        <span style="font-weight: 600; color: #2c3e50;">Informations manquantes : ${missingFields}</span>
+                    </div>
+                    <div>
+                        <a href="<?php echo site_url('dietetic/portal/profile'); ?>"
+                           class="btn"
+                           style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+                                  color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;">
+                            <i class="fa fa-user"></i> Compléter mon profil
+                        </a>
+                    </div>
+                </div>
+            `;
+            card.style.display = 'block';
         } else {
-            // Don't show card if there's an error or insufficient data
+            // Other error - don't show card
             console.log('Could not load calorie goal:', data.message);
         }
     } catch (error) {

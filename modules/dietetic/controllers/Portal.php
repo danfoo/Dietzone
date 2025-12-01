@@ -6409,10 +6409,18 @@ class Portal extends App_Controller
                 $current_weight = floatval($patient->initial_weight);
             }
 
-            if (!$current_weight || !$patient->height || !$patient->date_of_birth) {
+            // Check for missing data and provide specific messages
+            $missing_fields = [];
+            if (!$current_weight) $missing_fields[] = 'poids';
+            if (!$patient->height) $missing_fields[] = 'taille';
+            if (empty($patient->date_of_birth)) $missing_fields[] = 'date de naissance';
+
+            if (!empty($missing_fields)) {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Donnees insuffisantes pour calculer l objectif calorique'
+                    'incomplete_profile' => true,
+                    'missing_fields' => $missing_fields,
+                    'message' => 'Veuillez completer votre profil pour voir votre objectif calorique'
                 ]);
                 return;
             }
