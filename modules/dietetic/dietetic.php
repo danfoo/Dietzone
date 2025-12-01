@@ -444,14 +444,199 @@ function dietetic_add_portal_menu()
 
 /**
  * Register cron job for sending reminders
+ * Integrated with Perfex CRM cron system
  */
 hooks()->add_action('after_cron_run', 'dietetic_send_scheduled_reminders');
 
 function dietetic_send_scheduled_reminders()
 {
     $CI = &get_instance();
-    $CI->load->model('dietetic/dietetic_reminders_model');
-    $CI->dietetic_reminders_model->send_pending_reminders();
+    $CI->load->model('dietetic/dietetic_notifications_model');
+
+    // Compteurs pour le reporting
+    $total_sent = 0;
+    $total_failed = 0;
+
+    try {
+        // ==================== WEIGHT REMINDERS ====================
+        $weight_patients = $CI->dietetic_notifications_model->get_patients_for_weight_reminder();
+        if (!empty($weight_patients)) {
+            foreach ($weight_patients as $patient) {
+                $result = $CI->dietetic_notifications_model->send_weight_reminder($patient);
+                $success_count = array_filter($result, function($r) { return $r === true; });
+                $total_sent += count($success_count);
+                if (empty($success_count)) {
+                    $total_failed++;
+                }
+            }
+        }
+
+        // ==================== WATER REMINDERS ====================
+        $water_patients = $CI->dietetic_notifications_model->get_patients_for_water_reminder();
+        if (!empty($water_patients)) {
+            foreach ($water_patients as $patient) {
+                $result = $CI->dietetic_notifications_model->send_water_reminder($patient);
+                $success_count = array_filter($result, function($r) { return $r === true; });
+                $total_sent += count($success_count);
+                if (empty($success_count)) {
+                    $total_failed++;
+                }
+            }
+        }
+
+        // ==================== MEAL REMINDERS ====================
+        $meal_types = ['breakfast', 'lunch', 'dinner'];
+        foreach ($meal_types as $meal_type) {
+            $meal_patients = $CI->dietetic_notifications_model->get_patients_for_meal_reminder($meal_type);
+            if (!empty($meal_patients)) {
+                foreach ($meal_patients as $patient) {
+                    $result = $CI->dietetic_notifications_model->send_meal_reminder($patient, $meal_type);
+                    $success_count = array_filter($result, function($r) { return $r === true; });
+                    $total_sent += count($success_count);
+                    if (empty($success_count)) {
+                        $total_failed++;
+                    }
+                }
+            }
+        }
+
+        // ==================== CONSULTATION REMINDERS (DAY BEFORE) ====================
+        $consultations_day = $CI->dietetic_notifications_model->get_consultations_for_day_reminder();
+        if (!empty($consultations_day)) {
+            foreach ($consultations_day as $consultation) {
+                $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                $result = $CI->dietetic_notifications_model->notify_consultation_reminder_day(
+                    $consultation->patient_id,
+                    $consultation->consultation_date,
+                    $consultation->consultation_time,
+                    $dietitian_name
+                );
+                if ($result) {
+                    $success_count = array_filter($result, function($r) { return $r === true; });
+                    $total_sent += count($success_count);
+                    if (empty($success_count)) {
+                        $total_failed++;
+                    }
+                }
+            }
+        }
+
+        // ==================== CONSULTATION REMINDERS (1 HOUR BEFORE) ====================
+        $consultations_hour = $CI->dietetic_notifications_model->get_consultations_for_hour_reminder();
+        if (!empty($consultations_hour)) {
+            foreach ($consultations_hour as $consultation) {
+                $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                $result = $CI->dietetic_notifications_model->notify_consultation_reminder_hour(
+                    $consultation->patient_id,
+                    $consultation->consultation_time,
+                    $dietitian_name
+                );
+                if ($result) {
+                    $success_count = array_filter($result, function($r) { return $r === true; });
+                    $total_sent += count($success_count);
+                    if (empty($success_count)) {
+                        $total_failed++;
+                    }
+                }
+            }
+        }
+
+        // ==================== FOOD ENTRY REMINDERS (18:00 only) ====================
+        $current_hour = (int)date('H');
+        if ($current_hour == 18) {
+            $patients_to_remind = $CI->dietetic_notifications_model->get_patients_for_food_entry_reminder();
+            if (!empty($patients_to_remind)) {
+                foreach ($patients_to_remind as $patient) {
+                    $result = $CI->dietetic_notifications_model->send_food_entry_reminder($patient->patient_id);
+                    if ($result) {
+                        $success_count = array_filter($result, function($r) { return $r === true; });
+                        $total_sent += count($success_count);
+                        if (empty($success_count)) {
+                            $total_failed++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Log activity si des notifications ont été envoyées
+        if ($total_sent > 0 || $total_failed > 0) {
+            log_activity(sprintf(
+                'Dietetic Cron: %d notifications envoyées, %d échecs',
+                $total_sent,
+                $total_failed
+            ));
+        }
+
+    } catch (Exception $e) {
+        log_activity('Dietetic Cron Error: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Register cron job for processing recurring payments
+ * Integrated with Perfex CRM cron system - Phase 9
+ */
+hooks()->add_action('after_cron_run', 'dietetic_process_recurring_payments');
+
+function dietetic_process_recurring_payments()
+{
+    $CI = &get_instance();
+    $CI->load->model('dietetic/dietetic_recurring_payments_model');
+    $CI->load->model('dietetic/dietetic_settings_model');
+
+    try {
+        // Check if recurring payments are enabled
+        $enabled = $CI->dietetic_settings_model->get_setting('recurring_payments_enabled');
+        if ($enabled != '1') {
+            return; // Silently skip if disabled
+        }
+
+        $start_time = microtime(true);
+        $processed_count = 0;
+        $success_count = 0;
+        $failed_count = 0;
+
+        // Get all due payments
+        $due_payments = $CI->dietetic_recurring_payments_model->get_due_payments();
+
+        foreach ($due_payments as $payment) {
+            $processed_count++;
+
+            try {
+                $result = $CI->dietetic_recurring_payments_model->process_payment($payment->id);
+
+                if ($result) {
+                    $success_count++;
+                } else {
+                    $failed_count++;
+                }
+            } catch (Exception $e) {
+                $failed_count++;
+                log_activity(sprintf(
+                    'Dietetic Recurring Payment Error (Payment #%d): %s',
+                    $payment->id,
+                    $e->getMessage()
+                ));
+            }
+        }
+
+        $execution_time = round(microtime(true) - $start_time, 2);
+
+        // Log activity if payments were processed
+        if ($processed_count > 0) {
+            log_activity(sprintf(
+                'Dietetic Recurring Payments: %d traités, %d réussis, %d échecs (%.2fs)',
+                $processed_count,
+                $success_count,
+                $failed_count,
+                $execution_time
+            ));
+        }
+
+    } catch (Exception $e) {
+        log_activity('Dietetic Recurring Payments Cron Error: ' . $e->getMessage());
+    }
 }
 
 /**
