@@ -1,34 +1,41 @@
 // Firebase Cloud Messaging Service Worker
-// This file must be at the root of your site
+// This file MUST be at the root of your site for push notifications to work
 
-// Give the service worker access to Firebase Messaging
-// Note: Firebase SDK will be imported dynamically
+// Import Firebase scripts (compat version for service workers)
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
-// Initialize Firebase in the service worker
-// Config will be loaded from the main thread
-let firebaseConfig = null;
+console.log('[SW] Firebase Messaging Service Worker loaded');
+
+// Firebase app instance
+let firebaseApp = null;
 let messaging = null;
 
-// Listen for messages from the main thread to initialize Firebase
+// Listen for initialization message from main thread
 self.addEventListener('message', (event) => {
+    console.log('[SW] Message received:', event.data?.type);
+
     if (event.data && event.data.type === 'FIREBASE_CONFIG') {
-        firebaseConfig = event.data.config;
+        const config = event.data.config;
+        console.log('[SW] Received Firebase config');
 
-        if (firebaseConfig && !messaging) {
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-            messaging = firebase.messaging();
-
-            console.log('[SW] Firebase initialized with config');
+        try {
+            // Initialize Firebase if not already done
+            if (!firebaseApp) {
+                firebaseApp = firebase.initializeApp(config);
+                messaging = firebase.messaging();
+                console.log('[SW] ✅ Firebase initialized successfully');
+            }
+        } catch (error) {
+            console.error('[SW] ❌ Error initializing Firebase:', error);
         }
     }
 });
 
-// Handle background messages
+// Firebase Messaging will handle background messages automatically
+// We just need to customize how they're displayed
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push received:', event);
+    console.log('[SW] Push event received');
 
     if (!event.data) {
         console.log('[SW] No data in push event');
@@ -36,30 +43,37 @@ self.addEventListener('push', (event) => {
     }
 
     try {
-        const data = event.data.json();
-        const notification = data.notification || {};
-        const notificationData = data.data || {};
+        // Parse FCM payload
+        const payload = event.data.json();
+        console.log('[SW] Push payload:', payload);
 
-        const notificationTitle = notification.title || 'DietZone';
-        const notificationOptions = {
-            body: notification.body || 'Vous avez une nouvelle notification',
-            icon: notification.icon || '/uploads/company/favicon.png',
-            badge: notification.badge || '/uploads/company/favicon.png',
-            tag: notificationData.type || 'dietzone-notification',
+        // Extract notification data from FCM message
+        const notificationData = payload.notification || {};
+        const data = payload.data || {};
+
+        const title = notificationData.title || 'DietSenegal';
+        const options = {
+            body: notificationData.body || 'Vous avez une nouvelle notification',
+            icon: notificationData.icon || data.icon || '/uploads/company/favicon.png',
+            badge: '/uploads/company/favicon.png',
+            tag: data.type || 'dietzone',
             data: {
-                url: notification.click_action || notificationData.click_action || '/dietetic/portal',
-                ...notificationData
+                url: data.click_action || '/dietetic/portal',
+                ...data
             },
             requireInteraction: false,
-            silent: false
+            vibrate: [200, 100, 200]
         };
 
-        if (notification.image) {
-            notificationOptions.image = notification.image;
+        // Add image if provided
+        if (notificationData.image) {
+            options.image = notificationData.image;
         }
 
+        console.log('[SW] Showing notification:', title);
+
         event.waitUntil(
-            self.registration.showNotification(notificationTitle, notificationOptions)
+            self.registration.showNotification(title, options)
         );
     } catch (error) {
         console.error('[SW] Error handling push:', error);
@@ -68,8 +82,7 @@ self.addEventListener('push', (event) => {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW] Notification clicked:', event);
-
+    console.log('[SW] Notification clicked');
     event.notification.close();
 
     const urlToOpen = event.notification.data?.url || '/dietetic/portal';
@@ -77,18 +90,14 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then((clientList) => {
-                // Check if there's already a window open with this URL
-                for (let i = 0; i < clientList.length; i++) {
-                    const client = clientList[i];
-                    const clientUrl = new URL(client.url);
-                    const targetUrl = new URL(urlToOpen, self.location.origin);
-
-                    if (clientUrl.pathname === targetUrl.pathname && 'focus' in client) {
+                // Try to focus an existing window first
+                for (const client of clientList) {
+                    if (client.url === urlToOpen && 'focus' in client) {
                         return client.focus();
                     }
                 }
 
-                // If no window is open, open a new one
+                // No existing window, open a new one
                 if (clients.openWindow) {
                     return clients.openWindow(urlToOpen);
                 }
@@ -98,7 +107,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Handle notification close
 self.addEventListener('notificationclose', (event) => {
-    console.log('[SW] Notification closed:', event);
+    console.log('[SW] Notification closed');
 });
 
-console.log('[SW] Firebase Messaging Service Worker loaded');
+console.log('[SW] All event listeners registered');
