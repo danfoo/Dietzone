@@ -715,16 +715,16 @@
 
         // Register service worker
         function registerServiceWorker() {
-            // Service Worker at module root for wider scope
-            const swPath = '<?php echo module_dir_url("dietetic", "firebase-messaging-sw.js"); ?>';
-            const scope = '<?php echo base_url("modules/dietetic/"); ?>';
+            // CRITICAL: Service Worker MUST be at site root for Firebase push notifications
+            // Firebase requires the SW to be at '/' scope to receive push events
+            const swPath = '<?php echo base_url("firebase-messaging-sw.js"); ?>';
 
-            return navigator.serviceWorker.register(swPath, { scope: scope })
+            return navigator.serviceWorker.register(swPath)
                 .then(function(registration) {
-                    console.log('Service Worker registered successfully with scope:', scope);
+                    console.log('✅ Service Worker registered successfully at root scope');
                     console.log('Registration:', registration);
 
-                    // Store registration globally
+                    // Store registration globally (will be passed to getToken later)
                     swRegistration = registration;
 
                     // Wait for service worker to be active
@@ -732,15 +732,16 @@
                         // Pass Firebase config to service worker
                         if (registration.active) {
                             registration.active.postMessage({
-                                type: 'INIT_FIREBASE',
+                                type: 'FIREBASE_CONFIG',  // Changed from 'INIT_FIREBASE' to match SW listener
                                 config: firebaseApp.options
                             });
+                            console.log('✅ Firebase config sent to Service Worker');
                         }
                         return registration;
                     });
                 })
                 .catch(function(error) {
-                    console.error('Service Worker registration failed:', error);
+                    console.error('❌ Service Worker registration failed:', error);
                     throw error;
                 });
         }
