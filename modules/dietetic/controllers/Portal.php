@@ -6413,7 +6413,7 @@ class Portal extends App_Controller
             $missing_fields = [];
             if (!$current_weight) $missing_fields[] = 'poids';
             if (!$patient->height) $missing_fields[] = 'taille';
-            if (empty($patient->date_of_birth)) $missing_fields[] = 'date de naissance';
+            if (empty($patient->birth_date)) $missing_fields[] = 'date de naissance';
 
             if (!empty($missing_fields)) {
                 echo json_encode([
@@ -6426,7 +6426,7 @@ class Portal extends App_Controller
             }
 
             // Calculate age
-            $dob = new DateTime($patient->date_of_birth);
+            $dob = new DateTime($patient->birth_date);
             $now = new DateTime();
             $age = $dob->diff($now)->y;
 
@@ -6517,7 +6517,7 @@ class Portal extends App_Controller
         echo "Step 4: Check patient data:\n";
         echo "  - Gender: " . ($patient->gender ?? 'NULL') . "\n";
         echo "  - Height: " . ($patient->height ?? 'NULL') . " cm\n";
-        echo "  - Date of birth: " . ($patient->date_of_birth ?? 'NULL') . "\n";
+        echo "  - Date of birth: " . ($patient->birth_date ?? 'NULL') . "\n";
         echo "  - Initial weight: " . ($patient->initial_weight ?? 'NULL') . " kg\n";
         echo "  - Activity level: " . ($patient->activity_level ?? 'NULL') . "\n";
         echo "  - Goal: " . ($patient->goal ?? 'NULL') . "\n\n";
@@ -6549,16 +6549,16 @@ class Portal extends App_Controller
             }
             echo "\n";
 
-            if (!$current_weight || !$patient->height || !$patient->date_of_birth) {
+            if (!$current_weight || !$patient->height || !$patient->birth_date) {
                 echo "ERROR: Insufficient data\n";
                 echo "  - Weight: " . ($current_weight ?: 'MISSING') . "\n";
                 echo "  - Height: " . ($patient->height ?: 'MISSING') . "\n";
-                echo "  - DOB: " . ($patient->date_of_birth ?: 'MISSING') . "\n";
+                echo "  - DOB: " . ($patient->birth_date ?: 'MISSING') . "\n";
                 return;
             }
 
             echo "Step 8: Calculate age...\n";
-            $dob = new DateTime($patient->date_of_birth);
+            $dob = new DateTime($patient->birth_date);
             $now = new DateTime();
             $age = $dob->diff($now)->y;
             echo "  - Age: " . $age . " years\n\n";
