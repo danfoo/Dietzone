@@ -322,6 +322,29 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Get patients who need meal reminder at current time
+     *
+     * @param string $meal_type Type of meal: 'breakfast', 'lunch', or 'dinner'
+     * @return array
+     */
+    public function get_patients_for_meal_reminder($meal_type)
+    {
+        $current_time = date('H:i:00');
+
+        $column_enabled = 'reminder_' . $meal_type;
+        $column_time = 'reminder_' . $meal_type . '_time';
+
+        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
+        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->where('prefs.' . $column_enabled, 1);
+        $this->db->where('prefs.' . $column_time, $current_time);
+
+        return $this->db->get()->result();
+    }
+
+    /**
      * Send water reminder to patient
      */
     public function send_water_reminder($patient)

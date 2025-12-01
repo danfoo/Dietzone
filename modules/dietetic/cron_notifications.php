@@ -85,6 +85,36 @@ if (!empty($water_patients)) {
 
 echo "\n";
 
+// ==================== MEAL REMINDERS ====================
+echo "Checking meal reminders...\n";
+
+$meal_types = ['breakfast', 'lunch', 'dinner'];
+foreach ($meal_types as $meal_type) {
+    $meal_patients = $CI->dietetic_notifications_model->get_patients_for_meal_reminder($meal_type);
+
+    if (!empty($meal_patients)) {
+        echo "Found " . count($meal_patients) . " patients for {$meal_type} reminder\n";
+
+        foreach ($meal_patients as $patient) {
+            echo "  - Sending {$meal_type} reminder to: {$patient->firstname} {$patient->lastname}\n";
+            $result = $CI->dietetic_notifications_model->send_meal_reminder($patient, $meal_type);
+
+            $success_count = array_filter($result, function($r) { return $r === true; });
+            if (!empty($success_count)) {
+                $total_sent += count($success_count);
+                echo "    ✓ Sent via: " . implode(', ', array_keys($success_count)) . "\n";
+            } else {
+                $total_failed++;
+                echo "    ✗ Failed to send\n";
+            }
+        }
+    } else {
+        echo "No patients need {$meal_type} reminder at this time\n";
+    }
+}
+
+echo "\n";
+
 // ==================== CONSULTATION REMINDERS (DAY BEFORE) ====================
 echo "Checking consultation reminders (1 day before)...\n";
 
