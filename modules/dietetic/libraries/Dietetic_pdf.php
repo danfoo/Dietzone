@@ -326,8 +326,7 @@ class Dietetic_pdf extends App_pdf
         $pdf->SetTitle('Analyse Nutritionnelle - ' . $client_name);
         $pdf->SetAuthor(get_option('companyname'));
 
-        // Add page
-        $pdf->AddPage();
+        // Don't call AddPage() - parent constructor already creates a page
 
         // ==================== HEADER ====================
 
