@@ -713,6 +713,12 @@ html {
                     </div>
                 </div>
 
+                <!-- Nutrition Analysis Widget -->
+                <?php $this->load->view('dietetic/admin/patients/widgets/nutrition_analysis', ['patient' => $patient]); ?>
+
+                <!-- Nutrition Recommendations Widget -->
+                <?php $this->load->view('dietetic/admin/patients/widgets/nutrition_recommendations', ['patient' => $patient]); ?>
+
                 <!-- Weight Evolution Chart -->
                 <div class="panel_s">
                     <div class="panel-body">
