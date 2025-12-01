@@ -144,7 +144,9 @@ class Portal extends App_Controller
             'invoice',
             // Subscription management methods
             'subscriptions',
-            'subscription'
+            'subscription',
+            // Meal reminders migration
+            'add_meal_reminders_columns'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -8246,6 +8248,71 @@ class Portal extends App_Controller
 
         // Load view
         $this->load->view('dietetic/portal/achievements/index', $data);
+    }
+
+    /**
+     * Add meal reminders columns to notification_preferences table
+     * Migration method - run once to add new columns
+     */
+    public function add_meal_reminders_columns()
+    {
+        // Admin only
+        if (!is_staff_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Acces non autorise']);
+            return;
+        }
+
+        $table = db_prefix() . 'dietic_notification_preferences';
+
+        echo "<h2>Migration: Ajout colonnes rappels de repas</h2>";
+        echo "<pre>";
+
+        try {
+            // Check if table exists
+            if (!$this->db->table_exists($table)) {
+                echo "ERROR: Table $table n existe pas\n";
+                return;
+            }
+
+            echo "Table $table trouvee\n\n";
+
+            // Check if columns already exist
+            $fields = $this->db->field_data($table);
+            $existing_fields = array_column($fields, 'name');
+
+            $columns_to_add = [
+                'reminder_breakfast' => "INT(1) DEFAULT 1 COMMENT 'Enable breakfast reminder'",
+                'reminder_breakfast_time' => "TIME DEFAULT '08:00:00' COMMENT 'Breakfast reminder time'",
+                'reminder_lunch' => "INT(1) DEFAULT 1 COMMENT 'Enable lunch reminder'",
+                'reminder_lunch_time' => "TIME DEFAULT '12:30:00' COMMENT 'Lunch reminder time'",
+                'reminder_dinner' => "INT(1) DEFAULT 1 COMMENT 'Enable dinner reminder'",
+                'reminder_dinner_time' => "TIME DEFAULT '19:00:00' COMMENT 'Dinner reminder time'"
+            ];
+
+            foreach ($columns_to_add as $column => $definition) {
+                if (in_array($column, $existing_fields)) {
+                    echo "Colonne $column existe deja\n";
+                } else {
+                    $sql = "ALTER TABLE $table ADD COLUMN $column $definition";
+                    if ($this->db->query($sql)) {
+                        echo "Colonne $column ajoutee\n";
+                    } else {
+                        echo "ERREUR lors de l ajout de $column\n";
+                    }
+                }
+            }
+
+            echo "\n=== MIGRATION TERMINEE ===\n";
+            echo "Colonnes rappels de repas ajoutees avec succes\n";
+            echo "\nVous pouvez maintenant configurer les rappels de repas dans les preferences patient.\n";
+
+        } catch (Exception $e) {
+            echo "\nEXCEPTION: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+        }
+
+        echo "</pre>";
     }
 }
 
