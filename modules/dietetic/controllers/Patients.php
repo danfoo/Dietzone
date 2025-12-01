@@ -428,7 +428,7 @@ class Patients extends AdminController
             $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_analysis_data);
             echo "✓ Nutrition analysis completed\n";
             echo "  BMR: " . $nutrition_analysis['bmr']['value'] . " kcal\n";
-            echo "  TDEE: " . $nutrition_analysis['tdee']['value'] . " kcal\n\n";
+            echo "  TDEE: " . $nutrition_analysis['tdee']['tdee'] . " kcal\n\n";
 
             echo "Step 8: Generating recommendations...\n";
             $recommendations = $this->_generate_nutrition_recommendations($patient, $nutrition_analysis);

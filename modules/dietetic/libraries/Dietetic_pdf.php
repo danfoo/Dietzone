@@ -420,7 +420,7 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFont('helvetica', 'I', 9);
             $pdf->SetTextColor(127, 140, 141);
-            $pdf->Cell(0, 5, 'Formule : ' . $nutrition_analysis['bmr']['formula'], 0, 1);
+            $pdf->Cell(0, 5, 'Formule : ' . $nutrition_analysis['bmr']['mifflin_st_jeor']['formula'], 0, 1);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(2);
 
@@ -429,7 +429,7 @@ class Dietetic_pdf extends App_pdf
             $pdf->Cell(100, 8, 'Depense Energetique Totale (TDEE)', 0, 0);
             $pdf->SetFont('helvetica', 'B', 16);
             $pdf->SetTextColor(1, 128, 123);
-            $pdf->Cell(0, 8, number_format($nutrition_analysis['tdee']['value'], 0) . ' kcal/jour', 0, 1, 'R');
+            $pdf->Cell(0, 8, number_format($nutrition_analysis['tdee']['tdee'], 0) . ' kcal/jour', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', 'I', 9);
@@ -469,7 +469,7 @@ class Dietetic_pdf extends App_pdf
             $pdf->Cell(100, 10, 'Apport calorique recommande', 0, 0);
             $pdf->SetFont('helvetica', 'B', 20);
             $pdf->SetTextColor(231, 76, 60);
-            $pdf->Cell(0, 10, number_format($needs['daily_calories'], 0) . ' kcal', 0, 1, 'R');
+            $pdf->Cell(0, 10, number_format($needs['calories'], 0) . ' kcal', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', '', 10);
