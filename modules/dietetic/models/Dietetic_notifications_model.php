@@ -75,6 +75,12 @@ class Dietetic_notifications_model extends App_Model
             'reminder_weight_time' => '09:00:00',
             'reminder_water' => 1,
             'reminder_water_times' => '10:00,14:00,18:00',
+            'reminder_breakfast' => 1,
+            'reminder_breakfast_time' => '08:00:00',
+            'reminder_lunch' => 1,
+            'reminder_lunch_time' => '12:30:00',
+            'reminder_dinner' => 1,
+            'reminder_dinner_time' => '19:00:00',
             'notify_recommendation' => 1,
             'notify_consultation' => 1,
             'notify_milestone' => 1,
@@ -344,6 +350,85 @@ class Dietetic_notifications_model extends App_Model
                 'email' => $patient->channel_email,
                 'sms' => $patient->channel_sms,
                 'whatsapp' => $patient->channel_whatsapp
+            ]
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Send meal reminder (breakfast, lunch, dinner)
+     *
+     * @param object $patient Patient object with preferences
+     * @param string $meal_type Type of meal: 'breakfast', 'lunch', or 'dinner'
+     * @return array
+     */
+    public function send_meal_reminder($patient, $meal_type)
+    {
+        $meal_config = [
+            'breakfast' => [
+                'icon' => '🥐',
+                'title' => 'Petit Dejeuner',
+                'messages' => [
+                    "C est l heure du petit dejeuner ! Un bon depart pour une belle journee.",
+                    "Bonjour ! N oubliez pas votre petit dejeuner, le repas le plus important de la journee.",
+                    "Reveillez vos papilles ! Votre petit dejeuner vous attend.",
+                    "Prenez le temps de bien dejeuner ce matin. Votre corps a besoin d energie !"
+                ]
+            ],
+            'lunch' => [
+                'icon' => '🍽️',
+                'title' => 'Dejeuner',
+                'messages' => [
+                    "C est l heure du dejeuner ! Prenez une pause bien meritee.",
+                    "Il est midi ! N oubliez pas de dejeuner pour garder votre energie.",
+                    "Pause dejeuner ! Rechargez vos batteries avec un bon repas.",
+                    "Midi sonne ! Pensez a vous restaurer pour tenir jusqu au soir."
+                ]
+            ],
+            'dinner' => [
+                'icon' => '🍲',
+                'title' => 'Diner',
+                'messages' => [
+                    "C est l heure du diner ! Terminez la journee avec un bon repas.",
+                    "Le diner est servi ! Pensez a manger leger ce soir.",
+                    "Bonsoir ! N oubliez pas votre diner avant de vous reposer.",
+                    "Il est temps de diner. Un repas equilibre pour une bonne nuit !"
+                ]
+            ]
+        ];
+
+        if (!isset($meal_config[$meal_type])) {
+            log_activity("send_meal_reminder: Invalid meal type '{$meal_type}'");
+            return ['success' => false, 'error' => 'Invalid meal type'];
+        }
+
+        $config = $meal_config[$meal_type];
+        $random_message = $config['messages'][array_rand($config['messages'])];
+
+        $icon = $config['icon'];
+        $title = $config['title'];
+
+        $message = "Bonjour {$patient->firstname},\n\n{$icon} {$random_message}\n\n";
+        $message .= "Restez fidele a vos objectifs nutritionnels !\n\n";
+        $message .= "Bon appetit !";
+
+        $result = $this->send_notification([
+            'patient_id' => $patient->patient_id,
+            'type' => 'reminder_' . $meal_type,
+            'subject' => "{$icon} Rappel {$title}",
+            'message' => $message,
+            'email' => $patient->email,
+            'phone' => $patient->phonenumber,
+            'channels' => [
+                'email' => $patient->channel_email,
+                'sms' => $patient->channel_sms,
+                'whatsapp' => $patient->channel_whatsapp,
+                'push' => $patient->channel_push
+            ],
+            'push_data' => [
+                'meal_type' => $meal_type,
+                'url' => site_url('dietetic/portal')
             ]
         ]);
 
