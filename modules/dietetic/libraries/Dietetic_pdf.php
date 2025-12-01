@@ -70,35 +70,35 @@ class Dietetic_pdf extends App_pdf
         }
 
         // Header
-        $pdf->SetFont('Arial', 'B', 20);
+        $pdf->SetFont('helvetica', 'B', 20);
         $pdf->Cell(0, 10, _l('dietetic_meal_plan'), 0, 1, 'C');
         $pdf->Ln(5);
 
         // Patient and program info
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_patient') . ':', 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $client_name = (isset($patient->client) && isset($patient->client->company)) ? $patient->client->company : 'N/A';
         $pdf->Cell(0, 6, $client_name, 0, 1);
 
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_program') . ':', 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(0, 6, $program->program_name, 0, 1);
 
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(50, 6, _l('dietetic_week') . ':', 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(0, 6, $meal_plan->week_number, 0, 1);
 
         $pdf->Ln(5);
 
         // Daily targets
         if ($program->daily_calories || $program->daily_protein) {
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(0, 8, _l('dietetic_daily_targets'), 0, 1);
 
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
 
             if ($program->daily_calories) {
                 $pdf->Cell(0, 5, _l('dietetic_calories') . ': ' . $program->daily_calories . ' kcal', 0, 1);
@@ -128,7 +128,7 @@ class Dietetic_pdf extends App_pdf
             }
 
             // Day header
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->SetFillColor(52, 152, 219);
             $pdf->SetTextColor(255, 255, 255);
             $pdf->Cell(0, 10, dietetic_get_day_name($day), 0, 1, 'C', true);
@@ -137,18 +137,18 @@ class Dietetic_pdf extends App_pdf
 
             foreach ($meals as $meal) {
                 // Meal type header
-                $pdf->SetFont('Arial', 'B', 12);
+                $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->SetFillColor(230, 230, 230);
                 $pdf->Cell(0, 8, ucfirst(str_replace('_', ' ', $meal->meal_type)) . ($meal->meal_time ? ' - ' . substr($meal->meal_time, 0, 5) : ''), 0, 1, 'L', true);
 
                 if ($meal->meal_name) {
-                    $pdf->SetFont('Arial', 'I', 10);
+                    $pdf->SetFont('helvetica', 'I', 10);
                     $pdf->Cell(0, 5, $meal->meal_name, 0, 1);
                 }
 
                 // Foods
                 if (!empty($meal->foods)) {
-                    $pdf->SetFont('Arial', '', 9);
+                    $pdf->SetFont('helvetica', '', 9);
 
                     foreach ($meal->foods as $food) {
                         $ratio = $food->quantity / $food->serving_size;
@@ -163,7 +163,7 @@ class Dietetic_pdf extends App_pdf
 
                 // Instructions
                 if ($meal->instructions) {
-                    $pdf->SetFont('Arial', 'I', 9);
+                    $pdf->SetFont('helvetica', 'I', 9);
                     $pdf->MultiCell(0, 4, $meal->instructions);
                 }
 
@@ -182,7 +182,7 @@ class Dietetic_pdf extends App_pdf
                         $meal_fats += $food->fats * $ratio;
                     }
 
-                    $pdf->SetFont('Arial', 'B', 9);
+                    $pdf->SetFont('helvetica', 'B', 9);
                     $pdf->Cell(0, 5, sprintf(
                         '%s: %.0f kcal | P: %.1fg | C: %.1fg | F: %.1fg',
                         _l('dietetic_total'),
@@ -201,10 +201,10 @@ class Dietetic_pdf extends App_pdf
         if ($program->instructions || $meal_plan->notes) {
             $pdf->AddPage();
 
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, _l('dietetic_instructions'), 0, 1);
 
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
 
             if ($program->instructions) {
                 $pdf->MultiCell(0, 5, $program->instructions);
@@ -218,7 +218,7 @@ class Dietetic_pdf extends App_pdf
 
         // Footer on all pages
         $pdf->SetY(-20);
-        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetFont('helvetica', 'I', 8);
         $pdf->Cell(0, 10, get_option('companyname') . ' | ' . _l('dietetic_generated_on') . ' ' . date('Y-m-d H:i'), 0, 0, 'C');
 
         // Output
@@ -261,12 +261,12 @@ class Dietetic_pdf extends App_pdf
         $pdf->AddPage();
 
         // Header
-        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->SetFont('helvetica', 'B', 18);
         $pdf->Cell(0, 10, _l('dietetic_consultation_report'), 0, 1, 'C');
         $pdf->Ln(5);
 
         // Consultation details
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
 
         $details = [
             _l('dietetic_date') => _dt($consultation->consultation_date),
@@ -278,27 +278,27 @@ class Dietetic_pdf extends App_pdf
 
         foreach ($details as $label => $value) {
             $pdf->Cell(50, 6, $label . ':', 0, 0);
-            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFont('helvetica', 'B', 11);
             $pdf->Cell(0, 6, $value, 0, 1);
-            $pdf->SetFont('Arial', '', 11);
+            $pdf->SetFont('helvetica', '', 11);
         }
 
         $pdf->Ln(5);
 
         // Observations
         if ($consultation->observations) {
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(0, 8, _l('dietetic_observations'), 0, 1);
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
             $pdf->MultiCell(0, 5, $consultation->observations);
             $pdf->Ln(3);
         }
 
         // Recommendations
         if ($consultation->recommendations) {
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(0, 8, _l('dietetic_recommendations'), 0, 1);
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
             $pdf->MultiCell(0, 5, $consultation->recommendations);
         }
 
@@ -338,7 +338,7 @@ class Dietetic_pdf extends App_pdf
         }
 
         // Title
-        $pdf->SetFont('Arial', 'B', 22);
+        $pdf->SetFont('helvetica', 'B', 22);
         $pdf->SetTextColor(1, 128, 123); // #01807B
         $pdf->Cell(0, 15, 'ANALYSE NUTRITIONNELLE', 0, 1, 'C');
         $pdf->SetTextColor(0, 0, 0);
@@ -349,25 +349,25 @@ class Dietetic_pdf extends App_pdf
         $pdf->SetFillColor(241, 243, 245); // Light gray background
         $pdf->Rect(10, $pdf->GetY(), 190, 25, 'F');
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(40, 6, 'Patient :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(70, 6, $client_name, 0, 0);
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(30, 6, 'Date :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(0, 6, date('d/m/Y'), 0, 1);
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(40, 6, 'Sexe :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $gender_text = (!empty($patient->gender) && $patient->gender === 'female') ? 'Femme' : 'Homme';
         $pdf->Cell(70, 6, $gender_text, 0, 0);
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(30, 6, 'Age :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $age = 'N/A';
         if (!empty($patient->birth_date) && $patient->birth_date != '0000-00-00') {
             try {
@@ -388,14 +388,14 @@ class Dietetic_pdf extends App_pdf
             $current_weight = floatval($patient->initial_weight);
         }
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(40, 6, 'Poids :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(70, 6, ($current_weight ? $current_weight . ' kg' : 'N/A'), 0, 0);
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->Cell(30, 6, 'Taille :', 0, 0);
-        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(0, 6, (!empty($patient->height) ? $patient->height . ' cm' : 'N/A'), 0, 1);
 
         $pdf->Ln(8);
@@ -406,34 +406,34 @@ class Dietetic_pdf extends App_pdf
             // Section header
             $pdf->SetFillColor(1, 128, 123);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'METABOLISME ET DEPENSE ENERGETIQUE', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
 
             // BMR
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(100, 8, 'Metabolisme de Base (BMR)', 0, 0);
-            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->SetFont('helvetica', 'B', 16);
             $pdf->SetTextColor(1, 128, 123);
             $pdf->Cell(0, 8, number_format($nutrition_analysis['bmr']['value'], 0) . ' kcal/jour', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
-            $pdf->SetFont('Arial', 'I', 9);
+            $pdf->SetFont('helvetica', 'I', 9);
             $pdf->SetTextColor(127, 140, 141);
             $pdf->Cell(0, 5, 'Formule : ' . $nutrition_analysis['bmr']['formula'], 0, 1);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(2);
 
             // TDEE
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(100, 8, 'Depense Energetique Totale (TDEE)', 0, 0);
-            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->SetFont('helvetica', 'B', 16);
             $pdf->SetTextColor(1, 128, 123);
             $pdf->Cell(0, 8, number_format($nutrition_analysis['tdee']['value'], 0) . ' kcal/jour', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
-            $pdf->SetFont('Arial', 'I', 9);
+            $pdf->SetFont('helvetica', 'I', 9);
             $pdf->SetTextColor(127, 140, 141);
             $activity_labels = [
                 'sedentary' => 'Sedentaire (peu ou pas d exercice)',
@@ -457,7 +457,7 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFillColor(231, 76, 60);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'OBJECTIF CALORIQUE', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
@@ -466,14 +466,14 @@ class Dietetic_pdf extends App_pdf
             $pdf->SetFillColor(255, 245, 245);
             $pdf->Rect(10, $pdf->GetY(), 190, 20, 'F');
 
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(100, 10, 'Apport calorique recommande', 0, 0);
-            $pdf->SetFont('Arial', 'B', 20);
+            $pdf->SetFont('helvetica', 'B', 20);
             $pdf->SetTextColor(231, 76, 60);
             $pdf->Cell(0, 10, number_format($needs['daily_calories'], 0) . ' kcal', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
             $goal_labels = [
                 'weight_loss' => 'Perte de poids',
                 'weight_gain' => 'Prise de poids',
@@ -494,7 +494,7 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFillColor(52, 73, 94);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'REPARTITION DES MACRONUTRIMENTS', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
@@ -506,7 +506,7 @@ class Dietetic_pdf extends App_pdf
             $pdf->SetFillColor(231, 76, 60);
             $pdf->Rect(10, $pdf->GetY(), $col_width, 25, 'F');
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFont('helvetica', 'B', 11);
             $pdf->Cell($col_width, 6, 'PROTEINES', 0, 0, 'C');
             $pdf->SetFillColor(52, 152, 219);
             $pdf->Rect(10 + $col_width, $pdf->GetY() - 6, $col_width, 25, 'F');
@@ -515,12 +515,12 @@ class Dietetic_pdf extends App_pdf
             $pdf->Rect(10 + $col_width * 2, $pdf->GetY() - 6, $col_width, 25, 'F');
             $pdf->Cell($col_width, 6, 'LIPIDES', 0, 1, 'C');
 
-            $pdf->SetFont('Arial', 'B', 20);
+            $pdf->SetFont('helvetica', 'B', 20);
             $pdf->Cell($col_width, 10, number_format($macros['protein_grams'], 0) . 'g', 0, 0, 'C');
             $pdf->Cell($col_width, 10, number_format($macros['carbs_grams'], 0) . 'g', 0, 0, 'C');
             $pdf->Cell($col_width, 10, number_format($macros['fat_grams'], 0) . 'g', 0, 1, 'C');
 
-            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetFont('helvetica', '', 9);
             $pdf->Cell($col_width, 5, '(' . $macros['protein_percentage'] . '% - ' . number_format($macros['protein_calories'], 0) . ' kcal)', 0, 0, 'C');
             $pdf->Cell($col_width, 5, '(' . $macros['carbs_percentage'] . '% - ' . number_format($macros['carbs_calories'], 0) . ' kcal)', 0, 0, 'C');
             $pdf->Cell($col_width, 5, '(' . $macros['fat_percentage'] . '% - ' . number_format($macros['fat_calories'], 0) . ' kcal)', 0, 1, 'C');
@@ -538,7 +538,7 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFillColor(243, 156, 18);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'COMPOSITION CORPORELLE', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
@@ -547,21 +547,21 @@ class Dietetic_pdf extends App_pdf
             $pdf->SetFillColor(255, 248, 240);
             $pdf->Rect(10, $pdf->GetY(), 190, 30, 'F');
 
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(100, 15, 'Pourcentage de masse grasse', 0, 0);
-            $pdf->SetFont('Arial', 'B', 28);
+            $pdf->SetFont('helvetica', 'B', 28);
             $pdf->SetTextColor(243, 156, 18);
             $pdf->Cell(0, 15, $bc['body_fat_percentage'] . '%', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
-            $pdf->SetFont('Arial', 'I', 10);
+            $pdf->SetFont('helvetica', 'I', 10);
             $pdf->SetTextColor(127, 140, 141);
             $pdf->Cell(0, 8, 'Categorie : ' . $bc['category'], 0, 1);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(5);
 
             // Detailed composition
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(0, 8, 'Repartition de la masse corporelle', 0, 1);
 
             $items = [
@@ -571,16 +571,16 @@ class Dietetic_pdf extends App_pdf
                 ['Eau corporelle', $bc['body_water'] . ' kg']
             ];
 
-            $pdf->SetFont('Arial', '', 11);
+            $pdf->SetFont('helvetica', '', 11);
             foreach ($items as $item) {
                 $pdf->Cell(100, 8, '  ' . $item[0], 1, 0);
-                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetFont('helvetica', 'B', 11);
                 $pdf->Cell(0, 8, $item[1], 1, 1, 'R');
-                $pdf->SetFont('Arial', '', 11);
+                $pdf->SetFont('helvetica', '', 11);
             }
 
             $pdf->Ln(3);
-            $pdf->SetFont('Arial', 'I', 9);
+            $pdf->SetFont('helvetica', 'I', 9);
             $pdf->SetTextColor(127, 140, 141);
             $pdf->MultiCell(0, 4, 'Calcule selon la formule de la US Navy (Hodgdon & Beckett, 1984) basee sur les circonferences corporelles.');
             $pdf->SetTextColor(0, 0, 0);
@@ -594,19 +594,19 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFillColor(52, 152, 219);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'BESOINS EN EAU', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
 
-            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(100, 10, 'Hydratation quotidienne recommandee', 0, 0);
-            $pdf->SetFont('Arial', 'B', 24);
+            $pdf->SetFont('helvetica', 'B', 24);
             $pdf->SetTextColor(52, 152, 219);
             $pdf->Cell(0, 10, $water['daily_liters'] . ' L', 0, 1, 'R');
             $pdf->SetTextColor(0, 0, 0);
 
-            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetFont('helvetica', '', 10);
             $pdf->Cell(0, 6, 'Soit environ ' . $water['glasses_250ml'] . ' verres de 250ml par jour', 0, 1);
             $pdf->Ln(5);
         }
@@ -622,18 +622,18 @@ class Dietetic_pdf extends App_pdf
 
             $pdf->SetFillColor(46, 204, 113);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 10, 'RECOMMANDATIONS NUTRITIONNELLES', 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Ln(3);
 
             foreach ($recommendations['recommendations'] as $rec) {
-                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetFont('helvetica', 'B', 11);
                 $pdf->SetTextColor(46, 204, 113);
                 $pdf->Cell(0, 7, '> ' . $rec['title'], 0, 1);
                 $pdf->SetTextColor(0, 0, 0);
 
-                $pdf->SetFont('Arial', '', 10);
+                $pdf->SetFont('helvetica', '', 10);
                 $pdf->MultiCell(0, 5, $rec['description']);
                 $pdf->Ln(2);
             }
@@ -642,7 +642,7 @@ class Dietetic_pdf extends App_pdf
         // ==================== FOOTER ====================
 
         $pdf->SetY(-20);
-        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetFont('helvetica', 'I', 8);
         $pdf->SetTextColor(127, 140, 141);
         $pdf->Cell(0, 10, get_option('companyname') . ' | Genere le ' . date('d/m/Y a H:i'), 0, 0, 'C');
 
