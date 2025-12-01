@@ -1,18 +1,11 @@
-// Firebase Cloud Messaging Service Worker - MINIMAL VERSION
-// Version: 2025-12-01-v2 (for cache busting)
+// Firebase Cloud Messaging Service Worker
+// Version: 2025-12-01-v3 (fixed importScripts)
 
-console.log('[SW] Loading Firebase Service Worker v2...');
+// CRITICAL: importScripts MUST be called at global scope, NOT in try/catch
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
-// Import Firebase scripts
-try {
-    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-    importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
-    console.log('[SW] ✅ Firebase scripts imported successfully');
-} catch (error) {
-    console.error('[SW] ❌ Error importing Firebase scripts:', error);
-}
-
-console.log('[SW] Service Worker file loaded');
+console.log('[SW] ✅ Firebase Service Worker v3 loaded');
 
 // Skip waiting to activate immediately
 self.addEventListener('install', (event) => {
@@ -58,6 +51,7 @@ self.addEventListener('push', (event) => {
         const options = {
             body: notification.body || '',
             icon: notification.icon || '/uploads/company/favicon.png',
+            badge: '/uploads/company/favicon.png',
             data: { url: data.click_action || '/dietetic/portal' }
         };
 
@@ -81,4 +75,4 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-console.log('[SW] ✅ Service Worker ready v2');
+console.log('[SW] ✅ Service Worker v3 ready');
