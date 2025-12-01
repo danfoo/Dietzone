@@ -724,16 +724,22 @@ class Notifications extends AdminController
             if ($success_count > 0) {
                 echo json_encode([
                     'success' => true,
+                    'title' => $title,
                     'message' => sprintf(
                         'Notification envoyée avec succès à %d appareil(s)%s',
                         $success_count,
                         $error_count > 0 ? ' (' . $error_count . ' échec(s))' : ''
-                    )
+                    ),
+                    'devices_count' => $success_count,
+                    'total_sent' => count($tokens)
                 ]);
             } else {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Échec de l\'envoi de la notification: ' . implode(', ', $errors)
+                    'title' => $title,
+                    'message' => 'Échec de l\'envoi de la notification: ' . implode(', ', $errors),
+                    'devices_count' => 0,
+                    'errors' => $errors
                 ]);
             }
 
