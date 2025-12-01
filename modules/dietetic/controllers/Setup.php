@@ -113,4 +113,61 @@ class Setup extends AdminController
 
         $this->load->view('admin/setup/cron_instructions', $data);
     }
+
+    /**
+     * Diagnostic des notifications push Firebase
+     * Accès: /admin/dietetic/setup/diagnose_push
+     */
+    public function diagnose_push()
+    {
+        if (!is_admin()) {
+            access_denied('Diagnose Push Notifications');
+        }
+
+        // Exécuter le script de diagnostic
+        ob_start();
+        include(FCPATH . 'modules/dietetic/diagnose_push_notifications.php');
+        $output = ob_get_clean();
+
+        // Convertir la sortie en HTML
+        $html_output = '<pre style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 5px; font-family: monospace; font-size: 13px; line-height: 1.6;">';
+        $html_output .= htmlspecialchars($output);
+        $html_output .= '</pre>';
+
+        // Afficher dans une page admin
+        $data['title'] = 'Diagnostic Push Notifications Firebase';
+        $data['output'] = $html_output;
+
+        $this->load->view('admin/setup/notifications_setup', $data);
+    }
+
+    /**
+     * Désactiver les notifications push Firebase
+     * Accès: /admin/dietetic/setup/disable_push
+     */
+    public function disable_push()
+    {
+        if (!is_admin()) {
+            access_denied('Disable Push Notifications');
+        }
+
+        // Exécuter le script de désactivation
+        ob_start();
+        include(FCPATH . 'modules/dietetic/disable_push_notifications.php');
+        $output = ob_get_clean();
+
+        // Convertir la sortie en HTML
+        $html_output = '<pre style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 5px; font-family: monospace; font-size: 13px; line-height: 1.6;">';
+        $html_output .= htmlspecialchars($output);
+        $html_output .= '</pre>';
+
+        // Message de succès
+        set_alert('success', 'Les notifications push Firebase ont été désactivées avec succès.');
+
+        // Afficher dans une page admin
+        $data['title'] = 'Désactivation Push Notifications';
+        $data['output'] = $html_output;
+
+        $this->load->view('admin/setup/notifications_setup', $data);
+    }
 }
