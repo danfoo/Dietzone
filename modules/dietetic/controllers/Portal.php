@@ -126,6 +126,7 @@ class Portal extends App_Controller
             'api_add_statistic_note',
             'api_delete_statistic_note',
             'api_get_calorie_goal',
+            'api_get_calorie_goal_debug',
             // Hydration tracking API methods
             'api_get_hydration_data',
             'api_add_hydration',
@@ -6473,6 +6474,150 @@ class Portal extends App_Controller
                 'message' => 'Erreur serveur: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * DEBUG: Get patient's calorie goal with detailed output
+     */
+    public function api_get_calorie_goal_debug()
+    {
+        ini_set('display_errors', 1);
+        error_reporting(E_ALL);
+
+        echo "<h2>DEBUG - Calorie Goal API</h2>";
+        echo "<pre>";
+
+        echo "Step 1: Check if client logged in...\n";
+        if (!is_client_logged_in()) {
+            echo "ERROR: Client not logged in\n";
+            return;
+        }
+        echo "OK - Client logged in\n\n";
+
+        $client_id = get_client_user_id();
+        echo "Step 2: Get client ID: " . $client_id . "\n\n";
+
+        echo "Step 3: Get patient by client...\n";
+        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+        if (!$patient) {
+            echo "ERROR: Patient not found\n";
+            return;
+        }
+        echo "OK - Patient found (ID: " . $patient->id . ")\n\n";
+
+        echo "Step 4: Check patient data:\n";
+        echo "  - Gender: " . ($patient->gender ?? 'NULL') . "\n";
+        echo "  - Height: " . ($patient->height ?? 'NULL') . " cm\n";
+        echo "  - Date of birth: " . ($patient->date_of_birth ?? 'NULL') . "\n";
+        echo "  - Initial weight: " . ($patient->initial_weight ?? 'NULL') . " kg\n";
+        echo "  - Activity level: " . ($patient->activity_level ?? 'NULL') . "\n";
+        echo "  - Goal: " . ($patient->goal ?? 'NULL') . "\n\n";
+
+        echo "Step 5: Check latest_measurement:\n";
+        if (!empty($patient->latest_measurement)) {
+            echo "  - Latest measurement exists\n";
+            echo "  - Weight: " . ($patient->latest_measurement->weight ?? 'NULL') . " kg\n";
+        } else {
+            echo "  - No latest_measurement\n";
+        }
+        echo "\n";
+
+        try {
+            echo "Step 6: Load nutrition calculator...\n";
+            $this->load->library('dietetic/dietetic_nutrition_calculator');
+            echo "OK - Library loaded\n\n";
+
+            echo "Step 7: Get current weight...\n";
+            $current_weight = null;
+            if (!empty($patient->latest_measurement) && !empty($patient->latest_measurement->weight)) {
+                $current_weight = floatval($patient->latest_measurement->weight);
+                echo "  - Using latest_measurement weight: " . $current_weight . " kg\n";
+            } elseif (!empty($patient->initial_weight)) {
+                $current_weight = floatval($patient->initial_weight);
+                echo "  - Using initial_weight: " . $current_weight . " kg\n";
+            } else {
+                echo "  - ERROR: No weight available\n";
+            }
+            echo "\n";
+
+            if (!$current_weight || !$patient->height || !$patient->date_of_birth) {
+                echo "ERROR: Insufficient data\n";
+                echo "  - Weight: " . ($current_weight ?: 'MISSING') . "\n";
+                echo "  - Height: " . ($patient->height ?: 'MISSING') . "\n";
+                echo "  - DOB: " . ($patient->date_of_birth ?: 'MISSING') . "\n";
+                return;
+            }
+
+            echo "Step 8: Calculate age...\n";
+            $dob = new DateTime($patient->date_of_birth);
+            $now = new DateTime();
+            $age = $dob->diff($now)->y;
+            echo "  - Age: " . $age . " years\n\n";
+
+            echo "Step 9: Prepare patient data...\n";
+            $activity_level = floatval($patient->activity_level ?: 1.55);
+            $goal = $patient->goal ?: 'weight_loss';
+
+            $patient_data = [
+                'weight' => $current_weight,
+                'height' => floatval($patient->height),
+                'age' => $age,
+                'gender' => $patient->gender,
+                'activity_level' => $activity_level,
+                'goal' => $goal
+            ];
+
+            echo "  Patient data:\n";
+            print_r($patient_data);
+            echo "\n";
+
+            echo "Step 10: Calculate nutrition analysis...\n";
+            $nutrition_analysis = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_data);
+            echo "OK - Analysis completed\n\n";
+
+            echo "Step 11: Extract calorie goal...\n";
+            echo "  Nutrition analysis structure:\n";
+            echo "  - calorie_needs: ";
+            print_r($nutrition_analysis['calorie_needs']);
+            echo "\n";
+
+            $calorie_goal = $nutrition_analysis['calorie_needs']['calories'];
+            echo "  - Calorie goal: " . $calorie_goal . " kcal\n\n";
+
+            echo "Step 12: Convert goal to text...\n";
+            $goal_text = 'Maintien du poids';
+            switch ($goal) {
+                case 'weight_loss':
+                    $goal_text = 'Perte de poids';
+                    break;
+                case 'weight_gain':
+                    $goal_text = 'Prise de poids';
+                    break;
+                case 'muscle_gain':
+                    $goal_text = 'Prise de muscle';
+                    break;
+            }
+            echo "  - Goal text: " . $goal_text . "\n\n";
+
+            echo "=== SUCCESS ===\n";
+            echo "Final JSON response would be:\n";
+            print_r([
+                'success' => true,
+                'calorie_goal' => $calorie_goal,
+                'goal' => $goal_text,
+                'goal_code' => $goal
+            ]);
+
+        } catch (Exception $e) {
+            echo "\n\n=== EXCEPTION ===\n";
+            echo "Message: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+            echo "Trace:\n" . $e->getTraceAsString() . "\n";
+        }
+
+        echo "</pre>";
     }
 
     /**
