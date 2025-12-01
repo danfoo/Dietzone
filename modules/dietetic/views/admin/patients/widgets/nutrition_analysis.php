@@ -94,17 +94,29 @@ try {
         'goal' => $goal
     ];
 
-    // Ajouter les mesures corporelles si disponibles (depuis latest_measurement)
-    if (!empty($patient->latest_measurement)) {
-        if (!empty($patient->latest_measurement->waist) && $patient->latest_measurement->waist > 0) {
-            $patient_analysis_data['waist'] = floatval($patient->latest_measurement->waist);
-        }
-        if (!empty($patient->latest_measurement->neck) && $patient->latest_measurement->neck > 0) {
-            $patient_analysis_data['neck'] = floatval($patient->latest_measurement->neck);
-        }
-        if (!empty($patient->latest_measurement->hips) && $patient->latest_measurement->hips > 0) {
-            $patient_analysis_data['hip'] = floatval($patient->latest_measurement->hips);
-        }
+    // Ajouter les mesures corporelles si disponibles
+    // Priorité 1: depuis latest_measurement (mesures récentes)
+    // Priorité 2: depuis le profil patient (champs d'anamnèse avec _circumference)
+
+    // Tour de taille (waist)
+    if (!empty($patient->latest_measurement->waist) && $patient->latest_measurement->waist > 0) {
+        $patient_analysis_data['waist'] = floatval($patient->latest_measurement->waist);
+    } elseif (!empty($patient->waist_circumference) && $patient->waist_circumference > 0) {
+        $patient_analysis_data['waist'] = floatval($patient->waist_circumference);
+    }
+
+    // Tour de cou (neck)
+    if (!empty($patient->latest_measurement->neck) && $patient->latest_measurement->neck > 0) {
+        $patient_analysis_data['neck'] = floatval($patient->latest_measurement->neck);
+    } elseif (!empty($patient->neck_circumference) && $patient->neck_circumference > 0) {
+        $patient_analysis_data['neck'] = floatval($patient->neck_circumference);
+    }
+
+    // Tour de hanches (hip) - uniquement pour les femmes
+    if (!empty($patient->latest_measurement->hips) && $patient->latest_measurement->hips > 0) {
+        $patient_analysis_data['hip'] = floatval($patient->latest_measurement->hips);
+    } elseif (!empty($patient->hip_circumference) && $patient->hip_circumference > 0) {
+        $patient_analysis_data['hip'] = floatval($patient->hip_circumference);
     }
 
     // Effectuer l'analyse complète
@@ -654,7 +666,15 @@ if (empty($nutrition_analysis)) {
 
                 <div class="nutrition-warning">
                     <i class="fa fa-exclamation-triangle"></i>
-                    <strong>Mesures manquantes:</strong> Pour calculer la composition corporelle, veuillez ajouter les circonférences (taille, cou, hanches) dans les mesures du patient.
+                    <strong>Mesures manquantes:</strong> Pour calculer la composition corporelle avec la formule US Navy, ajoutez les circonférences suivantes :
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li><strong>Tour de taille</strong> (obligatoire)</li>
+                        <li><strong>Tour de cou</strong> (obligatoire)</li>
+                        <li><strong>Tour de hanches</strong> (obligatoire pour les femmes)</li>
+                    </ul>
+                    <small style="display: block; margin-top: 10px; color: #7f8c8d;">
+                        💡 Vous pouvez les ajouter dans l'onglet "Mesures Anthropométriques" ci-dessus ou dans une nouvelle mesure.
+                    </small>
                 </div>
 
                 <div style="text-align: center; padding: 40px 20px;">
