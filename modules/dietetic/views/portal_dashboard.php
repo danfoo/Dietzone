@@ -2010,19 +2010,19 @@ body {
 /* Weight Goal Card - Ultra Modern Design */
 .weight-goal-card {
     background: linear-gradient(135deg,
-        #01807B 0%,
-        #019B95 50%,
-        #01B5AE 100%);
+        #E0F2F1 0%,
+        #B2DFDB 35%,
+        #80CBC4 100%);
     background-size: 200% 200%;
     animation: gradientFlow 8s ease infinite;
     border-radius: 28px;
     padding: 20px 16px;
     margin-bottom: 24px;
-    color: white;
+    color: #2c3e50;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(1, 128, 123, 0.3),
-                0 4px 12px rgba(1, 128, 123, 0.2);
+    box-shadow: 0 12px 40px rgba(128, 203, 196, 0.25),
+                0 4px 12px rgba(178, 223, 219, 0.15);
     display: flex;
     flex-direction: column;
     transform-style: preserve-3d;
@@ -2031,8 +2031,8 @@ body {
 
 .weight-goal-card:hover {
     transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 60px rgba(1, 128, 123, 0.4),
-                0 8px 20px rgba(1, 128, 123, 0.3);
+    box-shadow: 0 20px 60px rgba(128, 203, 196, 0.35),
+                0 8px 20px rgba(178, 223, 219, 0.25);
 }
 
 @keyframes gradientFlow {
@@ -2049,10 +2049,10 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.08) 1px, transparent 1px);
     background-size: 40px 40px;
     animation: particlesFloat 20s linear infinite;
-    opacity: 0.3;
+    opacity: 0.4;
 }
 
 @keyframes particlesFloat {
@@ -2096,10 +2096,10 @@ body {
 .weight-goal-title {
     font-size: 18px;
     font-weight: 800;
-    color: white;
+    color: #00695C;
     margin: 0;
     padding: 0;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 2px 10px rgba(0, 105, 92, 0.1);
     letter-spacing: 0.3px;
     display: flex;
     align-items: center;
@@ -2121,16 +2121,16 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     padding: 6px 14px;
     border-radius: 24px;
     font-size: 11px;
     font-weight: 700;
-    color: white;
+    color: #00695C;
     white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(0, 105, 92, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 105, 92, 0.15);
     animation: statusPulse 3s ease-in-out infinite;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -2139,11 +2139,11 @@ body {
 @keyframes statusPulse {
     0%, 100% {
         transform: scale(1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 105, 92, 0.15);
     }
     50% {
         transform: scale(1.05);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 16px rgba(0, 105, 92, 0.25);
     }
 }
 
@@ -2159,28 +2159,33 @@ body {
 }
 
 .weight-goal-status.achieved {
-    background: rgba(76, 175, 80, 0.35);
-    border-color: rgba(76, 175, 80, 0.5);
+    background: rgba(76, 175, 80, 0.2);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #2E7D32;
 }
 
 .weight-goal-status.on-track {
-    background: rgba(66, 153, 225, 0.35);
-    border-color: rgba(66, 153, 225, 0.5);
+    background: rgba(66, 153, 225, 0.2);
+    border-color: rgba(66, 153, 225, 0.4);
+    color: #1976D2;
 }
 
 .weight-goal-status.ahead {
-    background: rgba(159, 122, 234, 0.35);
-    border-color: rgba(159, 122, 234, 0.5);
+    background: rgba(159, 122, 234, 0.2);
+    border-color: rgba(159, 122, 234, 0.4);
+    color: #6A1B9A;
 }
 
 .weight-goal-status.behind {
-    background: rgba(255, 152, 0, 0.35);
-    border-color: rgba(255, 152, 0, 0.5);
+    background: rgba(255, 152, 0, 0.2);
+    border-color: rgba(255, 152, 0, 0.4);
+    color: #E65100;
 }
 
 .weight-goal-status.no-data {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #546E7A;
 }
 
 .weight-values-compact {
@@ -2409,18 +2414,17 @@ body {
 
 .progress-gauge-label {
     font-size: 11px;
-    color: white;
+    color: #00695C;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     display: flex;
     align-items: center;
     gap: 8px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .progress-gauge-label i {
-    color: white;
+    color: #00796B;
     font-size: 14px;
     animation: iconBounce 2s ease-in-out infinite;
 }
@@ -2428,8 +2432,7 @@ body {
 .progress-gauge-percent {
     font-size: 24px;
     font-weight: 800;
-    color: white;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    color: #004D40;
     animation: numberScale 3s ease-in-out infinite;
 }
 
@@ -2498,15 +2501,11 @@ body {
     line-height: 1.6;
     font-weight: 600;
     text-align: center;
-    color: white;
+    color: #2c3e50;
     position: relative;
     z-index: 1;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    padding: 0;
+    background: transparent;
     animation: messageFloat 3s ease-in-out infinite;
 }
 
@@ -2520,34 +2519,28 @@ body {
 }
 
 .weight-motivation-simple.achieved {
-    background: rgba(76, 175, 80, 0.25);
-    border-color: rgba(76, 175, 80, 0.4);
+    color: #2E7D32;
 }
 
 .weight-motivation-simple.on-track {
-    background: rgba(66, 153, 225, 0.25);
-    border-color: rgba(66, 153, 225, 0.4);
+    color: #1976D2;
 }
 
 .weight-motivation-simple.ahead {
-    background: rgba(159, 122, 234, 0.25);
-    border-color: rgba(159, 122, 234, 0.4);
+    color: #6A1B9A;
 }
 
 .weight-motivation-simple.behind {
-    background: rgba(255, 152, 0, 0.25);
-    border-color: rgba(255, 152, 0, 0.4);
+    color: #E65100;
 }
 
 .weight-motivation-simple.no-data {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
+    color: #546E7A;
 }
 
 .weight-motivation-simple strong {
     font-weight: 800;
-    color: #FFEB3B;
-    text-shadow: 0 2px 10px rgba(255, 235, 59, 0.5);
+    color: #00695C;
 }
 
 /* Mobile responsive */
