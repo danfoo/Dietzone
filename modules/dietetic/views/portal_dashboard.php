@@ -2395,11 +2395,11 @@ body {
     }
 }
 
-/* Grid for Orange Block + Circle */
+/* Grid for Orange Block + Circle - Always 2 columns (Mobile WebView) */
 .progress-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
@@ -2409,12 +2409,6 @@ body {
 .progress-grid > * {
     width: 100%;
     max-width: 100%;
-}
-
-@media (max-width: 576px) {
-    .progress-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Circular Progress Container */
@@ -2629,36 +2623,61 @@ body {
     color: #00695C;
 }
 
-/* Mobile responsive */
+/* Mobile WebView optimizations */
 @media (max-width: 768px) {
     .weight-goal-card {
-        padding: 18px 14px;
+        padding: 16px 12px;
         border-radius: 24px;
     }
 
     .weight-goal-title {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .weight-goal-title::before {
-        font-size: 20px;
+        font-size: 18px;
     }
 
-    .progress-gauge-percent {
-        font-size: 20px;
+    .progress-grid {
+        gap: 10px;
+    }
+
+    .progress-circle-wrapper {
+        width: 140px;
+        height: 140px;
+    }
+
+    .progress-circle-percent {
+        font-size: 30px;
+    }
+
+    .progress-circle-label {
+        font-size: 10px;
     }
 
     .weight-remaining-simple-value {
         font-size: 24px;
     }
 
+    .weight-remaining-simple-text {
+        font-size: 10px;
+    }
+
     .weight-value-icon {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
     }
 
     .weight-value-icon i {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .weight-value-compact-number {
+        font-size: 16px;
+    }
+
+    .weight-value-compact-label {
+        font-size: 8px;
     }
 }
 
