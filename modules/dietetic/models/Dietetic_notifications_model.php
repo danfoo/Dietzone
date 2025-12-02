@@ -333,7 +333,10 @@ class Dietetic_notifications_model extends App_Model
      */
     public function get_patients_for_meal_reminder($meal_type)
     {
+        // Fenêtre de 5 minutes pour capturer les rappels
+        // Si cron passe à 22:25, on envoie les rappels entre 22:20 et 22:25
         $current_time = date('H:i:00');
+        $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
 
         $column_enabled = 'reminder_' . $meal_type;
         $column_time = 'reminder_' . $meal_type . '_time';
@@ -345,9 +348,22 @@ class Dietetic_notifications_model extends App_Model
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
         $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.' . $column_enabled, 1);
-        $this->db->where('prefs.' . $column_time, $current_time);
 
-        return $this->db->get()->result();
+        // Fenêtre de 5 minutes : entre time_5min_ago et current_time
+        $this->db->where('prefs.' . $column_time . ' >', $time_5min_ago);
+        $this->db->where('prefs.' . $column_time . ' <=', $current_time);
+
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu ce rappel aujourd'hui
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_today($patient->patient_id, 'reminder_' . $meal_type)) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -383,6 +399,32 @@ class Dietetic_notifications_model extends App_Model
         ]);
 
         return $result;
+    }
+
+    /**
+     * Vérifie si une notification a déjà été envoyée aujourd'hui
+     * Protection anti-doublons pour éviter d'envoyer plusieurs fois le même rappel
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé aujourd'hui
+     */
+    private function was_sent_today($patient_id, $notification_type)
+    {
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
+
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $today_start);
+        $this->db->where('created_at <=', $today_end);
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
     }
 
     /**
