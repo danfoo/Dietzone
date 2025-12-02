@@ -2115,7 +2115,7 @@ body {
     backdrop-filter: blur(10px);
     padding: 6px 14px;
     border-radius: 24px;
-    font-size: 11px;
+    font-size: 8px;
     font-weight: 700;
     color: #00695C;
     white-space: nowrap;
@@ -2328,7 +2328,6 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 160px;
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 
