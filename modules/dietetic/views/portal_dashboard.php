@@ -2589,28 +2589,32 @@ body {
     }
 
     .progress-grid {
-        gap: 10px;
+        gap: 8px;
+    }
+
+    .progress-circle-container {
+        padding: 10px;
     }
 
     .progress-circle-wrapper {
-        width: 140px;
-        height: 140px;
+        width: 120px;
+        height: 120px;
     }
 
     .progress-circle-percent {
-        font-size: 30px;
+        font-size: 26px;
     }
 
     .progress-circle-label {
-        font-size: 10px;
+        font-size: 9px;
     }
 
-    .weight-remaining-simple-value {
-        font-size: 24px;
+    .progress-circle-weight {
+        font-size: 30px;
     }
 
-    .weight-remaining-simple-text {
-        font-size: 10px;
+    .progress-circle-label-orange {
+        font-size: 8px;
     }
 
     .weight-value-icon {
