@@ -2320,79 +2320,35 @@ body {
 .weight-remaining-simple {
     text-align: center;
     padding: 20px 12px;
-    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
-    border-radius: 16px;
+    background: transparent;
     position: relative;
     z-index: 1;
-    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    overflow: hidden;
-    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 160px;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.weight-remaining-simple::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    transform: translate(-50%, -50%);
-    animation: glow 3s ease-in-out infinite;
-}
-
-@keyframes glow {
-    0%, 100% {
-        opacity: 0.3;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-        opacity: 0.6;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-}
-
-.weight-remaining-simple:hover {
-    transform: scale(1.03);
-    box-shadow: 0 12px 32px rgba(255, 152, 0, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
 
 .weight-remaining-simple-text {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.95);
+    color: #FF9800;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     position: relative;
     z-index: 1;
 }
 
 .weight-remaining-simple-value {
-    font-size: 28px;
+    font-size: 40px;
     font-weight: 800;
-    color: white;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    color: #FF9800;
     position: relative;
     z-index: 1;
-    animation: numberPulse 2s ease-in-out infinite;
-}
-
-@keyframes numberPulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
 }
 
 /* Grid for Orange Block + Circle - Always 2 columns (Mobile WebView) */
