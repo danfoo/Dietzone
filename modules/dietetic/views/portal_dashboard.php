@@ -2009,7 +2009,7 @@ body {
 
 /* Weight Goal Card - Ultra Modern Design */
 .weight-goal-card {
-    background: linear-gradient(135deg, #FFF 0%, #FFF 35%, #FFF 100%);
+    background: linear-gradient(-6deg, #ffc925 0%, #43BA8880 35%, #FFF 100%);
     background-size: 200% 200%;
     border-radius: 28px;
     padding: 20px 16px;
@@ -3613,7 +3613,7 @@ if (!$current_weight || !$target_weight) {
     // 2. CIRCULAR PROGRESS ANIMATION
     // ============================================
     function animateCircularProgress() {
-        const progressCircle = document.querySelector('.progress-circle-fill');
+        const progressCircle = document.querySelector('.progress-circle-fill:not(.progress-circle-fill-orange)');
         const percentElement = document.querySelector('.progress-circle-percent');
 
         if (!progressCircle || !percentElement) return;
