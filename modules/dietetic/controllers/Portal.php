@@ -150,6 +150,7 @@ class Portal extends App_Controller
             // Diagnostic tools
             'diagnostic_notifications',
             'diagnostic_system',
+            'test_notification_manual',
             'migrate_notifications_to_patient_table'
         ];
 
@@ -3290,6 +3291,214 @@ class Portal extends App_Controller
 </body>
 </html>
         <?php
+    }
+
+    /**
+     * Test manuel d'envoi de notification
+     * Access: /dietetic/portal/test_notification_manual
+     * Permet de déclencher manuellement une notification pour déboguer
+     */
+    public function test_notification_manual()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        // Load model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        header('Content-Type: text/html; charset=utf-8');
+
+        echo '<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notification Manuelle</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #01807B;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 20px 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #01807B;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            border-left: 4px solid #01807B;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f44336;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+            margin: 10px 0;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #01807B;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .button:hover { background: #01605B; }
+        .actions { text-align: center; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="title">🧪 Test Manuel de Notification</div>
+            <div class="info">
+                <strong>📍 Objectif :</strong> Déclencher manuellement une notification de rappel dîner pour identifier les problèmes.
+            </div>';
+
+        echo '<div class="section-title">1️⃣ Récupération des patients avec rappel dîner activé</div>';
+
+        try {
+            // Désactiver temporairement la vérification de l'heure pour le test
+            // Récupérer les patients avec reminder_dinner = 1
+            $this->db->select('p.*, prefs.*, p.email, p.phone, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_preferences prefs');
+            $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = prefs.patient_id');
+            $this->db->join(db_prefix() . 'contacts c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->where('prefs.reminder_dinner', 1);
+            $this->db->limit(1);
+
+            $query = $this->db->get();
+
+            echo '<div class="info"><strong>🔍 Requête SQL :</strong><pre>' . $this->db->last_query() . '</pre></div>';
+
+            if ($query->num_rows() > 0) {
+                $patient = $query->row();
+                echo '<div class="success">✅ Patient trouvé : ' . htmlspecialchars($patient->firstname . ' ' . $patient->lastname) . '</div>';
+                echo '<pre>' . print_r($patient, true) . '</pre>';
+
+                echo '<div class="section-title">2️⃣ Configuration des canaux</div>';
+                echo '<div class="info">';
+                echo '📧 Email: ' . ($patient->channel_email ? '✅ Activé (' . $patient->email . ')' : '❌ Désactivé') . '<br>';
+                echo '📱 SMS: ' . ($patient->channel_sms ? '✅ Activé (' . $patient->phone . ')' : '❌ Désactivé') . '<br>';
+                echo '💬 WhatsApp: ' . ($patient->channel_whatsapp ? '✅ Activé' : '❌ Désactivé') . '<br>';
+                echo '🔔 Push: ' . ($patient->channel_push ? '✅ Activé' : '❌ Désactivé');
+                echo '</div>';
+
+                echo '<div class="section-title">3️⃣ Envoi de la notification de test</div>';
+
+                // Créer un objet patient formaté pour send_meal_reminder
+                $test_patient = new stdClass();
+                $test_patient->patient_id = $patient->patient_id;
+                $test_patient->firstname = $patient->firstname;
+                $test_patient->lastname = $patient->lastname;
+                $test_patient->email = $patient->email;
+                $test_patient->phonenumber = $patient->phone;
+                $test_patient->channel_email = $patient->channel_email;
+                $test_patient->channel_sms = $patient->channel_sms;
+                $test_patient->channel_whatsapp = $patient->channel_whatsapp;
+                $test_patient->channel_push = $patient->channel_push;
+
+                echo '<div class="warning">⏳ Envoi en cours...</div>';
+
+                $result = $this->dietetic_notifications_model->send_meal_reminder($test_patient, 'dinner');
+
+                echo '<div class="section-title">4️⃣ Résultat de l\'envoi</div>';
+
+                if (is_array($result)) {
+                    $has_success = false;
+                    foreach ($result as $channel => $status) {
+                        if ($status === true) {
+                            echo '<div class="success">✅ ' . ucfirst($channel) . ' : Envoyé avec succès</div>';
+                            $has_success = true;
+                        } else {
+                            echo '<div class="error">❌ ' . ucfirst($channel) . ' : Échec (' . (is_string($status) ? $status : 'erreur inconnue') . ')</div>';
+                        }
+                    }
+
+                    if ($has_success) {
+                        echo '<div class="success"><strong>🎉 Au moins une notification a été envoyée avec succès !</strong></div>';
+                    } else {
+                        echo '<div class="error"><strong>❌ Aucune notification n\'a pu être envoyée.</strong></div>';
+                    }
+                } else {
+                    echo '<div class="error">❌ Résultat inattendu : <pre>' . print_r($result, true) . '</pre></div>';
+                }
+
+                echo '<div class="section-title">5️⃣ Détails complets du résultat</div>';
+                echo '<pre>' . print_r($result, true) . '</pre>';
+
+            } else {
+                echo '<div class="error">❌ Aucun patient trouvé avec rappel dîner activé.</div>';
+                echo '<div class="warning">Vérifiez que vous avez bien activé le rappel dîner dans vos préférences.</div>';
+            }
+
+        } catch (Exception $e) {
+            echo '<div class="error">❌ ERREUR : ' . htmlspecialchars($e->getMessage()) . '</div>';
+            echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+        }
+
+        echo '<div class="actions">
+                <a href="' . site_url('dietetic/portal/diagnostic_system') . '" class="button">🔍 Diagnostic Système</a>
+                <a href="' . site_url('dietetic/portal/notification_preferences') . '" class="button">⚙️ Préférences</a>
+                <a href="' . site_url('dietetic/portal/test_notification_manual') . '" class="button">🔄 Relancer le test</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
     }
 
     /**
