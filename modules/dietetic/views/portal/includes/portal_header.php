@@ -1348,8 +1348,7 @@
             </div>
         </div>
         <div class="notification-filters">
-            <button class="filter-btn active" data-filter="all">Toutes</button>
-            <button class="filter-btn" data-filter="unread">Non lues</button>
+            <button class="filter-btn active" data-filter="unread">Non lues</button>
             <button class="filter-btn" data-filter="read">Lues</button>
         </div>
         <div class="notification-panel-content">
