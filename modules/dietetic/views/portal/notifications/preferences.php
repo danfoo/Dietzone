@@ -520,6 +520,14 @@ $this->load->view('portal/includes/portal_header');
                         WhatsApp
                     </label>
                 </div>
+
+                <div class="channel-option <?php echo $preferences->channel_push ? 'active' : ''; ?>">
+                    <input type="checkbox" name="channel_push" id="channel_push" <?php echo $preferences->channel_push ? 'checked' : ''; ?>>
+                    <label for="channel_push">
+                        <i class="fa fa-bell"></i>
+                        Push (App Mobile)
+                    </label>
+                </div>
             </div>
         </div>
 
