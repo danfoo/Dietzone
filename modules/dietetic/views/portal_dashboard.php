@@ -2422,28 +2422,37 @@ body {
 }
 
 /* Orange Circle Styles */
+.progress-circle-wrapper-orange {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    border: none;
+}
+
+.progress-circle-wrapper-orange .progress-circle-bg {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
 .progress-circle-fill-orange {
     fill: none;
-    stroke: url(#progressGradientOrange);
+    stroke: white;
     stroke-width: 12;
     stroke-linecap: round;
     stroke-dasharray: 440;
     stroke-dashoffset: 440;
     transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.4));
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
 .progress-circle-weight {
     font-size: 40px;
     font-weight: 800;
-    color: #FF9800;
+    color: white;
     line-height: 1;
     margin-bottom: 4px;
 }
 
 .progress-circle-label-orange {
     font-size: 9px;
-    color: #FF9800;
+    color: white;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
