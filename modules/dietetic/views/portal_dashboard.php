@@ -2317,40 +2317,7 @@ body {
     display: none;
 }
 
-.weight-remaining-simple {
-    text-align: center;
-    padding: 20px 12px;
-    background: transparent;
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 160px;
-}
-
-
-.weight-remaining-simple-text {
-    font-size: 11px;
-    color: #FF9800;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 1;
-}
-
-.weight-remaining-simple-value {
-    font-size: 40px;
-    font-weight: 800;
-    color: #FF9800;
-    position: relative;
-    z-index: 1;
-}
-
-/* Grid for Orange Block + Circle - Always 2 columns (Mobile WebView) */
+/* Grid for Orange Circle + Progress Circle - Always 2 columns (Mobile WebView) */
 .progress-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2452,6 +2419,34 @@ body {
 
 .progress-circle-fill.achieved {
     animation: circlePulse 2s ease-in-out infinite;
+}
+
+/* Orange Circle Styles */
+.progress-circle-fill-orange {
+    fill: none;
+    stroke: url(#progressGradientOrange);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.4));
+}
+
+.progress-circle-weight {
+    font-size: 40px;
+    font-weight: 800;
+    color: #FF9800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.progress-circle-label-orange {
+    font-size: 9px;
+    color: #FF9800;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Celebration Effects - Confetti */
@@ -3486,26 +3481,41 @@ if (!$current_weight || !$target_weight) {
     <!-- Grid: Orange Block + Circle -->
     <div class="progress-grid">
         <?php if ($weight_remaining !== null) { ?>
-        <div class="weight-remaining-simple">
-            <div class="weight-remaining-simple-text">
-                <?php
-                if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                    echo 'Objectif atteint !';
-                } elseif ($goal_type == 'gain') {
-                    echo 'À rattraper';
-                } else {
-                    echo 'Encore à perdre';
-                }
-                ?>
-            </div>
-            <div class="weight-remaining-simple-value">
-                <?php
-                if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                    echo '🎉';
-                } else {
-                    echo number_format($weight_remaining, 1) . ' kg';
-                }
-                ?>
+        <div class="progress-circle-container">
+            <div class="progress-circle-wrapper progress-circle-wrapper-orange">
+                <svg class="progress-circle-svg" viewBox="0 0 160 160">
+                    <defs>
+                        <linearGradient id="progressGradientOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF9800;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#F57C00;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#E65100;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-circle-fill progress-circle-fill-orange <?php echo $overall_status == 'achieved' ? 'achieved' : ''; ?>"
+                            cx="80" cy="80" r="70"
+                            data-progress="<?php echo round($progress_percent); ?>"></circle>
+                </svg>
+                <div class="progress-circle-center">
+                    <div class="progress-circle-weight" data-target="<?php echo $weight_remaining; ?>">
+                        <?php
+                        if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                            echo '🎉';
+                        } else {
+                            echo '0';
+                        }
+                        ?>
+                    </div>
+                    <div class="progress-circle-label-orange">
+                        <?php
+                        if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                            echo 'Objectif atteint !';
+                        } else {
+                            echo 'kg à perdre';
+                        }
+                        ?>
+                    </div>
+                </div>
             </div>
         </div>
         <?php } ?>
@@ -3649,38 +3659,29 @@ if (!$current_weight || !$target_weight) {
     }
 
     // ============================================
-    // 4. ANIMATE REMAINING WEIGHT
+    // 4. ANIMATE ORANGE CIRCLE (KG REMAINING)
     // ============================================
-    function animateRemainingWeight() {
-        const remainingValue = document.querySelector('.weight-remaining-simple-value');
-        if (!remainingValue) return;
+    function animateOrangeCircle() {
+        const orangeCircle = document.querySelector('.progress-circle-fill-orange');
+        const weightElement = document.querySelector('.progress-circle-weight');
 
-        const fullText = remainingValue.textContent.trim();
+        if (!orangeCircle || !weightElement) return;
 
-        // Skip if it's the emoji (goal achieved)
-        if (fullText === '🎉') return;
+        const targetProgress = parseInt(orangeCircle.getAttribute('data-progress')) || 0;
+        const circumference = 2 * Math.PI * 70; // r=70
+        const offset = circumference - (targetProgress / 100) * circumference;
 
-        const match = fullText.match(/^([\d.]+)/);
-        if (match) {
-            const targetValue = parseFloat(match[1]);
-            const unit = fullText.replace(match[1], '');
+        // Animate the orange circle
+        setTimeout(() => {
+            orangeCircle.style.strokeDashoffset = offset;
+        }, 300);
 
+        // Animate the weight counter (if not emoji)
+        if (weightElement.textContent.trim() !== '🎉') {
             setTimeout(() => {
-                remainingValue.textContent = '0.0' + unit;
-
-                const interval = setInterval(() => {
-                    const current = parseFloat(remainingValue.textContent);
-                    const increment = targetValue / 100;
-                    const newValue = Math.min(current + increment, targetValue);
-
-                    remainingValue.textContent = newValue.toFixed(1) + unit;
-
-                    if (newValue >= targetValue) {
-                        clearInterval(interval);
-                        remainingValue.textContent = targetValue.toFixed(1) + unit;
-                    }
-                }, 20);
-            }, 400);
+                const targetWeight = parseFloat(weightElement.getAttribute('data-target')) || 0;
+                animateDecimalCounter(weightElement, 0, targetWeight, 2000, 1);
+            }, 500);
         }
     }
 
@@ -3767,7 +3768,7 @@ if (!$current_weight || !$target_weight) {
         }, 300);
 
         setTimeout(() => {
-            animateRemainingWeight();
+            animateOrangeCircle();
         }, 800);
 
         setTimeout(() => {
