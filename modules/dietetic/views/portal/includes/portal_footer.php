@@ -237,17 +237,21 @@
                     html += `<div class="notification-date-separator"><span>${group.label}</span></div>`;
 
                     // Add notifications in this group
+                    let notificationIndex = 0;
                     group.notifications.forEach(notification => {
                         const unreadClass = notification.is_read ? '' : 'unread';
                         const clickableClass = notification.url ? 'clickable' : '';
                         const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+                        const animationDelay = `animation-delay: ${notificationIndex * 0.05}s;`;
+                        notificationIndex++;
 
                         html += `
                             <div class="notification-item ${unreadClass} ${clickableClass}"
                                  data-notification-id="${notification.id}"
+                                 data-type="${notification.type || 'info'}"
                                  data-url="${notification.url || ''}"
                                  data-is-read="${notification.is_read ? '1' : '0'}"
-                                 style="${cursorStyle}"
+                                 style="${cursorStyle} ${animationDelay}"
                                  onclick="handleNotificationClick(this, event)">
                                 <button class="notification-item-delete" onclick="deleteNotification(this, event)">
                                     <i class="fa fa-times"></i>
