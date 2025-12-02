@@ -2880,90 +2880,134 @@ class Portal extends App_Controller
         $warnings = [];
         $success = [];
 
-        // 1. Check module activation
-        $query = "SELECT * FROM " . db_prefix() . "modules WHERE module_name = 'dietetic'";
-        $result = $this->db->query($query);
-        $module = $result->num_rows() > 0 ? $result->row_array() : null;
-        $diagnostic['module_active'] = ($module && $module['active'] == 1);
+        try {
+            // 1. Check module activation
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'modules');
+            $this->db->where('module_name', 'dietetic');
+            $query = $this->db->get();
+            $module = $query->num_rows() > 0 ? $query->row() : null;
+            $diagnostic['module_active'] = ($module && $module->active == 1);
 
-        if ($diagnostic['module_active']) {
-            $success[] = "Module Dietetic activé";
-        } else {
-            $errors[] = "Module Dietetic NON activé - Allez dans Admin > Modules pour l'activer";
-        }
-
-        // 2. Check cron
-        $query = "SELECT * FROM " . db_prefix() . "options WHERE name = 'last_cron_run'";
-        $result = $this->db->query($query);
-        $cron = $result->num_rows() > 0 ? $result->row_array() : null;
-        $diagnostic['last_cron_run'] = $cron ? $cron['value'] : null;
-        $diagnostic['cron_minutes_ago'] = $diagnostic['last_cron_run'] ? floor((time() - $diagnostic['last_cron_run']) / 60) : null;
-
-        if ($diagnostic['cron_minutes_ago'] === null) {
-            $errors[] = "Cron jamais exécuté";
-        } elseif ($diagnostic['cron_minutes_ago'] > 10) {
-            $warnings[] = "Cron inactif depuis " . $diagnostic['cron_minutes_ago'] . " minutes";
-        } else {
-            $success[] = "Cron actif (il y a " . $diagnostic['cron_minutes_ago'] . " min)";
-        }
-
-        // 3. Check patients with preferences
-        $query = "SELECT COUNT(*) as total FROM " . db_prefix() . "dietic_patients";
-        $result = $this->db->query($query);
-        $diagnostic['total_patients'] = $result->num_rows() > 0 ? $result->row()->total : 0;
-
-        $query = "SELECT COUNT(*) as total FROM " . db_prefix() . "dietic_notification_preferences";
-        $result = $this->db->query($query);
-        $diagnostic['patients_with_prefs'] = $result->num_rows() > 0 ? $result->row()->total : 0;
-
-        if ($diagnostic['patients_with_prefs'] == 0) {
-            $warnings[] = "Aucun patient avec préférences configurées";
-        } else {
-            $success[] = $diagnostic['patients_with_prefs'] . " patient(s) avec préférences";
-        }
-
-        // 4. Get patients with dinner reminder
-        $query = "SELECT p.*, c.firstname, c.lastname, c.email, c.phonenumber
-                  FROM " . db_prefix() . "dietic_notification_preferences p
-                  INNER JOIN " . db_prefix() . "dietic_patients dp ON p.patient_id = dp.id
-                  INNER JOIN " . db_prefix() . "contacts c ON dp.contact_id = c.id
-                  WHERE p.reminder_dinner = 1
-                  LIMIT 10";
-        $result = $this->db->query($query);
-        $diagnostic['dinner_patients'] = $result->num_rows() > 0 ? $result->result_array() : [];
-
-        if (count($diagnostic['dinner_patients']) == 0) {
-            $warnings[] = "Aucun patient avec rappel dîner activé";
-        } else {
-            $success[] = count($diagnostic['dinner_patients']) . " patient(s) avec rappel dîner";
-        }
-
-        // 5. Check channel configuration
-        $query = "SELECT * FROM " . db_prefix() . "dietic_notification_settings WHERE name IN ('sms_lam_account_id', 'sms_lam_password', 'whatsapp_api_key')";
-        $result = $this->db->query($query);
-        $settings = [];
-        if ($result->num_rows() > 0) {
-            foreach ($result->result_array() as $row) {
-                $settings[$row['name']] = !empty($row['value']);
+            if ($diagnostic['module_active']) {
+                $success[] = "Module Dietetic activé";
+            } else {
+                $errors[] = "Module Dietetic NON activé - Allez dans Admin > Modules pour l'activer";
             }
-        }
 
-        $query = "SELECT * FROM " . db_prefix() . "options WHERE name IN ('smtp_host', 'smtp_username')";
-        $result = $this->db->query($query);
-        if ($result->num_rows() > 0) {
-            foreach ($result->result_array() as $row) {
-                $settings[$row['name']] = !empty($row['value']);
+            // 2. Check cron
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'options');
+            $this->db->where('name', 'last_cron_run');
+            $query = $this->db->get();
+            $cron = $query->num_rows() > 0 ? $query->row() : null;
+            $diagnostic['last_cron_run'] = $cron ? $cron->value : null;
+            $diagnostic['cron_minutes_ago'] = $diagnostic['last_cron_run'] ? floor((time() - $diagnostic['last_cron_run']) / 60) : null;
+
+            if ($diagnostic['cron_minutes_ago'] === null) {
+                $errors[] = "Cron jamais exécuté";
+            } elseif ($diagnostic['cron_minutes_ago'] > 10) {
+                $warnings[] = "Cron inactif depuis " . $diagnostic['cron_minutes_ago'] . " minutes";
+            } else {
+                $success[] = "Cron actif (il y a " . $diagnostic['cron_minutes_ago'] . " min)";
             }
+
+            // 3. Check patients with preferences
+            if ($this->db->table_exists(db_prefix() . 'dietic_patients')) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_patients');
+                $query = $this->db->get();
+                $diagnostic['total_patients'] = $query->row()->total;
+            } else {
+                $diagnostic['total_patients'] = 0;
+                $warnings[] = "Table dietic_patients n'existe pas";
+            }
+
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_notification_preferences');
+                $query = $this->db->get();
+                $diagnostic['patients_with_prefs'] = $query->row()->total;
+
+                if ($diagnostic['patients_with_prefs'] == 0) {
+                    $warnings[] = "Aucun patient avec préférences configurées";
+                } else {
+                    $success[] = $diagnostic['patients_with_prefs'] . " patient(s) avec préférences";
+                }
+            } else {
+                $diagnostic['patients_with_prefs'] = 0;
+                $warnings[] = "Table dietic_notification_preferences n'existe pas";
+            }
+
+            // 4. Get patients with dinner reminder
+            $diagnostic['dinner_patients'] = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') &&
+                $this->db->table_exists(db_prefix() . 'dietic_patients') &&
+                $this->db->table_exists(db_prefix() . 'contacts')) {
+
+                $this->db->select('p.*, c.firstname, c.lastname, c.email, c.phonenumber');
+                $this->db->from(db_prefix() . 'dietic_notification_preferences p');
+                $this->db->join(db_prefix() . 'dietic_patients dp', 'p.patient_id = dp.id');
+                $this->db->join(db_prefix() . 'contacts c', 'dp.contact_id = c.id');
+                $this->db->where('p.reminder_dinner', 1);
+                $this->db->limit(10);
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    $diagnostic['dinner_patients'] = $query->result_array();
+                    $success[] = count($diagnostic['dinner_patients']) . " patient(s) avec rappel dîner";
+                } else {
+                    $warnings[] = "Aucun patient avec rappel dîner activé";
+                }
+            }
+
+            // 5. Check channel configuration
+            $settings = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_settings')) {
+                $this->db->select('*');
+                $this->db->from(db_prefix() . 'dietic_notification_settings');
+                $this->db->where_in('name', ['sms_lam_account_id', 'sms_lam_password', 'whatsapp_api_key']);
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    foreach ($query->result() as $row) {
+                        $settings[$row->name] = !empty($row->value);
+                    }
+                }
+            }
+
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'options');
+            $this->db->where_in('name', ['smtp_host', 'smtp_username']);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result() as $row) {
+                    $settings[$row->name] = !empty($row->value);
+                }
+            }
+
+            $diagnostic['smtp_configured'] = isset($settings['smtp_host']) && isset($settings['smtp_username']);
+            $diagnostic['sms_configured'] = isset($settings['sms_lam_account_id']) && isset($settings['sms_lam_password']);
+            $diagnostic['whatsapp_configured'] = isset($settings['whatsapp_api_key']);
+
+            // 6. Get recent notifications
+            $diagnostic['recent_notifications'] = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                $this->db->select('*');
+                $this->db->from(db_prefix() . 'dietic_patient_notifications');
+                $this->db->order_by('created_at', 'DESC');
+                $this->db->limit(10);
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    $diagnostic['recent_notifications'] = $query->result_array();
+                }
+            }
+
+        } catch (Exception $e) {
+            $errors[] = "Erreur lors du diagnostic: " . $e->getMessage();
         }
-
-        $diagnostic['smtp_configured'] = isset($settings['smtp_host']) && isset($settings['smtp_username']);
-        $diagnostic['sms_configured'] = isset($settings['sms_lam_account_id']) && isset($settings['sms_lam_password']);
-        $diagnostic['whatsapp_configured'] = isset($settings['whatsapp_api_key']);
-
-        // 6. Get recent notifications
-        $query = "SELECT * FROM " . db_prefix() . "dietic_patient_notifications ORDER BY created_at DESC LIMIT 10";
-        $result = $this->db->query($query);
-        $diagnostic['recent_notifications'] = $result->num_rows() > 0 ? $result->result_array() : [];
 
         // Generate HTML output
         $this->output_diagnostic_html($diagnostic, $success, $warnings, $errors);
