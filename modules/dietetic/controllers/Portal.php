@@ -148,7 +148,8 @@ class Portal extends App_Controller
             // Meal reminders migration
             'add_meal_reminders_columns',
             // Diagnostic tools
-            'diagnostic_notifications'
+            'diagnostic_notifications',
+            'migrate_notifications_to_patient_table'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2858,6 +2859,140 @@ class Portal extends App_Controller
 
         // Load diagnostic view
         $this->load->view('dietetic/portal_diagnostic_notifications', $data);
+    }
+
+    /**
+     * Migrate notifications from logs to patient_notifications table
+     * Fixes the issue where notifications exist in logs but not in patient table
+     * Access: /dietetic/portal/migrate_notifications_to_patient_table
+     */
+    public function migrate_notifications_to_patient_table()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+            return;
+        }
+
+        // Check if both tables exist
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            echo json_encode(['success' => false, 'message' => 'Source table (notification_logs) does not exist']);
+            return;
+        }
+
+        if (!$this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            echo json_encode(['success' => false, 'message' => 'Destination table (patient_notifications) does not exist']);
+            return;
+        }
+
+        try {
+            // Start transaction
+            $this->db->trans_start();
+
+            // Build the INSERT SELECT query
+            $sql = "
+                INSERT INTO `" . db_prefix() . "dietic_patient_notifications` (
+                    `patient_id`,
+                    `notification_type`,
+                    `title`,
+                    `message`,
+                    `icon`,
+                    `url`,
+                    `is_read`,
+                    `created_at`,
+                    `updated_at`
+                )
+                SELECT
+                    nl.`patient_id`,
+                    nl.`notification_type`,
+                    CASE nl.`notification_type`
+                        WHEN 'weight_reminder' THEN 'Rappel de Pesée'
+                        WHEN 'water_reminder' THEN 'Rappel d\'Hydratation'
+                        WHEN 'recommendation' THEN 'Nouvelle Recommandation'
+                        WHEN 'consultation' THEN 'Consultation'
+                        WHEN 'milestone' THEN 'Jalon Atteint'
+                        WHEN 'program' THEN 'Programme Diététique'
+                        WHEN 'food_entry' THEN 'Saisie Alimentaire'
+                        WHEN 'test' THEN 'Test Notification'
+                        ELSE 'Notification'
+                    END as `title`,
+                    nl.`message`,
+                    CASE nl.`notification_type`
+                        WHEN 'weight_reminder' THEN 'fa-balance-scale'
+                        WHEN 'water_reminder' THEN 'fa-tint'
+                        WHEN 'recommendation' THEN 'fa-comments'
+                        WHEN 'consultation' THEN 'fa-calendar'
+                        WHEN 'milestone' THEN 'fa-trophy'
+                        WHEN 'program' THEN 'fa-leaf'
+                        WHEN 'food_entry' THEN 'fa-cutlery'
+                        WHEN 'test' THEN 'fa-flask'
+                        ELSE 'fa-bell'
+                    END as `icon`,
+                    NULL as `url`,
+                    0 as `is_read`,
+                    nl.`created_at`,
+                    NOW() as `updated_at`
+                FROM `" . db_prefix() . "dietic_notification_logs` nl
+                WHERE nl.`patient_id` > 0
+                  AND nl.`status` = 'sent'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM `" . db_prefix() . "dietic_patient_notifications` pn
+                      WHERE pn.`patient_id` = nl.`patient_id`
+                        AND pn.`notification_type` = nl.`notification_type`
+                        AND pn.`message` = nl.`message`
+                        AND pn.`created_at` = nl.`created_at`
+                  )
+            ";
+
+            // Execute the query
+            $this->db->query($sql);
+            $affected_rows = $this->db->affected_rows();
+
+            // Complete transaction
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Transaction failed',
+                    'migrated' => 0
+                ]);
+                return;
+            }
+
+            // Count notifications per patient after migration
+            $count_query = $this->db->query("
+                SELECT
+                    patient_id,
+                    COUNT(*) as notification_count,
+                    SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread_count
+                FROM `" . db_prefix() . "dietic_patient_notifications`
+                GROUP BY patient_id
+                ORDER BY patient_id
+            ");
+            $patient_stats = $count_query->result_array();
+
+            // Log the migration
+            log_activity('Notifications migrated from logs to patient_notifications: ' . $affected_rows . ' notifications');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration completed successfully',
+                'migrated' => $affected_rows,
+                'patient_stats' => $patient_stats
+            ]);
+
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_activity('Error migrating notifications: ' . $e->getMessage());
+
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error during migration: ' . $e->getMessage(),
+                'migrated' => 0
+            ]);
+        }
     }
 
     /**
