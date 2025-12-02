@@ -578,7 +578,6 @@
 
         .notification-item.unread {
             background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
-            border-left: 3px solid #ff4757;
             box-shadow: 0 4px 12px rgba(255, 71, 87, 0.1);
         }
 
