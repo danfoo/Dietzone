@@ -261,10 +261,12 @@ class Dietetic_notifications_model extends App_Model
         $today = strtolower(date('l')); // monday, tuesday, etc.
         $current_time = date('H:i:00');
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.reminder_weight', 1);
         $this->db->where('prefs.reminder_weight_day', $today);
         $this->db->where('prefs.reminder_weight_time', $current_time);
@@ -311,10 +313,12 @@ class Dietetic_notifications_model extends App_Model
     {
         $current_time = date('H:i');
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.reminder_water', 1);
         $this->db->like('prefs.reminder_water_times', $current_time);
 
@@ -334,10 +338,12 @@ class Dietetic_notifications_model extends App_Model
         $column_enabled = 'reminder_' . $meal_type;
         $column_time = 'reminder_' . $meal_type . '_time';
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.' . $column_enabled, 1);
         $this->db->where('prefs.' . $column_time, $current_time);
 
