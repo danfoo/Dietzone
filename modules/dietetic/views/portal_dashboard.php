@@ -2009,20 +2009,16 @@ body {
 
 /* Weight Goal Card - Ultra Modern Design */
 .weight-goal-card {
-    background: linear-gradient(135deg,
-        #E0F2F1 0%,
-        #B2DFDB 35%,
-        #80CBC4 100%);
+    background: linear-gradient(135deg, #FFF 0%, #FFF 35%, #FFF 100%);
     background-size: 200% 200%;
-    animation: gradientFlow 8s ease infinite;
     border-radius: 28px;
     padding: 20px 16px;
     margin-bottom: 24px;
     color: #2c3e50;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(128, 203, 196, 0.25),
-                0 4px 12px rgba(178, 223, 219, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08),
+                0 4px 12px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     transform-style: preserve-3d;
@@ -2031,14 +2027,8 @@ body {
 
 .weight-goal-card:hover {
     transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 60px rgba(128, 203, 196, 0.35),
-                0 8px 20px rgba(178, 223, 219, 0.25);
-}
-
-@keyframes gradientFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12),
+                0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Floating particles effect */
@@ -2049,7 +2039,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(1, 128, 123, 0.08) 1px, transparent 1px);
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
     animation: particlesFloat 20s linear infinite;
     opacity: 0.4;
@@ -2269,6 +2259,15 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Icon positioning variants */
+.weight-value-icon-left {
+    flex-direction: row;
+}
+
+.weight-value-icon-right {
+    flex-direction: row-reverse;
+}
+
 .weight-value-compact:hover .weight-value-icon {
     transform: rotate(360deg) scale(1.1);
     box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
@@ -2277,6 +2276,7 @@ body {
 .weight-value-icon i {
     font-size: 20px;
     color: white;
+    display: block;
 }
 
 .weight-value-content {
@@ -2319,8 +2319,7 @@ body {
 
 .weight-remaining-simple {
     text-align: center;
-    margin-bottom: 10px;
-    padding: 16px 12px;
+    padding: 20px 12px;
     background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
     border-radius: 16px;
     position: relative;
@@ -2329,6 +2328,11 @@ body {
                 inset 0 1px 0 rgba(255, 255, 255, 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
 }
 
 .weight-remaining-simple::before {
@@ -2391,13 +2395,29 @@ body {
     }
 }
 
+/* Grid for Orange Block + Circle */
+.progress-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 576px) {
+    .progress-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Circular Progress Container */
 .progress-circle-container {
-    margin-bottom: 16px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     position: relative;
     z-index: 1;
@@ -2464,10 +2484,10 @@ body {
 /* Progress ring pulse animation */
 @keyframes circlePulse {
     0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(1, 128, 123, 0.4));
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0));
     }
     50% {
-        filter: drop-shadow(0 0 16px rgba(1, 128, 123, 0.7));
+        filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.7));
     }
 }
 
@@ -3479,54 +3499,57 @@ if (!$current_weight || !$target_weight) {
         </div>
     </div>
 
-    <?php if ($weight_remaining !== null) { ?>
-    <div class="weight-remaining-simple">
-        <div class="weight-remaining-simple-text">
-            <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo 'Objectif atteint !';
-            } elseif ($goal_type == 'gain') {
-                echo 'À rattraper';
-            } else {
-                echo 'Encore à perdre';
-            }
-            ?>
-        </div>
-        <div class="weight-remaining-simple-value">
-            <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo '🎉';
-            } else {
-                echo number_format($weight_remaining, 1) . ' kg';
-            }
-            ?>
-        </div>
-    </div>
-    <?php } ?>
-
-    <?php if ($current_weight && $target_weight) { ?>
-    <div class="progress-circle-container">
-        <div class="progress-circle-wrapper">
-            <svg class="progress-circle-svg" viewBox="0 0 160 160">
-                <defs>
-                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
-                        <stop offset="50%" style="stop-color:#009688;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#4CAF50;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-                <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
-                <circle class="progress-circle-fill <?php echo $overall_status == 'achieved' ? 'achieved' : ''; ?>"
-                        cx="80" cy="80" r="70"
-                        data-progress="<?php echo round($progress_percent); ?>"></circle>
-            </svg>
-            <div class="progress-circle-center">
-                <div class="progress-circle-percent" data-target="<?php echo round($progress_percent); ?>">0</div>
-                <div class="progress-circle-label">Progression</div>
+    <!-- Grid: Orange Block + Circle -->
+    <div class="progress-grid">
+        <?php if ($weight_remaining !== null) { ?>
+        <div class="weight-remaining-simple">
+            <div class="weight-remaining-simple-text">
+                <?php
+                if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                    echo 'Objectif atteint !';
+                } elseif ($goal_type == 'gain') {
+                    echo 'À rattraper';
+                } else {
+                    echo 'Encore à perdre';
+                }
+                ?>
+            </div>
+            <div class="weight-remaining-simple-value">
+                <?php
+                if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                    echo '🎉';
+                } else {
+                    echo number_format($weight_remaining, 1) . ' kg';
+                }
+                ?>
             </div>
         </div>
+        <?php } ?>
+
+        <?php if ($current_weight && $target_weight) { ?>
+        <div class="progress-circle-container">
+            <div class="progress-circle-wrapper">
+                <svg class="progress-circle-svg" viewBox="0 0 160 160">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#009688;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#4CAF50;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-circle-fill <?php echo $overall_status == 'achieved' ? 'achieved' : ''; ?>"
+                            cx="80" cy="80" r="70"
+                            data-progress="<?php echo round($progress_percent); ?>"></circle>
+                </svg>
+                <div class="progress-circle-center">
+                    <div class="progress-circle-percent" data-target="<?php echo round($progress_percent); ?>">0</div>
+                    <div class="progress-circle-label">Progression</div>
+                </div>
+            </div>
+        </div>
+        <?php } ?>
     </div>
-    <?php } ?>
 
     <div class="weight-motivation-simple <?php echo $overall_status; ?>">
         <?php echo $motivation_message; ?>
