@@ -2942,22 +2942,25 @@ class Portal extends App_Controller
             // 4. Get patients with dinner reminder
             $diagnostic['dinner_patients'] = [];
             if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') &&
-                $this->db->table_exists(db_prefix() . 'dietic_patients') &&
-                $this->db->table_exists(db_prefix() . 'contacts')) {
+                $this->db->table_exists(db_prefix() . 'dietic_patients')) {
 
-                $this->db->select('p.*, c.firstname, c.lastname, c.email, c.phonenumber');
+                $this->db->select('p.*, dp.email, dp.phone, c.firstname, c.lastname');
                 $this->db->from(db_prefix() . 'dietic_notification_preferences p');
                 $this->db->join(db_prefix() . 'dietic_patients dp', 'p.patient_id = dp.id');
-                $this->db->join(db_prefix() . 'contacts c', 'dp.contact_id = c.id');
+                $this->db->join(db_prefix() . 'contacts c', 'dp.client_id = c.userid AND c.is_primary = 1', 'left');
                 $this->db->where('p.reminder_dinner', 1);
                 $this->db->limit(10);
-                $query = $this->db->get();
 
-                if ($query->num_rows() > 0) {
-                    $diagnostic['dinner_patients'] = $query->result_array();
-                    $success[] = count($diagnostic['dinner_patients']) . " patient(s) avec rappel dîner";
-                } else {
-                    $warnings[] = "Aucun patient avec rappel dîner activé";
+                try {
+                    $query = $this->db->get();
+                    if ($query->num_rows() > 0) {
+                        $diagnostic['dinner_patients'] = $query->result_array();
+                        $success[] = count($diagnostic['dinner_patients']) . " patient(s) avec rappel dîner";
+                    } else {
+                        $warnings[] = "Aucun patient avec rappel dîner activé";
+                    }
+                } catch (Exception $e) {
+                    $warnings[] = "Aucun patient avec rappel dîner activé (erreur de requête)";
                 }
             }
 
@@ -3224,7 +3227,7 @@ class Portal extends App_Controller
                             📧 Email : <?php echo $patient['email'] ?: '<span style="color: #f44336;">❌ Non renseigné</span>'; ?>
                         </div>
                         <div class="patient-info">
-                            📱 Téléphone : <?php echo $patient['phonenumber'] ?: '<span style="color: #f44336;">❌ Non renseigné</span>'; ?>
+                            📱 Téléphone : <?php echo $patient['phone'] ?: '<span style="color: #f44336;">❌ Non renseigné</span>'; ?>
                         </div>
                         <div style="margin-top: 8px;">
                             <?php if ($patient['channel_email']): ?><span class="badge success">Email</span><?php endif; ?>
