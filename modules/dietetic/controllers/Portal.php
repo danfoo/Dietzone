@@ -146,7 +146,9 @@ class Portal extends App_Controller
             'subscriptions',
             'subscription',
             // Meal reminders migration
-            'add_meal_reminders_columns'
+            'add_meal_reminders_columns',
+            // Diagnostic tools
+            'diagnostic_notifications'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -2768,6 +2770,95 @@ class Portal extends App_Controller
     }
 
     // ==================== DIAGNOSTIC TOOLS ====================
+
+    /**
+     * Comprehensive diagnostic page for notification system
+     * Tests all aspects: login, patient record, database tables, API calls
+     * Access: /dietetic/portal/diagnostic_notifications
+     */
+    public function diagnostic_notifications()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $data = [];
+        $data['title'] = 'Test du Système de Notifications';
+
+        // Test 1: Check if user is logged in
+        $data['is_staff_logged_in'] = is_staff_logged_in();
+        $data['is_client_logged_in'] = is_client_logged_in();
+
+        // Test 2: Get client ID and patient
+        if (is_client_logged_in()) {
+            $data['client_id'] = get_client_user_id();
+
+            // Test 3: Get patient
+            $patient = $this->dietetic_patients_model->get_by_client($data['client_id']);
+            $data['patient'] = $patient;
+            $data['patient_exists'] = !empty($patient);
+
+            // Test 4: Check if tables exist
+            $data['notification_logs_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_logs');
+            $data['patient_notifications_exists'] = $this->db->table_exists(db_prefix() . 'dietic_patient_notifications');
+            $data['notification_settings_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_settings');
+
+            // Test 5: Count notifications in logs table
+            if ($data['notification_logs_exists'] && isset($patient)) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_notification_logs');
+                $this->db->where_in('patient_id', [$patient->id, 0]);
+                $this->db->where('status', 'sent');
+                $query = $this->db->get();
+                $result = $query->row();
+                $data['notification_logs_count'] = $result->total;
+
+                // Get last SQL query for debugging
+                $data['sql_query_logs'] = $this->db->last_query();
+            } else {
+                $data['notification_logs_count'] = null;
+                $data['sql_query_logs'] = null;
+            }
+
+            // Test 6: Count notifications in patient_notifications table
+            if ($data['patient_notifications_exists'] && isset($patient)) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_patient_notifications');
+                $this->db->where('patient_id', $patient->id);
+                $query = $this->db->get();
+                $result = $query->row();
+                $data['patient_notifications_count'] = $result->total;
+
+                $data['sql_query_patient_notif'] = $this->db->last_query();
+            } else {
+                $data['patient_notifications_count'] = null;
+                $data['sql_query_patient_notif'] = null;
+            }
+
+            // Test 7: API endpoint URL
+            $data['api_test_url'] = site_url('dietetic/portal/get_notifications');
+        } else {
+            // Staff logged in - show limited info
+            $data['client_id'] = null;
+            $data['patient'] = null;
+            $data['patient_exists'] = false;
+
+            // Still show table existence
+            $data['notification_logs_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_logs');
+            $data['patient_notifications_exists'] = $this->db->table_exists(db_prefix() . 'dietic_patient_notifications');
+            $data['notification_settings_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_settings');
+
+            $data['notification_logs_count'] = null;
+            $data['patient_notifications_count'] = null;
+            $data['sql_query_logs'] = null;
+            $data['sql_query_patient_notif'] = null;
+            $data['api_test_url'] = null;
+        }
+
+        // Load diagnostic view
+        $this->load->view('dietetic/portal_diagnostic_notifications', $data);
+    }
 
     /**
      * Diagnostic page for notification preferences
