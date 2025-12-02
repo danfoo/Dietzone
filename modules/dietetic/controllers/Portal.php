@@ -2969,12 +2969,12 @@ class Portal extends App_Controller
             if ($this->db->table_exists(db_prefix() . 'dietic_notification_settings')) {
                 $this->db->select('*');
                 $this->db->from(db_prefix() . 'dietic_notification_settings');
-                $this->db->where_in('name', ['sms_lam_account_id', 'sms_lam_password', 'whatsapp_api_key']);
+                $this->db->where_in('setting_key', ['sms_lam_account_id', 'sms_lam_password', 'whatsapp_api_key']);
                 $query = $this->db->get();
 
                 if ($query->num_rows() > 0) {
                     foreach ($query->result() as $row) {
-                        $settings[$row->name] = !empty($row->value);
+                        $settings[$row->setting_key] = !empty($row->setting_value);
                     }
                 }
             }
