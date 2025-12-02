@@ -2403,6 +2403,12 @@ body {
     margin-bottom: 16px;
     position: relative;
     z-index: 1;
+    width: 100%;
+}
+
+.progress-grid > * {
+    width: 100%;
+    max-width: 100%;
 }
 
 @media (max-width: 576px) {
@@ -2431,6 +2437,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    padding: 5px;
 }
 
 .progress-circle-svg {
@@ -2441,7 +2451,7 @@ body {
 
 .progress-circle-bg {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.3);
+    stroke: rgba(0, 0, 0, 0.08);
     stroke-width: 12;
 }
 
