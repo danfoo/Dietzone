@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Couleurs principales de DietSenegal -->
+    <color name="primary">#01807B</color>
+    <color name="primary_dark">#01605B</color>
+    <color name="accent">#FFC925</color>
+
+    <!-- Couleurs système -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#757575</color>
+    <color name="light_gray">#F5F5F5</color>
+
+    <!-- Status bar -->
+    <color name="status_bar">#01605B</color>
+</resources>

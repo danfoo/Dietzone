@@ -1,0 +1,88 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.dietsenegal.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.dietsenegal.app"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Enable multidex
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // Signature configuration
+            signingConfig signingConfigs.debug
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    // AndroidX Core
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // WebView
+    implementation 'androidx.webkit:webkit:1.9.0'
+
+    // Permissions
+    implementation 'com.karumi:dexter:6.2.3'
+
+    // Splash Screen
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+
+    // SwipeRefreshLayout
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+    // Lifecycle
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
+
+    // Firebase (optional - pour push notifications)
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-analytics'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+// Apply Google Services plugin (pour Firebase)
+// Décommentez si vous utilisez Firebase
+// apply plugin: 'com.google.gms.google-services'
