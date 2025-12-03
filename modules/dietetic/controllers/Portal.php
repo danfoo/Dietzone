@@ -152,7 +152,8 @@ class Portal extends App_Controller
             'diagnostic_system',
             'test_notification_manual',
             'migrate_notifications_to_patient_table',
-            'debug_meal_reminder'
+            'debug_meal_reminder',
+            'check_cron_execution'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -9436,6 +9437,297 @@ class Portal extends App_Controller
                 echo '🔗 <a href="' . $test_url . '">Tester ' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</a><br>';
             }
             echo '</div>';
+        }
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Check cron execution history
+     * Vérifie les exécutions du cron et les notifications envoyées
+     * Access: /dietetic/portal/check_cron_execution
+     */
+    public function check_cron_execution()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Historique Cron & Notifications</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 4px solid #3498db; padding-left: 10px; }
+        .info-box { background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background: #3498db; color: white; font-weight: bold; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .code { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-email { background: #007bff; color: white; }
+        .badge-sms { background: #ffc107; color: #000; }
+        .badge-whatsapp { background: #25D366; color: white; }
+        .badge-push { background: #6f42c1; color: white; }
+        .time-8am { background: #ffffcc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Historique Cron & Notifications</h1>
+        <div class="info-box">
+            <strong>Heure actuelle:</strong> ' . date('Y-m-d H:i:s') . '<br>
+            <strong>Timezone:</strong> ' . date_default_timezone_get() . '
+        </div>';
+
+        // Check if notification_logs table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            echo '<div class="error">❌ La table dietic_notification_logs n\'existe pas</div>';
+        } else {
+            // Get today's notifications grouped by hour
+            echo '<h2>1. Notifications envoyées aujourd\'hui (par heure)</h2>';
+
+            $today_start = date('Y-m-d 00:00:00');
+            $today_end = date('Y-m-d 23:59:59');
+
+            $sql = "
+                SELECT
+                    DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') as hour,
+                    COUNT(*) as total,
+                    SUM(CASE WHEN channel = 'email' THEN 1 ELSE 0 END) as email_count,
+                    SUM(CASE WHEN channel = 'sms' THEN 1 ELSE 0 END) as sms_count,
+                    SUM(CASE WHEN channel = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp_count,
+                    SUM(CASE WHEN channel = 'push' THEN 1 ELSE 0 END) as push_count
+                FROM " . db_prefix() . "dietic_notification_logs
+                WHERE created_at >= ?
+                AND created_at <= ?
+                GROUP BY hour
+                ORDER BY hour DESC
+            ";
+
+            $query = $this->db->query($sql, [$today_start, $today_end]);
+            $hourly_stats = $query->result();
+
+            if (empty($hourly_stats)) {
+                echo '<div class="warning">⚠️ Aucune notification envoyée aujourd\'hui</div>';
+            } else {
+                echo '<table>';
+                echo '<tr>
+                        <th>Heure</th>
+                        <th>Total</th>
+                        <th>Email</th>
+                        <th>SMS</th>
+                        <th>WhatsApp</th>
+                        <th>Push</th>
+                      </tr>';
+
+                foreach ($hourly_stats as $stat) {
+                    $hour_formatted = date('H:i', strtotime($stat->hour));
+                    $is_8am = (substr($stat->hour, 11, 2) == '08');
+
+                    echo '<tr' . ($is_8am ? ' class="time-8am"' : '') . '>';
+                    echo '<td><strong>' . $stat->hour . '</strong></td>';
+                    echo '<td><strong>' . $stat->total . '</strong></td>';
+                    echo '<td>' . $stat->email_count . '</td>';
+                    echo '<td>' . $stat->sms_count . '</td>';
+                    echo '<td>' . $stat->whatsapp_count . '</td>';
+                    echo '<td>' . $stat->push_count . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+
+                // Check if 8am notifications exist
+                $has_8am = false;
+                foreach ($hourly_stats as $stat) {
+                    if (substr($stat->hour, 11, 2) == '08') {
+                        $has_8am = true;
+                        break;
+                    }
+                }
+
+                if (!$has_8am) {
+                    echo '<div class="error">❌ <strong>PROBLÈME DÉTECTÉ:</strong> Aucune notification envoyée à 8h00 ce matin!</div>';
+                    echo '<div class="info-box">';
+                    echo '➡️ <strong>Cause probable:</strong> Le cron ne s\'est pas exécuté entre 8h00 et 8h05<br>';
+                    echo '➡️ <strong>Solution:</strong> Vérifier la configuration du cron job dans Perfex CRM';
+                    echo '</div>';
+                }
+            }
+
+            // Get detailed notifications for breakfast today
+            echo '<h2>2. Détails des notifications breakfast aujourd\'hui</h2>';
+
+            $this->db->select('nl.*, p.email, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_logs as nl');
+            $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = nl.patient_id', 'left');
+            $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->where('nl.notification_type', 'reminder_breakfast');
+            $this->db->where('nl.created_at >=', $today_start);
+            $this->db->where('nl.created_at <=', $today_end);
+            $this->db->order_by('nl.created_at', 'DESC');
+
+            $breakfast_logs = $this->db->get()->result();
+
+            if (empty($breakfast_logs)) {
+                echo '<div class="error">❌ Aucune notification breakfast envoyée aujourd\'hui</div>';
+            } else {
+                echo '<div class="success">✅ ' . count($breakfast_logs) . ' notification(s) breakfast envoyée(s) aujourd\'hui</div>';
+
+                echo '<table>';
+                echo '<tr>
+                        <th>Patient</th>
+                        <th>Email</th>
+                        <th>Canal</th>
+                        <th>Statut</th>
+                        <th>Heure d\'envoi</th>
+                        <th>Message</th>
+                      </tr>';
+
+                foreach ($breakfast_logs as $log) {
+                    $channel_badge = '';
+                    switch ($log->channel) {
+                        case 'email': $channel_badge = '<span class="badge badge-email">Email</span>'; break;
+                        case 'sms': $channel_badge = '<span class="badge badge-sms">SMS</span>'; break;
+                        case 'whatsapp': $channel_badge = '<span class="badge badge-whatsapp">WhatsApp</span>'; break;
+                        case 'push': $channel_badge = '<span class="badge badge-push">Push</span>'; break;
+                    }
+
+                    $status_badge = $log->status == 'sent' ?
+                        '<span class="badge badge-success">Envoyé</span>' :
+                        '<span class="badge badge-error">Échec</span>';
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($log->firstname . ' ' . $log->lastname) . '</td>';
+                    echo '<td>' . htmlspecialchars($log->email) . '</td>';
+                    echo '<td>' . $channel_badge . '</td>';
+                    echo '<td>' . $status_badge . '</td>';
+                    echo '<td><strong>' . $log->created_at . '</strong></td>';
+                    echo '<td>' . htmlspecialchars(substr($log->message, 0, 50)) . '...</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // Get last 100 notifications (all types)
+            echo '<h2>3. Dernières 100 notifications (tous types)</h2>';
+
+            $this->db->select('nl.*, p.email, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_logs as nl');
+            $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = nl.patient_id', 'left');
+            $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->order_by('nl.created_at', 'DESC');
+            $this->db->limit(100);
+
+            $recent_logs = $this->db->get()->result();
+
+            if (empty($recent_logs)) {
+                echo '<div class="warning">⚠️ Aucune notification dans les logs</div>';
+            } else {
+                echo '<div class="info-box">Affichage des ' . count($recent_logs) . ' dernières notifications</div>';
+
+                echo '<table>';
+                echo '<tr>
+                        <th>Patient</th>
+                        <th>Type</th>
+                        <th>Canal</th>
+                        <th>Statut</th>
+                        <th>Heure</th>
+                      </tr>';
+
+                foreach ($recent_logs as $log) {
+                    $channel_badge = '';
+                    switch ($log->channel) {
+                        case 'email': $channel_badge = '<span class="badge badge-email">Email</span>'; break;
+                        case 'sms': $channel_badge = '<span class="badge badge-sms">SMS</span>'; break;
+                        case 'whatsapp': $channel_badge = '<span class="badge badge-whatsapp">WhatsApp</span>'; break;
+                        case 'push': $channel_badge = '<span class="badge badge-push">Push</span>'; break;
+                    }
+
+                    $status_badge = $log->status == 'sent' ?
+                        '<span class="badge badge-success">Envoyé</span>' :
+                        '<span class="badge badge-error">Échec</span>';
+
+                    $is_breakfast_8am = ($log->notification_type == 'reminder_breakfast' &&
+                                        substr($log->created_at, 11, 2) == '08');
+
+                    echo '<tr' . ($is_breakfast_8am ? ' class="time-8am"' : '') . '>';
+                    echo '<td>' . htmlspecialchars($log->firstname . ' ' . $log->lastname) . '</td>';
+                    echo '<td>' . htmlspecialchars($log->notification_type) . '</td>';
+                    echo '<td>' . $channel_badge . '</td>';
+                    echo '<td>' . $status_badge . '</td>';
+                    echo '<td>' . $log->created_at . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+        }
+
+        // Check Perfex cron configuration
+        echo '<h2>4. Configuration Cron Perfex</h2>';
+        echo '<div class="info-box">';
+        echo '<strong>Vérifications à faire:</strong><br><br>';
+        echo '1. <strong>Cron Job Perfex:</strong> Vérifier que le cron est configuré pour s\'exécuter toutes les 5 minutes<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>*/5 * * * * php /path/to/perfex/index.php cron/run</code><br><br>';
+        echo '2. <strong>Module Dietetic Hook:</strong> Vérifier que le hook after_cron_run est actif<br>';
+        echo '&nbsp;&nbsp;&nbsp;Fichier: modules/dietetic/dietetic.php<br><br>';
+        echo '3. <strong>Logs Serveur:</strong> Consulter les logs du serveur pour voir les exécutions du cron<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>grep "cron" /var/log/apache2/access.log</code> ou <code>/var/log/nginx/access.log</code><br><br>';
+        echo '4. <strong>Test Manuel:</strong> Exécuter le cron manuellement pour tester<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>php /path/to/perfex/index.php cron/run</code>';
+        echo '</div>';
+
+        // Recommendations
+        echo '<h2>5. Diagnostic Final</h2>';
+
+        if (empty($hourly_stats)) {
+            echo '<div class="error">';
+            echo '❌ <strong>PROBLÈME CRITIQUE:</strong> Aucune notification n\'a été envoyée aujourd\'hui<br><br>';
+            echo '<strong>Causes possibles:</strong><br>';
+            echo '1. Le cron job n\'est pas configuré ou ne s\'exécute pas<br>';
+            echo '2. Le module Dietetic n\'est pas activé<br>';
+            echo '3. Le hook after_cron_run n\'est pas enregistré<br><br>';
+            echo '<strong>Actions à prendre:</strong><br>';
+            echo '➡️ Vérifier la configuration du cron job dans le cPanel ou via SSH<br>';
+            echo '➡️ Tester l\'exécution manuelle du cron: <code>php index.php cron/run</code><br>';
+            echo '➡️ Vérifier les logs du serveur pour voir si le cron est appelé';
+            echo '</div>';
+        } else {
+            $has_8am = false;
+            foreach ($hourly_stats as $stat) {
+                if (substr($stat->hour, 11, 2) == '08') {
+                    $has_8am = true;
+                    break;
+                }
+            }
+
+            if (!$has_8am && date('H') >= 8) {
+                echo '<div class="error">';
+                echo '❌ <strong>PROBLÈME:</strong> Le cron a envoyé des notifications mais PAS à 8h00<br><br>';
+                echo '<strong>Cause probable:</strong><br>';
+                echo 'Le cron job ne s\'est pas exécuté entre 8h00 et 8h05 ce matin<br><br>';
+                echo '<strong>Solutions:</strong><br>';
+                echo '➡️ Vérifier que le cron s\'exécute TOUTES LES 5 MINUTES (pas toutes les heures)<br>';
+                echo '➡️ Configuration correcte: <code>*/5 * * * *</code> (toutes les 5 minutes)<br>';
+                echo '➡️ Configuration incorrecte: <code>0 * * * *</code> (toutes les heures à :00)';
+                echo '</div>';
+            } else {
+                echo '<div class="success">';
+                echo '✅ Le système de notifications fonctionne correctement';
+                echo '</div>';
+            }
         }
 
         echo '
