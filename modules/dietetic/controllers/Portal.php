@@ -9926,5 +9926,235 @@ php index.php cron/index</pre>';
 </body>
 </html>';
     }
+
+    /**
+     * Tester l'exécution complète du cron manuellement
+     * URL: /dietetic/portal/test_cron_complete
+     */
+    public function test_cron_complete()
+    {
+        // Permettre l'accès aux admins et clients connectés
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $this->load->model('dietetic_notifications_model');
+
+        $start_time = microtime(true);
+        $total_sent = 0;
+        $total_failed = 0;
+        $details = [];
+        $errors = [];
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Cron Complet - Dietetic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #4CAF50; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 3px; font-size: 0.9em; font-weight: bold; }
+        .badge-success { background: #4CAF50; color: white; }
+        .badge-error { background: #f44336; color: white; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; border-radius: 4px; }
+        .success { background: #e8f5e9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px; }
+        .warning { background: #fff3e0; padding: 15px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }
+        .error { background: #ffebee; padding: 15px; border-left: 4px solid #f44336; margin: 20px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Complet du Cron Dietetic</h1>
+        <p><strong>Date/Heure :</strong> ' . date('Y-m-d H:i:s') . ' (Timezone: Africa/Dakar)</p>';
+
+        try {
+            // ==================== MEAL REMINDERS ====================
+            $meal_types = ['breakfast' => '🥐 Petit-Déjeuner', 'lunch' => '🍽️ Déjeuner', 'dinner' => '🍴 Dîner'];
+            foreach ($meal_types as $meal_type => $meal_label) {
+                echo '<h2>' . $meal_label . '</h2>';
+
+                $meal_patients = $this->dietetic_notifications_model->get_patients_for_meal_reminder($meal_type);
+
+                // Afficher la fenêtre de temps
+                $current_time = date('H:i:00');
+                $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
+                echo '<div class="info">';
+                echo '<p><strong>Fenêtre de temps :</strong> ' . $time_5min_ago . ' &lt; heure_configurée ≤ ' . $current_time . '</p>';
+                echo '<p><strong>Patients trouvés :</strong> ' . count($meal_patients) . '</p>';
+                echo '</div>';
+
+                if (!empty($meal_patients)) {
+                    echo '<table><tr><th>Patient</th><th>Heure configurée</th><th>Email</th><th>Téléphone</th><th>Résultat</th></tr>';
+                    foreach ($meal_patients as $patient) {
+                        $result = $this->dietetic_notifications_model->send_meal_reminder($patient, $meal_type);
+                        $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                        $total_sent += $success_count;
+                        if (empty($success_count)) {
+                            $total_failed++;
+                        }
+
+                        $configured_time = $patient->{'reminder_' . $meal_type . '_time'} ?? 'N/A';
+
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                        echo '<td><strong>' . htmlspecialchars($configured_time) . '</strong></td>';
+                        echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                        echo '<td>' . htmlspecialchars($patient->phonenumber ?? 'N/A') . '</td>';
+                        echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ Envoyé (' . $success_count . ')</span>' : '<span class="badge badge-error">✗ Échec</span>') . '</td>';
+                        echo '</tr>';
+                    }
+                    echo '</table>';
+                } else {
+                    echo '<p class="warning">Aucun patient dans la fenêtre de temps.</p>';
+                }
+            }
+
+            // ==================== WEIGHT REMINDERS ====================
+            echo '<h2>⚖️ Rappels de Pesée</h2>';
+            $weight_patients = $this->dietetic_notifications_model->get_patients_for_weight_reminder();
+            echo '<p><strong>Patients trouvés :</strong> ' . count($weight_patients) . '</p>';
+
+            if (!empty($weight_patients)) {
+                echo '<table><tr><th>Patient</th><th>Email</th><th>Résultat</th></tr>';
+                foreach ($weight_patients as $patient) {
+                    $result = $this->dietetic_notifications_model->send_weight_reminder($patient);
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // ==================== WATER REMINDERS ====================
+            echo '<h2>💧 Rappels d\'Hydratation</h2>';
+            $water_patients = $this->dietetic_notifications_model->get_patients_for_water_reminder();
+            echo '<p><strong>Patients trouvés :</strong> ' . count($water_patients) . '</p>';
+
+            if (!empty($water_patients)) {
+                echo '<table><tr><th>Patient</th><th>Email</th><th>Résultat</th></tr>';
+                foreach ($water_patients as $patient) {
+                    $result = $this->dietetic_notifications_model->send_water_reminder($patient);
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // ==================== CONSULTATION REMINDERS ====================
+            echo '<h2>📅 Rappels de Consultation (J-1)</h2>';
+            $consultations_day = $this->dietetic_notifications_model->get_consultations_for_day_reminder();
+            echo '<p><strong>Consultations trouvées :</strong> ' . count($consultations_day) . '</p>';
+
+            if (!empty($consultations_day)) {
+                echo '<table><tr><th>Patient</th><th>Date</th><th>Heure</th><th>Diététicien</th><th>Résultat</th></tr>';
+                foreach ($consultations_day as $consultation) {
+                    $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                    $result = $this->dietetic_notifications_model->notify_consultation_reminder_day(
+                        $consultation->patient_id,
+                        $consultation->consultation_date,
+                        $consultation->consultation_time,
+                        $dietitian_name
+                    );
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>Patient #' . $consultation->patient_id . '</td>';
+                    echo '<td>' . date('Y-m-d', strtotime($consultation->consultation_date)) . '</td>';
+                    echo '<td>' . htmlspecialchars($consultation->consultation_time ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($dietitian_name) . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            echo '<h2>⏰ Rappels de Consultation (H-1)</h2>';
+            $consultations_hour = $this->dietetic_notifications_model->get_consultations_for_hour_reminder();
+            echo '<p><strong>Consultations trouvées :</strong> ' . count($consultations_hour) . '</p>';
+
+            if (!empty($consultations_hour)) {
+                echo '<table><tr><th>Patient</th><th>Date/Heure</th><th>Diététicien</th><th>Résultat</th></tr>';
+                foreach ($consultations_hour as $consultation) {
+                    $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                    $result = $this->dietetic_notifications_model->notify_consultation_reminder_hour(
+                        $consultation->patient_id,
+                        $consultation->consultation_time,
+                        $dietitian_name
+                    );
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>Patient #' . $consultation->patient_id . '</td>';
+                    echo '<td>' . htmlspecialchars($consultation->consultation_date) . '</td>';
+                    echo '<td>' . htmlspecialchars($dietitian_name) . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+        } catch (Exception $e) {
+            echo '<div class="error">';
+            echo '<h3>❌ Erreur</h3>';
+            echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
+            echo '</div>';
+            $errors[] = $e->getMessage();
+        }
+
+        $execution_time = round((microtime(true) - $start_time) * 1000, 2);
+
+        echo '<h2>📊 Résumé</h2>';
+        echo '<div class="' . ($total_sent > 0 ? 'success' : 'warning') . '">';
+        echo '<p><strong>Notifications envoyées :</strong> <span class="badge badge-success">' . $total_sent . '</span></p>';
+        echo '<p><strong>Échecs :</strong> <span class="badge badge-' . ($total_failed > 0 ? 'error' : 'success') . '">' . $total_failed . '</span></p>';
+        echo '<p><strong>Temps d\'exécution :</strong> ' . $execution_time . ' ms</p>';
+        echo '<p><strong>Erreurs :</strong> ' . count($errors) . '</p>';
+        echo '</div>';
+
+        // Logs récents
+        echo '<h2>📝 Logs Récents (5 derniers)</h2>';
+        $logs = $this->db->order_by('id', 'DESC')
+                        ->limit(5)
+                        ->like('description', 'Dietetic Cron', 'both')
+                        ->get(db_prefix() . 'activity_log')
+                        ->result_array();
+
+        if (!empty($logs)) {
+            echo '<table><tr><th>Date</th><th>Description</th></tr>';
+            foreach ($logs as $log) {
+                echo '<tr><td>' . htmlspecialchars($log['date']) . '</td><td>' . htmlspecialchars($log['description']) . '</td></tr>';
+            }
+            echo '</table>';
+        } else {
+            echo '<p class="warning">Aucun log trouvé. Le fichier dietetic.php doit être mis à jour sur le serveur.</p>';
+        }
+
+        echo '<div style="margin-top: 30px;"><a href="' . base_url('dietetic/portal/test_cron_complete') . '" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:4px;">🔄 Relancer le test</a></div>';
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
 }
 
