@@ -434,12 +434,14 @@ class Dietetic_notifications_model extends App_Model
         $today_start = date('Y-m-d 00:00:00');
         $today_end = date('Y-m-d 23:59:59');
 
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
         $this->db->select('COUNT(*) as count');
-        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
         $this->db->where('patient_id', $patient_id);
         $this->db->where('notification_type', $notification_type);
         $this->db->where('created_at >=', $today_start);
         $this->db->where('created_at <=', $today_end);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
 
         $query = $this->db->get();
         $result = $query->row();
@@ -459,11 +461,13 @@ class Dietetic_notifications_model extends App_Model
     {
         $one_hour_ago = date('Y-m-d H:i:s', strtotime('-1 hour'));
 
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
         $this->db->select('COUNT(*) as count');
-        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
         $this->db->where('patient_id', $patient_id);
         $this->db->where('notification_type', $notification_type);
         $this->db->where('created_at >=', $one_hour_ago);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
 
         $query = $this->db->get();
         $result = $query->row();
@@ -484,12 +488,14 @@ class Dietetic_notifications_model extends App_Model
         $current_hour_start = date('Y-m-d H:00:00');
         $current_hour_end = date('Y-m-d H:59:59');
 
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
         $this->db->select('COUNT(*) as count');
-        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
         $this->db->where('patient_id', $patient_id);
         $this->db->where('notification_type', $notification_type);
         $this->db->where('created_at >=', $current_hour_start);
         $this->db->where('created_at <=', $current_hour_end);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
 
         $query = $this->db->get();
         $result = $query->row();
