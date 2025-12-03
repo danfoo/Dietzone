@@ -652,4 +652,31 @@ class Dietetic_food_surveys_model extends App_Model
 
         return round(($completed_days / $total_days) * 100, 2);
     }
+
+    /**
+     * Mettre à jour automatiquement les enquêtes alimentaires expirées
+     * Met le statut à 'completed' pour les enquêtes dont la end_date est dépassée
+     *
+     * @return int Nombre d'enquêtes mises à jour
+     */
+    public function update_expired_surveys()
+    {
+        $today = date('Y-m-d');
+
+        // Mettre à jour les enquêtes dont la date de fin est dépassée
+        $this->db->where('status', 'active');
+        $this->db->where('end_date <', $today);
+        $this->db->update(db_prefix() . $this->table, [
+            'status' => 'completed',
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $affected_rows = $this->db->affected_rows();
+
+        if ($affected_rows > 0) {
+            log_activity("Auto-completed $affected_rows expired food surveys");
+        }
+
+        return $affected_rows;
+    }
 }

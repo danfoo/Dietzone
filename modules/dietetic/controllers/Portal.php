@@ -256,6 +256,33 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         $data['client'] = $client;
 
+        // ========================================
+        // MISE À JOUR AUTOMATIQUE DES STATUTS
+        // ========================================
+        // Mettre à jour automatiquement les programmes expirés
+        try {
+            $this->dietetic_programs_model->update_expired_programs();
+        } catch (Exception $e) {
+            log_activity('Error updating expired programs: ' . $e->getMessage());
+        }
+
+        // Mettre à jour automatiquement les enquêtes alimentaires expirées
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                $this->load->model('dietetic/dietetic_food_surveys_model');
+                $this->dietetic_food_surveys_model->update_expired_surveys();
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating expired food surveys: ' . $e->getMessage());
+        }
+
+        // Mettre à jour automatiquement les consultations passées
+        try {
+            $this->dietetic_consultations_model->update_past_consultations();
+        } catch (Exception $e) {
+            log_activity('Error updating past consultations: ' . $e->getMessage());
+        }
+
         // Get active program
         try {
             $data['active_program'] = $this->dietetic_programs_model->get_active_program($patient->id);
