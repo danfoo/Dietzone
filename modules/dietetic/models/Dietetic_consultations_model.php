@@ -155,6 +155,34 @@ class Dietetic_consultations_model extends App_Model
     }
 
     /**
+     * Get upcoming consultations for a specific patient
+     * Retourne uniquement les consultations futures (scheduled et date future)
+     *
+     * @param int $patient_id
+     * @param int $limit
+     * @return array
+     */
+    public function get_upcoming_by_patient($patient_id, $limit = 10)
+    {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access consultations for Patient ID ' . $patient_id);
+            return [];
+        }
+
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('status', 'scheduled');
+        $this->db->where('consultation_date >=', date('Y-m-d H:i:s'));
+        $this->db->order_by('consultation_date', 'ASC');
+
+        if ($limit) {
+            $this->db->limit($limit);
+        }
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
      * Get upcoming consultations
      *
      * @param int $limit

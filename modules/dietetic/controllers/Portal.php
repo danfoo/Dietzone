@@ -308,7 +308,7 @@ class Portal extends App_Controller
 
         // Get upcoming consultations
         try {
-            $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id, 3);
+            $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_upcoming_by_patient($patient->id, 3);
         } catch (Exception $e) {
             $data['upcoming_consultations'] = [];
         }
