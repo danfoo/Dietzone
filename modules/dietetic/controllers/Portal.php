@@ -151,7 +151,8 @@ class Portal extends App_Controller
             'diagnostic_notifications',
             'diagnostic_system',
             'test_notification_manual',
-            'migrate_notifications_to_patient_table'
+            'migrate_notifications_to_patient_table',
+            'debug_meal_reminder'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -9185,6 +9186,262 @@ class Portal extends App_Controller
         }
 
         echo "</pre>";
+    }
+
+    /**
+     * Debug meal reminder - Outil de diagnostic pour les rappels de repas
+     * Affiche les détails de configuration et teste la logique de fenêtre de temps
+     * Access: /dietetic/portal/debug_meal_reminder?meal_type=breakfast&patient_id=X
+     */
+    public function debug_meal_reminder()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $meal_type = $this->input->get('meal_type') ?: 'breakfast';
+        $patient_id = $this->input->get('patient_id');
+
+        // Load models
+        $this->load->model('dietetic_notifications_model');
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Rappel de Repas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 4px solid #3498db; padding-left: 10px; }
+        .info-box { background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .code { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-yes { background: #28a745; color: white; }
+        .badge-no { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Rappel de Repas</h1>
+        <div class="info-box">
+            <strong>Heure actuelle:</strong> ' . date('Y-m-d H:i:s') . '<br>
+            <strong>Type de repas:</strong> ' . htmlspecialchars($meal_type) . '<br>
+            <strong>Patient ID:</strong> ' . ($patient_id ?: 'Tous') . '
+        </div>';
+
+        // Test de la logique de fenêtre de temps
+        echo '<h2>1. Test de la fenêtre de temps (5 minutes)</h2>';
+        $current_time = date('H:i:00');
+        $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
+
+        echo '<div class="info-box">';
+        echo '<strong>Heure actuelle:</strong> ' . $current_time . '<br>';
+        echo '<strong>5 minutes avant:</strong> ' . $time_5min_ago . '<br>';
+        echo '<strong>Fenêtre de rappel:</strong> ' . $time_5min_ago . ' < reminder_time <= ' . $current_time;
+        echo '</div>';
+
+        // Get patients with meal reminder enabled
+        echo '<h2>2. Patients avec rappel ' . htmlspecialchars($meal_type) . ' activé</h2>';
+
+        $column_enabled = 'reminder_' . $meal_type;
+        $column_time = 'reminder_' . $meal_type . '_time';
+
+        $this->db->select('p.id as patient_id, p.email, p.phone as phonenumber, c.firstname, c.lastname,
+                          prefs.' . $column_enabled . ' as enabled,
+                          prefs.' . $column_time . ' as reminder_time,
+                          prefs.channel_email, prefs.channel_sms, prefs.channel_whatsapp, prefs.channel_push');
+        $this->db->from(db_prefix() . 'dietic_notification_preferences as prefs');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('prefs.' . $column_enabled, 1);
+
+        if ($patient_id) {
+            $this->db->where('p.id', $patient_id);
+        }
+
+        $patients = $this->db->get()->result();
+
+        if (empty($patients)) {
+            echo '<div class="warning">❌ Aucun patient n\'a activé le rappel ' . htmlspecialchars($meal_type) . '</div>';
+        } else {
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient ID</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Heure rappel</th>
+                    <th>Dans fenêtre?</th>
+                    <th>Canaux</th>
+                  </tr>';
+
+            foreach ($patients as $p) {
+                $in_window = ($p->reminder_time > $time_5min_ago && $p->reminder_time <= $current_time);
+                $channels = [];
+                if ($p->channel_email) $channels[] = 'Email';
+                if ($p->channel_sms) $channels[] = 'SMS';
+                if ($p->channel_whatsapp) $channels[] = 'WhatsApp';
+                if ($p->channel_push) $channels[] = 'Push';
+
+                echo '<tr>';
+                echo '<td>' . $p->patient_id . '</td>';
+                echo '<td>' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($p->email) . '</td>';
+                echo '<td>' . htmlspecialchars($p->phonenumber) . '</td>';
+                echo '<td><strong>' . $p->reminder_time . '</strong></td>';
+                echo '<td><span class="badge badge-' . ($in_window ? 'yes' : 'no') . '">' . ($in_window ? 'OUI' : 'NON') . '</span></td>';
+                echo '<td>' . implode(', ', $channels) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Check for already sent notifications today
+        echo '<h2>3. Notifications déjà envoyées aujourd\'hui</h2>';
+
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
+
+        $this->db->select('pn.*, p.email, c.firstname, c.lastname');
+        $this->db->from(db_prefix() . 'dietic_patient_notifications as pn');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = pn.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('pn.notification_type', 'reminder_' . $meal_type);
+        $this->db->where('pn.created_at >=', $today_start);
+        $this->db->where('pn.created_at <=', $today_end);
+
+        if ($patient_id) {
+            $this->db->where('pn.patient_id', $patient_id);
+        }
+
+        $this->db->order_by('pn.created_at', 'DESC');
+        $sent_notifications = $this->db->get()->result();
+
+        if (empty($sent_notifications)) {
+            echo '<div class="info-box">ℹ️ Aucune notification ' . htmlspecialchars($meal_type) . ' envoyée aujourd\'hui</div>';
+        } else {
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Envoyé à</th>
+                  </tr>';
+
+            foreach ($sent_notifications as $notif) {
+                echo '<tr>';
+                echo '<td>' . htmlspecialchars($notif->firstname . ' ' . $notif->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($notif->email) . '</td>';
+                echo '<td>' . htmlspecialchars($notif->notification_type) . '</td>';
+                echo '<td>' . htmlspecialchars(substr($notif->message, 0, 50)) . '...</td>';
+                echo '<td>' . $notif->created_at . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Test de la requête SQL exacte utilisée par le cron
+        echo '<h2>4. Test de la requête SQL du cron</h2>';
+
+        echo '<div class="code">';
+        echo 'SELECT p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname<br>';
+        echo 'FROM ' . db_prefix() . 'dietic_notification_preferences as prefs<br>';
+        echo 'JOIN ' . db_prefix() . 'dietic_patients as p ON p.id = prefs.patient_id<br>';
+        echo 'LEFT JOIN ' . db_prefix() . 'contacts as c ON c.userid = p.client_id AND c.is_primary = 1<br>';
+        echo 'WHERE prefs.' . $column_enabled . ' = 1<br>';
+        echo 'AND prefs.' . $column_time . ' > \'' . $time_5min_ago . '\'<br>';
+        echo 'AND prefs.' . $column_time . ' <= \'' . $current_time . '\'';
+        echo '</div>';
+
+        // Execute the exact query
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
+        $this->db->from(db_prefix() . 'dietic_notification_preferences as prefs');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('prefs.' . $column_enabled, 1);
+        $this->db->where('prefs.' . $column_time . ' >', $time_5min_ago);
+        $this->db->where('prefs.' . $column_time . ' <=', $current_time);
+
+        if ($patient_id) {
+            $this->db->where('p.id', $patient_id);
+        }
+
+        $query_results = $this->db->get()->result();
+
+        echo '<h3>Résultats de la requête:</h3>';
+        if (empty($query_results)) {
+            echo '<div class="warning">❌ Aucun patient ne correspond aux critères de la fenêtre de temps actuelle</div>';
+        } else {
+            echo '<div class="success">✅ ' . count($query_results) . ' patient(s) trouvé(s) dans la fenêtre de temps</div>';
+
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient ID</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Heure rappel</th>
+                  </tr>';
+
+            foreach ($query_results as $p) {
+                echo '<tr>';
+                echo '<td>' . $p->patient_id . '</td>';
+                echo '<td>' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($p->email) . '</td>';
+                echo '<td>' . htmlspecialchars($p->phonenumber) . '</td>';
+                echo '<td><strong>' . $p->{$column_time} . '</strong></td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Recommendations
+        echo '<h2>5. Recommandations</h2>';
+        echo '<div class="info-box">';
+
+        if (empty($patients)) {
+            echo '❌ <strong>Problème:</strong> Aucun patient n\'a activé le rappel ' . htmlspecialchars($meal_type) . '<br>';
+            echo '➡️ <strong>Solution:</strong> Vérifiez les préférences de notifications du patient';
+        } elseif (empty($query_results)) {
+            echo '⚠️ <strong>Problème:</strong> Des patients ont activé le rappel mais aucun n\'est dans la fenêtre de temps actuelle<br>';
+            echo '➡️ <strong>Solution:</strong> Vérifiez que l\'heure du rappel correspond à l\'heure d\'exécution du cron<br>';
+            echo '➡️ Le cron doit s\'exécuter toutes les 5 minutes pour capturer tous les rappels';
+        } else {
+            echo '✅ <strong>Tout semble correct!</strong> Les patients sont dans la fenêtre de temps<br>';
+            echo '➡️ Si les notifications ne sont pas envoyées, vérifiez:<br>';
+            echo '&nbsp;&nbsp;&nbsp;1. Que le cron s\'exécute bien<br>';
+            echo '&nbsp;&nbsp;&nbsp;2. Que les canaux de notification sont configurés (Email, SMS, etc.)<br>';
+            echo '&nbsp;&nbsp;&nbsp;3. Les logs dans dietic_notification_logs pour voir les erreurs';
+        }
+
+        echo '</div>';
+
+        // Access link for specific patient
+        if (!$patient_id && !empty($patients)) {
+            echo '<h2>6. Tester un patient spécifique</h2>';
+            echo '<div class="info-box">';
+            foreach ($patients as $p) {
+                $test_url = site_url('dietetic/portal/debug_meal_reminder?meal_type=' . $meal_type . '&patient_id=' . $p->patient_id);
+                echo '🔗 <a href="' . $test_url . '">Tester ' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</a><br>';
+            }
+            echo '</div>';
+        }
+
+        echo '
+    </div>
+</body>
+</html>';
     }
 }
 
