@@ -133,86 +133,192 @@
             opacity: 0.95;
         }
 
-        /* Section Title */
-        .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 30px 0 16px 0;
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            flex: 1;
+            min-width: 140px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.total {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+        }
+
+        .stat-icon.upcoming {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #388e3c;
+        }
+
+        .stat-icon.past {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #7b1fa2;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-top: 4px;
         }
 
-        .section-title i {
-            color: #01807B;
-        }
-
-        /* Consultation Card - MODERNIZED */
-        .consultation-card {
-            background: white;
-            border-radius: 16px;
-            padding: 0;
+        /* Accordion Panel */
+        .panel-group {
             margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
+        }
+
+        .consultation-panel {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             border: 2px solid transparent;
+            transition: all 0.3s ease;
         }
 
-        .consultation-card:hover {
-            box-shadow: 0 8px 30px rgba(1, 128, 123, 0.15);
+        .consultation-panel:hover {
             border-color: #01807B;
+            box-shadow: 0 4px 16px rgba(1, 128, 123, 0.15);
         }
 
-        .consultation-card.past {
-            opacity: 0.85;
+        .consultation-panel.upcoming {
+            border-left: 4px solid #01807B;
         }
 
-        /* Card Header with colored strip */
-        .card-strip {
-            height: 6px;
-            background: linear-gradient(90deg, #01807B 0%, #F3911D 100%);
+        .consultation-panel.past {
+            opacity: 0.9;
+            border-left: 4px solid #6c757d;
         }
 
-        .card-strip.past {
-            background: #6c757d;
+        .consultation-panel.cancelled {
+            border-left: 4px solid #dc3545;
         }
 
-        .card-strip.cancelled {
-            background: #dc3545;
+        /* Panel Heading */
+        .panel-heading {
+            background: white !important;
+            border: none !important;
+            padding: 0 !important;
         }
 
-        .card-content {
-            padding: 20px;
+        .panel-title {
+            margin: 0;
         }
 
-        /* Consultation Header */
-        .consultation-header {
+        .panel-title a {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            padding: 20px;
+            text-decoration: none;
+            color: #2c3e50;
+            transition: background 0.3s ease;
         }
 
-        .consultation-date {
+        .panel-title a:hover {
+            background: #f8f9fa;
+        }
+
+        .panel-title a[aria-expanded="true"] {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .consultation-summary {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .consultation-date-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .date-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .date-day {
             font-size: 18px;
+            line-height: 1;
+        }
+
+        .date-month {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .consultation-info-header {
+            flex: 1;
+        }
+
+        .consultation-title {
+            font-size: 16px;
             font-weight: 700;
             color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .consultation-time {
+            font-size: 13px;
+            color: #6c757d;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .consultation-date i {
-            color: #01807B;
-        }
-
-        /* Status Badge - IMPROVED */
-        .status-badge {
-            padding: 8px 16px;
+        .status-badge-header {
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
@@ -223,171 +329,122 @@
             gap: 6px;
         }
 
-        .status-badge.scheduled {
+        .status-badge-header.scheduled {
             background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
         }
 
-        .status-badge.completed {
+        .status-badge-header.completed {
             background: #e7f5ff;
             color: #0c8599;
         }
 
-        .status-badge.cancelled {
+        .status-badge-header.cancelled {
             background: #ffe0e0;
             color: #dc3545;
         }
 
-        .status-badge.no_show {
+        .status-badge-header.no_show {
             background: #fff3cd;
             color: #856404;
         }
 
-        /* Mode Badge - NEW */
-        .mode-badge {
-            display: inline-flex;
+        .expand-icon {
+            font-size: 18px;
+            color: #01807B;
+            transition: transform 0.3s ease;
+        }
+
+        a[aria-expanded="true"] .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Panel Body */
+        .panel-body {
+            padding: 20px !important;
+            background: #f8f9fa;
+            border-top: none !important;
+        }
+
+        .detail-section {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 16px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 16px;
         }
 
-        .mode-badge i {
-            font-size: 18px;
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
         }
 
-        .mode-badge.online {
-            background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
-            color: #0c8599;
-        }
-
-        .mode-badge.online i {
-            color: #0c8599;
-        }
-
-        .mode-badge.in-person i {
-            color: #01807B;
-        }
-
-        /* Platform Badge - NEW */
-        .platform-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: white;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-
-        .platform-badge.zoom {
-            border-color: #2D8CFF;
-            color: #2D8CFF;
-        }
-
-        .platform-badge.google_meet {
-            border-color: #00897B;
-            color: #00897B;
-        }
-
-        .platform-badge.teams {
-            border-color: #6264A7;
-            color: #6264A7;
-        }
-
-        .platform-badge.whatsapp {
-            border-color: #25D366;
-            color: #25D366;
-        }
-
-        /* Countdown - NEW */
-        .countdown {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-            border-left: 4px solid #F3911D;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
+        .detail-item {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .countdown i {
-            font-size: 20px;
-            color: #F3911D;
-        }
-
-        .countdown-text {
-            font-size: 14px;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .countdown-time {
-            font-weight: 700;
-            color: #F3911D;
-        }
-
-        /* Consultation Info Grid */
-        .consultation-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .info-item {
+        .detail-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             background: #f8f9fa;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .info-item i {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #01807B;
-            font-size: 20px;
-            margin-bottom: 6px;
+            font-size: 16px;
         }
 
-        .info-item label {
-            display: block;
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
             font-size: 11px;
             color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-weight: 700;
-            margin-bottom: 6px;
         }
 
-        .info-item .value {
+        .detail-value {
             font-size: 14px;
             font-weight: 600;
             color: #2c3e50;
+            margin-top: 2px;
         }
 
-        /* Action Buttons - NEW */
-        .action-buttons {
+        /* Action Buttons in Panel */
+        .action-buttons-panel {
             display: flex;
             gap: 10px;
-            margin-top: 16px;
             flex-wrap: wrap;
         }
 
-        .btn-action {
+        .btn-action-panel {
             flex: 1;
             min-width: 140px;
-            padding: 14px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 14px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -401,12 +458,12 @@
         .btn-join {
             background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
-            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+            box-shadow: 0 2px 8px rgba(1, 128, 123, 0.3);
         }
 
         .btn-join:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.4);
             color: white;
             text-decoration: none;
         }
@@ -414,12 +471,12 @@
         .btn-directions {
             background: linear-gradient(135deg, #F3911D 0%, #E67E22 100%);
             color: white;
-            box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
+            box-shadow: 0 2px 8px rgba(243, 145, 29, 0.3);
         }
 
         .btn-directions:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(243, 145, 29, 0.4);
+            box-shadow: 0 4px 12px rgba(243, 145, 29, 0.4);
             color: white;
             text-decoration: none;
         }
@@ -436,68 +493,84 @@
             text-decoration: none;
         }
 
-        .btn-calendar {
-            background: white;
-            color: #6c757d;
-            border: 2px solid #dee2e6;
-        }
-
-        .btn-calendar:hover {
-            background: #f8f9fa;
-            border-color: #01807B;
-            color: #01807B;
-            text-decoration: none;
-        }
-
-        /* Location/Link Display - NEW */
-        .location-display, .link-display {
-            background: #f8f9fa;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-        }
-
-        .location-display i, .link-display i {
-            color: #01807B;
-            font-size: 18px;
-        }
-
-        .location-display a, .link-display a {
-            color: #01807B;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .location-display a:hover, .link-display a:hover {
-            text-decoration: underline;
-        }
-
-        /* Consultation Notes */
-        .consultation-notes {
-            padding: 14px;
-            background: #f8f9fa;
-            border-radius: 10px;
+        /* Notes/Reason Display */
+        .notes-box {
+            background: #fff3e0;
             border-left: 3px solid #F3911D;
-            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
         }
 
-        .consultation-notes strong {
+        .notes-box strong {
             color: #2c3e50;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .consultation-notes p {
+        .notes-box p {
             margin: 8px 0 0 0;
             color: #6c757d;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
+        }
+
+        /* Pagination */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .pagination {
+            margin: 0;
+        }
+
+        .pagination > li > a,
+        .pagination > li > span {
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin: 0 4px;
+            border: 2px solid #dee2e6;
+            color: #495057;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination > li > a:hover {
+            background: #f8f9fa;
+            border-color: #01807B;
+            color: #01807B;
+        }
+
+        .pagination > .active > a,
+        .pagination > .active > span {
+            background: linear-gradient(135deg, #01807B 0%, #026661 100%);
+            border-color: #01807B;
+            color: white;
+        }
+
+        .pagination > .active > a:hover {
+            background: linear-gradient(135deg, #026661 0%, #01807B 100%);
+            color: white;
+        }
+
+        .pagination > .disabled > a,
+        .pagination > .disabled > span {
+            background: #f8f9fa;
+            border-color: #dee2e6;
+            color: #adb5bd;
+            cursor: not-allowed;
         }
 
         /* Empty State */
@@ -553,72 +626,6 @@
             text-decoration: none;
         }
 
-        /* Bottom Nav */
-        .bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #e9ecef;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-            z-index: 1000;
-            padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
-        }
-
-        .bottom-nav-items {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .bottom-nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px;
-            color: #6c757d;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-radius: 12px;
-            min-width: 60px;
-            position: relative;
-        }
-
-        .bottom-nav-item.active {
-            color: #01807B;
-        }
-
-        .bottom-nav-item i {
-            font-size: 24px;
-        }
-
-        .bottom-nav-item.active i {
-            transform: scale(1.1);
-        }
-
-        .bottom-nav-item span {
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .bottom-nav-item.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 32px;
-            height: 3px;
-            background: #01807B;
-            border-radius: 0 0 3px 3px;
-        }
-
         /* Animations */
         @keyframes fadeInUp {
             from {
@@ -631,15 +638,6 @@
             }
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
         .animate-in {
             animation: fadeInUp 0.5s ease-out forwards;
         }
@@ -647,93 +645,57 @@
         .delay-1 { animation-delay: 0.1s; opacity: 0; }
         .delay-2 { animation-delay: 0.2s; opacity: 0; }
 
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-
-        /* Desktop */
-        @media (min-width: 769px) {
-            body {
-                padding-bottom: 0;
-            }
-
-            .bottom-nav {
-                display: none !important;
-            }
-
-            .portal-nav-desktop {
-                display: flex !important;
-            }
-
-            .consultation-info {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            }
-
-            .action-buttons {
-                flex-wrap: nowrap;
-            }
-        }
-
-        /* Mobile */
+        /* Responsive */
         @media (max-width: 768px) {
             .portal-nav-desktop {
                 display: none !important;
-            }
-
-            .bottom-nav {
-                display: block;
             }
 
             .content-container {
                 padding: 16px 12px 20px;
             }
 
-            .page-header-mobile {
-                padding: 20px 16px;
-                border-radius: 12px;
-                margin-bottom: 20px;
-            }
-
             .page-header-mobile h1 {
                 font-size: 20px;
             }
 
-            .card-content {
-                padding: 16px;
+            .stats-bar {
+                flex-direction: column;
             }
 
-            .consultation-info {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+            .stat-item {
+                min-width: 100%;
             }
 
-            .consultation-header {
+            .consultation-summary {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
             }
 
-            .action-buttons {
+            .consultation-date-header {
+                width: 100%;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons-panel {
                 flex-direction: column;
             }
 
-            .btn-action {
+            .btn-action-panel {
                 min-width: 100%;
             }
         }
 
-        @media (max-width: 375px) {
-            .portal-logo img {
-                max-height: 32px;
-                max-width: 120px;
+        @media (min-width: 769px) {
+            body {
+                padding-bottom: 0;
             }
 
-            .portal-logo-text {
-                font-size: 16px;
-            }
-
-            .page-header-mobile h1 {
-                font-size: 18px;
+            .portal-nav-desktop {
+                display: flex !important;
             }
         }
     </style>
@@ -749,274 +711,321 @@
             <p>Historique et rendez-vous à venir</p>
         </div>
 
-        <?php if (!empty($consultations)) { ?>
+        <?php if (!empty($consultations) || $total_consultations > 0) { ?>
             <?php
             $now = new DateTime();
-            $upcoming = [];
-            $past = [];
+            $upcoming_count = 0;
+            $past_count = 0;
 
-            foreach ($consultations as $consultation) {
-                $consultation_date = new DateTime($consultation->consultation_date);
-                if ($consultation_date > $now && $consultation->status !== 'cancelled') {
-                    $upcoming[] = $consultation;
+            // Count upcoming and past consultations from all consultations
+            $all_consultations_for_count = $this->dietetic_consultations_model->get_by_patient($patient->id);
+            foreach ($all_consultations_for_count as $c) {
+                $c_date = new DateTime($c->consultation_date);
+                if ($c_date > $now && $c->status !== 'cancelled') {
+                    $upcoming_count++;
                 } else {
-                    $past[] = $consultation;
+                    $past_count++;
                 }
             }
             ?>
 
-            <?php if (!empty($upcoming)) { ?>
-                <div class="section-title animate-in delay-1">
-                    <i class="fa fa-clock-o"></i>
-                    <span>Rendez-vous à venir</span>
+            <!-- Stats Bar -->
+            <div class="stats-bar animate-in delay-1">
+                <div class="stat-item">
+                    <div class="stat-icon total">
+                        <i class="fa fa-calendar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?php echo $total_consultations; ?></div>
+                        <div class="stat-label">Total</div>
+                    </div>
                 </div>
-                <div class="animate-in delay-1">
-                    <?php foreach ($upcoming as $consultation) {
-                        $consultation_datetime = new DateTime($consultation->consultation_date);
-                        $interval = $now->diff($consultation_datetime);
+                <div class="stat-item">
+                    <div class="stat-icon upcoming">
+                        <i class="fa fa-clock-o"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?php echo $upcoming_count; ?></div>
+                        <div class="stat-label">À venir</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon past">
+                        <i class="fa fa-history"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value"><?php echo $past_count; ?></div>
+                        <div class="stat-label">Passées</div>
+                    </div>
+                </div>
+            </div>
 
-                        // Calculate countdown
-                        $days = $interval->days;
-                        $hours = $interval->h;
-                        $minutes = $interval->i;
+            <!-- Accordion -->
+            <div class="panel-group animate-in delay-2" id="consultationsAccordion" role="tablist">
+                <?php foreach ($consultations as $index => $consultation) {
+                    $consultation_datetime = new DateTime($consultation->consultation_date);
+                    $is_upcoming = ($consultation_datetime > $now && $consultation->status !== 'cancelled');
+                    $panel_class = $is_upcoming ? 'upcoming' : 'past';
+                    if ($consultation->status === 'cancelled') {
+                        $panel_class = 'cancelled';
+                    }
 
-                        $countdown_text = '';
-                        if ($days > 0) {
-                            $countdown_text = "Dans $days jour" . ($days > 1 ? 's' : '');
-                            if ($hours > 0) {
-                                $countdown_text .= " et $hours heure" . ($hours > 1 ? 's' : '');
-                            }
-                        } elseif ($hours > 0) {
-                            $countdown_text = "Dans $hours heure" . ($hours > 1 ? 's' : '');
-                            if ($minutes > 0) {
-                                $countdown_text .= " et $minutes minute" . ($minutes > 1 ? 's' : '');
-                            }
-                        } else {
-                            $countdown_text = "Dans $minutes minute" . ($minutes > 1 ? 's' : '');
-                        }
-                    ?>
-                        <div class="consultation-card <?php echo $consultation->status == 'cancelled' ? 'cancelled' : ''; ?>">
-                            <div class="card-strip <?php echo $consultation->status == 'cancelled' ? 'cancelled' : ''; ?>"></div>
-                            <div class="card-content">
-                                <div class="consultation-header">
-                                    <div class="consultation-date">
-                                        <i class="fa fa-calendar"></i>
-                                        <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
-                                    </div>
-                                    <?php
-                                    $status_class = $consultation->status;
-                                    $status_text = '';
-                                    $status_icon = '';
-                                    switch ($consultation->status) {
-                                        case 'scheduled':
-                                            $status_text = 'À venir';
-                                            $status_icon = 'fa-clock-o';
-                                            break;
-                                        case 'completed':
-                                            $status_text = 'Terminée';
-                                            $status_icon = 'fa-check';
-                                            break;
-                                        case 'cancelled':
-                                            $status_text = 'Annulée';
-                                            $status_icon = 'fa-times';
-                                            break;
-                                        case 'no_show':
-                                            $status_text = 'Manquée';
-                                            $status_icon = 'fa-exclamation';
-                                            break;
-                                        default:
-                                            $status_text = 'Planifiée';
-                                            $status_icon = 'fa-calendar';
-                                    }
-                                    ?>
-                                    <span class="status-badge <?php echo $status_class; ?>">
-                                        <i class="fa <?php echo $status_icon; ?>"></i>
-                                        <?php echo $status_text; ?>
-                                    </span>
-                                </div>
+                    // Status badge
+                    $status_class = $consultation->status;
+                    $status_text = '';
+                    $status_icon = '';
+                    switch ($consultation->status) {
+                        case 'scheduled':
+                            $status_text = 'À venir';
+                            $status_icon = 'fa-clock-o';
+                            break;
+                        case 'completed':
+                            $status_text = 'Terminée';
+                            $status_icon = 'fa-check';
+                            break;
+                        case 'cancelled':
+                            $status_text = 'Annulée';
+                            $status_icon = 'fa-times';
+                            break;
+                        case 'no_show':
+                            $status_text = 'Manquée';
+                            $status_icon = 'fa-exclamation';
+                            break;
+                        default:
+                            $status_text = 'Planifiée';
+                            $status_icon = 'fa-calendar';
+                    }
 
-                                <!-- Countdown -->
-                                <?php if ($consultation->status !== 'cancelled') { ?>
-                                <div class="countdown pulse-animation">
-                                    <i class="fa fa-hourglass-half"></i>
-                                    <div class="countdown-text">
-                                        <span class="countdown-time"><?php echo $countdown_text; ?></span>
-                                    </div>
-                                </div>
-                                <?php } ?>
-
-                                <!-- Mode Badge -->
-                                <?php
-                                $mode = isset($consultation->consultation_mode) ? $consultation->consultation_mode : 'in_person';
-                                $mode_text = ($mode === 'online') ? 'Consultation en ligne' : 'Consultation en présentiel';
-                                $mode_icon = ($mode === 'online') ? 'fa-video-camera' : 'fa-hospital-o';
-                                ?>
-                                <div class="mode-badge <?php echo ($mode === 'online') ? 'online' : 'in-person'; ?>">
-                                    <i class="fa <?php echo $mode_icon; ?>"></i>
-                                    <span><?php echo $mode_text; ?></span>
-
-                                    <?php if ($mode === 'online' && !empty($consultation->online_platform)) {
-                                        $platform_name = ucfirst(str_replace('_', ' ', $consultation->online_platform));
-                                    ?>
-                                        <span class="platform-badge <?php echo $consultation->online_platform; ?>">
-                                            <?php echo $platform_name; ?>
+                    // Format date
+                    $day = date('d', strtotime($consultation->consultation_date));
+                    $month = date('M', strtotime($consultation->consultation_date));
+                    $time = date('H:i', strtotime($consultation->consultation_date));
+                    $full_date = date('d/m/Y', strtotime($consultation->consultation_date));
+                ?>
+                    <div class="consultation-panel <?php echo $panel_class; ?>">
+                        <div class="panel-heading" role="tab" id="heading<?php echo $consultation->id; ?>">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#consultationsAccordion"
+                                   href="#collapse<?php echo $consultation->id; ?>"
+                                   aria-expanded="<?php echo $index === 0 ? 'true' : 'false'; ?>"
+                                   aria-controls="collapse<?php echo $consultation->id; ?>">
+                                    <div class="consultation-summary">
+                                        <div class="consultation-date-header">
+                                            <div class="date-icon">
+                                                <div class="date-day"><?php echo $day; ?></div>
+                                                <div class="date-month"><?php echo $month; ?></div>
+                                            </div>
+                                            <div class="consultation-info-header">
+                                                <div class="consultation-title"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
+                                                <div class="consultation-time">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo $full_date; ?> à <?php echo $time; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge-header <?php echo $status_class; ?>">
+                                            <i class="fa <?php echo $status_icon; ?>"></i>
+                                            <?php echo $status_text; ?>
                                         </span>
-                                    <?php } ?>
-                                </div>
-
-                                <!-- Location for in-person -->
-                                <?php if ($mode === 'in_person' && !empty($consultation->location)) { ?>
-                                <div class="location-display">
-                                    <i class="fa fa-map-marker"></i>
-                                    <span><?php echo htmlspecialchars($consultation->location); ?></span>
-                                </div>
-                                <?php } ?>
-
-                                <div class="consultation-info">
-                                    <div class="info-item">
-                                        <i class="fa fa-stethoscope"></i>
-                                        <label>Type</label>
-                                        <div class="value"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
                                     </div>
-
-                                    <?php if (isset($consultation->duration)) { ?>
-                                    <div class="info-item">
-                                        <i class="fa fa-clock-o"></i>
-                                        <label>Durée</label>
-                                        <div class="value"><?php echo $consultation->duration; ?> min</div>
-                                    </div>
-                                    <?php } ?>
-
-                                    <?php if (isset($consultation->dietitian_name)) { ?>
-                                    <div class="info-item">
-                                        <i class="fa fa-user-md"></i>
-                                        <label>Diététicien</label>
-                                        <div class="value"><?php echo htmlspecialchars($consultation->dietitian_name); ?></div>
-                                    </div>
-                                    <?php } ?>
-                                </div>
-
-                                <!-- Action Buttons -->
-                                <div class="action-buttons">
-                                    <?php if ($mode === 'online' && !empty($consultation->meeting_link)) { ?>
-                                        <a href="<?php echo htmlspecialchars($consultation->meeting_link); ?>" target="_blank" class="btn-action btn-join">
-                                            <i class="fa fa-video-camera"></i>
-                                            Rejoindre la consultation
-                                        </a>
-                                    <?php } elseif ($mode === 'in_person' && !empty($consultation->location)) { ?>
-                                        <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($consultation->location); ?>" target="_blank" class="btn-action btn-directions">
-                                            <i class="fa fa-map-marker"></i>
-                                            Voir l'itinéraire
-                                        </a>
-                                    <?php } ?>
-
-                                    <a href="<?php echo site_url('dietetic/portal/consultation/' . $consultation->id); ?>" class="btn-action btn-details">
-                                        <i class="fa fa-info-circle"></i>
-                                        Voir détails
-                                    </a>
-
-                                    <button class="btn-action btn-calendar" onclick="addToCalendar(<?php echo $consultation->id; ?>)">
-                                        <i class="fa fa-calendar-plus-o"></i>
-                                        Ajouter au calendrier
-                                    </button>
-                                </div>
-
-                                <?php if (!empty($consultation->reason)) { ?>
-                                <div class="consultation-notes">
-                                    <strong><i class="fa fa-info-circle"></i> Motif</strong>
-                                    <p><?php echo nl2br(htmlspecialchars($consultation->reason)); ?></p>
-                                </div>
-                                <?php } ?>
-                            </div>
+                                    <i class="fa fa-chevron-down expand-icon"></i>
+                                </a>
+                            </h4>
                         </div>
-                    <?php } ?>
-                </div>
-            <?php } ?>
-
-            <?php if (!empty($past)) { ?>
-                <div class="section-title animate-in delay-2" style="margin-top: 30px;">
-                    <i class="fa fa-history"></i>
-                    <span>Consultations passées</span>
-                </div>
-                <div class="animate-in delay-2">
-                    <?php foreach ($past as $consultation) { ?>
-                        <div class="consultation-card past">
-                            <div class="card-strip past"></div>
-                            <div class="card-content">
-                                <div class="consultation-header">
-                                    <div class="consultation-date">
-                                        <i class="fa fa-calendar"></i>
-                                        <?php echo date('d/m/Y à H:i', strtotime($consultation->consultation_date)); ?>
-                                    </div>
-                                    <?php
-                                    $status_class = $consultation->status;
-                                    $status_text = '';
-                                    $status_icon = '';
-                                    switch ($consultation->status) {
-                                        case 'completed':
-                                            $status_text = 'Terminée';
-                                            $status_icon = 'fa-check';
-                                            break;
-                                        case 'cancelled':
-                                            $status_text = 'Annulée';
-                                            $status_icon = 'fa-times';
-                                            break;
-                                        case 'no_show':
-                                            $status_text = 'Manquée';
-                                            $status_icon = 'fa-exclamation';
-                                            break;
-                                        default:
-                                            $status_text = 'Passée';
-                                            $status_icon = 'fa-history';
-                                    }
-                                    ?>
-                                    <span class="status-badge <?php echo $status_class; ?>">
-                                        <i class="fa <?php echo $status_icon; ?>"></i>
-                                        <?php echo $status_text; ?>
-                                    </span>
-                                </div>
-
-                                <div class="consultation-info">
-                                    <div class="info-item">
-                                        <i class="fa fa-stethoscope"></i>
-                                        <label>Type</label>
-                                        <div class="value"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
-                                    </div>
-
-                                    <?php if (isset($consultation->duration)) { ?>
-                                    <div class="info-item">
-                                        <i class="fa fa-clock-o"></i>
-                                        <label>Durée</label>
-                                        <div class="value"><?php echo $consultation->duration; ?> min</div>
-                                    </div>
-                                    <?php } ?>
-
-                                    <?php if (isset($consultation->dietitian_name)) { ?>
-                                    <div class="info-item">
-                                        <i class="fa fa-user-md"></i>
-                                        <label>Diététicien</label>
-                                        <div class="value"><?php echo htmlspecialchars($consultation->dietitian_name); ?></div>
-                                    </div>
-                                    <?php } ?>
-                                </div>
-
-                                <div class="action-buttons">
-                                    <a href="<?php echo site_url('dietetic/portal/consultation/' . $consultation->id); ?>" class="btn-action btn-details">
+                        <div id="collapse<?php echo $consultation->id; ?>"
+                             class="panel-collapse collapse <?php echo $index === 0 ? 'in' : ''; ?>"
+                             role="tabpanel"
+                             aria-labelledby="heading<?php echo $consultation->id; ?>">
+                            <div class="panel-body">
+                                <!-- Details Section -->
+                                <div class="detail-section">
+                                    <div class="section-title">
                                         <i class="fa fa-info-circle"></i>
-                                        Voir le compte-rendu
-                                    </a>
+                                        Informations
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-item">
+                                            <div class="detail-icon">
+                                                <i class="fa fa-stethoscope"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Type</div>
+                                                <div class="detail-value"><?php echo dietetic_consultation_type_label($consultation->consultation_type); ?></div>
+                                            </div>
+                                        </div>
+
+                                        <?php if (isset($consultation->duration)) { ?>
+                                        <div class="detail-item">
+                                            <div class="detail-icon">
+                                                <i class="fa fa-hourglass-half"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Durée</div>
+                                                <div class="detail-value"><?php echo $consultation->duration; ?> min</div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+
+                                        <?php if (isset($consultation->dietitian_name)) { ?>
+                                        <div class="detail-item">
+                                            <div class="detail-icon">
+                                                <i class="fa fa-user-md"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Diététicien</div>
+                                                <div class="detail-value"><?php echo htmlspecialchars($consultation->dietitian_name); ?></div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+
+                                        <?php
+                                        $mode = isset($consultation->consultation_mode) ? $consultation->consultation_mode : 'in_person';
+                                        $mode_text = ($mode === 'online') ? 'En ligne' : 'En présentiel';
+                                        ?>
+                                        <div class="detail-item">
+                                            <div class="detail-icon">
+                                                <i class="fa <?php echo ($mode === 'online') ? 'fa-video-camera' : 'fa-hospital-o'; ?>"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Mode</div>
+                                                <div class="detail-value"><?php echo $mode_text; ?></div>
+                                            </div>
+                                        </div>
+
+                                        <?php if ($mode === 'online' && !empty($consultation->online_platform)) { ?>
+                                        <div class="detail-item">
+                                            <div class="detail-icon">
+                                                <i class="fa fa-desktop"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Plateforme</div>
+                                                <div class="detail-value"><?php echo ucfirst(str_replace('_', ' ', $consultation->online_platform)); ?></div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+
+                                        <?php if ($mode === 'in_person' && !empty($consultation->location)) { ?>
+                                        <div class="detail-item" style="grid-column: 1 / -1;">
+                                            <div class="detail-icon">
+                                                <i class="fa fa-map-marker"></i>
+                                            </div>
+                                            <div class="detail-content">
+                                                <div class="detail-label">Lieu</div>
+                                                <div class="detail-value"><?php echo htmlspecialchars($consultation->location); ?></div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+                                    </div>
                                 </div>
+
+                                <!-- Reason/Notes -->
+                                <?php if (!empty($consultation->reason)) { ?>
+                                <div class="detail-section">
+                                    <div class="notes-box">
+                                        <strong><i class="fa fa-comment"></i> Motif de consultation</strong>
+                                        <p><?php echo nl2br(htmlspecialchars($consultation->reason)); ?></p>
+                                    </div>
+                                </div>
+                                <?php } ?>
 
                                 <?php if (isset($consultation->observations) && $consultation->observations) { ?>
-                                <div class="consultation-notes">
-                                    <strong><i class="fa fa-sticky-note"></i> Observations</strong>
-                                    <p><?php echo nl2br(htmlspecialchars($consultation->observations)); ?></p>
+                                <div class="detail-section">
+                                    <div class="notes-box">
+                                        <strong><i class="fa fa-sticky-note"></i> Observations</strong>
+                                        <p><?php echo nl2br(htmlspecialchars($consultation->observations)); ?></p>
+                                    </div>
                                 </div>
                                 <?php } ?>
+
+                                <!-- Action Buttons -->
+                                <div class="detail-section">
+                                    <div class="action-buttons-panel">
+                                        <?php if ($mode === 'online' && !empty($consultation->meeting_link) && $is_upcoming) { ?>
+                                            <a href="<?php echo htmlspecialchars($consultation->meeting_link); ?>" target="_blank" class="btn-action-panel btn-join">
+                                                <i class="fa fa-video-camera"></i>
+                                                Rejoindre la consultation
+                                            </a>
+                                        <?php } elseif ($mode === 'in_person' && !empty($consultation->location) && $is_upcoming) { ?>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($consultation->location); ?>" target="_blank" class="btn-action-panel btn-directions">
+                                                <i class="fa fa-map-marker"></i>
+                                                Voir l'itinéraire
+                                            </a>
+                                        <?php } ?>
+
+                                        <a href="<?php echo site_url('dietetic/portal/consultation/' . $consultation->id); ?>" class="btn-action-panel btn-details">
+                                            <i class="fa fa-info-circle"></i>
+                                            Voir détails complets
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    <?php } ?>
+                    </div>
+                <?php } ?>
+            </div>
+
+            <!-- Pagination -->
+            <?php if ($total_pages > 1) { ?>
+            <div class="pagination-wrapper">
+                <div class="pagination-info">
+                    Page <?php echo $current_page; ?> sur <?php echo $total_pages; ?>
+                    (<?php echo $total_consultations; ?> consultation<?php echo $total_consultations > 1 ? 's' : ''; ?>)
                 </div>
+                <ul class="pagination">
+                    <?php if ($current_page > 1) { ?>
+                        <li>
+                            <a href="<?php echo site_url('dietetic/portal/consultations/1'); ?>" aria-label="Première">
+                                <i class="fa fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo site_url('dietetic/portal/consultations/' . ($current_page - 1)); ?>" aria-label="Précédente">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        </li>
+                    <?php } else { ?>
+                        <li class="disabled">
+                            <span><i class="fa fa-angle-double-left"></i></span>
+                        </li>
+                        <li class="disabled">
+                            <span><i class="fa fa-angle-left"></i></span>
+                        </li>
+                    <?php } ?>
+
+                    <?php
+                    $start_page = max(1, $current_page - 2);
+                    $end_page = min($total_pages, $current_page + 2);
+
+                    for ($i = $start_page; $i <= $end_page; $i++) {
+                        if ($i == $current_page) {
+                            echo '<li class="active"><span>' . $i . '</span></li>';
+                        } else {
+                            echo '<li><a href="' . site_url('dietetic/portal/consultations/' . $i) . '">' . $i . '</a></li>';
+                        }
+                    }
+                    ?>
+
+                    <?php if ($current_page < $total_pages) { ?>
+                        <li>
+                            <a href="<?php echo site_url('dietetic/portal/consultations/' . ($current_page + 1)); ?>" aria-label="Suivante">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo site_url('dietetic/portal/consultations/' . $total_pages); ?>" aria-label="Dernière">
+                                <i class="fa fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    <?php } else { ?>
+                        <li class="disabled">
+                            <span><i class="fa fa-angle-right"></i></span>
+                        </li>
+                        <li class="disabled">
+                            <span><i class="fa fa-angle-double-right"></i></span>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
             <?php } ?>
 
         <?php } else { ?>
@@ -1046,57 +1055,8 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        // Add to Calendar Function
-        function addToCalendar(consultationId) {
-            // Get consultation data
-            <?php if (!empty($consultations)) { ?>
-                var consultations = <?php echo json_encode($consultations); ?>;
-                var consultation = consultations.find(c => c.id == consultationId);
-
-                if (consultation) {
-                    var startDate = new Date(consultation.consultation_date);
-                    var endDate = new Date(startDate.getTime() + (consultation.duration || 60) * 60000);
-
-                    var title = 'Consultation - ' + (consultation.dietitian_name || 'Diététicien');
-                    var description = 'Type: ' + consultation.consultation_type;
-                    if (consultation.reason) {
-                        description += '\\nMotif: ' + consultation.reason;
-                    }
-                    if (consultation.consultation_mode === 'online' && consultation.meeting_link) {
-                        description += '\\nLien: ' + consultation.meeting_link;
-                    }
-
-                    var location = consultation.consultation_mode === 'in_person' ? (consultation.location || '') : 'En ligne';
-
-                    // Create .ics file
-                    var icsContent = 'BEGIN:VCALENDAR\n';
-                    icsContent += 'VERSION:2.0\n';
-                    icsContent += 'BEGIN:VEVENT\n';
-                    icsContent += 'DTSTART:' + startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z\n';
-                    icsContent += 'DTEND:' + endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z\n';
-                    icsContent += 'SUMMARY:' + title + '\n';
-                    icsContent += 'DESCRIPTION:' + description.replace(/\n/g, '\\n') + '\n';
-                    icsContent += 'LOCATION:' + location + '\n';
-                    icsContent += 'END:VEVENT\n';
-                    icsContent += 'END:VCALENDAR';
-
-                    // Download file
-                    var blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    var link = document.createElement('a');
-                    link.href = window.URL.createObjectURL(blob);
-                    link.download = 'consultation-' + consultationId + '.ics';
-                    link.click();
-
-                    // Haptic feedback
-                    if ('vibrate' in navigator) {
-                        navigator.vibrate(50);
-                    }
-                }
-            <?php } ?>
-        }
-
-        // Touch feedback
-        document.querySelectorAll('.consultation-card, .bottom-nav-item, .btn-action').forEach(function(element) {
+        // Touch feedback for mobile
+        document.querySelectorAll('.panel-title a, .btn-action-panel').forEach(function(element) {
             element.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.97)';
             });
@@ -1107,17 +1067,22 @@
 
         // Haptic feedback
         if ('vibrate' in navigator) {
-            document.querySelectorAll('.btn-action').forEach(function(button) {
+            document.querySelectorAll('.btn-action-panel').forEach(function(button) {
                 button.addEventListener('click', function() {
                     navigator.vibrate(10);
                 });
             });
         }
 
-        // Update countdown every minute for upcoming consultations
-        setInterval(function() {
-            location.reload();
-        }, 60000); // Refresh every minute to update countdown
+        // Auto-scroll to first opened panel
+        $(document).ready(function() {
+            $('.panel-collapse').on('shown.bs.collapse', function() {
+                var panel = $(this).closest('.consultation-panel');
+                $('html, body').animate({
+                    scrollTop: panel.offset().top - 80
+                }, 300);
+            });
+        });
     </script>
 </body>
 </html>

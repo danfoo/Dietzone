@@ -856,7 +856,7 @@ class Portal extends App_Controller
     /**
      * View consultations
      */
-    public function consultations()
+    public function consultations($page = 1)
     {
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
@@ -881,11 +881,24 @@ class Portal extends App_Controller
         $data['patient'] = $patient;
         $data['title'] = 'Mes Consultations';
 
+        // Pagination configuration
+        $per_page = 10;
+        $offset = ($page - 1) * $per_page;
+
         // Get all consultations for this patient
         try {
-            $data['consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id);
+            $all_consultations = $this->dietetic_consultations_model->get_by_patient($patient->id);
+            $data['total_consultations'] = count($all_consultations);
+            $data['consultations'] = array_slice($all_consultations, $offset, $per_page);
+            $data['current_page'] = $page;
+            $data['total_pages'] = ceil($data['total_consultations'] / $per_page);
+            $data['per_page'] = $per_page;
         } catch (Exception $e) {
             $data['consultations'] = [];
+            $data['total_consultations'] = 0;
+            $data['current_page'] = 1;
+            $data['total_pages'] = 0;
+            $data['per_page'] = $per_page;
         }
 
         $this->load->view('portal/consultations/index', $data);
