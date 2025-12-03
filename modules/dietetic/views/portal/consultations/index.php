@@ -217,17 +217,8 @@
             box-shadow: 0 4px 16px rgba(1, 128, 123, 0.15);
         }
 
-        .consultation-panel.upcoming {
-            border-left: 4px solid #01807B;
-        }
-
         .consultation-panel.past {
             opacity: 0.9;
-            border-left: 4px solid #6c757d;
-        }
-
-        .consultation-panel.cancelled {
-            border-left: 4px solid #dc3545;
         }
 
         /* Panel Heading */
@@ -805,7 +796,7 @@
                     <div class="consultation-panel <?php echo $panel_class; ?>">
                         <div class="panel-heading" role="tab" id="heading<?php echo $consultation->id; ?>">
                             <h4 class="panel-title">
-                                <a role="button" data-toggle="collapse" data-parent="#consultationsAccordion"
+                                <a role="button" data-toggle="collapse"
                                    href="#collapse<?php echo $consultation->id; ?>"
                                    aria-expanded="<?php echo $index === 0 ? 'true' : 'false'; ?>"
                                    aria-controls="collapse<?php echo $consultation->id; ?>">
