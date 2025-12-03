@@ -1949,7 +1949,8 @@ class Dietetic_notifications_model extends App_Model
     {
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
 
-        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        // Extract TIME from consultation_date as virtual column 'consultation_time'
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname, TIME(c.consultation_date) as consultation_time');
         $this->db->from(db_prefix() . 'dietic_consultations c');
         $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
         $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
@@ -1977,12 +1978,14 @@ class Dietetic_notifications_model extends App_Model
         $now = date('Y-m-d H:i:s');
         $one_hour_later = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        // Extract TIME from consultation_date as virtual column 'consultation_time'
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname, TIME(c.consultation_date) as consultation_time');
         $this->db->from(db_prefix() . 'dietic_consultations c');
         $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
         $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
-        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) <=', $one_hour_later);
-        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) >', $now);
+        // consultation_date is already a DATETIME containing both date and time
+        $this->db->where('c.consultation_date <=', $one_hour_later);
+        $this->db->where('c.consultation_date >', $now);
         $this->db->where('c.status !=', 'cancelled');
 
         $results = $this->db->get()->result();
