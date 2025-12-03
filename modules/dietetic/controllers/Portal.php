@@ -153,7 +153,9 @@ class Portal extends App_Controller
             'test_notification_manual',
             'migrate_notifications_to_patient_table',
             'debug_meal_reminder',
-            'check_cron_execution'
+            'check_cron_execution',
+            'check_perfex_cron',
+            'test_cron_complete'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
