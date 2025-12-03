@@ -271,7 +271,17 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('prefs.reminder_weight_day', $today);
         $this->db->where('prefs.reminder_weight_time', $current_time);
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu ce rappel aujourd'hui
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_today($patient->patient_id, 'reminder_weight')) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -322,7 +332,17 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('prefs.reminder_water', 1);
         $this->db->like('prefs.reminder_water_times', $current_time);
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu un rappel eau cette heure
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_this_hour($patient->patient_id, 'reminder_water')) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -444,6 +464,32 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('patient_id', $patient_id);
         $this->db->where('notification_type', $notification_type);
         $this->db->where('created_at >=', $one_hour_ago);
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
+    }
+
+    /**
+     * Vérifie si une notification a été envoyée dans l'heure courante
+     * Protection anti-doublons pour les rappels d'eau (plusieurs par jour)
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé cette heure
+     */
+    private function was_sent_this_hour($patient_id, $notification_type)
+    {
+        $current_hour_start = date('Y-m-d H:00:00');
+        $current_hour_end = date('Y-m-d H:59:59');
+
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $current_hour_start);
+        $this->db->where('created_at <=', $current_hour_end);
 
         $query = $this->db->get();
         $result = $query->row();
