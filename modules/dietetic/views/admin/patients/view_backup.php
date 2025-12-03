@@ -4,296 +4,96 @@
 <?php init_head(); ?>
 
 <style>
-/* ========================================
-   MODERN PROFESSIONAL DESIGN SYSTEM
-   Pour la page de vue patient
-   Remplace les styles de la ligne 6 à 207
-   ======================================== */
-
+/* Modern Patient View Styles */
 :root {
-    --primary: #01807B;
+    --primary-color: #01807B;
     --primary-dark: #015a57;
-    --primary-light: #02a39d;
-    --secondary: #F3911D;
-    --accent: #2196F3;
-    --success: #4CAF50;
-    --warning: #FF9800;
-    --danger: #F44336;
-    --info: #00BCD4;
-
-    --gray-50: #F9FAFB;
-    --gray-100: #F3F4F6;
-    --gray-200: #E5E7EB;
-    --gray-300: #D1D5DB;
-    --gray-400: #9CA3AF;
-    --gray-500: #6B7280;
-    --gray-600: #4B5563;
-    --gray-700: #374151;
-    --gray-800: #1F2937;
-    --gray-900: #111827;
-
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.10), 0 4px 6px rgba(0,0,0,0.05);
-    --shadow-xl: 0 20px 25px rgba(0,0,0,0.10), 0 10px 10px rgba(0,0,0,0.04);
-
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 20px;
+    --secondary-color: #F3911D;
+    --weight-blue: #3498db;
+    --current-green: #2ecc71;
+    --target-orange: #F3911D;
+    --bmi-red: #e74c3c;
 }
 
-* {
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    background: var(--gray-100);
-}
-
-/* ========================================
-   MODERN PANEL DESIGN
-   ======================================== */
-
+/* Enhanced Panel Hover Effects */
 .panel_s {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-    background: white;
-    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    border-radius: 10px;
 }
 
 .panel_s:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
 }
 
 .panel-body {
-    padding: 24px;
+    border-radius: 10px;
 }
 
-/* ========================================
-   PATIENT HEADER - MODERN GRADIENT
-   ======================================== */
-
-.patient-header-enhanced {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg) !important;
-    box-shadow: var(--shadow-xl);
-}
-
-.patient-header-enhanced .panel-body {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: white;
-    padding: 32px 40px;
-    border-radius: var(--radius-lg);
-    position: relative;
-}
-
-.patient-header-enhanced::before {
-    content: '';
-    position: absolute;
-    top: -100px;
-    right: -100px;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-    border-radius: 50%;
-}
-
-.patient-header-enhanced h2 {
-    font-weight: 700;
-    font-size: 32px;
-    margin: 0 0 8px 0;
-    display: flex;
-    align-items: center;
-}
-
-.patient-header-enhanced h2 i {
-    margin-right: 16px;
-    width: 54px;
-    height: 54px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.patient-header-enhanced p {
-    font-size: 14px;
-    opacity: 0.95;
-}
-
-/* ========================================
-   STAT CARDS - MODERN DESIGN
-   ======================================== */
-
+/* Stat Card Enhancements */
 .stat-card-enhanced {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: visible;
-    border-radius: var(--radius-lg);
-    background: white;
-    border: 1px solid var(--gray-200);
+    overflow: hidden;
 }
 
-.stat-card-enhanced::before {
+.stat-card-enhanced::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    top: -50%;
+    right: -50%;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
     transition: all 0.3s ease;
 }
 
-.stat-card-enhanced[style*="border-left: 4px solid #3498db"]::before {
-    background: #3498db;
-}
-
-.stat-card-enhanced[style*="border-left: 4px solid #2ecc71"]::before {
-    background: #2ecc71;
-}
-
-.stat-card-enhanced[style*="border-left: 4px solid #f39c12"]::before {
-    background: #f39c12;
-}
-
-.stat-card-enhanced[style*="border-left: 4px solid #e74c3c"]::before {
-    background: #e74c3c;
+.stat-card-enhanced:hover::after {
+    transform: scale(3);
 }
 
 .stat-card-enhanced:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: var(--shadow-xl);
-    border-color: transparent;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-.stat-card-enhanced:hover::before {
-    width: 100%;
-    opacity: 0.08;
-    border-radius: var(--radius-lg);
-}
-
-.stat-card-enhanced .panel-body {
-    padding: 24px 20px;
-}
-
-.stat-card-enhanced h4 {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 8px 0;
-}
-
-.stat-card-enhanced .text-muted {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-card-enhanced > div > div {
-    font-size: 40px;
-}
-
-/* ========================================
-   BUTTONS - MODERN STYLE
-   ======================================== */
-
-.btn {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    padding: 10px 20px;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-lg {
-    padding: 12px 28px;
-    font-size: 15px;
-}
-
-.btn[style*="background: white"] {
-    box-shadow: var(--shadow-sm);
-}
-
-/* ========================================
-   TABLES - MODERN DESIGN
-   ======================================== */
-
+/* Table Enhancements */
 .table-hover tbody tr {
     transition: all 0.2s ease;
 }
 
 .table-hover tbody tr:hover {
-    background-color: var(--gray-50) !important;
-    transform: translateX(4px);
-    box-shadow: -4px 0 0 var(--primary);
+    background-color: #f8f9fa !important;
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.table {
-    border-radius: var(--radius-md);
-    overflow: hidden;
+/* Button Enhancements */
+.btn {
+    transition: all 0.2s ease;
 }
 
-.table thead tr {
-    background: var(--gray-100);
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.table thead th {
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--gray-700);
-    padding: 16px;
-    border-bottom: 2px solid var(--gray-300);
-}
-
-.table tbody td {
-    padding: 14px 16px;
-    vertical-align: middle;
-}
-
-/* ========================================
-   INFO BOXES - CARD STYLE
-   ======================================== */
-
+/* Info Box Enhancements */
 .info-box {
     transition: all 0.3s ease;
-    border-radius: var(--radius-md) !important;
-    border: 1px solid var(--gray-200);
-    background: white;
+    border-radius: 8px !important;
 }
 
 .info-box:hover {
-    transform: translateX(4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary);
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* ========================================
-   ALERTS - MODERN STYLE
-   ======================================== */
-
+/* Alert Enhancements */
 .alert {
-    border-radius: var(--radius-md) !important;
+    border-radius: 8px !important;
     animation: slideInDown 0.5s ease;
-    border: none;
-    padding: 18px 24px;
-    box-shadow: var(--shadow-sm);
 }
 
 @keyframes slideInDown {
@@ -307,58 +107,33 @@ body {
     }
 }
 
-.alert-success {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(46, 204, 113, 0.08) 100%);
-    border-left: 4px solid var(--success) !important;
-    color: #2d6a2d;
-}
-
-.alert-warning {
-    background: linear-gradient(135deg, rgba(255, 152, 0, 0.12) 0%, rgba(243, 156, 18, 0.08) 100%);
-    border-left: 4px solid var(--warning) !important;
-    color: #8f5902;
-}
-
-.alert-info {
-    background: linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(0, 188, 212, 0.08) 100%);
-    border-left: 4px solid var(--info) !important;
-    color: #1565c0;
-}
-
-.alert-danger {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.12) 0%, rgba(231, 76, 60, 0.08) 100%);
-    border-left: 4px solid var(--danger) !important;
-    color: #b71c1c;
-}
-
-/* ========================================
-   CHART CONTAINER
-   ======================================== */
-
+/* Chart Container */
 #weightChart {
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    border-radius: 8px;
 }
 
-.chart-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    color: var(--gray-500);
-    font-size: 18px;
+/* Patient Header Enhancement */
+.patient-header-enhanced {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px !important;
 }
 
-/* ========================================
-   PANEL HEADERS - MODERN TITLES
-   ======================================== */
+.patient-header-enhanced::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
 
+/* Panel Headers */
 .panel_s h4 {
     position: relative;
-    padding-left: 16px;
-    font-weight: 700;
-    font-size: 19px;
-    color: var(--gray-900);
+    padding-left: 10px;
 }
 
 .panel_s h4::before {
@@ -367,315 +142,67 @@ body {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 5px;
-    height: 24px;
-    border-radius: 3px;
+    width: 4px;
+    height: 20px;
     background: currentColor;
+    border-radius: 2px;
 }
 
-.panel_s h4[style*="border-bottom"] {
-    border-bottom-width: 3px !important;
-    border-bottom-style: solid !important;
-    padding-bottom: 12px !important;
-    margin-bottom: 24px !important;
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
 }
 
-/* ========================================
-   UPLOAD ZONE - MODERN DROPZONE
-   ======================================== */
+/* Loading State for Chart */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: #95a5a6;
+}
 
+/* Upload Zone for Documents */
 .upload-zone-documents {
-    border: 3px dashed var(--primary);
-    border-radius: var(--radius-lg);
-    padding: 48px 24px;
+    border: 3px dashed #4299e1;
+    border-radius: 12px;
+    padding: 40px 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: rgba(1, 128, 123, 0.04);
-    margin-top: 16px;
+    background: rgba(66, 153, 225, 0.05);
+    margin-top: 12px;
 }
 
 .upload-zone-documents:hover {
-    background: rgba(1, 128, 123, 0.10);
-    border-color: var(--primary-dark);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    background: rgba(66, 153, 225, 0.1);
+    border-color: #2b6cb0;
+    transform: translateY(-2px);
 }
 
 .upload-zone-documents i {
-    font-size: 56px;
-    color: var(--primary);
-    margin-bottom: 20px;
+    font-size: 48px;
+    color: #4299e1;
+    margin-bottom: 16px;
     display: block;
 }
 
 .upload-zone-documents p {
     margin: 0;
-    color: var(--gray-800);
+    color: #2d3748;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 16px;
 }
 
 .upload-zone-documents small {
-    color: var(--gray-600);
+    color: #718096;
     display: block;
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: 8px;
 }
 
 .upload-zone-documents.uploading {
     opacity: 0.6;
     pointer-events: none;
-    cursor: not-allowed;
-}
-
-/* ========================================
-   INFO ITEMS - MODERN CARD STYLE
-   ======================================== */
-
-div[style*="padding: 10px; background: #f8f9fa"] {
-    background: var(--gray-50) !important;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-md) !important;
-    padding: 14px !important;
-    transition: all 0.3s ease;
-}
-
-div[style*="padding: 10px; background: #f8f9fa"]:hover {
-    background: white !important;
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-}
-
-div[style*="padding: 10px; background: #f8f9fa"] label {
-    font-weight: 700 !important;
-    font-size: 11px !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--gray-600) !important;
-}
-
-div[style*="padding: 10px; background: #f8f9fa"] .value {
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    color: var(--gray-900);
-}
-
-/* ========================================
-   OBJECTIVE BOX - MODERN DESIGN
-   ======================================== */
-
-div[style*="background: #fff3cd; border-left: 4px solid #ffc107"] {
-    background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%) !important;
-    border-left: 5px solid var(--warning) !important;
-    border-radius: var(--radius-md) !important;
-    padding: 20px 24px !important;
-    box-shadow: var(--shadow-sm);
-}
-
-div[style*="background: #fff3cd; border-left: 4px solid #ffc107"] h5 {
-    font-weight: 700;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-div[style*="background: #fff3cd; border-left: 4px solid #ffc107"] i {
-    font-size: 20px;
-}
-
-/* ========================================
-   BADGES - MODERN PILL STYLE
-   ======================================== */
-
-.label {
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-weight: 600;
-    font-size: 13px;
-}
-
-.label-success {
-    background: rgba(46, 204, 113, 0.15);
-    color: #27ae60;
-}
-
-.label-warning {
-    background: rgba(243, 156, 18, 0.15);
-    color: #d68910;
-}
-
-.label-danger {
-    background: rgba(231, 76, 60, 0.15);
-    color: #c0392b;
-}
-
-.label-info {
-    background: rgba(52, 152, 219, 0.15);
-    color: #2980b9;
-}
-
-.label-default {
-    background: rgba(149, 165, 166, 0.15);
-    color: #7f8c8d;
-}
-
-/* ========================================
-   NAV TABS - MODERN DESIGN
-   ======================================== */
-
-.nav-tabs {
-    border-bottom: 2px solid var(--gray-300);
-    gap: 4px;
-}
-
-.nav-tabs > li > a {
-    border: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
-    color: var(--gray-600);
-    font-weight: 600;
-    padding: 14px 20px;
-    transition: all 0.2s ease;
-}
-
-.nav-tabs > li > a:hover {
-    background: rgba(1, 128, 123, 0.05);
-    border-bottom-color: var(--primary-light);
-    color: var(--primary);
-}
-
-.nav-tabs > li.active > a,
-.nav-tabs > li.active > a:hover,
-.nav-tabs > li.active > a:focus {
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid var(--primary);
-    color: var(--primary);
-}
-
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.panel_s {
-    animation: slideInUp 0.4s ease backwards;
-}
-
-.panel_s:nth-child(1) { animation-delay: 0.05s; }
-.panel_s:nth-child(2) { animation-delay: 0.10s; }
-.panel_s:nth-child(3) { animation-delay: 0.15s; }
-.panel_s:nth-child(4) { animation-delay: 0.20s; }
-
-/* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
-
-@media (max-width: 768px) {
-    .patient-header-enhanced .panel-body {
-        padding: 24px 20px;
-    }
-
-    .patient-header-enhanced h2 {
-        font-size: 24px;
-    }
-
-    .panel-body {
-        padding: 20px;
-    }
-
-    .stat-card-enhanced h4 {
-        font-size: 24px;
-    }
-}
-
-/* ========================================
-   PULL LEFT/RIGHT - MODERN FLEXBOX
-   ======================================== */
-
-.pull-left {
-    float: left;
-}
-
-.pull-right {
-    float: right;
-}
-
-.clearfix::after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
-/* ========================================
-   ADDITIONAL ENHANCEMENTS
-   ======================================== */
-
-/* Smooth scrolling for anchor links */
-a[href^="#"] {
-    scroll-behavior: smooth;
-}
-
-/* Better focus states */
-button:focus,
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-}
-
-/* Loading states */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Empty states */
-.empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--gray-500);
-}
-
-.empty-state i {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.5;
-}
-
-.empty-state p {
-    font-size: 16px;
-    margin: 0;
-}
-
-/* Print styles */
-@media print {
-    .btn,
-    .panel_s:hover {
-        transform: none !important;
-        box-shadow: none !important;
-    }
-
-    .patient-header-enhanced {
-        background: var(--primary) !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
 }
 </style>
 
