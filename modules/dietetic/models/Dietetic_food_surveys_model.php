@@ -621,10 +621,18 @@ class Dietetic_food_surveys_model extends App_Model
             return [];
         }
 
-        return $this->get_all([
-            $this->table_surveys . '.patient_id' => $patient_id,
-            $this->table_surveys . '.status' => 'active'
-        ]);
+        $today = date('Y-m-d');
+
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('status', 'active');
+        // Exclure les enquêtes dont la date de fin est dépassée
+        $this->db->group_start();
+        $this->db->where('end_date >=', $today);
+        $this->db->or_where('end_date IS NULL');
+        $this->db->group_end();
+        $this->db->order_by('created_at', 'DESC');
+
+        return $this->db->get(db_prefix() . $this->table_surveys)->result();
     }
 
     /**

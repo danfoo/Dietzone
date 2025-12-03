@@ -123,8 +123,15 @@ class Dietetic_programs_model extends App_Model
             return null;
         }
 
+        $today = date('Y-m-d');
+
         $this->db->where('patient_id', $patient_id);
         $this->db->where('status', 'active');
+        // Exclure les programmes dont la date de fin est dépassée
+        $this->db->group_start();
+        $this->db->where('end_date >=', $today);
+        $this->db->or_where('end_date IS NULL');
+        $this->db->group_end();
         $this->db->order_by('start_date', 'DESC');
         $this->db->limit(1);
 
