@@ -9735,5 +9735,196 @@ class Portal extends App_Controller
 </body>
 </html>';
     }
+
+    /**
+     * Vérifier si le cron de Perfex s'exécute réellement
+     * URL: /dietetic/portal/check_perfex_cron
+     */
+    public function check_perfex_cron()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit(50);
+        $this->db->like('description', 'Dietetic Cron', 'both');
+        $logs = $this->db->get(db_prefix() . 'activity_log')->result_array();
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Vérification Cron Perfex - Dietetic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #4CAF50; color: white; padding: 12px; text-align: left; font-weight: bold; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .warning { color: #ff9800; font-weight: bold; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; border-radius: 4px; }
+        .error-box { background: #ffebee; padding: 15px; border-left: 4px solid #f44336; margin: 20px 0; border-radius: 4px; }
+        .success-box { background: #e8f5e9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .timestamp { color: #666; font-size: 0.9em; }
+        .cron-status { padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .status-running { background: #e8f5e9; border: 2px solid #4CAF50; }
+        .status-stopped { background: #ffebee; border: 2px solid #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Vérification du Cron Perfex</h1>
+        <p><strong>Date/Heure actuelle :</strong> ' . date('Y-m-d H:i:s') . '</p>
+        ';
+
+        // Analyse des logs
+        $cron_executions = [];
+        $last_start = null;
+        $last_end = null;
+        $errors = [];
+
+        foreach ($logs as $log) {
+            if (strpos($log['description'], 'Démarrage') !== false) {
+                $last_start = $log['date'];
+            } elseif (strpos($log['description'], 'Fin à') !== false) {
+                $last_end = $log['date'];
+                $cron_executions[] = $log;
+            } elseif (strpos($log['description'], 'Error') !== false) {
+                $errors[] = $log;
+            }
+        }
+
+        // Statut du cron
+        $now = time();
+        $last_run_time = $last_end ? strtotime($last_end) : ($last_start ? strtotime($last_start) : null);
+        $minutes_since_last_run = $last_run_time ? round(($now - $last_run_time) / 60) : null;
+
+        echo '<div class="cron-status ' . ($minutes_since_last_run && $minutes_since_last_run <= 10 ? 'status-running' : 'status-stopped') . '">';
+
+        if ($last_run_time) {
+            if ($minutes_since_last_run <= 10) {
+                echo '<p class="success">✅ <strong>CRON ACTIF</strong> - Dernière exécution il y a ' . $minutes_since_last_run . ' minute(s)</p>';
+                echo '<p>Le cron fonctionne correctement (exécution toutes les 5 minutes attendue).</p>';
+            } else {
+                echo '<p class="error">❌ <strong>CRON ARRÊTÉ</strong> - Dernière exécution il y a ' . $minutes_since_last_run . ' minute(s)</p>';
+                echo '<p>Le cron devrait s\'exécuter toutes les 5 minutes. Il semble arrêté depuis plus de 10 minutes.</p>';
+            }
+            echo '<p><strong>Dernière exécution :</strong> ' . ($last_end ?: $last_start) . '</p>';
+        } else {
+            echo '<p class="error">❌ <strong>AUCUNE EXÉCUTION DÉTECTÉE</strong></p>';
+            echo '<p>Aucune trace d\'exécution du cron dans les logs. Le cron ne semble jamais avoir démarré.</p>';
+        }
+
+        echo '</div>';
+
+        // Erreurs récentes
+        if (!empty($errors)) {
+            echo '<div class="error-box">';
+            echo '<h3>⚠️ Erreurs récentes (' . count($errors) . ')</h3>';
+            echo '<table>';
+            echo '<tr><th>Date</th><th>Message</th></tr>';
+            foreach (array_slice($errors, 0, 10) as $error) {
+                echo '<tr>';
+                echo '<td class="timestamp">' . htmlspecialchars($error['date']) . '</td>';
+                echo '<td class="error">' . htmlspecialchars($error['description']) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+            echo '</div>';
+        }
+
+        // Historique des exécutions
+        echo '<h2>📊 Historique des 20 dernières exécutions</h2>';
+
+        if (!empty($cron_executions)) {
+            echo '<table>';
+            echo '<tr><th>Date</th><th>Résultat</th></tr>';
+            foreach (array_slice($cron_executions, 0, 20) as $exec) {
+                echo '<tr>';
+                echo '<td class="timestamp">' . htmlspecialchars($exec['date']) . '</td>';
+                echo '<td>' . htmlspecialchars($exec['description']) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        } else {
+            echo '<div class="error-box"><p>Aucune exécution complète enregistrée.</p></div>';
+        }
+
+        // Recommandations
+        echo '<h2>💡 Diagnostic et Solutions</h2>';
+
+        if (!$last_run_time || $minutes_since_last_run > 10) {
+            echo '<div class="error-box">';
+            echo '<h3>❌ Problème: Le cron ne s\'exécute pas automatiquement</h3>';
+            echo '<p><strong>Configuration actuelle du cron serveur :</strong></p>';
+            echo '<code>*/5 * * * * /usr/bin/php /home/trpuftja/app/index.php cron/index</code>';
+            echo '<p><strong>Vérifications à effectuer :</strong></p>';
+            echo '<ol>';
+            echo '<li><strong>Vérifier que le cron est bien configuré dans cPanel :</strong>';
+            echo '<ul>';
+            echo '<li>Connectez-vous à cPanel</li>';
+            echo '<li>Allez dans "Cron Jobs"</li>';
+            echo '<li>Vérifiez que la tâche existe et est active</li>';
+            echo '<li>Vérifiez que le chemin est correct : <code>/usr/bin/php /home/trpuftja/app/index.php cron/index</code></li>';
+            echo '</ul></li>';
+            echo '<li><strong>Tester manuellement le cron via SSH :</strong>';
+            echo '<pre style="background:#f5f5f5;padding:10px;border-radius:4px;">cd /home/trpuftja/app
+php index.php cron/index</pre>';
+            echo '<p>Puis rechargez cette page pour voir si une nouvelle exécution apparaît.</p>';
+            echo '</li>';
+            echo '<li><strong>Vérifier les permissions :</strong>';
+            echo '<pre style="background:#f5f5f5;padding:10px;border-radius:4px;">ls -la /home/trpuftja/app/index.php</pre>';
+            echo '<p>Le fichier doit être lisible et exécutable.</p>';
+            echo '</li>';
+            echo '<li><strong>Vérifier les logs du serveur :</strong>';
+            echo '<ul>';
+            echo '<li>Dans cPanel, consultez les logs d\'erreurs</li>';
+            echo '<li>Cherchez des erreurs liées au cron</li>';
+            echo '</ul></li>';
+            echo '</ol>';
+            echo '</div>';
+        } else {
+            echo '<div class="success-box">';
+            echo '<h3>✅ Le cron fonctionne correctement</h3>';
+            echo '<p>Le cron s\'exécute automatiquement toutes les 5 minutes comme prévu.</p>';
+            echo '<p>Si vous ne recevez toujours pas de notifications, le problème se situe dans la logique de détection des rappels à envoyer.</p>';
+            echo '</div>';
+        }
+
+        echo '<div class="info">';
+        echo '<h3>ℹ️ Comment fonctionne le système</h3>';
+        echo '<p><strong>1. Cron du serveur</strong> (toutes les 5 minutes) :</p>';
+        echo '<code>*/5 * * * * /usr/bin/php /home/trpuftja/app/index.php cron/index</code>';
+        echo '<p>↓</p>';
+        echo '<p><strong>2. Perfex exécute son cron</strong> (<code>/application/controllers/Cron.php</code>)</p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>3. Perfex déclenche le hook</strong> <code>after_cron_run</code></p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>4. Notre fonction s\'exécute</strong> : <code>dietetic_send_scheduled_reminders()</code></p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>5. Les notifications sont envoyées</strong> selon les configurations des patients</p>';
+        echo '</div>';
+
+        echo '<div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 4px;">';
+        echo '<p><strong>🔄 Actions rapides :</strong></p>';
+        echo '<ul>';
+        echo '<li><a href="' . base_url('dietetic/portal/check_perfex_cron') . '" style="color: #2196F3;">Recharger cette page</a> pour voir les nouvelles exécutions</li>';
+        echo '<li><a href="' . base_url('dietetic/portal/debug_meal_reminder?meal_type=breakfast') . '" style="color: #2196F3;">Tester la détection des rappels de petit-déjeuner</a></li>';
+        echo '<li><a href="' . base_url('dietetic/portal/check_cron_execution') . '" style="color: #2196F3;">Voir l\'historique des notifications envoyées</a></li>';
+        echo '</ul>';
+        echo '</div>';
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
 }
 
