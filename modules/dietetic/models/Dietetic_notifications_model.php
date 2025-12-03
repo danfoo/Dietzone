@@ -428,6 +428,30 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
+     * Vérifie si une notification a été envoyée dans la dernière heure
+     * Protection anti-doublons pour les rappels H-1 de consultation
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé dans la dernière heure
+     */
+    private function was_sent_last_hour($patient_id, $notification_type)
+    {
+        $one_hour_ago = date('Y-m-d H:i:s', strtotime('-1 hour'));
+
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_patient_notifications');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $one_hour_ago);
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
+    }
+
+    /**
      * Send meal reminder (breakfast, lunch, dinner)
      *
      * @param object $patient Patient object with preferences
@@ -1728,7 +1752,7 @@ class Dietetic_notifications_model extends App_Model
         $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
 
         // Short SMS message
-        $message_sms = "Bonjour {$firstname}, rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
+        $message_sms = "Bonjour {$firstname}, rappel : consultation demain à {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
@@ -1880,7 +1904,17 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('DATE(c.consultation_date)', $tomorrow);
         $this->db->where('c.status !=', 'cancelled');
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu le rappel J-1 aujourd'hui
+        $filtered = [];
+        foreach ($results as $consultation) {
+            if (!$this->was_sent_today($consultation->patient_id, 'consultation_reminder_day')) {
+                $filtered[] = $consultation;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -1899,7 +1933,17 @@ class Dietetic_notifications_model extends App_Model
         $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) >', $now);
         $this->db->where('c.status !=', 'cancelled');
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu le rappel H-1 dans la dernière heure
+        $filtered = [];
+        foreach ($results as $consultation) {
+            if (!$this->was_sent_last_hour($consultation->patient_id, 'consultation_reminder_hour')) {
+                $filtered[] = $consultation;
+            }
+        }
+
+        return $filtered;
     }
 
     // ==================== FOOD SURVEY NOTIFICATIONS ====================
