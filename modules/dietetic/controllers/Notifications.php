@@ -139,6 +139,12 @@ class Notifications extends AdminController
                 // Firebase API v1 (Modern)
                 'firebase_use_v1_api' => $this->input->post('firebase_use_v1_api') ? '1' : '0',
                 'firebase_service_account_json' => $this->input->post('firebase_service_account_json'),
+
+                // OneSignal (Push Notifications for Median)
+                'onesignal_app_id' => $this->input->post('onesignal_app_id'),
+                'onesignal_rest_api_key' => $this->input->post('onesignal_rest_api_key'),
+                'onesignal_user_auth_key' => $this->input->post('onesignal_user_auth_key'),
+                'onesignal_web_enabled' => $this->input->post('onesignal_web_enabled') ? '1' : '0',
             ];
 
             // Log for debugging (hide sensitive data)
@@ -158,6 +164,12 @@ class Notifications extends AdminController
             if (isset($safe_settings['firebase_server_key'])) {
                 $safe_settings['firebase_server_key'] = $settings['firebase_server_key'] ? '***SET***' : '***EMPTY***';
             }
+            if (isset($safe_settings['onesignal_rest_api_key'])) {
+                $safe_settings['onesignal_rest_api_key'] = $settings['onesignal_rest_api_key'] ? '***SET***' : '***EMPTY***';
+            }
+            if (isset($safe_settings['onesignal_user_auth_key'])) {
+                $safe_settings['onesignal_user_auth_key'] = $settings['onesignal_user_auth_key'] ? '***SET***' : '***EMPTY***';
+            }
             log_activity('🔍 [DEBUG] Settings to save: ' . json_encode($safe_settings));
 
             $success_count = 0;
@@ -168,7 +180,7 @@ class Notifications extends AdminController
                 try {
                     // Log each setting before saving (hide sensitive data)
                     $display_value = $value;
-                    if (in_array($key, ['sms_lam_password', 'whatsapp_lam_password', 'whatsapp_api_key', 'firebase_server_key']) && $value) {
+                    if (in_array($key, ['sms_lam_password', 'whatsapp_lam_password', 'whatsapp_api_key', 'firebase_server_key', 'onesignal_rest_api_key', 'onesignal_user_auth_key']) && $value) {
                         $display_value = '***SET***';
                     } elseif ($key === 'firebase_service_account_json' && $value) {
                         $display_value = '***JSON_SET***';
