@@ -1120,6 +1120,11 @@
             document.write('<script src="https://unpkg.com/firebase@9.22.0/firebase-messaging-compat.js"><\/script>');
         }
     </script>
+
+    <!-- OneSignal Scripts for Web Push + Median Integration -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script src="<?php echo module_dir_url('dietetic', 'assets/js/onesignal_push.js'); ?>"></script>
+    <script src="<?php echo module_dir_url('dietetic', 'assets/js/median_onesignal.js'); ?>"></script>
 </head>
 <body>
     <!-- HEADER MAGNIFIQUE -->
