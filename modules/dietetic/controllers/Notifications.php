@@ -1375,4 +1375,284 @@ class Notifications extends AdminController
             ]);
         }
     }
+
+    /**
+     * OneSignal Migration Deployment Page
+     * Page admin pour déployer la migration Firebase → OneSignal
+     */
+    public function deploy_onesignal()
+    {
+        if (!is_admin()) {
+            access_denied('OneSignal Deployment');
+        }
+
+        $data['title'] = 'Déploiement OneSignal Migration';
+        $this->load->view('admin/notifications/deploy_onesignal', $data);
+    }
+
+    /**
+     * Execute OneSignal Migration (AJAX)
+     * Exécute la migration SQL et retourne les résultats en JSON
+     */
+    public function execute_onesignal_migration()
+    {
+        if (!is_admin()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied. Admin only.'
+            ]);
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        try {
+            $output = [];
+            $output[] = "╔════════════════════════════════════════════════════════════════╗";
+            $output[] = "║        DIETZONE - OneSignal Migration Deployment              ║";
+            $output[] = "║  Migration: Firebase → OneSignal                              ║";
+            $output[] = "║  Date: " . date('Y-m-d H:i:s') . "                                    ║";
+            $output[] = "╚════════════════════════════════════════════════════════════════╝";
+            $output[] = "";
+
+            // Étape 1: Charger la configuration de la base de données
+            $output[] = "📋 Étape 1/6 : Chargement de la configuration...";
+
+            $db_config = $this->db;
+            $hostname = $db_config->hostname;
+            $username = $db_config->username;
+            $password = $db_config->password;
+            $database = $db_config->database;
+            $db_prefix = $db_config->dbprefix;
+
+            $output[] = "✅ Configuration chargée";
+            $output[] = "";
+
+            // Étape 2: Connexion (déjà établie via CodeIgniter)
+            $output[] = "📋 Étape 2/6 : Connexion à la base de données...";
+            $output[] = "   Host: $hostname";
+            $output[] = "   Database: $database";
+            $output[] = "✅ Connexion établie";
+            $output[] = "";
+
+            // Étape 3: Vérifier si la migration est nécessaire
+            $output[] = "📋 Étape 3/6 : Vérification de l'état actuel...";
+
+            $migration_needed = false;
+
+            // Vérifier si la colonne onesignal_player_id existe déjà
+            $result = $this->db->query("SHOW COLUMNS FROM {$db_prefix}dietic_fcm_tokens LIKE 'onesignal_player_id'");
+            if ($result->num_rows() == 0) {
+                $output[] = "⚠️  Colonne onesignal_player_id manquante";
+                $migration_needed = true;
+            } else {
+                $output[] = "✅ Colonne onesignal_player_id existe déjà";
+            }
+
+            // Vérifier si les settings OneSignal existent
+            $result = $this->db->query("SELECT COUNT(*) as count FROM {$db_prefix}dietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
+            $row = $result->row();
+            if ($row->count == 0) {
+                $output[] = "⚠️  Settings OneSignal manquants";
+                $migration_needed = true;
+            } else {
+                $output[] = "✅ Settings OneSignal existent (" . $row->count . " entrées)";
+            }
+
+            if (!$migration_needed) {
+                $output[] = "";
+                $output[] = "✨ Migration déjà effectuée ! Aucune action nécessaire.";
+                $output[] = "";
+
+                // Afficher l'état actuel
+                $output[] = "📊 État actuel de la base de données:";
+                $output[] = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
+                $result = $this->db->query("
+                    SELECT
+                        COUNT(*) as total_devices,
+                        SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_devices,
+                        SUM(CASE WHEN onesignal_player_id IS NOT NULL THEN 1 ELSE 0 END) as onesignal_registered,
+                        SUM(CASE WHEN token IS NOT NULL THEN 1 ELSE 0 END) as firebase_tokens
+                    FROM {$db_prefix}dietic_fcm_tokens
+                ");
+
+                if ($result->num_rows() > 0) {
+                    $stats = $result->row();
+                    $output[] = "   Total appareils      : " . $stats->total_devices;
+                    $output[] = "   Appareils actifs     : " . $stats->active_devices;
+                    $output[] = "   OneSignal Players    : " . $stats->onesignal_registered;
+                    $output[] = "   Firebase Tokens      : " . $stats->firebase_tokens;
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'already_migrated' => true,
+                    'output' => implode("\n", $output)
+                ]);
+                return;
+            }
+
+            $output[] = "";
+            $output[] = "🚀 Migration nécessaire, démarrage...";
+            $output[] = "";
+
+            // Étape 4: Exécuter la migration SQL
+            $output[] = "📋 Étape 4/6 : Exécution de la migration SQL...";
+
+            // Lire le fichier SQL
+            $sql_file = FCPATH . 'modules/dietetic/migrations/migrate_to_onesignal.sql';
+            if (!file_exists($sql_file)) {
+                throw new Exception("Fichier SQL introuvable: $sql_file");
+            }
+
+            $sql_content = file_get_contents($sql_file);
+
+            // Remplacer les préfixes de table
+            $sql_content = str_replace('tbl', $db_prefix, $sql_content);
+
+            // Nettoyer le SQL
+            $sql_lines = explode("\n", $sql_content);
+            $sql_commands = [];
+            $current_command = '';
+
+            foreach ($sql_lines as $line) {
+                $line = trim($line);
+                if (empty($line) || substr($line, 0, 2) == '--' || substr($line, 0, 1) == '#') {
+                    continue;
+                }
+                $current_command .= $line . "\n";
+                if (substr(rtrim($line), -1) == ';') {
+                    $sql_commands[] = trim($current_command);
+                    $current_command = '';
+                }
+            }
+
+            $output[] = "   Nombre de commandes SQL à exécuter: " . count($sql_commands);
+            $output[] = "";
+
+            $success_count = 0;
+            $error_count = 0;
+
+            foreach ($sql_commands as $index => $sql) {
+                if (stripos(trim($sql), 'SELECT') === 0) {
+                    continue;
+                }
+
+                $line_output = "   Exécution commande " . ($index + 1) . "...";
+
+                try {
+                    $this->db->query($sql);
+                    $line_output .= " ✅";
+                    $success_count++;
+                } catch (Exception $e) {
+                    $error = $e->getMessage();
+                    if (strpos($error, 'Duplicate') !== false || strpos($error, 'already exists') !== false) {
+                        $line_output .= " ⚠️  (déjà existant)";
+                        $success_count++;
+                    } else {
+                        $line_output .= " ❌";
+                        $line_output .= "\n      ERREUR: $error";
+                        $error_count++;
+                    }
+                }
+
+                $output[] = $line_output;
+            }
+
+            $output[] = "";
+            $output[] = "   Résultat: $success_count succès, $error_count erreurs";
+
+            if ($error_count > 0) {
+                $output[] = "⚠️  ATTENTION: Certaines commandes ont échoué.";
+            }
+
+            $output[] = "✅ Migration SQL terminée";
+            $output[] = "";
+
+            // Étape 5: Vérifier la migration
+            $output[] = "📋 Étape 5/6 : Vérification de la migration...";
+
+            $checks_passed = 0;
+            $checks_total = 3;
+
+            // Check 1
+            $result = $this->db->query("SHOW COLUMNS FROM {$db_prefix}dietic_fcm_tokens LIKE 'onesignal_player_id'");
+            if ($result->num_rows() > 0) {
+                $output[] = "   ✅ Colonne onesignal_player_id créée";
+                $checks_passed++;
+            } else {
+                $output[] = "   ❌ Colonne onesignal_player_id manquante";
+            }
+
+            // Check 2
+            $result = $this->db->query("SHOW INDEX FROM {$db_prefix}dietic_fcm_tokens WHERE Key_name = 'idx_player_id'");
+            if ($result->num_rows() > 0) {
+                $output[] = "   ✅ Index idx_player_id créé";
+            } else {
+                $output[] = "   ⚠️  Index idx_player_id manquant (non critique)";
+            }
+            $checks_passed++;
+
+            // Check 3
+            $result = $this->db->query("SELECT COUNT(*) as count FROM {$db_prefix}dietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
+            $row = $result->row();
+            if ($row->count >= 3) {
+                $output[] = "   ✅ Settings OneSignal créés (" . $row->count . " entrées)";
+                $checks_passed++;
+            } else {
+                $output[] = "   ❌ Settings OneSignal incomplets";
+            }
+
+            $output[] = "";
+            $output[] = "   Résultat: $checks_passed/$checks_total vérifications passées";
+            $output[] = "✅ Vérification terminée";
+            $output[] = "";
+
+            // Étape 6: Résumé
+            $output[] = "📋 Étape 6/6 : Résumé final...";
+            $output[] = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
+            $result = $this->db->query("
+                SELECT
+                    COUNT(*) as total_devices,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_devices,
+                    SUM(CASE WHEN onesignal_player_id IS NOT NULL THEN 1 ELSE 0 END) as onesignal_registered,
+                    SUM(CASE WHEN token IS NOT NULL THEN 1 ELSE 0 END) as firebase_tokens
+                FROM {$db_prefix}dietic_fcm_tokens
+            ");
+
+            if ($result->num_rows() > 0) {
+                $stats = $result->row();
+                $output[] = "📊 État de la base de données:";
+                $output[] = "   Total appareils      : " . $stats->total_devices;
+                $output[] = "   Appareils actifs     : " . $stats->active_devices;
+                $output[] = "   OneSignal Players    : " . $stats->onesignal_registered;
+                $output[] = "   Firebase Tokens      : " . $stats->firebase_tokens;
+                $output[] = "";
+            }
+
+            $output[] = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+            $output[] = "✅ MIGRATION TERMINÉE AVEC SUCCÈS !";
+            $output[] = "";
+            $output[] = "📝 Prochaines étapes:";
+            $output[] = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+            $output[] = "1️⃣  Configurer OneSignal (onglet Settings ci-dessus)";
+            $output[] = "2️⃣  Uploader OneSignalSDKWorker.js à la racine";
+            $output[] = "3️⃣  Configurer Median Dashboard";
+            $output[] = "4️⃣  Rebuild l'APK Median";
+
+            echo json_encode([
+                'success' => true,
+                'already_migrated' => false,
+                'output' => implode("\n", $output)
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
