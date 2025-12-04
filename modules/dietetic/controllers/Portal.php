@@ -128,9 +128,9 @@ class Portal extends App_Controller
             'invoice',
             // Subscription management methods
             'subscriptions',
-            'subscription'
-            // NOTE: Debug/test/diagnostic methods have been disabled for production
-            // To re-enable for development, add them back to this array
+            'subscription',
+            // Diagnostic methods
+            'diagnostic_onesignal'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -10372,6 +10372,252 @@ php index.php cron/index</pre>';
         }
 
         echo '<div style="margin-top: 30px;"><a href="' . base_url('dietetic/portal/test_cron_complete') . '" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:4px;">🔄 Relancer le test</a></div>';
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Diagnostic page for OneSignal Player IDs
+     * URL: /dietetic/portal/diagnostic_onesignal
+     */
+    public function diagnostic_onesignal()
+    {
+        // Set header
+        header('Content-Type: text/html; charset=utf-8');
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 Diagnostic OneSignal Player IDs</title>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; padding: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #FF5722; border-bottom: 3px solid #FF5722; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; border-left: 4px solid #FF5722; padding-left: 15px; }
+        .stat-box { display: inline-block; margin: 10px; padding: 20px 30px; background: linear-gradient(135deg, #FF5722 0%, #F3911D 100%); color: white; border-radius: 8px; min-width: 200px; }
+        .stat-box h3 { margin: 0; font-size: 36px; }
+        .stat-box p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #FF5722; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f9f9f9; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-active { background: #48bb78; color: white; }
+        .badge-inactive { background: #cbd5e0; color: #4a5568; }
+        .alert { padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .alert-success { background: #d4edda; border-left: 4px solid #48bb78; color: #155724; }
+        .alert-warning { background: #fff3cd; border-left: 4px solid #ffc107; color: #856404; }
+        .alert-info { background: #d1ecf1; border-left: 4px solid #17a2b8; color: #0c5460; }
+        .code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+        .section { margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 8px; }
+        .activity-log { max-height: 400px; overflow-y: auto; background: #f4f4f4; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        .activity-log div { padding: 5px 0; border-bottom: 1px solid #ddd; }
+        .activity-log .error { color: #dc3545; font-weight: bold; }
+        .activity-log .success { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">';
+
+        echo '<h1>🔍 Diagnostic OneSignal Player IDs</h1>';
+        echo '<p style="color: #666; margin-bottom: 30px;">Analyse complète des Player IDs OneSignal dans la base de données</p>';
+
+        // Section 1: Database Statistics
+        echo '<h2>📊 Statistiques Database</h2>';
+
+        try {
+            // Count total fcm_tokens records
+            $total_records = $this->db
+                ->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Count records with OneSignal Player ID
+            $this->db->where('onesignal_player_id IS NOT NULL');
+            $this->db->where('onesignal_player_id !=', '');
+            $with_player_id = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Count active Player IDs
+            $this->db->where('onesignal_player_id IS NOT NULL');
+            $this->db->where('onesignal_player_id !=', '');
+            $this->db->where('is_active', 1);
+            $active_player_ids = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Count unique patients with Player IDs
+            $this->db->select('COUNT(DISTINCT patient_id) as total');
+            $this->db->where('onesignal_player_id IS NOT NULL');
+            $this->db->where('onesignal_player_id !=', '');
+            $this->db->where('is_active', 1);
+            $result = $this->db->get(db_prefix() . 'dietic_fcm_tokens')->row();
+            $unique_patients = $result ? $result->total : 0;
+
+            echo '<div style="margin: 20px 0;">';
+            echo '<div class="stat-box"><h3>' . $total_records . '</h3><p>Total enregistrements</p></div>';
+            echo '<div class="stat-box"><h3>' . $with_player_id . '</h3><p>Avec Player ID</p></div>';
+            echo '<div class="stat-box"><h3>' . $active_player_ids . '</h3><p>Player IDs actifs</p></div>';
+            echo '<div class="stat-box"><h3>' . $unique_patients . '</h3><p>Patients uniques</p></div>';
+            echo '</div>';
+
+            // Section 2: Player IDs Details
+            if ($with_player_id > 0) {
+                echo '<div class="alert alert-success">';
+                echo '<strong>✅ SUCCÈS !</strong> ' . $active_player_ids . ' Player ID(s) OneSignal actif(s) trouvé(s) dans la base de données.';
+                echo '</div>';
+
+                echo '<h2>📋 Détails des Player IDs</h2>';
+                echo '<table>';
+                echo '<tr>';
+                echo '<th>Patient ID</th>';
+                echo '<th>Patient Nom</th>';
+                echo '<th>Player ID</th>';
+                echo '<th>Type</th>';
+                echo '<th>Statut</th>';
+                echo '<th>Créé le</th>';
+                echo '<th>Mis à jour</th>';
+                echo '</tr>';
+
+                // Get all Player IDs with patient info
+                $this->db->select('f.*, p.id as patient_id, c.company as patient_name');
+                $this->db->from(db_prefix() . 'dietic_fcm_tokens f');
+                $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = f.patient_id');
+                $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+                $this->db->where('f.onesignal_player_id IS NOT NULL');
+                $this->db->where('f.onesignal_player_id !=', '');
+                $this->db->order_by('f.updated_at', 'DESC');
+                $player_ids = $this->db->get()->result();
+
+                foreach ($player_ids as $player) {
+                    $status_badge = $player->is_active
+                        ? '<span class="badge badge-active">Actif</span>'
+                        : '<span class="badge badge-inactive">Inactif</span>';
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($player->patient_id) . '</td>';
+                    echo '<td>' . htmlspecialchars($player->patient_name ?? 'N/A') . '</td>';
+                    echo '<td><span class="code">' . htmlspecialchars($player->onesignal_player_id) . '</span></td>';
+                    echo '<td>' . htmlspecialchars($player->device_type ?? 'N/A') . '</td>';
+                    echo '<td>' . $status_badge . '</td>';
+                    echo '<td>' . htmlspecialchars($player->created_at ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($player->updated_at ?? 'N/A') . '</td>';
+                    echo '</tr>';
+                }
+
+                echo '</table>';
+
+            } else {
+                echo '<div class="alert alert-warning">';
+                echo '<strong>⚠️ PROBLÈME DÉTECTÉ</strong><br><br>';
+                echo 'Aucun Player ID OneSignal trouvé dans la base de données.<br><br>';
+                echo '<strong>Diagnostic :</strong><br>';
+                echo '1. Ouvrez le portail patient : <a href="' . site_url('dietetic/portal') . '" target="_blank">' . site_url('dietetic/portal') . '</a><br>';
+                echo '2. Ouvrez la console développeur (F12 → Console)<br>';
+                echo '3. Cherchez les messages <span class="code">[OneSignal]</span><br>';
+                echo '4. Vérifiez si vous voyez des erreurs lors de la sauvegarde du Player ID<br>';
+                echo '</div>';
+            }
+
+            // Section 3: Activity Logs
+            echo '<h2>📝 Logs d\'Activité OneSignal (20 derniers)</h2>';
+
+            $this->db->select('date, description, staffid');
+            $this->db->where('description LIKE', '%[OneSignal]%');
+            $this->db->order_by('date', 'DESC');
+            $this->db->limit(20);
+            $logs = $this->db->get(db_prefix() . 'activity_log')->result();
+
+            if (!empty($logs)) {
+                echo '<div class="activity-log">';
+                foreach ($logs as $log) {
+                    $class = '';
+                    if (stripos($log->description, 'error') !== false || stripos($log->description, 'failed') !== false) {
+                        $class = 'error';
+                    } elseif (stripos($log->description, 'success') !== false) {
+                        $class = 'success';
+                    }
+                    echo '<div class="' . $class . '">';
+                    echo '<strong>' . htmlspecialchars($log->date) . '</strong> - ';
+                    echo htmlspecialchars($log->description);
+                    echo '</div>';
+                }
+                echo '</div>';
+            } else {
+                echo '<div class="alert alert-info">';
+                echo 'Aucun log OneSignal trouvé. Cela peut signifier que la fonction save_onesignal_player_id() n\'a jamais été appelée.';
+                echo '</div>';
+            }
+
+            // Section 4: OneSignal Settings Check
+            echo '<h2>⚙️ Configuration OneSignal</h2>';
+
+            $this->db->where_in('setting_key', ['onesignal_app_id', 'onesignal_rest_api_key', 'onesignal_web_enabled']);
+            $settings = $this->db->get(db_prefix() . 'dietic_notification_settings')->result();
+
+            if (!empty($settings)) {
+                echo '<table>';
+                echo '<tr><th>Paramètre</th><th>Valeur</th><th>Statut</th></tr>';
+                foreach ($settings as $setting) {
+                    $value = $setting->setting_value;
+                    $display_value = $value;
+
+                    // Mask sensitive keys
+                    if ($setting->setting_key === 'onesignal_rest_api_key' && !empty($value)) {
+                        $display_value = substr($value, 0, 10) . '...' . substr($value, -5);
+                    }
+
+                    $status = empty($value) || $value === '0'
+                        ? '<span class="badge badge-inactive">Non configuré</span>'
+                        : '<span class="badge badge-active">Configuré</span>';
+
+                    echo '<tr>';
+                    echo '<td><span class="code">' . htmlspecialchars($setting->setting_key) . '</span></td>';
+                    echo '<td>' . htmlspecialchars($display_value) . '</td>';
+                    echo '<td>' . $status . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            } else {
+                echo '<div class="alert alert-warning">Aucune configuration OneSignal trouvée.</div>';
+            }
+
+            // Section 5: Next Steps
+            echo '<div class="section">';
+            echo '<h2>🎯 Prochaines Étapes</h2>';
+
+            if ($active_player_ids > 0) {
+                echo '<div class="alert alert-success">';
+                echo '<strong>✅ Tout fonctionne correctement !</strong><br><br>';
+                echo 'Vous pouvez maintenant tester l\'envoi de notifications :<br>';
+                echo '<a href="' . admin_url('dietetic/notifications/test_push') . '" target="_blank" style="color: #FF5722; font-weight: bold;">→ Page de test des notifications</a>';
+                echo '</div>';
+            } else {
+                echo '<div class="alert alert-warning">';
+                echo '<strong>⚠️ Action requise</strong><br><br>';
+                echo '<ol style="margin: 10px 0 0 20px;">';
+                echo '<li>Vérifiez que OneSignal est activé dans les <a href="' . admin_url('dietetic/notifications/settings') . '" target="_blank">paramètres</a></li>';
+                echo '<li>Ouvrez le portail patient et acceptez les notifications</li>';
+                echo '<li>Vérifiez la console développeur pour voir les logs [OneSignal]</li>';
+                echo '<li>Rechargez cette page pour voir si le Player ID a été enregistré</li>';
+                echo '</ol>';
+                echo '</div>';
+            }
+
+            echo '</div>';
+
+        } catch (Exception $e) {
+            echo '<div class="alert alert-danger">';
+            echo '<strong>❌ ERREUR</strong><br>';
+            echo 'Exception: ' . htmlspecialchars($e->getMessage()) . '<br>';
+            echo 'Trace: <pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+            echo '</div>';
+        }
+
+        echo '<div style="margin-top: 30px; text-align: center;">';
+        echo '<a href="' . site_url('dietetic/portal/diagnostic_onesignal') . '" style="display: inline-block; padding: 12px 24px; background: #FF5722; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">🔄 Recharger le diagnostic</a>';
+        echo ' ';
+        echo '<a href="' . admin_url('dietetic/notifications/settings') . '" style="display: inline-block; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">⚙️ Paramètres OneSignal</a>';
+        echo '</div>';
 
         echo '
     </div>
