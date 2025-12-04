@@ -5,7 +5,15 @@
  * Usage: Access via browser to see Player IDs status
  */
 
+// Set content type to plain text for better readability
+header('Content-Type: text/plain; charset=utf-8');
+
 // Load database configuration
+// We need to define BASEPATH to avoid "No direct script access allowed" error
+if (!defined('BASEPATH')) {
+    define('BASEPATH', dirname(__FILE__) . '/../../');
+}
+
 $db_config_path = dirname(__FILE__) . '/../../application/config/database.php';
 
 if (!file_exists($db_config_path)) {
