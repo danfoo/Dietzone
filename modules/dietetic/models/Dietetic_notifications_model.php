@@ -1260,7 +1260,8 @@ class Dietetic_notifications_model extends App_Model
     }
 
     /**
-     * Send push notification via Firebase Cloud Messaging
+     * Send push notification via OneSignal
+     * (Remplace Firebase pour compatibilité Median + Web)
      */
     private function send_push_notification($patient_id, $type, $title, $message, $data = [])
     {
@@ -1268,7 +1269,7 @@ class Dietetic_notifications_model extends App_Model
             'patient_id' => $patient_id,
             'notification_type' => $type,
             'channel' => 'push',
-            'recipient' => 'firebase_token',
+            'recipient' => 'onesignal_player',
             'subject' => $title,
             'message' => $message,
             'status' => 'pending',
@@ -1276,16 +1277,16 @@ class Dietetic_notifications_model extends App_Model
         ];
 
         try {
-            // Load Firebase library
-            $this->load->library('dietetic/firebase_cloud_messaging');
+            // Load OneSignal library (remplace Firebase)
+            $this->load->library('dietetic/onesignal_cloud_messaging');
 
-            if (!$this->firebase_cloud_messaging->is_enabled()) {
+            if (!$this->onesignal_cloud_messaging->is_enabled()) {
                 throw new Exception('Push notifications are not enabled');
             }
 
             // Prepare notification options
             $options = [
-                'click_action' => $data['click_action'] ?? site_url('dietetic/portal'),
+                'click_action' => $data['click_action'] ?? $data['url'] ?? site_url('dietetic/portal'),
                 'icon' => $data['icon'] ?? base_url('uploads/company/favicon.png'),
             ];
 
@@ -1293,8 +1294,8 @@ class Dietetic_notifications_model extends App_Model
                 $options['image'] = $data['image'];
             }
 
-            // Send to patient (all devices)
-            $result = $this->firebase_cloud_messaging->send_to_patient(
+            // Send to patient (all devices via OneSignal)
+            $result = $this->onesignal_cloud_messaging->send_to_patient(
                 $patient_id,
                 $title,
                 $message,
@@ -1302,10 +1303,15 @@ class Dietetic_notifications_model extends App_Model
                 $options
             );
 
-            if ($result['success'] || (isset($result['success_count']) && $result['success_count'] > 0)) {
+            if ($result['success']) {
                 $log_data['status'] = 'sent';
                 $log_data['sent_at'] = date('Y-m-d H:i:s');
-                $log_data['recipient'] = ($result['success_count'] ?? 1) . ' device(s)';
+                $log_data['recipient'] = ($result['recipients'] ?? 1) . ' device(s)';
+
+                // Log notification ID for tracking
+                if (isset($result['notification_id'])) {
+                    $log_data['external_id'] = $result['notification_id'];
+                }
             } else {
                 $log_data['status'] = 'failed';
                 $log_data['error_message'] = $result['error'] ?? 'Push notification failed';

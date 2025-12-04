@@ -68,6 +68,9 @@ class Portal extends App_Controller
             'save_fcm_token',
             'delete_fcm_token',
             'get_firebase_config',
+            'save_onesignal_player_id',
+            'delete_onesignal_player_id',
+            'get_onesignal_config',
             'get_notifications',
             'delete_notification',
             'mark_notification_read',
@@ -2336,6 +2339,197 @@ class Portal extends App_Controller
             echo json_encode([
                 'success' => false,
                 'message' => 'Token not found or already deleted'
+            ]);
+        }
+    }
+
+    /**
+     * Save OneSignal Player ID (remplace save_fcm_token pour OneSignal)
+     */
+    public function save_onesignal_player_id()
+    {
+        // Prevent any output buffering issues
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        header('Content-Type: application/json');
+        http_response_code(200);
+
+        try {
+            log_activity('[OneSignal] save_onesignal_player_id called');
+
+            if (!is_client_logged_in()) {
+                log_activity('[OneSignal] User not logged in');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Not authenticated'
+                ]);
+                return;
+            }
+
+            // Get patient record
+            $client_id = get_client_user_id();
+            log_activity('[OneSignal] Client ID: ' . $client_id);
+
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                log_activity('[OneSignal] Patient not found for client: ' . $client_id);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Patient not found'
+                ]);
+                return;
+            }
+
+            log_activity('[OneSignal] Patient found: ' . $patient->id);
+
+            // Get POST data - support both JSON and form-encoded
+            $player_id = $this->input->post('player_id');
+            $device_type = $this->input->post('device_type');
+            $device_name = $this->input->post('device_name');
+
+            // If not form POST, try JSON
+            if (empty($player_id)) {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                $player_id = $data['player_id'] ?? null;
+                $device_type = $data['device_type'] ?? null;
+                $device_name = $data['device_name'] ?? null;
+                log_activity('[OneSignal] Received data via JSON: ' . ($data ? 'Valid' : 'Invalid'));
+            } else {
+                log_activity('[OneSignal] Received data via POST form');
+            }
+
+            if (empty($player_id)) {
+                log_activity('[OneSignal] Player ID missing in request');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Player ID is required'
+                ]);
+                return;
+            }
+
+            log_activity('[OneSignal] Player ID received: ' . $player_id);
+
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+            log_activity('[OneSignal] OneSignal library loaded');
+
+            // Prepare device info
+            $device_info = [
+                'device_name' => $device_name ?? 'Unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                'ip_address' => $this->input->ip_address(),
+            ];
+
+            // Register player
+            log_activity('[OneSignal] Calling register_player for patient: ' . $patient->id);
+            $result = $this->onesignal_cloud_messaging->register_player(
+                $patient->id,
+                $player_id,
+                $device_type ?? 'web',
+                $device_info
+            );
+
+            log_activity('[OneSignal] register_player result: ' . ($result ? 'SUCCESS' : 'FAILED'));
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Player ID registered successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to register player ID'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_activity('[OneSignal ERROR] Exception: ' . $e->getMessage());
+            log_activity('[OneSignal ERROR] Trace: ' . $e->getTraceAsString());
+
+            echo json_encode([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Delete OneSignal Player ID from database
+     */
+    public function delete_onesignal_player_id()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        // Get POST data
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (empty($data['player_id'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Player ID is required'
+            ]);
+            return;
+        }
+
+        // Load OneSignal library
+        $this->load->library('dietetic/onesignal_cloud_messaging');
+
+        // Unregister player
+        $result = $this->onesignal_cloud_messaging->unregister_player($data['player_id']);
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Player ID deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Player ID not found or already deleted'
+            ]);
+        }
+    }
+
+    /**
+     * Get OneSignal configuration for web client
+     */
+    public function get_onesignal_config()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            $config = $this->onesignal_cloud_messaging->get_web_config();
+
+            if ($config) {
+                echo json_encode([
+                    'success' => true,
+                    'config' => $config
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'OneSignal is not configured or enabled'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
             ]);
         }
     }
