@@ -73,8 +73,6 @@
         registerServiceWorker: function() {
             navigator.serviceWorker.register('/firebase-messaging-sw.js')
                 .then((registration) => {
-                    console.log('[Firebase] Service Worker registered:', registration);
-
                     // Pass config to service worker
                     if (registration.active) {
                         registration.active.postMessage({
@@ -101,13 +99,10 @@
 
             Notification.requestPermission().then((permission) => {
                 if (permission === 'granted') {
-                    console.log('[Firebase] Notification permission granted');
-
                     // Get FCM token
                     messaging.getToken({ vapidKey: firebaseConfig.vapidKey })
                         .then((token) => {
                             if (token) {
-                                console.log('[Firebase] FCM Token:', token);
                                 currentToken = token;
 
                                 // Save token to server
@@ -124,7 +119,6 @@
                             if (callback) callback(false, error.message);
                         });
                 } else {
-                    console.log('[Firebase] Notification permission denied');
                     if (callback) callback(false, 'Permission denied');
                 }
             }).catch((error) => {
@@ -153,9 +147,7 @@
             })
             .then(response => response.json())
             .then(result => {
-                if (result.success) {
-                    console.log('[Firebase] Token saved to server');
-                } else {
+                if (!result.success) {
                     console.error('[Firebase] Failed to save token:', result.message);
                 }
             })
@@ -169,8 +161,6 @@
          */
         handleForegroundMessages: function() {
             messaging.onMessage((payload) => {
-                console.log('[Firebase] Message received:', payload);
-
                 const notificationTitle = payload.notification?.title || 'DietZone';
                 const notificationOptions = {
                     body: payload.notification?.body || 'Nouvelle notification',
@@ -218,7 +208,6 @@
 
             messaging.deleteToken()
                 .then(() => {
-                    console.log('[Firebase] Token deleted');
                     currentToken = null;
 
                     // Remove from server

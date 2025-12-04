@@ -14,7 +14,6 @@
     }
 
     function addBlogMenu() {
-        console.log('[Force Blog Menu] Script lancé');
 
         // Chercher le menu Dietetic dans la sidebar
         var dieteticMenu = document.querySelector('li.menu-item-dietetic') ||
@@ -26,7 +25,6 @@
             return;
         }
 
-        console.log('[Force Blog Menu] Menu Dietetic trouvé', dieteticMenu);
 
         // Chercher le sous-menu ul
         var submenu = dieteticMenu.querySelector('ul.nav-second-level') ||
@@ -38,12 +36,10 @@
             return;
         }
 
-        console.log('[Force Blog Menu] Sous-menu trouvé', submenu);
 
         // Vérifier si le menu Blog existe déjà
         var existingBlog = submenu.querySelector('a[href*="dietetic/blog"]');
         if (existingBlog) {
-            console.log('[Force Blog Menu] Menu Blog existe déjà');
             return;
         }
 
@@ -77,7 +73,6 @@
             } else {
                 submenu.appendChild(li);
             }
-            console.log('[Force Blog Menu] ✅ Menu Blog ajouté après Recettes');
         } else {
             // Sinon, chercher après Foods
             var foodsItem = submenu.querySelector('a[href*="dietetic/foods"]');
@@ -88,11 +83,9 @@
                 } else {
                     submenu.appendChild(li);
                 }
-                console.log('[Force Blog Menu] ✅ Menu Blog ajouté après Foods');
             } else {
                 // Sinon, ajouter à la fin
                 submenu.appendChild(li);
-                console.log('[Force Blog Menu] ✅ Menu Blog ajouté à la fin');
             }
         }
 

@@ -19,23 +19,19 @@ self.addEventListener('message', (event) => {
             firebaseApp = firebase.initializeApp(firebaseConfig);
             messaging = firebase.messaging();
 
-            console.log('[SW] Firebase initialized in service worker');
         }
     }
 });
 
 // Handle background messages
 self.addEventListener('push', function(event) {
-    console.log('[SW] Push notification received:', event);
 
     if (!event.data) {
-        console.log('[SW] Push event has no data');
         return;
     }
 
     try {
         const data = event.data.json();
-        console.log('[SW] Push data:', data);
 
         const notificationTitle = data.notification?.title || data.data?.title || 'Nouvelle notification';
         const notificationOptions = {
@@ -73,7 +69,6 @@ self.addEventListener('push', function(event) {
 
 // Handle notification click
 self.addEventListener('notificationclick', function(event) {
-    console.log('[SW] Notification clicked:', event.notification);
 
     event.notification.close();
 
@@ -108,7 +103,5 @@ self.addEventListener('notificationclick', function(event) {
 
 // Handle notification close
 self.addEventListener('notificationclose', function(event) {
-    console.log('[SW] Notification closed:', event.notification);
 });
 
-console.log('[SW] Firebase messaging service worker loaded');

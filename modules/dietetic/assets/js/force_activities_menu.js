@@ -13,7 +13,6 @@
     }
 
     function addActivitiesMenu() {
-        console.log('[Force Activities Menu] Script lancé');
 
         // Chercher le menu Dietetic dans la sidebar
         var dieteticMenu = document.querySelector('li.menu-item-dietetic') ||
@@ -25,7 +24,6 @@
             return;
         }
 
-        console.log('[Force Activities Menu] Menu Dietetic trouvé', dieteticMenu);
 
         // Chercher le sous-menu ul
         var submenu = dieteticMenu.querySelector('ul.nav-second-level') ||
@@ -37,12 +35,10 @@
             return;
         }
 
-        console.log('[Force Activities Menu] Sous-menu trouvé', submenu);
 
         // Vérifier si le menu Activités existe déjà
         var existingActivities = submenu.querySelector('a[href*="dietetic/activities"]');
         if (existingActivities) {
-            console.log('[Force Activities Menu] Menu Activités existe déjà');
             return;
         }
 
@@ -74,7 +70,6 @@
             } else {
                 submenu.appendChild(li);
             }
-            console.log('[Force Activities Menu] ✅ Menu Activités ajouté après Enquêtes Alimentaires');
         } else {
             // Sinon, chercher après Programs
             var programsItem = submenu.querySelector('a[href*="dietetic/programs"]');
@@ -85,11 +80,9 @@
                 } else {
                     submenu.appendChild(li);
                 }
-                console.log('[Force Activities Menu] ✅ Menu Activités ajouté après Programs');
             } else {
                 // Sinon, ajouter à la fin
                 submenu.appendChild(li);
-                console.log('[Force Activities Menu] ✅ Menu Activités ajouté à la fin');
             }
         }
 

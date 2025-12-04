@@ -14,10 +14,12 @@
 
         $.post(site_url + 'dietetic/portal/add_measurement', formData, function(response) {
             if (response.success) {
-                alert('Measurement added successfully!');
+                // Reload page to show new measurement
                 location.reload();
             } else {
-                alert('Error: ' + response.message);
+                // Show error message in form
+                var errorMsg = '<div class="alert alert-danger">' + (response.message || 'An error occurred') + '</div>';
+                form.prepend(errorMsg);
             }
         }, 'json');
     }

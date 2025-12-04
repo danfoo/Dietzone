@@ -13,7 +13,6 @@
     }
 
     function addRecipesMenu() {
-        console.log('[Force Recipes Menu] Script lancé');
 
         // Chercher le menu Dietetic dans la sidebar
         var dieteticMenu = document.querySelector('li.menu-item-dietetic') ||
@@ -25,7 +24,6 @@
             return;
         }
 
-        console.log('[Force Recipes Menu] Menu Dietetic trouvé', dieteticMenu);
 
         // Chercher le sous-menu ul
         var submenu = dieteticMenu.querySelector('ul.nav-second-level') ||
@@ -37,12 +35,10 @@
             return;
         }
 
-        console.log('[Force Recipes Menu] Sous-menu trouvé', submenu);
 
         // Vérifier si le menu Recettes existe déjà
         var existingRecipes = submenu.querySelector('a[href*="dietetic/recipes"]');
         if (existingRecipes) {
-            console.log('[Force Recipes Menu] Menu Recettes existe déjà');
             return;
         }
 
@@ -74,11 +70,9 @@
             } else {
                 submenu.appendChild(li);
             }
-            console.log('[Force Recipes Menu] ✅ Menu Recettes ajouté après Foods');
         } else {
             // Sinon, ajouter à la fin
             submenu.appendChild(li);
-            console.log('[Force Recipes Menu] ✅ Menu Recettes ajouté à la fin');
         }
 
         // Ajouter un style pour le mettre en évidence (temporaire)

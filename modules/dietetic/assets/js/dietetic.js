@@ -5,15 +5,10 @@
 // Check if jQuery is available
 if (typeof jQuery === 'undefined') {
     console.error('DIETETIC.JS: jQuery is not loaded!');
-} else {
-    console.log('DIETETIC.JS: jQuery is loaded, version: ' + jQuery.fn.jquery);
 }
 
 (function($) {
     'use strict';
-
-    // Verify we're inside the closure properly
-    console.log('DIETETIC.JS: Initializing module...');
 
     /**
      * Initialize datatables
@@ -377,8 +372,6 @@ if (typeof jQuery === 'undefined') {
         if (window.location.href.indexOf('/admin/dietetic') !== -1) {
             // Wait for window to fully load (after Perfex's own menu initialization)
             setTimeout(function() {
-                console.log('Attempting to activate Dietetic menu...');
-
                 // Find the parent Dietetic menu item
                 var $dieteticMenuItem = null;
 
@@ -390,19 +383,14 @@ if (typeof jQuery === 'undefined') {
                     // Find the parent menu item (not child)
                     if (href && (href === admin_url + 'dietetic' || href === admin_url + 'dietetic/')) {
                         $dieteticMenuItem = $link.closest('li');
-                        console.log('Found Dietetic parent menu item');
                         return false; // break
                     }
                 });
 
                 if ($dieteticMenuItem && $dieteticMenuItem.length) {
                     // Get current URL path
-                    var currentUrl = window.location.href;
                     var currentPath = window.location.pathname;
                     var foundActiveChild = false;
-
-                    console.log('Current URL: ' + currentUrl);
-                    console.log('Current Path: ' + currentPath);
 
                     // Find all child menu items
                     $dieteticMenuItem.find('ul li').each(function() {
@@ -421,11 +409,9 @@ if (typeof jQuery === 'undefined') {
                                         var url = new URL(childHref);
                                         childPath = url.pathname;
                                     } catch (e) {
-                                        console.log('Error parsing URL: ' + childHref);
+                                        // Silently handle URL parsing errors
                                     }
                                 }
-
-                                console.log('Checking child: ' + childPath);
 
                                 // Check if current path matches this child
                                 // Use exact match or startsWith for child routes
@@ -437,14 +423,10 @@ if (typeof jQuery === 'undefined') {
                                     // Mark this child as active
                                     $child.addClass('active');
                                     foundActiveChild = true;
-                                    console.log('✓ Marked child as active: ' + childPath);
                                 }
                             }
                         }
                     });
-
-                    // Always expand parent on dietetic pages (not just when child is active)
-                    console.log('Expanding parent menu (foundActiveChild: ' + foundActiveChild + ')');
 
                     // Mark parent as active
                     $dieteticMenuItem.addClass('active');
@@ -453,17 +435,13 @@ if (typeof jQuery === 'undefined') {
                     var $submenu = $dieteticMenuItem.find('> ul');
                     if ($submenu.length) {
                         $submenu.addClass('in').show();
-                        console.log('Expanded parent menu');
                     }
 
                     // Set aria-expanded on parent link
                     var $parentLink = $dieteticMenuItem.find('> a');
                     if ($parentLink.length) {
                         $parentLink.attr('aria-expanded', 'true');
-                        console.log('Set aria-expanded on parent link');
                     }
-                } else {
-                    console.log('Could not find Dietetic parent menu item');
                 }
             }, 500); // Wait 500ms to ensure Perfex has initialized its menu
         }

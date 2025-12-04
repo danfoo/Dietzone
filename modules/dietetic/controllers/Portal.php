@@ -48,9 +48,6 @@ class Portal extends App_Controller
             'consultation',
             'my_dietitians',
             'rate_dietitian',
-            'test',
-            'test_with_param',
-            'repair_orphans',
             'food_surveys',
             'food_survey_submit',
             'save_daily_entry',
@@ -75,18 +72,6 @@ class Portal extends App_Controller
             'delete_notification',
             'mark_notification_read',
             'mark_all_notifications_read',
-            'debug_prefs',
-            'debug_firebase',
-            'run_firebase_fix',
-            'check_notifications_system',
-            'debug_notifications_raw',
-            'create_patient_notifications_table',
-            'add_test_notifications',
-            'debug_notifications_api',
-            'check_current_user',
-            'fix_notifications_table',
-            'install_patient_notifications',
-            'install_recipe_library',
             // Recipe methods
             'recipes',
             'recipe_view',
@@ -103,8 +88,6 @@ class Portal extends App_Controller
             'blog_search',
             // Gamification
             'achievements',
-            'gamification_diagnostic',
-            'test_api_php',
             // Profile methods
             'profile',
             'update_password',
@@ -126,7 +109,6 @@ class Portal extends App_Controller
             'api_add_statistic_note',
             'api_delete_statistic_note',
             'api_get_calorie_goal',
-            'api_get_calorie_goal_debug',
             // Hydration tracking API methods
             'api_get_hydration_data',
             'api_add_hydration',
@@ -137,25 +119,15 @@ class Portal extends App_Controller
             'get_my_activities',
             'add_activity',
             'delete_activity',
-            'test_activity_post',
             'api_get_today_activities',
             // Invoice and payment methods
             'invoices',
             'invoice',
             // Subscription management methods
             'subscriptions',
-            'subscription',
-            // Meal reminders migration
-            'add_meal_reminders_columns',
-            // Diagnostic tools
-            'diagnostic_notifications',
-            'diagnostic_system',
-            'test_notification_manual',
-            'migrate_notifications_to_patient_table',
-            'debug_meal_reminder',
-            'check_cron_execution',
-            'check_perfex_cron',
-            'test_cron_complete'
+            'subscription'
+            // NOTE: Debug/test/diagnostic methods have been disabled for production
+            // To re-enable for development, add them back to this array
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -165,7 +137,6 @@ class Portal extends App_Controller
         }
 
         // Call the requested method with all parameters
-        log_activity('[DIETETIC DEBUG] Calling method: ' . $method . ' with params: ' . json_encode($params));
         return call_user_func_array([$this, $method], $params);
     }
 
