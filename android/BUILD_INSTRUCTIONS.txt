@@ -1,0 +1,79 @@
+================================================================================
+  INSTRUCTIONS DE COMPILATION - APPLICATION ANDROID DIETSENEGAL
+================================================================================
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  MÉTHODE RAPIDE (Recommandée)                                             ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+1. Ouvrir Android Studio
+2. File > Open > Sélectionner le dossier "android/"
+3. Attendre la synchronisation Gradle (barre de progression en bas)
+4. Build > Build Bundle(s) / APK(s) > Build APK(s)
+5. L'APK sera dans: app/build/outputs/apk/debug/app-debug.apk
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  MÉTHODE LIGNE DE COMMANDE                                                ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Linux/Mac:
+----------
+cd android/
+chmod +x gradlew
+./gradlew assembleDebug
+
+Windows:
+--------
+cd android
+gradlew.bat assembleDebug
+
+L'APK sera généré dans: app/build/outputs/apk/debug/app-debug.apk
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  INSTALLER SUR UN TÉLÉPHONE                                               ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Option 1: Transfert manuel
+---------------------------
+1. Copier l'APK sur le téléphone
+2. Ouvrir le fichier APK
+3. Autoriser l'installation depuis des sources inconnues
+4. Suivre les instructions
+
+Option 2: Via ADB
+-----------------
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+Option 3: Via Android Studio
+-----------------------------
+1. Connecter le téléphone en USB
+2. Activer le débogage USB sur le téléphone
+3. Run > Run 'app' dans Android Studio
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  PRÉREQUIS                                                                ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+✓ Android Studio (version 2022.3 ou plus récente)
+✓ JDK 17 ou supérieur
+✓ Android SDK 34 (Android 14)
+✓ Connexion Internet (pour télécharger les dépendances)
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  PROBLÈMES COURANTS                                                       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Erreur "Gradle sync failed":
+→ Solution: ./gradlew clean
+
+Erreur "SDK not found":
+→ Solution: Tools > SDK Manager > Installer Android SDK 34
+
+APK ne s'installe pas:
+→ Solution: Désinstaller l'ancienne version d'abord
+
+================================================================================
+
+Pour plus de détails, consultez le fichier README.md
+
+================================================================================

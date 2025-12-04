@@ -2007,29 +2007,71 @@ body {
     }
 }
 
-/* Weight Goal Card - Program Style Design */
+/* Weight Goal Card - Ultra Modern Design */
 .weight-goal-card {
-    background: #BAE2E1;
-    border-radius: 24px;
-    padding: 16px 14px;
-    margin-bottom: 20px;
+    background: linear-gradient(-6deg, #ffc925 0%, #43BA8880 35%, #FFF 100%);
+    background-size: 200% 200%;
+    border-radius: 28px;
+    padding: 20px 16px;
+    margin-bottom: 24px;
     color: #2c3e50;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 8px 24px rgba(44, 95, 111, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08),
+                0 4px 12px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
+    transform-style: preserve-3d;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
+.weight-goal-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12),
+                0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Floating particles effect */
 .weight-goal-card::before {
     content: '';
     position: absolute;
-    top: -80px;
-    right: -80px;
-    width: 250px;
-    height: 250px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: particlesFloat 20s linear infinite;
+    opacity: 0.4;
+}
+
+@keyframes particlesFloat {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(40px, 40px); }
+}
+
+/* Animated glow effect */
+.weight-goal-card::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: glowPulse 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translate(20px, 20px) scale(1.1);
+        opacity: 0.6;
+    }
 }
 
 .weight-goal-header {
@@ -2042,53 +2084,98 @@ body {
 }
 
 .weight-goal-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 800;
+    color: #00695C;
     margin: 0;
     padding: 0;
+    text-shadow: 0 2px 10px rgba(0, 105, 92, 0.1);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weight-goal-title::before {
+    content: '🎯';
+    font-size: 22px;
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.15) rotate(-10deg); }
 }
 
 .weight-goal-status {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(245, 165, 74, 0.25);
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #d67f3a;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 6px 14px;
+    border-radius: 24px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #00695C;
     white-space: nowrap;
+    border: 2px solid rgba(0, 105, 92, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 105, 92, 0.15);
+    animation: statusPulse 3s ease-in-out infinite;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(0, 105, 92, 0.15);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 105, 92, 0.25);
+    }
 }
 
 .weight-goal-status i {
-    font-size: 12px;
+    font-size: 13px;
+    animation: iconSpin 3s linear infinite;
+}
+
+@keyframes iconSpin {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(360deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .weight-goal-status.achieved {
-    background: rgba(72, 187, 120, 0.25);
-    color: #2d7a4f;
+    background: rgba(76, 175, 80, 0.2);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #2E7D32;
 }
 
 .weight-goal-status.on-track {
-    background: rgba(66, 153, 225, 0.25);
-    color: #2b5a99;
+    background: rgba(66, 153, 225, 0.2);
+    border-color: rgba(66, 153, 225, 0.4);
+    color: #1976D2;
 }
 
 .weight-goal-status.ahead {
-    background: rgba(159, 122, 234, 0.25);
-    color: #6b46c1;
+    background: rgba(159, 122, 234, 0.2);
+    border-color: rgba(159, 122, 234, 0.4);
+    color: #6A1B9A;
 }
 
 .weight-goal-status.behind {
-    background: rgba(243, 145, 29, 0.25);
-    color: #c77219;
+    background: rgba(255, 152, 0, 0.2);
+    border-color: rgba(255, 152, 0, 0.4);
+    color: #E65100;
 }
 
 .weight-goal-status.no-data {
-    background: rgba(0, 0, 0, 0.1);
-    color: #4a5568;
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #546E7A;
 }
 
 .weight-values-compact {
@@ -2105,24 +2192,58 @@ body {
 }
 
 .weight-value-compact {
-    background: white;
-    border-radius: 12px;
-    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 12px 14px;
     text-align: center;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    min-height: 65px;
-    transition: all 0.3s ease;
-    gap: 6px;
+    min-height: 72px;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.weight-value-compact::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(1, 128, 123, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .weight-value-compact:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(1, 128, 123, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(1, 128, 123, 0.3);
+}
+
+.weight-value-compact:hover::before {
+    opacity: 1;
+    animation: ripple 1.5s ease-out;
+}
+
+@keyframes ripple {
+    from {
+        transform: scale(0);
+        opacity: 1;
+    }
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
 }
 
 .weight-value-icon {
@@ -2130,11 +2251,32 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Icon positioning variants */
+.weight-value-icon-left {
+    flex-direction: row;
+}
+
+.weight-value-icon-right {
+    flex-direction: row-reverse;
+}
+
+.weight-value-compact:hover .weight-value-icon {
+    transform: rotate(360deg) scale(1.1);
+    box-shadow: 0 6px 16px rgba(1, 128, 123, 0.4);
 }
 
 .weight-value-icon i {
     font-size: 20px;
-    color: #01807B;
+    color: white;
+    display: block;
 }
 
 .weight-value-content {
@@ -2175,143 +2317,330 @@ body {
     display: none;
 }
 
-.weight-remaining-simple {
-    text-align: center;
-    margin-bottom: 8px;
-    padding: 12px 10px;
-    background: #F3911D;
-    border-radius: 12px;
+/* Grid for Orange Circle + Progress Circle - Always 2 columns (Mobile WebView) */
+.progress-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
     position: relative;
     z-index: 1;
-    box-shadow: 0 4px 12px rgba(243, 145, 29, 0.3);
+    width: 100%;
 }
 
-.weight-remaining-simple-text {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.9);
+.progress-grid > * {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Circular Progress Container */
+.progress-circle-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+/* SVG Circle Progress */
+.progress-circle-wrapper {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    padding: 5px;
+}
+
+.progress-circle-svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.progress-circle-bg {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.08);
+    stroke-width: 12;
+}
+
+.progress-circle-fill {
+    fill: none;
+    stroke: url(#progressGradient);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 0 8px rgba(1, 128, 123, 0.4));
+}
+
+/* Progress percentage in center */
+.progress-circle-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-circle-percent {
+    font-size: 36px;
+    font-weight: 800;
+    color: #004D40;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.progress-circle-label {
+    font-size: 11px;
+    color: #00695C;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 6px;
 }
 
-.weight-remaining-simple-value {
-    font-size: 24px;
-    font-weight: 700;
+/* Progress ring pulse animation */
+@keyframes circlePulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0));
+    }
+    50% {
+        filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.7));
+    }
+}
+
+.progress-circle-fill.achieved {
+    animation: circlePulse 2s ease-in-out infinite;
+}
+
+/* Orange Circle Styles */
+.progress-circle-wrapper-orange {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    border: none;
+}
+
+.progress-circle-wrapper-orange .progress-circle-bg {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
+.progress-circle-fill-orange {
+    fill: none;
+    stroke: white;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.progress-circle-weight {
+    font-size: 40px;
+    font-weight: 800;
     color: white;
+    line-height: 1;
+    margin-bottom: 4px;
 }
 
-.progress-gauge-container {
-    margin-bottom: 8px;
-    padding: 10px 8px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 1;
-}
-
-.progress-gauge-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    gap: 12px;
-}
-
-.progress-gauge-label {
-    font-size: 10px;
-    color: #4a5568;
-    font-weight: 700;
+.progress-circle-label-orange {
+    font-size: 9px;
+    color: white;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
-.progress-gauge-label i {
-    color: #01807B;
-    font-size: 12px;
-}
-
-.progress-gauge-percent {
-    font-size: 20px;
-    font-weight: 700;
-    color: #2c3e50;
-}
-
-.progress-gauge-bar {
-    position: relative;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.progress-gauge-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #01807B 0%, #019B95 100%);
-    border-radius: 10px;
-    transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-}
-
-.progress-gauge-fill::after {
-    content: '';
+/* Celebration Effects - Confetti */
+.confetti-container {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
-    animation: shimmer 2s infinite;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #FFC107;
+    opacity: 0;
+    animation: confettiFall 3s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(400px) rotate(720deg);
+    }
+}
+
+.confetti:nth-child(1) { left: 10%; animation-delay: 0s; background: #FF9800; }
+.confetti:nth-child(2) { left: 20%; animation-delay: 0.1s; background: #4CAF50; }
+.confetti:nth-child(3) { left: 30%; animation-delay: 0.2s; background: #2196F3; }
+.confetti:nth-child(4) { left: 40%; animation-delay: 0.3s; background: #9C27B0; }
+.confetti:nth-child(5) { left: 50%; animation-delay: 0.4s; background: #FF5722; }
+.confetti:nth-child(6) { left: 60%; animation-delay: 0.5s; background: #FFEB3B; }
+.confetti:nth-child(7) { left: 70%; animation-delay: 0.6s; background: #00BCD4; }
+.confetti:nth-child(8) { left: 80%; animation-delay: 0.7s; background: #E91E63; }
+.confetti:nth-child(9) { left: 90%; animation-delay: 0.8s; background: #8BC34A; }
+.confetti:nth-child(10) { left: 15%; animation-delay: 0.9s; background: #FFC107; }
+
+/* Celebration shake animation */
+.celebrate-shake {
+    animation: celebrationShake 0.5s ease-in-out;
+}
+
+@keyframes celebrationShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Star sparkles for celebration */
+.sparkle {
+    position: absolute;
+    font-size: 20px;
+    animation: sparkleAnimation 1.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes sparkleAnimation {
+    0% {
+        opacity: 1;
+        transform: scale(0) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0) rotate(360deg);
+    }
 }
 
 .weight-motivation-simple {
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.6;
     font-weight: 600;
     text-align: center;
     color: #2c3e50;
     position: relative;
     z-index: 1;
+    padding: 0;
+    background: transparent;
+    animation: messageFloat 3s ease-in-out infinite;
+}
+
+@keyframes messageFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
 }
 
 .weight-motivation-simple.achieved {
-    color: #2d7a4f;
+    color: #2E7D32;
 }
 
 .weight-motivation-simple.on-track {
-    color: #2b5a99;
+    color: #1976D2;
 }
 
 .weight-motivation-simple.ahead {
-    color: #6b46c1;
+    color: #6A1B9A;
 }
 
 .weight-motivation-simple.behind {
-    color: #c77219;
+    color: #E65100;
 }
 
 .weight-motivation-simple.no-data {
-    color: #4a5568;
+    color: #546E7A;
 }
 
 .weight-motivation-simple strong {
     font-weight: 800;
-    color: #01807B;
+    color: #00695C;
 }
 
-/* Mobile responsive */
+/* Mobile WebView optimizations */
 @media (max-width: 768px) {
     .weight-goal-card {
-        padding: 20px 16px;
+        padding: 16px 12px;
+        border-radius: 24px;
+    }
+
+    .weight-goal-title {
+        font-size: 15px;
+    }
+
+    .weight-goal-title::before {
+        font-size: 18px;
+    }
+
+    .progress-grid {
+        gap: 8px;
+    }
+
+    .progress-circle-container {
+        padding: 10px;
+    }
+
+    .progress-circle-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
+    .progress-circle-percent {
+        font-size: 26px;
+    }
+
+    .progress-circle-label {
+        font-size: 9px;
+    }
+
+    .progress-circle-weight {
+        font-size: 30px;
+    }
+
+    .progress-circle-label-orange {
+        font-size: 8px;
+    }
+
+    .weight-value-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .weight-value-icon i {
+        font-size: 16px;
+    }
+
+    .weight-value-compact-number {
+        font-size: 16px;
+    }
+
+    .weight-value-compact-label {
+        font-size: 8px;
     }
 }
 
@@ -3162,50 +3491,319 @@ if (!$current_weight || !$target_weight) {
         </div>
     </div>
 
-    <?php if ($weight_remaining !== null) { ?>
-    <div class="weight-remaining-simple">
-        <div class="weight-remaining-simple-text">
-            <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo 'Objectif atteint !';
-            } elseif ($goal_type == 'gain') {
-                echo 'À rattraper';
-            } else {
-                echo 'Encore à perdre';
-            }
-            ?>
-        </div>
-        <div class="weight-remaining-simple-value">
-            <?php
-            if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
-                echo '🎉';
-            } else {
-                echo number_format($weight_remaining, 1) . ' kg';
-            }
-            ?>
-        </div>
-    </div>
-    <?php } ?>
-
-    <?php if ($current_weight && $target_weight) { ?>
-    <div class="progress-gauge-container">
-        <div class="progress-gauge-header">
-            <div class="progress-gauge-label">
-                <i class="fa fa-chart-line"></i>
-                Progression
+    <!-- Grid: Orange Block + Circle -->
+    <div class="progress-grid">
+        <?php if ($weight_remaining !== null) { ?>
+        <div class="progress-circle-container">
+            <div class="progress-circle-wrapper progress-circle-wrapper-orange">
+                <svg class="progress-circle-svg" viewBox="0 0 160 160">
+                    <defs>
+                        <linearGradient id="progressGradientOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF9800;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#F57C00;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#E65100;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-circle-fill progress-circle-fill-orange <?php echo $overall_status == 'achieved' ? 'achieved' : ''; ?>"
+                            cx="80" cy="80" r="70"
+                            data-progress="<?php echo round($progress_percent); ?>"></circle>
+                </svg>
+                <div class="progress-circle-center">
+                    <div class="progress-circle-weight" data-target="<?php echo $weight_remaining; ?>">
+                        <?php
+                        if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                            echo '🎉';
+                        } else {
+                            echo '0';
+                        }
+                        ?>
+                    </div>
+                    <div class="progress-circle-label-orange">
+                        <?php
+                        if ($overall_status == 'achieved' || $weight_remaining <= 0.5) {
+                            echo 'Objectif atteint !';
+                        } else {
+                            echo 'kg à perdre';
+                        }
+                        ?>
+                    </div>
+                </div>
             </div>
-            <div class="progress-gauge-percent"><?php echo round($progress_percent); ?>%</div>
         </div>
-        <div class="progress-gauge-bar">
-            <div class="progress-gauge-fill" style="width: <?php echo round($progress_percent); ?>%;"></div>
+        <?php } ?>
+
+        <?php if ($current_weight && $target_weight) { ?>
+        <div class="progress-circle-container">
+            <div class="progress-circle-wrapper">
+                <svg class="progress-circle-svg" viewBox="0 0 160 160">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#009688;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#4CAF50;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-circle-fill <?php echo $overall_status == 'achieved' ? 'achieved' : ''; ?>"
+                            cx="80" cy="80" r="70"
+                            data-progress="<?php echo round($progress_percent); ?>"></circle>
+                </svg>
+                <div class="progress-circle-center">
+                    <div class="progress-circle-percent" data-target="<?php echo round($progress_percent); ?>">0</div>
+                    <div class="progress-circle-label">Progression</div>
+                </div>
+            </div>
         </div>
+        <?php } ?>
     </div>
-    <?php } ?>
 
     <div class="weight-motivation-simple <?php echo $overall_status; ?>">
         <?php echo $motivation_message; ?>
     </div>
 </div>
+
+<script>
+// ============================================
+// WEIGHT GOAL ANIMATIONS
+// ============================================
+(function() {
+    'use strict';
+
+    // Check if we're on the right page
+    if (!document.querySelector('.weight-goal-card')) return;
+
+    const overallStatus = '<?php echo $overall_status; ?>';
+    const isAchieved = overallStatus === 'achieved';
+
+    // ============================================
+    // 1. ANIMATED COUNTERS (Rolling Numbers)
+    // ============================================
+    function animateCounter(element, start, end, duration) {
+        const range = end - start;
+        const increment = range / (duration / 16); // 60fps
+        let current = start;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                current = end;
+                clearInterval(timer);
+            }
+            element.textContent = Math.round(current);
+        }, 16);
+    }
+
+    function animateDecimalCounter(element, start, end, duration, decimals = 1) {
+        const range = end - start;
+        const increment = range / (duration / 16);
+        let current = start;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                current = end;
+                clearInterval(timer);
+            }
+            element.textContent = current.toFixed(decimals);
+        }, 16);
+    }
+
+    // ============================================
+    // 2. CIRCULAR PROGRESS ANIMATION
+    // ============================================
+    function animateCircularProgress() {
+        const progressCircle = document.querySelector('.progress-circle-fill:not(.progress-circle-fill-orange)');
+        const percentElement = document.querySelector('.progress-circle-percent');
+
+        if (!progressCircle || !percentElement) return;
+
+        const targetProgress = parseInt(progressCircle.getAttribute('data-progress')) || 0;
+        const circumference = 2 * Math.PI * 70; // r=70
+        const offset = circumference - (targetProgress / 100) * circumference;
+
+        // Animate the circle
+        setTimeout(() => {
+            progressCircle.style.strokeDashoffset = offset;
+        }, 300);
+
+        // Animate the percentage counter
+        setTimeout(() => {
+            const targetPercent = parseInt(percentElement.getAttribute('data-target')) || 0;
+            animateCounter(percentElement, 0, targetPercent, 2000);
+        }, 500);
+    }
+
+    // ============================================
+    // 3. ANIMATE WEIGHT NUMBERS
+    // ============================================
+    function animateWeightNumbers() {
+        const weightNumbers = document.querySelectorAll('.weight-value-compact-number');
+
+        weightNumbers.forEach((el, index) => {
+            const fullText = el.textContent.trim();
+            const match = fullText.match(/^([\d.]+)/);
+
+            if (match) {
+                const targetValue = parseFloat(match[1]);
+                const unit = fullText.replace(match[1], '');
+
+                setTimeout(() => {
+                    // Create a temporary span for the number
+                    const numSpan = document.createElement('span');
+                    numSpan.textContent = '0.0';
+
+                    el.textContent = '';
+                    el.appendChild(numSpan);
+
+                    // Animate
+                    animateDecimalCounter(numSpan, 0, targetValue, 1500, 1);
+
+                    // Add unit back after animation
+                    setTimeout(() => {
+                        const unitSpan = document.createElement('span');
+                        unitSpan.className = 'weight-value-compact-unit';
+                        unitSpan.textContent = unit;
+                        el.appendChild(unitSpan);
+                    }, 1500);
+                }, index * 200);
+            }
+        });
+    }
+
+    // ============================================
+    // 4. ANIMATE ORANGE CIRCLE (KG REMAINING)
+    // ============================================
+    function animateOrangeCircle() {
+        const orangeCircle = document.querySelector('.progress-circle-fill-orange');
+        const weightElement = document.querySelector('.progress-circle-weight');
+
+        if (!orangeCircle || !weightElement) return;
+
+        const targetProgress = parseInt(orangeCircle.getAttribute('data-progress')) || 0;
+        const circumference = 2 * Math.PI * 70; // r=70
+        const offset = circumference - (targetProgress / 100) * circumference;
+
+        // Animate the orange circle
+        setTimeout(() => {
+            orangeCircle.style.strokeDashoffset = offset;
+        }, 300);
+
+        // Animate the weight counter (if not emoji)
+        if (weightElement.textContent.trim() !== '🎉') {
+            setTimeout(() => {
+                const targetWeight = parseFloat(weightElement.getAttribute('data-target')) || 0;
+                animateDecimalCounter(weightElement, 0, targetWeight, 2000, 1);
+            }, 500);
+        }
+    }
+
+    // ============================================
+    // 5. CELEBRATION EFFECTS
+    // ============================================
+    function triggerCelebration() {
+        const card = document.querySelector('.weight-goal-card');
+        if (!card) return;
+
+        // Add confetti
+        const confettiContainer = document.createElement('div');
+        confettiContainer.className = 'confetti-container';
+
+        for (let i = 0; i < 10; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confettiContainer.appendChild(confetti);
+        }
+
+        card.appendChild(confettiContainer);
+
+        // Add shake effect to status badge
+        const statusBadge = document.querySelector('.weight-goal-status');
+        if (statusBadge) {
+            statusBadge.classList.add('celebrate-shake');
+            setTimeout(() => {
+                statusBadge.classList.remove('celebrate-shake');
+            }, 500);
+        }
+
+        // Add sparkles around the circle
+        setTimeout(() => {
+            addSparkles();
+        }, 1000);
+
+        // Remove confetti after animation
+        setTimeout(() => {
+            if (confettiContainer && confettiContainer.parentNode) {
+                confettiContainer.parentNode.removeChild(confettiContainer);
+            }
+        }, 3000);
+    }
+
+    function addSparkles() {
+        const wrapper = document.querySelector('.progress-circle-wrapper');
+        if (!wrapper) return;
+
+        const sparklePositions = [
+            { top: '10%', left: '10%', delay: 0 },
+            { top: '10%', right: '10%', delay: 100 },
+            { bottom: '10%', left: '10%', delay: 200 },
+            { bottom: '10%', right: '10%', delay: 300 },
+        ];
+
+        sparklePositions.forEach(pos => {
+            setTimeout(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.textContent = '⭐';
+                sparkle.style.top = pos.top || 'auto';
+                sparkle.style.bottom = pos.bottom || 'auto';
+                sparkle.style.left = pos.left || 'auto';
+                sparkle.style.right = pos.right || 'auto';
+
+                wrapper.appendChild(sparkle);
+
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 1500);
+            }, pos.delay);
+        });
+    }
+
+    // ============================================
+    // INITIALIZE ALL ANIMATIONS
+    // ============================================
+    function initWeightGoalAnimations() {
+        // Start animations in sequence
+        setTimeout(() => {
+            animateWeightNumbers();
+        }, 300);
+
+        setTimeout(() => {
+            animateOrangeCircle();
+        }, 800);
+
+        setTimeout(() => {
+            animateCircularProgress();
+        }, 1000);
+
+        // Trigger celebration if goal is achieved
+        if (isAchieved) {
+            setTimeout(() => {
+                triggerCelebration();
+            }, 2500);
+        }
+    }
+
+    // Run on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWeightGoalAnimations);
+    } else {
+        initWeightGoalAnimations();
+    }
+})();
+</script>
 
 <!-- Other Stats Cards -->
 <div class="stats-grid">

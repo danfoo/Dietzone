@@ -261,15 +261,27 @@ class Dietetic_notifications_model extends App_Model
         $today = strtolower(date('l')); // monday, tuesday, etc.
         $current_time = date('H:i:00');
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.reminder_weight', 1);
         $this->db->where('prefs.reminder_weight_day', $today);
         $this->db->where('prefs.reminder_weight_time', $current_time);
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu ce rappel aujourd'hui
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_today($patient->patient_id, 'reminder_weight')) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -311,14 +323,26 @@ class Dietetic_notifications_model extends App_Model
     {
         $current_time = date('H:i');
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.reminder_water', 1);
         $this->db->like('prefs.reminder_water_times', $current_time);
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu un rappel eau cette heure
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_this_hour($patient->patient_id, 'reminder_water')) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -329,19 +353,37 @@ class Dietetic_notifications_model extends App_Model
      */
     public function get_patients_for_meal_reminder($meal_type)
     {
+        // Fenêtre de 5 minutes pour capturer les rappels
+        // Si cron passe à 22:25, on envoie les rappels entre 22:20 et 22:25
         $current_time = date('H:i:00');
+        $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
 
         $column_enabled = 'reminder_' . $meal_type;
         $column_time = 'reminder_' . $meal_type . '_time';
 
-        $this->db->select('p.*, prefs.*, patient.email, patient.phonenumber, patient.firstname, patient.lastname');
+        // Select from dietic_patients directly (has email and phone columns)
+        // Join with contacts to get firstname/lastname
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
         $this->db->from(db_prefix() . $this->table_preferences . ' as prefs');
         $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
-        $this->db->join(db_prefix() . 'clients as patient', 'patient.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
         $this->db->where('prefs.' . $column_enabled, 1);
-        $this->db->where('prefs.' . $column_time, $current_time);
 
-        return $this->db->get()->result();
+        // Fenêtre de 5 minutes : entre time_5min_ago et current_time
+        $this->db->where('prefs.' . $column_time . ' >', $time_5min_ago);
+        $this->db->where('prefs.' . $column_time . ' <=', $current_time);
+
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu ce rappel aujourd'hui
+        $filtered = [];
+        foreach ($results as $patient) {
+            if (!$this->was_sent_today($patient->patient_id, 'reminder_' . $meal_type)) {
+                $filtered[] = $patient;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -377,6 +419,88 @@ class Dietetic_notifications_model extends App_Model
         ]);
 
         return $result;
+    }
+
+    /**
+     * Vérifie si une notification a déjà été envoyée aujourd'hui
+     * Protection anti-doublons pour éviter d'envoyer plusieurs fois le même rappel
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé aujourd'hui
+     */
+    private function was_sent_today($patient_id, $notification_type)
+    {
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
+
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $today_start);
+        $this->db->where('created_at <=', $today_end);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
+    }
+
+    /**
+     * Vérifie si une notification a été envoyée dans la dernière heure
+     * Protection anti-doublons pour les rappels H-1 de consultation
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé dans la dernière heure
+     */
+    private function was_sent_last_hour($patient_id, $notification_type)
+    {
+        $one_hour_ago = date('Y-m-d H:i:s', strtotime('-1 hour'));
+
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $one_hour_ago);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
+    }
+
+    /**
+     * Vérifie si une notification a été envoyée dans l'heure courante
+     * Protection anti-doublons pour les rappels d'eau (plusieurs par jour)
+     *
+     * @param int $patient_id ID du patient
+     * @param string $notification_type Type de notification
+     * @return bool True si déjà envoyé cette heure
+     */
+    private function was_sent_this_hour($patient_id, $notification_type)
+    {
+        $current_hour_start = date('Y-m-d H:00:00');
+        $current_hour_end = date('Y-m-d H:59:59');
+
+        // Cherche dans dietic_notification_logs (table réellement utilisée pour les logs)
+        $this->db->select('COUNT(*) as count');
+        $this->db->from(db_prefix() . 'dietic_notification_logs');
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('notification_type', $notification_type);
+        $this->db->where('created_at >=', $current_hour_start);
+        $this->db->where('created_at <=', $current_hour_end);
+        $this->db->where('status', 'sent'); // Ne compter que les notifications réussies
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return ($result && $result->count > 0);
     }
 
     /**
@@ -1680,7 +1804,7 @@ class Dietetic_notifications_model extends App_Model
         $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
 
         // Short SMS message
-        $message_sms = "Bonjour {$firstname}, rappel : consultation demain a {$formatted_time} avec {$dietitian_name}.";
+        $message_sms = "Bonjour {$firstname}, rappel : consultation demain à {$formatted_time} avec {$dietitian_name}.";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
@@ -1825,14 +1949,25 @@ class Dietetic_notifications_model extends App_Model
     {
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
 
-        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        // Extract TIME from consultation_date as virtual column 'consultation_time'
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname, TIME(c.consultation_date) as consultation_time');
         $this->db->from(db_prefix() . 'dietic_consultations c');
         $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
         $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
         $this->db->where('DATE(c.consultation_date)', $tomorrow);
         $this->db->where('c.status !=', 'cancelled');
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu le rappel J-1 aujourd'hui
+        $filtered = [];
+        foreach ($results as $consultation) {
+            if (!$this->was_sent_today($consultation->patient_id, 'consultation_reminder_day')) {
+                $filtered[] = $consultation;
+            }
+        }
+
+        return $filtered;
     }
 
     /**
@@ -1843,15 +1978,27 @@ class Dietetic_notifications_model extends App_Model
         $now = date('Y-m-d H:i:s');
         $one_hour_later = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname');
+        // Extract TIME from consultation_date as virtual column 'consultation_time'
+        $this->db->select('c.*, p.id as patient_id, p.client_id, s.firstname as dietitian_firstname, s.lastname as dietitian_lastname, TIME(c.consultation_date) as consultation_time');
         $this->db->from(db_prefix() . 'dietic_consultations c');
         $this->db->join(db_prefix() . 'dietic_patients p', 'c.patient_id = p.id', 'left');
         $this->db->join(db_prefix() . 'staff s', 'c.dietitian_id = s.staffid', 'left');
-        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) <=', $one_hour_later);
-        $this->db->where('CONCAT(c.consultation_date, " ", COALESCE(c.consultation_time, "00:00:00")) >', $now);
+        // consultation_date is already a DATETIME containing both date and time
+        $this->db->where('c.consultation_date <=', $one_hour_later);
+        $this->db->where('c.consultation_date >', $now);
         $this->db->where('c.status !=', 'cancelled');
 
-        return $this->db->get()->result();
+        $results = $this->db->get()->result();
+
+        // Filtre anti-doublons : exclure les patients qui ont déjà reçu le rappel H-1 dans la dernière heure
+        $filtered = [];
+        foreach ($results as $consultation) {
+            if (!$this->was_sent_last_hour($consultation->patient_id, 'consultation_reminder_hour')) {
+                $filtered[] = $consultation;
+            }
+        }
+
+        return $filtered;
     }
 
     // ==================== FOOD SURVEY NOTIFICATIONS ====================

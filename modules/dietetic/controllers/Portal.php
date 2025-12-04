@@ -146,7 +146,16 @@ class Portal extends App_Controller
             'subscriptions',
             'subscription',
             // Meal reminders migration
-            'add_meal_reminders_columns'
+            'add_meal_reminders_columns',
+            // Diagnostic tools
+            'diagnostic_notifications',
+            'diagnostic_system',
+            'test_notification_manual',
+            'migrate_notifications_to_patient_table',
+            'debug_meal_reminder',
+            'check_cron_execution',
+            'check_perfex_cron',
+            'test_cron_complete'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
@@ -247,6 +256,33 @@ class Portal extends App_Controller
         $client = $this->clients_model->get($patient->client_id);
         $data['client'] = $client;
 
+        // ========================================
+        // MISE À JOUR AUTOMATIQUE DES STATUTS
+        // ========================================
+        // Mettre à jour automatiquement les programmes expirés
+        try {
+            $this->dietetic_programs_model->update_expired_programs();
+        } catch (Exception $e) {
+            log_activity('Error updating expired programs: ' . $e->getMessage());
+        }
+
+        // Mettre à jour automatiquement les enquêtes alimentaires expirées
+        try {
+            if ($this->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
+                $this->load->model('dietetic/dietetic_food_surveys_model');
+                $this->dietetic_food_surveys_model->update_expired_surveys();
+            }
+        } catch (Exception $e) {
+            log_activity('Error updating expired food surveys: ' . $e->getMessage());
+        }
+
+        // Mettre à jour automatiquement les consultations passées
+        try {
+            $this->dietetic_consultations_model->update_past_consultations();
+        } catch (Exception $e) {
+            log_activity('Error updating past consultations: ' . $e->getMessage());
+        }
+
         // Get active program
         try {
             $data['active_program'] = $this->dietetic_programs_model->get_active_program($patient->id);
@@ -272,7 +308,7 @@ class Portal extends App_Controller
 
         // Get upcoming consultations
         try {
-            $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id, 3);
+            $data['upcoming_consultations'] = $this->dietetic_consultations_model->get_upcoming_by_patient($patient->id, 3);
         } catch (Exception $e) {
             $data['upcoming_consultations'] = [];
         }
@@ -820,7 +856,7 @@ class Portal extends App_Controller
     /**
      * View consultations
      */
-    public function consultations()
+    public function consultations($page = 1)
     {
         if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
@@ -845,11 +881,24 @@ class Portal extends App_Controller
         $data['patient'] = $patient;
         $data['title'] = 'Mes Consultations';
 
+        // Pagination configuration
+        $per_page = 10;
+        $offset = ($page - 1) * $per_page;
+
         // Get all consultations for this patient
         try {
-            $data['consultations'] = $this->dietetic_consultations_model->get_by_patient($patient->id);
+            $all_consultations = $this->dietetic_consultations_model->get_by_patient($patient->id);
+            $data['total_consultations'] = count($all_consultations);
+            $data['consultations'] = array_slice($all_consultations, $offset, $per_page);
+            $data['current_page'] = $page;
+            $data['total_pages'] = ceil($data['total_consultations'] / $per_page);
+            $data['per_page'] = $per_page;
         } catch (Exception $e) {
             $data['consultations'] = [];
+            $data['total_consultations'] = 0;
+            $data['current_page'] = 1;
+            $data['total_pages'] = 0;
+            $data['per_page'] = $per_page;
         }
 
         $this->load->view('portal/consultations/index', $data);
@@ -2768,6 +2817,867 @@ class Portal extends App_Controller
     }
 
     // ==================== DIAGNOSTIC TOOLS ====================
+
+    /**
+     * Comprehensive diagnostic page for notification system
+     * Tests all aspects: login, patient record, database tables, API calls
+     * Access: /dietetic/portal/diagnostic_notifications
+     */
+    public function diagnostic_notifications()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $data = [];
+        $data['title'] = 'Test du Système de Notifications';
+
+        // Test 1: Check if user is logged in
+        $data['is_staff_logged_in'] = is_staff_logged_in();
+        $data['is_client_logged_in'] = is_client_logged_in();
+
+        // Test 2: Get client ID and patient
+        if (is_client_logged_in()) {
+            $data['client_id'] = get_client_user_id();
+
+            // Test 3: Get patient
+            $patient = $this->dietetic_patients_model->get_by_client($data['client_id']);
+            $data['patient'] = $patient;
+            $data['patient_exists'] = !empty($patient);
+
+            // Test 4: Check if tables exist
+            $data['notification_logs_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_logs');
+            $data['patient_notifications_exists'] = $this->db->table_exists(db_prefix() . 'dietic_patient_notifications');
+            $data['notification_settings_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_settings');
+
+            // Test 5: Count notifications in logs table
+            if ($data['notification_logs_exists'] && isset($patient)) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_notification_logs');
+                $this->db->where_in('patient_id', [$patient->id, 0]);
+                $this->db->where('status', 'sent');
+                $query = $this->db->get();
+                $result = $query->row();
+                $data['notification_logs_count'] = $result->total;
+
+                // Get last SQL query for debugging
+                $data['sql_query_logs'] = $this->db->last_query();
+            } else {
+                $data['notification_logs_count'] = null;
+                $data['sql_query_logs'] = null;
+            }
+
+            // Test 6: Count notifications in patient_notifications table
+            if ($data['patient_notifications_exists'] && isset($patient)) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_patient_notifications');
+                $this->db->where('patient_id', $patient->id);
+                $query = $this->db->get();
+                $result = $query->row();
+                $data['patient_notifications_count'] = $result->total;
+
+                $data['sql_query_patient_notif'] = $this->db->last_query();
+            } else {
+                $data['patient_notifications_count'] = null;
+                $data['sql_query_patient_notif'] = null;
+            }
+
+            // Test 7: API endpoint URL
+            $data['api_test_url'] = site_url('dietetic/portal/get_notifications');
+        } else {
+            // Staff logged in - show limited info
+            $data['client_id'] = null;
+            $data['patient'] = null;
+            $data['patient_exists'] = false;
+
+            // Still show table existence
+            $data['notification_logs_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_logs');
+            $data['patient_notifications_exists'] = $this->db->table_exists(db_prefix() . 'dietic_patient_notifications');
+            $data['notification_settings_exists'] = $this->db->table_exists(db_prefix() . 'dietic_notification_settings');
+
+            $data['notification_logs_count'] = null;
+            $data['patient_notifications_count'] = null;
+            $data['sql_query_logs'] = null;
+            $data['sql_query_patient_notif'] = null;
+            $data['api_test_url'] = null;
+        }
+
+        // Load diagnostic view
+        $this->load->view('dietetic/portal_diagnostic_notifications', $data);
+    }
+
+    /**
+     * Diagnostic complet du système de notifications
+     * Access: /dietetic/portal/diagnostic_system
+     * Accessible par admin et patients connectés
+     */
+    public function diagnostic_system()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        // Run diagnostics
+        $diagnostic = [];
+        $errors = [];
+        $warnings = [];
+        $success = [];
+
+        try {
+            // 1. Check module activation
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'modules');
+            $this->db->where('module_name', 'dietetic');
+            $query = $this->db->get();
+            $module = $query->num_rows() > 0 ? $query->row() : null;
+            $diagnostic['module_active'] = ($module && $module->active == 1);
+
+            if ($diagnostic['module_active']) {
+                $success[] = "Module Dietetic activé";
+            } else {
+                $errors[] = "Module Dietetic NON activé - Allez dans Admin > Modules pour l'activer";
+            }
+
+            // 2. Check cron
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'options');
+            $this->db->where('name', 'last_cron_run');
+            $query = $this->db->get();
+            $cron = $query->num_rows() > 0 ? $query->row() : null;
+            $diagnostic['last_cron_run'] = $cron ? $cron->value : null;
+            $diagnostic['cron_minutes_ago'] = $diagnostic['last_cron_run'] ? floor((time() - $diagnostic['last_cron_run']) / 60) : null;
+
+            if ($diagnostic['cron_minutes_ago'] === null) {
+                $errors[] = "Cron jamais exécuté";
+            } elseif ($diagnostic['cron_minutes_ago'] > 10) {
+                $warnings[] = "Cron inactif depuis " . $diagnostic['cron_minutes_ago'] . " minutes";
+            } else {
+                $success[] = "Cron actif (il y a " . $diagnostic['cron_minutes_ago'] . " min)";
+            }
+
+            // 3. Check patients with preferences
+            if ($this->db->table_exists(db_prefix() . 'dietic_patients')) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_patients');
+                $query = $this->db->get();
+                $diagnostic['total_patients'] = $query->row()->total;
+            } else {
+                $diagnostic['total_patients'] = 0;
+                $warnings[] = "Table dietic_patients n'existe pas";
+            }
+
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                $this->db->select('COUNT(*) as total');
+                $this->db->from(db_prefix() . 'dietic_notification_preferences');
+                $query = $this->db->get();
+                $diagnostic['patients_with_prefs'] = $query->row()->total;
+
+                if ($diagnostic['patients_with_prefs'] == 0) {
+                    $warnings[] = "Aucun patient avec préférences configurées";
+                } else {
+                    $success[] = $diagnostic['patients_with_prefs'] . " patient(s) avec préférences";
+                }
+            } else {
+                $diagnostic['patients_with_prefs'] = 0;
+                $warnings[] = "Table dietic_notification_preferences n'existe pas";
+            }
+
+            // 4. Get patients with dinner reminder
+            $diagnostic['dinner_patients'] = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') &&
+                $this->db->table_exists(db_prefix() . 'dietic_patients')) {
+
+                $this->db->select('p.*, dp.email, dp.phone, c.firstname, c.lastname');
+                $this->db->from(db_prefix() . 'dietic_notification_preferences p');
+                $this->db->join(db_prefix() . 'dietic_patients dp', 'p.patient_id = dp.id');
+                $this->db->join(db_prefix() . 'contacts c', 'dp.client_id = c.userid AND c.is_primary = 1', 'left');
+                $this->db->where('p.reminder_dinner', 1);
+                $this->db->limit(10);
+
+                try {
+                    $query = $this->db->get();
+                    if ($query->num_rows() > 0) {
+                        $diagnostic['dinner_patients'] = $query->result_array();
+                        $success[] = count($diagnostic['dinner_patients']) . " patient(s) avec rappel dîner";
+                    } else {
+                        $warnings[] = "Aucun patient avec rappel dîner activé";
+                    }
+                } catch (Exception $e) {
+                    $warnings[] = "Aucun patient avec rappel dîner activé (erreur de requête)";
+                }
+            }
+
+            // 5. Check channel configuration
+            $settings = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_notification_settings')) {
+                $this->db->select('*');
+                $this->db->from(db_prefix() . 'dietic_notification_settings');
+                $this->db->where_in('setting_key', ['sms_lam_account_id', 'sms_lam_password', 'whatsapp_api_key']);
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    foreach ($query->result() as $row) {
+                        $settings[$row->setting_key] = !empty($row->setting_value);
+                    }
+                }
+            }
+
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'options');
+            $this->db->where_in('name', ['smtp_host', 'smtp_username']);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result() as $row) {
+                    $settings[$row->name] = !empty($row->value);
+                }
+            }
+
+            $diagnostic['smtp_configured'] = isset($settings['smtp_host']) && isset($settings['smtp_username']);
+            $diagnostic['sms_configured'] = isset($settings['sms_lam_account_id']) && isset($settings['sms_lam_password']);
+            $diagnostic['whatsapp_configured'] = isset($settings['whatsapp_api_key']);
+
+            // 6. Get recent notifications
+            $diagnostic['recent_notifications'] = [];
+            if ($this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+                $this->db->select('*');
+                $this->db->from(db_prefix() . 'dietic_patient_notifications');
+                $this->db->order_by('created_at', 'DESC');
+                $this->db->limit(10);
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    $diagnostic['recent_notifications'] = $query->result_array();
+                }
+            }
+
+        } catch (Exception $e) {
+            $errors[] = "Erreur lors du diagnostic: " . $e->getMessage();
+        }
+
+        // Generate HTML output
+        $this->output_diagnostic_html($diagnostic, $success, $warnings, $errors);
+    }
+
+    /**
+     * Output HTML for diagnostic system
+     */
+    private function output_diagnostic_html($diagnostic, $success, $warnings, $errors)
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        ?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Notifications - Dietetic</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .header h1 { color: #01807B; font-size: 28px; margin-bottom: 10px; }
+        .header .subtitle { color: #666; font-size: 14px; }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .summary-card.success { background: linear-gradient(135deg, #4caf50, #45a049); color: white; }
+        .summary-card.error { background: linear-gradient(135deg, #f44336, #e53935); color: white; }
+        .summary-card.warning { background: linear-gradient(135deg, #ff9800, #fb8c00); color: white; }
+        .summary-number { font-size: 48px; font-weight: 700; margin-bottom: 5px; }
+        .summary-label { font-size: 14px; opacity: 0.9; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #01807B;
+        }
+        .status-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .status-item.success { background: #e8f5e9; border-color: #4caf50; }
+        .status-item.error { background: #ffebee; border-color: #f44336; }
+        .status-item.warning { background: #fff3e0; border-color: #ff9800; }
+        .status-label { font-weight: 600; font-size: 16px; margin-bottom: 5px; }
+        .status-detail { font-size: 14px; color: #666; }
+        .patient-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #01807B;
+        }
+        .patient-name { font-weight: 700; color: #01807B; margin-bottom: 8px; }
+        .patient-info { font-size: 13px; color: #666; margin-bottom: 4px; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .badge.success { background: #4caf50; color: white; }
+        .badge.error { background: #f44336; color: white; }
+        .recommendation-box {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .recommendation-box.success {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-color: #4caf50;
+        }
+        .recommendation-title {
+            font-weight: 700;
+            color: #1565c0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .recommendation-title.success { color: #2e7d32; }
+        ul { margin-left: 20px; }
+        li { margin-bottom: 8px; color: #1976d2; }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #01807B;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .button:hover { background: #01605B; }
+        .actions { text-align: center; margin-top: 30px; }
+        @media (max-width: 768px) {
+            .summary { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Diagnostic des Notifications</h1>
+            <div class="subtitle">
+                app.dietsenegal.net • <?php echo date('d/m/Y H:i:s'); ?>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary">
+            <div class="summary-card <?php echo count($success) > 0 ? 'success' : 'error'; ?>">
+                <div class="summary-number"><?php echo count($success); ?></div>
+                <div class="summary-label">✅ Points Positifs</div>
+            </div>
+            <div class="summary-card <?php echo count($warnings) > 0 ? 'warning' : 'success'; ?>">
+                <div class="summary-number"><?php echo count($warnings); ?></div>
+                <div class="summary-label">⚠️ Avertissements</div>
+            </div>
+            <div class="summary-card <?php echo count($errors) > 0 ? 'error' : 'success'; ?>">
+                <div class="summary-number"><?php echo count($errors); ?></div>
+                <div class="summary-label">❌ Erreurs</div>
+            </div>
+        </div>
+
+        <!-- Module Status -->
+        <div class="card">
+            <div class="card-title">📦 État du Module</div>
+            <div class="status-item <?php echo $diagnostic['module_active'] ? 'success' : 'error'; ?>">
+                <div class="status-label"><?php echo $diagnostic['module_active'] ? '✅' : '❌'; ?> Module Dietetic</div>
+                <div class="status-detail">
+                    <?php if ($diagnostic['module_active']): ?>
+                        Le module est activé et opérationnel
+                    <?php else: ?>
+                        <strong>❌ Le module n'est PAS activé !</strong><br>
+                        Action : Allez dans <a href="<?php echo admin_url('modules'); ?>" target="_blank" style="color: #01807B; font-weight: 600;">Admin > Modules</a> et cliquez sur "Activate"
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cron Status -->
+        <div class="card">
+            <div class="card-title">⏰ État du Cron</div>
+            <?php if ($diagnostic['last_cron_run']): ?>
+                <div class="status-item <?php echo $diagnostic['cron_minutes_ago'] < 10 ? 'success' : 'warning'; ?>">
+                    <div class="status-label"><?php echo $diagnostic['cron_minutes_ago'] < 10 ? '✅' : '⚠️'; ?> Cron Perfex</div>
+                    <div class="status-detail">
+                        Dernière exécution : il y a <strong><?php echo $diagnostic['cron_minutes_ago']; ?></strong> minute(s)<br>
+                        <small><?php echo date('d/m/Y H:i:s', $diagnostic['last_cron_run']); ?></small>
+                        <?php if ($diagnostic['cron_minutes_ago'] > 10): ?>
+                            <br><strong style="color: #f57c00;">⚠️ Le cron devrait s'exécuter toutes les 5 minutes !</strong>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="status-item error">
+                    <div class="status-label">❌ Cron Non Configuré</div>
+                    <div class="status-detail">Le cron n'a jamais été exécuté</div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Patients -->
+        <div class="card">
+            <div class="card-title">👥 Patients avec Rappel Dîner</div>
+            <?php if (count($diagnostic['dinner_patients']) > 0): ?>
+                <?php foreach ($diagnostic['dinner_patients'] as $patient): ?>
+                    <div class="patient-card">
+                        <div class="patient-name">
+                            <?php echo htmlspecialchars($patient['firstname'] . ' ' . $patient['lastname']); ?>
+                        </div>
+                        <div class="patient-info">
+                            ⏰ Heure : <strong><?php echo substr($patient['reminder_dinner_time'], 0, 5); ?></strong>
+                        </div>
+                        <div class="patient-info">
+                            📧 Email : <?php echo $patient['email'] ?: '<span style="color: #f44336;">❌ Non renseigné</span>'; ?>
+                        </div>
+                        <div class="patient-info">
+                            📱 Téléphone : <?php echo $patient['phone'] ?: '<span style="color: #f44336;">❌ Non renseigné</span>'; ?>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <?php if ($patient['channel_email']): ?><span class="badge success">Email</span><?php endif; ?>
+                            <?php if ($patient['channel_sms']): ?><span class="badge success">SMS</span><?php endif; ?>
+                            <?php if ($patient['channel_whatsapp']): ?><span class="badge success">WhatsApp</span><?php endif; ?>
+                            <?php if (!$patient['channel_email'] && !$patient['channel_sms'] && !$patient['channel_whatsapp']): ?>
+                                <span class="badge error">❌ Aucun canal activé</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="status-item warning">
+                    <div class="status-label">⚠️ Aucun Patient</div>
+                    <div class="status-detail">Aucun patient n'a activé le rappel de dîner</div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Recommendations -->
+        <?php if (count($errors) > 0 || count($warnings) > 0): ?>
+        <div class="recommendation-box">
+            <div class="recommendation-title">💡 Actions Recommandées</div>
+            <?php if (count($errors) > 0): ?>
+                <strong style="color: #d32f2f;">🚨 ERREURS CRITIQUES :</strong>
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li style="color: #d32f2f;"><strong><?php echo $error; ?></strong></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+            <?php if (count($warnings) > 0): ?>
+                <strong style="color: #f57c00;">⚠️ AVERTISSEMENTS :</strong>
+                <ul>
+                    <?php foreach ($warnings as $warning): ?>
+                        <li style="color: #f57c00;"><?php echo $warning; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+        <?php else: ?>
+        <div class="recommendation-box success">
+            <div class="recommendation-title success">✅ Tout est en ordre !</div>
+            <p style="color: #1b5e20;">
+                Votre système est correctement configuré. Les notifications seront envoyées aux heures prévues (± 5 minutes).
+            </p>
+        </div>
+        <?php endif; ?>
+
+        <div class="actions">
+            <a href="<?php echo admin_url(); ?>" class="button">🏠 Dashboard Admin</a>
+            <a href="<?php echo admin_url('modules'); ?>" class="button">📦 Modules</a>
+            <a href="<?php echo site_url('dietetic/portal/diagnostic_system'); ?>" class="button">🔄 Rafraîchir</a>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: white; font-size: 12px;">
+            Diagnostic Dietetic • <?php echo date('Y'); ?>
+        </div>
+    </div>
+</body>
+</html>
+        <?php
+    }
+
+    /**
+     * Test manuel d'envoi de notification
+     * Access: /dietetic/portal/test_notification_manual
+     * Permet de déclencher manuellement une notification pour déboguer
+     */
+    public function test_notification_manual()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        // Load model
+        $this->load->model('dietetic/dietetic_notifications_model');
+
+        header('Content-Type: text/html; charset=utf-8');
+
+        echo '<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notification Manuelle</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #01807B;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 20px 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #01807B;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            border-left: 4px solid #01807B;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f44336;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+            margin: 10px 0;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #01807B;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .button:hover { background: #01605B; }
+        .actions { text-align: center; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="title">🧪 Test Manuel de Notification</div>
+            <div class="info">
+                <strong>📍 Objectif :</strong> Déclencher manuellement une notification de rappel dîner pour identifier les problèmes.
+            </div>';
+
+        echo '<div class="section-title">1️⃣ Récupération des patients avec rappel dîner activé</div>';
+
+        try {
+            // Désactiver temporairement la vérification de l'heure pour le test
+            // Récupérer les patients avec reminder_dinner = 1
+            $this->db->select('p.*, prefs.*, p.email, p.phone, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_preferences prefs');
+            $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = prefs.patient_id');
+            $this->db->join(db_prefix() . 'contacts c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->where('prefs.reminder_dinner', 1);
+            $this->db->limit(1);
+
+            $query = $this->db->get();
+
+            echo '<div class="info"><strong>🔍 Requête SQL :</strong><pre>' . $this->db->last_query() . '</pre></div>';
+
+            if ($query->num_rows() > 0) {
+                $patient = $query->row();
+                echo '<div class="success">✅ Patient trouvé : ' . htmlspecialchars($patient->firstname . ' ' . $patient->lastname) . '</div>';
+                echo '<pre>' . print_r($patient, true) . '</pre>';
+
+                echo '<div class="section-title">2️⃣ Configuration des canaux</div>';
+                echo '<div class="info">';
+                echo '📧 Email: ' . ($patient->channel_email ? '✅ Activé (' . $patient->email . ')' : '❌ Désactivé') . '<br>';
+                echo '📱 SMS: ' . ($patient->channel_sms ? '✅ Activé (' . $patient->phone . ')' : '❌ Désactivé') . '<br>';
+                echo '💬 WhatsApp: ' . ($patient->channel_whatsapp ? '✅ Activé' : '❌ Désactivé') . '<br>';
+                echo '🔔 Push: ' . ($patient->channel_push ? '✅ Activé' : '❌ Désactivé');
+                echo '</div>';
+
+                echo '<div class="section-title">3️⃣ Envoi de la notification de test</div>';
+
+                // Créer un objet patient formaté pour send_meal_reminder
+                $test_patient = new stdClass();
+                $test_patient->patient_id = $patient->patient_id;
+                $test_patient->firstname = $patient->firstname;
+                $test_patient->lastname = $patient->lastname;
+                $test_patient->email = $patient->email;
+                $test_patient->phonenumber = $patient->phone;
+                $test_patient->channel_email = $patient->channel_email;
+                $test_patient->channel_sms = $patient->channel_sms;
+                $test_patient->channel_whatsapp = $patient->channel_whatsapp;
+                $test_patient->channel_push = $patient->channel_push;
+
+                echo '<div class="warning">⏳ Envoi en cours...</div>';
+
+                $result = $this->dietetic_notifications_model->send_meal_reminder($test_patient, 'dinner');
+
+                echo '<div class="section-title">4️⃣ Résultat de l\'envoi</div>';
+
+                if (is_array($result)) {
+                    $has_success = false;
+                    foreach ($result as $channel => $status) {
+                        if ($status === true) {
+                            echo '<div class="success">✅ ' . ucfirst($channel) . ' : Envoyé avec succès</div>';
+                            $has_success = true;
+                        } else {
+                            echo '<div class="error">❌ ' . ucfirst($channel) . ' : Échec (' . (is_string($status) ? $status : 'erreur inconnue') . ')</div>';
+                        }
+                    }
+
+                    if ($has_success) {
+                        echo '<div class="success"><strong>🎉 Au moins une notification a été envoyée avec succès !</strong></div>';
+                    } else {
+                        echo '<div class="error"><strong>❌ Aucune notification n\'a pu être envoyée.</strong></div>';
+                    }
+                } else {
+                    echo '<div class="error">❌ Résultat inattendu : <pre>' . print_r($result, true) . '</pre></div>';
+                }
+
+                echo '<div class="section-title">5️⃣ Détails complets du résultat</div>';
+                echo '<pre>' . print_r($result, true) . '</pre>';
+
+            } else {
+                echo '<div class="error">❌ Aucun patient trouvé avec rappel dîner activé.</div>';
+                echo '<div class="warning">Vérifiez que vous avez bien activé le rappel dîner dans vos préférences.</div>';
+            }
+
+        } catch (Exception $e) {
+            echo '<div class="error">❌ ERREUR : ' . htmlspecialchars($e->getMessage()) . '</div>';
+            echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+        }
+
+        echo '<div class="actions">
+                <a href="' . site_url('dietetic/portal/diagnostic_system') . '" class="button">🔍 Diagnostic Système</a>
+                <a href="' . site_url('dietetic/portal/notification_preferences') . '" class="button">⚙️ Préférences</a>
+                <a href="' . site_url('dietetic/portal/test_notification_manual') . '" class="button">🔄 Relancer le test</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Migrate notifications from logs to patient_notifications table
+     * Fixes the issue where notifications exist in logs but not in patient table
+     * Access: /dietetic/portal/migrate_notifications_to_patient_table
+     */
+    public function migrate_notifications_to_patient_table()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+            return;
+        }
+
+        // Check if both tables exist
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            echo json_encode(['success' => false, 'message' => 'Source table (notification_logs) does not exist']);
+            return;
+        }
+
+        if (!$this->db->table_exists(db_prefix() . 'dietic_patient_notifications')) {
+            echo json_encode(['success' => false, 'message' => 'Destination table (patient_notifications) does not exist']);
+            return;
+        }
+
+        try {
+            // Start transaction
+            $this->db->trans_start();
+
+            // Build the INSERT SELECT query
+            $sql = "
+                INSERT INTO `" . db_prefix() . "dietic_patient_notifications` (
+                    `patient_id`,
+                    `notification_type`,
+                    `title`,
+                    `message`,
+                    `icon`,
+                    `url`,
+                    `is_read`,
+                    `created_at`,
+                    `updated_at`
+                )
+                SELECT
+                    nl.`patient_id`,
+                    nl.`notification_type`,
+                    CASE nl.`notification_type`
+                        WHEN 'weight_reminder' THEN 'Rappel de Pesée'
+                        WHEN 'water_reminder' THEN 'Rappel d\'Hydratation'
+                        WHEN 'recommendation' THEN 'Nouvelle Recommandation'
+                        WHEN 'consultation' THEN 'Consultation'
+                        WHEN 'milestone' THEN 'Jalon Atteint'
+                        WHEN 'program' THEN 'Programme Diététique'
+                        WHEN 'food_entry' THEN 'Saisie Alimentaire'
+                        WHEN 'test' THEN 'Test Notification'
+                        ELSE 'Notification'
+                    END as `title`,
+                    nl.`message`,
+                    CASE nl.`notification_type`
+                        WHEN 'weight_reminder' THEN 'fa-balance-scale'
+                        WHEN 'water_reminder' THEN 'fa-tint'
+                        WHEN 'recommendation' THEN 'fa-comments'
+                        WHEN 'consultation' THEN 'fa-calendar'
+                        WHEN 'milestone' THEN 'fa-trophy'
+                        WHEN 'program' THEN 'fa-leaf'
+                        WHEN 'food_entry' THEN 'fa-cutlery'
+                        WHEN 'test' THEN 'fa-flask'
+                        ELSE 'fa-bell'
+                    END as `icon`,
+                    NULL as `url`,
+                    0 as `is_read`,
+                    nl.`created_at`,
+                    NOW() as `updated_at`
+                FROM `" . db_prefix() . "dietic_notification_logs` nl
+                WHERE nl.`patient_id` > 0
+                  AND nl.`status` = 'sent'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM `" . db_prefix() . "dietic_patient_notifications` pn
+                      WHERE pn.`patient_id` = nl.`patient_id`
+                        AND pn.`notification_type` = nl.`notification_type`
+                        AND pn.`message` = nl.`message`
+                        AND pn.`created_at` = nl.`created_at`
+                  )
+            ";
+
+            // Execute the query
+            $this->db->query($sql);
+            $affected_rows = $this->db->affected_rows();
+
+            // Complete transaction
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Transaction failed',
+                    'migrated' => 0
+                ]);
+                return;
+            }
+
+            // Count notifications per patient after migration
+            $count_query = $this->db->query("
+                SELECT
+                    patient_id,
+                    COUNT(*) as notification_count,
+                    SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread_count
+                FROM `" . db_prefix() . "dietic_patient_notifications`
+                GROUP BY patient_id
+                ORDER BY patient_id
+            ");
+            $patient_stats = $count_query->result_array();
+
+            // Log the migration
+            log_activity('Notifications migrated from logs to patient_notifications: ' . $affected_rows . ' notifications');
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Migration completed successfully',
+                'migrated' => $affected_rows,
+                'patient_stats' => $patient_stats
+            ]);
+
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_activity('Error migrating notifications: ' . $e->getMessage());
+
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error during migration: ' . $e->getMessage(),
+                'migrated' => 0
+            ]);
+        }
+    }
 
     /**
      * Diagnostic page for notification preferences
@@ -8319,6 +9229,974 @@ class Portal extends App_Controller
         }
 
         echo "</pre>";
+    }
+
+    /**
+     * Debug meal reminder - Outil de diagnostic pour les rappels de repas
+     * Affiche les détails de configuration et teste la logique de fenêtre de temps
+     * Access: /dietetic/portal/debug_meal_reminder?meal_type=breakfast&patient_id=X
+     */
+    public function debug_meal_reminder()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $meal_type = $this->input->get('meal_type') ?: 'breakfast';
+        $patient_id = $this->input->get('patient_id');
+
+        // Load models
+        $this->load->model('dietetic_notifications_model');
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Rappel de Repas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 4px solid #3498db; padding-left: 10px; }
+        .info-box { background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .code { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-yes { background: #28a745; color: white; }
+        .badge-no { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Rappel de Repas</h1>
+        <div class="info-box">
+            <strong>Heure actuelle:</strong> ' . date('Y-m-d H:i:s') . '<br>
+            <strong>Type de repas:</strong> ' . htmlspecialchars($meal_type) . '<br>
+            <strong>Patient ID:</strong> ' . ($patient_id ?: 'Tous') . '
+        </div>';
+
+        // Test de la logique de fenêtre de temps
+        echo '<h2>1. Test de la fenêtre de temps (5 minutes)</h2>';
+        $current_time = date('H:i:00');
+        $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
+
+        echo '<div class="info-box">';
+        echo '<strong>Heure actuelle:</strong> ' . $current_time . '<br>';
+        echo '<strong>5 minutes avant:</strong> ' . $time_5min_ago . '<br>';
+        echo '<strong>Fenêtre de rappel:</strong> ' . $time_5min_ago . ' < reminder_time <= ' . $current_time;
+        echo '</div>';
+
+        // Get patients with meal reminder enabled
+        echo '<h2>2. Patients avec rappel ' . htmlspecialchars($meal_type) . ' activé</h2>';
+
+        $column_enabled = 'reminder_' . $meal_type;
+        $column_time = 'reminder_' . $meal_type . '_time';
+
+        $this->db->select('p.id as patient_id, p.email, p.phone as phonenumber, c.firstname, c.lastname,
+                          prefs.' . $column_enabled . ' as enabled,
+                          prefs.' . $column_time . ' as reminder_time,
+                          prefs.channel_email, prefs.channel_sms, prefs.channel_whatsapp, prefs.channel_push');
+        $this->db->from(db_prefix() . 'dietic_notification_preferences as prefs');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('prefs.' . $column_enabled, 1);
+
+        if ($patient_id) {
+            $this->db->where('p.id', $patient_id);
+        }
+
+        $patients = $this->db->get()->result();
+
+        if (empty($patients)) {
+            echo '<div class="warning">❌ Aucun patient n\'a activé le rappel ' . htmlspecialchars($meal_type) . '</div>';
+        } else {
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient ID</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Heure rappel</th>
+                    <th>Dans fenêtre?</th>
+                    <th>Canaux</th>
+                  </tr>';
+
+            foreach ($patients as $p) {
+                $in_window = ($p->reminder_time > $time_5min_ago && $p->reminder_time <= $current_time);
+                $channels = [];
+                if ($p->channel_email) $channels[] = 'Email';
+                if ($p->channel_sms) $channels[] = 'SMS';
+                if ($p->channel_whatsapp) $channels[] = 'WhatsApp';
+                if ($p->channel_push) $channels[] = 'Push';
+
+                echo '<tr>';
+                echo '<td>' . $p->patient_id . '</td>';
+                echo '<td>' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($p->email) . '</td>';
+                echo '<td>' . htmlspecialchars($p->phonenumber) . '</td>';
+                echo '<td><strong>' . $p->reminder_time . '</strong></td>';
+                echo '<td><span class="badge badge-' . ($in_window ? 'yes' : 'no') . '">' . ($in_window ? 'OUI' : 'NON') . '</span></td>';
+                echo '<td>' . implode(', ', $channels) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Check for already sent notifications today
+        echo '<h2>3. Notifications déjà envoyées aujourd\'hui</h2>';
+
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
+
+        $this->db->select('pn.*, p.email, c.firstname, c.lastname');
+        $this->db->from(db_prefix() . 'dietic_patient_notifications as pn');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = pn.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('pn.notification_type', 'reminder_' . $meal_type);
+        $this->db->where('pn.created_at >=', $today_start);
+        $this->db->where('pn.created_at <=', $today_end);
+
+        if ($patient_id) {
+            $this->db->where('pn.patient_id', $patient_id);
+        }
+
+        $this->db->order_by('pn.created_at', 'DESC');
+        $sent_notifications = $this->db->get()->result();
+
+        if (empty($sent_notifications)) {
+            echo '<div class="info-box">ℹ️ Aucune notification ' . htmlspecialchars($meal_type) . ' envoyée aujourd\'hui</div>';
+        } else {
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Envoyé à</th>
+                  </tr>';
+
+            foreach ($sent_notifications as $notif) {
+                echo '<tr>';
+                echo '<td>' . htmlspecialchars($notif->firstname . ' ' . $notif->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($notif->email) . '</td>';
+                echo '<td>' . htmlspecialchars($notif->notification_type) . '</td>';
+                echo '<td>' . htmlspecialchars(substr($notif->message, 0, 50)) . '...</td>';
+                echo '<td>' . $notif->created_at . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Test de la requête SQL exacte utilisée par le cron
+        echo '<h2>4. Test de la requête SQL du cron</h2>';
+
+        echo '<div class="code">';
+        echo 'SELECT p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname<br>';
+        echo 'FROM ' . db_prefix() . 'dietic_notification_preferences as prefs<br>';
+        echo 'JOIN ' . db_prefix() . 'dietic_patients as p ON p.id = prefs.patient_id<br>';
+        echo 'LEFT JOIN ' . db_prefix() . 'contacts as c ON c.userid = p.client_id AND c.is_primary = 1<br>';
+        echo 'WHERE prefs.' . $column_enabled . ' = 1<br>';
+        echo 'AND prefs.' . $column_time . ' > \'' . $time_5min_ago . '\'<br>';
+        echo 'AND prefs.' . $column_time . ' <= \'' . $current_time . '\'';
+        echo '</div>';
+
+        // Execute the exact query
+        $this->db->select('p.*, prefs.*, p.email, p.phone as phonenumber, c.firstname, c.lastname');
+        $this->db->from(db_prefix() . 'dietic_notification_preferences as prefs');
+        $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = prefs.patient_id');
+        $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+        $this->db->where('prefs.' . $column_enabled, 1);
+        $this->db->where('prefs.' . $column_time . ' >', $time_5min_ago);
+        $this->db->where('prefs.' . $column_time . ' <=', $current_time);
+
+        if ($patient_id) {
+            $this->db->where('p.id', $patient_id);
+        }
+
+        $query_results = $this->db->get()->result();
+
+        echo '<h3>Résultats de la requête:</h3>';
+        if (empty($query_results)) {
+            echo '<div class="warning">❌ Aucun patient ne correspond aux critères de la fenêtre de temps actuelle</div>';
+        } else {
+            echo '<div class="success">✅ ' . count($query_results) . ' patient(s) trouvé(s) dans la fenêtre de temps</div>';
+
+            echo '<table>';
+            echo '<tr>
+                    <th>Patient ID</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Heure rappel</th>
+                  </tr>';
+
+            foreach ($query_results as $p) {
+                echo '<tr>';
+                echo '<td>' . $p->patient_id . '</td>';
+                echo '<td>' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</td>';
+                echo '<td>' . htmlspecialchars($p->email) . '</td>';
+                echo '<td>' . htmlspecialchars($p->phonenumber) . '</td>';
+                echo '<td><strong>' . $p->{$column_time} . '</strong></td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+
+        // Recommendations
+        echo '<h2>5. Recommandations</h2>';
+        echo '<div class="info-box">';
+
+        if (empty($patients)) {
+            echo '❌ <strong>Problème:</strong> Aucun patient n\'a activé le rappel ' . htmlspecialchars($meal_type) . '<br>';
+            echo '➡️ <strong>Solution:</strong> Vérifiez les préférences de notifications du patient';
+        } elseif (empty($query_results)) {
+            echo '⚠️ <strong>Problème:</strong> Des patients ont activé le rappel mais aucun n\'est dans la fenêtre de temps actuelle<br>';
+            echo '➡️ <strong>Solution:</strong> Vérifiez que l\'heure du rappel correspond à l\'heure d\'exécution du cron<br>';
+            echo '➡️ Le cron doit s\'exécuter toutes les 5 minutes pour capturer tous les rappels';
+        } else {
+            echo '✅ <strong>Tout semble correct!</strong> Les patients sont dans la fenêtre de temps<br>';
+            echo '➡️ Si les notifications ne sont pas envoyées, vérifiez:<br>';
+            echo '&nbsp;&nbsp;&nbsp;1. Que le cron s\'exécute bien<br>';
+            echo '&nbsp;&nbsp;&nbsp;2. Que les canaux de notification sont configurés (Email, SMS, etc.)<br>';
+            echo '&nbsp;&nbsp;&nbsp;3. Les logs dans dietic_notification_logs pour voir les erreurs';
+        }
+
+        echo '</div>';
+
+        // Access link for specific patient
+        if (!$patient_id && !empty($patients)) {
+            echo '<h2>6. Tester un patient spécifique</h2>';
+            echo '<div class="info-box">';
+            foreach ($patients as $p) {
+                $test_url = site_url('dietetic/portal/debug_meal_reminder?meal_type=' . $meal_type . '&patient_id=' . $p->patient_id);
+                echo '🔗 <a href="' . $test_url . '">Tester ' . htmlspecialchars($p->firstname . ' ' . $p->lastname) . '</a><br>';
+            }
+            echo '</div>';
+        }
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Check cron execution history
+     * Vérifie les exécutions du cron et les notifications envoyées
+     * Access: /dietetic/portal/check_cron_execution
+     */
+    public function check_cron_execution()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Historique Cron & Notifications</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 4px solid #3498db; padding-left: 10px; }
+        .info-box { background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background: #3498db; color: white; font-weight: bold; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .code { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-email { background: #007bff; color: white; }
+        .badge-sms { background: #ffc107; color: #000; }
+        .badge-whatsapp { background: #25D366; color: white; }
+        .badge-push { background: #6f42c1; color: white; }
+        .time-8am { background: #ffffcc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Historique Cron & Notifications</h1>
+        <div class="info-box">
+            <strong>Heure actuelle:</strong> ' . date('Y-m-d H:i:s') . '<br>
+            <strong>Timezone:</strong> ' . date_default_timezone_get() . '
+        </div>';
+
+        // Check if notification_logs table exists
+        if (!$this->db->table_exists(db_prefix() . 'dietic_notification_logs')) {
+            echo '<div class="error">❌ La table dietic_notification_logs n\'existe pas</div>';
+        } else {
+            // Get today's notifications grouped by hour
+            echo '<h2>1. Notifications envoyées aujourd\'hui (par heure)</h2>';
+
+            $today_start = date('Y-m-d 00:00:00');
+            $today_end = date('Y-m-d 23:59:59');
+
+            $sql = "
+                SELECT
+                    DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') as hour,
+                    COUNT(*) as total,
+                    SUM(CASE WHEN channel = 'email' THEN 1 ELSE 0 END) as email_count,
+                    SUM(CASE WHEN channel = 'sms' THEN 1 ELSE 0 END) as sms_count,
+                    SUM(CASE WHEN channel = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp_count,
+                    SUM(CASE WHEN channel = 'push' THEN 1 ELSE 0 END) as push_count
+                FROM " . db_prefix() . "dietic_notification_logs
+                WHERE created_at >= ?
+                AND created_at <= ?
+                GROUP BY hour
+                ORDER BY hour DESC
+            ";
+
+            $query = $this->db->query($sql, [$today_start, $today_end]);
+            $hourly_stats = $query->result();
+
+            if (empty($hourly_stats)) {
+                echo '<div class="warning">⚠️ Aucune notification envoyée aujourd\'hui</div>';
+            } else {
+                echo '<table>';
+                echo '<tr>
+                        <th>Heure</th>
+                        <th>Total</th>
+                        <th>Email</th>
+                        <th>SMS</th>
+                        <th>WhatsApp</th>
+                        <th>Push</th>
+                      </tr>';
+
+                foreach ($hourly_stats as $stat) {
+                    $hour_formatted = date('H:i', strtotime($stat->hour));
+                    $is_8am = (substr($stat->hour, 11, 2) == '08');
+
+                    echo '<tr' . ($is_8am ? ' class="time-8am"' : '') . '>';
+                    echo '<td><strong>' . $stat->hour . '</strong></td>';
+                    echo '<td><strong>' . $stat->total . '</strong></td>';
+                    echo '<td>' . $stat->email_count . '</td>';
+                    echo '<td>' . $stat->sms_count . '</td>';
+                    echo '<td>' . $stat->whatsapp_count . '</td>';
+                    echo '<td>' . $stat->push_count . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+
+                // Check if 8am notifications exist
+                $has_8am = false;
+                foreach ($hourly_stats as $stat) {
+                    if (substr($stat->hour, 11, 2) == '08') {
+                        $has_8am = true;
+                        break;
+                    }
+                }
+
+                if (!$has_8am) {
+                    echo '<div class="error">❌ <strong>PROBLÈME DÉTECTÉ:</strong> Aucune notification envoyée à 8h00 ce matin!</div>';
+                    echo '<div class="info-box">';
+                    echo '➡️ <strong>Cause probable:</strong> Le cron ne s\'est pas exécuté entre 8h00 et 8h05<br>';
+                    echo '➡️ <strong>Solution:</strong> Vérifier la configuration du cron job dans Perfex CRM';
+                    echo '</div>';
+                }
+            }
+
+            // Get detailed notifications for breakfast today
+            echo '<h2>2. Détails des notifications breakfast aujourd\'hui</h2>';
+
+            $this->db->select('nl.*, p.email, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_logs as nl');
+            $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = nl.patient_id', 'left');
+            $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->where('nl.notification_type', 'reminder_breakfast');
+            $this->db->where('nl.created_at >=', $today_start);
+            $this->db->where('nl.created_at <=', $today_end);
+            $this->db->order_by('nl.created_at', 'DESC');
+
+            $breakfast_logs = $this->db->get()->result();
+
+            if (empty($breakfast_logs)) {
+                echo '<div class="error">❌ Aucune notification breakfast envoyée aujourd\'hui</div>';
+            } else {
+                echo '<div class="success">✅ ' . count($breakfast_logs) . ' notification(s) breakfast envoyée(s) aujourd\'hui</div>';
+
+                echo '<table>';
+                echo '<tr>
+                        <th>Patient</th>
+                        <th>Email</th>
+                        <th>Canal</th>
+                        <th>Statut</th>
+                        <th>Heure d\'envoi</th>
+                        <th>Message</th>
+                      </tr>';
+
+                foreach ($breakfast_logs as $log) {
+                    $channel_badge = '';
+                    switch ($log->channel) {
+                        case 'email': $channel_badge = '<span class="badge badge-email">Email</span>'; break;
+                        case 'sms': $channel_badge = '<span class="badge badge-sms">SMS</span>'; break;
+                        case 'whatsapp': $channel_badge = '<span class="badge badge-whatsapp">WhatsApp</span>'; break;
+                        case 'push': $channel_badge = '<span class="badge badge-push">Push</span>'; break;
+                    }
+
+                    $status_badge = $log->status == 'sent' ?
+                        '<span class="badge badge-success">Envoyé</span>' :
+                        '<span class="badge badge-error">Échec</span>';
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($log->firstname . ' ' . $log->lastname) . '</td>';
+                    echo '<td>' . htmlspecialchars($log->email) . '</td>';
+                    echo '<td>' . $channel_badge . '</td>';
+                    echo '<td>' . $status_badge . '</td>';
+                    echo '<td><strong>' . $log->created_at . '</strong></td>';
+                    echo '<td>' . htmlspecialchars(substr($log->message, 0, 50)) . '...</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // Get last 100 notifications (all types)
+            echo '<h2>3. Dernières 100 notifications (tous types)</h2>';
+
+            $this->db->select('nl.*, p.email, c.firstname, c.lastname');
+            $this->db->from(db_prefix() . 'dietic_notification_logs as nl');
+            $this->db->join(db_prefix() . 'dietic_patients as p', 'p.id = nl.patient_id', 'left');
+            $this->db->join(db_prefix() . 'contacts as c', 'c.userid = p.client_id AND c.is_primary = 1', 'left');
+            $this->db->order_by('nl.created_at', 'DESC');
+            $this->db->limit(100);
+
+            $recent_logs = $this->db->get()->result();
+
+            if (empty($recent_logs)) {
+                echo '<div class="warning">⚠️ Aucune notification dans les logs</div>';
+            } else {
+                echo '<div class="info-box">Affichage des ' . count($recent_logs) . ' dernières notifications</div>';
+
+                echo '<table>';
+                echo '<tr>
+                        <th>Patient</th>
+                        <th>Type</th>
+                        <th>Canal</th>
+                        <th>Statut</th>
+                        <th>Heure</th>
+                      </tr>';
+
+                foreach ($recent_logs as $log) {
+                    $channel_badge = '';
+                    switch ($log->channel) {
+                        case 'email': $channel_badge = '<span class="badge badge-email">Email</span>'; break;
+                        case 'sms': $channel_badge = '<span class="badge badge-sms">SMS</span>'; break;
+                        case 'whatsapp': $channel_badge = '<span class="badge badge-whatsapp">WhatsApp</span>'; break;
+                        case 'push': $channel_badge = '<span class="badge badge-push">Push</span>'; break;
+                    }
+
+                    $status_badge = $log->status == 'sent' ?
+                        '<span class="badge badge-success">Envoyé</span>' :
+                        '<span class="badge badge-error">Échec</span>';
+
+                    $is_breakfast_8am = ($log->notification_type == 'reminder_breakfast' &&
+                                        substr($log->created_at, 11, 2) == '08');
+
+                    echo '<tr' . ($is_breakfast_8am ? ' class="time-8am"' : '') . '>';
+                    echo '<td>' . htmlspecialchars($log->firstname . ' ' . $log->lastname) . '</td>';
+                    echo '<td>' . htmlspecialchars($log->notification_type) . '</td>';
+                    echo '<td>' . $channel_badge . '</td>';
+                    echo '<td>' . $status_badge . '</td>';
+                    echo '<td>' . $log->created_at . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+        }
+
+        // Check Perfex cron configuration
+        echo '<h2>4. Configuration Cron Perfex</h2>';
+        echo '<div class="info-box">';
+        echo '<strong>Vérifications à faire:</strong><br><br>';
+        echo '1. <strong>Cron Job Perfex:</strong> Vérifier que le cron est configuré pour s\'exécuter toutes les 5 minutes<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>*/5 * * * * php /path/to/perfex/index.php cron/run</code><br><br>';
+        echo '2. <strong>Module Dietetic Hook:</strong> Vérifier que le hook after_cron_run est actif<br>';
+        echo '&nbsp;&nbsp;&nbsp;Fichier: modules/dietetic/dietetic.php<br><br>';
+        echo '3. <strong>Logs Serveur:</strong> Consulter les logs du serveur pour voir les exécutions du cron<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>grep "cron" /var/log/apache2/access.log</code> ou <code>/var/log/nginx/access.log</code><br><br>';
+        echo '4. <strong>Test Manuel:</strong> Exécuter le cron manuellement pour tester<br>';
+        echo '&nbsp;&nbsp;&nbsp;<code>php /path/to/perfex/index.php cron/run</code>';
+        echo '</div>';
+
+        // Recommendations
+        echo '<h2>5. Diagnostic Final</h2>';
+
+        if (empty($hourly_stats)) {
+            echo '<div class="error">';
+            echo '❌ <strong>PROBLÈME CRITIQUE:</strong> Aucune notification n\'a été envoyée aujourd\'hui<br><br>';
+            echo '<strong>Causes possibles:</strong><br>';
+            echo '1. Le cron job n\'est pas configuré ou ne s\'exécute pas<br>';
+            echo '2. Le module Dietetic n\'est pas activé<br>';
+            echo '3. Le hook after_cron_run n\'est pas enregistré<br><br>';
+            echo '<strong>Actions à prendre:</strong><br>';
+            echo '➡️ Vérifier la configuration du cron job dans le cPanel ou via SSH<br>';
+            echo '➡️ Tester l\'exécution manuelle du cron: <code>php index.php cron/run</code><br>';
+            echo '➡️ Vérifier les logs du serveur pour voir si le cron est appelé';
+            echo '</div>';
+        } else {
+            $has_8am = false;
+            foreach ($hourly_stats as $stat) {
+                if (substr($stat->hour, 11, 2) == '08') {
+                    $has_8am = true;
+                    break;
+                }
+            }
+
+            if (!$has_8am && date('H') >= 8) {
+                echo '<div class="error">';
+                echo '❌ <strong>PROBLÈME:</strong> Le cron a envoyé des notifications mais PAS à 8h00<br><br>';
+                echo '<strong>Cause probable:</strong><br>';
+                echo 'Le cron job ne s\'est pas exécuté entre 8h00 et 8h05 ce matin<br><br>';
+                echo '<strong>Solutions:</strong><br>';
+                echo '➡️ Vérifier que le cron s\'exécute TOUTES LES 5 MINUTES (pas toutes les heures)<br>';
+                echo '➡️ Configuration correcte: <code>*/5 * * * *</code> (toutes les 5 minutes)<br>';
+                echo '➡️ Configuration incorrecte: <code>0 * * * *</code> (toutes les heures à :00)';
+                echo '</div>';
+            } else {
+                echo '<div class="success">';
+                echo '✅ Le système de notifications fonctionne correctement';
+                echo '</div>';
+            }
+        }
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Vérifier si le cron de Perfex s'exécute réellement
+     * URL: /dietetic/portal/check_perfex_cron
+     */
+    public function check_perfex_cron()
+    {
+        // Allow both admin and logged-in clients
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit(50);
+        $this->db->like('description', 'Dietetic Cron', 'both');
+        $logs = $this->db->get(db_prefix() . 'activity_log')->result_array();
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Vérification Cron Perfex - Dietetic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #4CAF50; color: white; padding: 12px; text-align: left; font-weight: bold; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .warning { color: #ff9800; font-weight: bold; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; border-radius: 4px; }
+        .error-box { background: #ffebee; padding: 15px; border-left: 4px solid #f44336; margin: 20px 0; border-radius: 4px; }
+        .success-box { background: #e8f5e9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .timestamp { color: #666; font-size: 0.9em; }
+        .cron-status { padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .status-running { background: #e8f5e9; border: 2px solid #4CAF50; }
+        .status-stopped { background: #ffebee; border: 2px solid #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Vérification du Cron Perfex</h1>
+        <p><strong>Date/Heure actuelle :</strong> ' . date('Y-m-d H:i:s') . '</p>
+        ';
+
+        // Analyse des logs
+        $cron_executions = [];
+        $last_start = null;
+        $last_end = null;
+        $errors = [];
+
+        foreach ($logs as $log) {
+            if (strpos($log['description'], 'Démarrage') !== false) {
+                $last_start = $log['date'];
+            } elseif (strpos($log['description'], 'Fin à') !== false) {
+                $last_end = $log['date'];
+                $cron_executions[] = $log;
+            } elseif (strpos($log['description'], 'Error') !== false) {
+                $errors[] = $log;
+            }
+        }
+
+        // Statut du cron
+        $now = time();
+        $last_run_time = $last_end ? strtotime($last_end) : ($last_start ? strtotime($last_start) : null);
+        $minutes_since_last_run = $last_run_time ? round(($now - $last_run_time) / 60) : null;
+
+        echo '<div class="cron-status ' . ($minutes_since_last_run && $minutes_since_last_run <= 10 ? 'status-running' : 'status-stopped') . '">';
+
+        if ($last_run_time) {
+            if ($minutes_since_last_run <= 10) {
+                echo '<p class="success">✅ <strong>CRON ACTIF</strong> - Dernière exécution il y a ' . $minutes_since_last_run . ' minute(s)</p>';
+                echo '<p>Le cron fonctionne correctement (exécution toutes les 5 minutes attendue).</p>';
+            } else {
+                echo '<p class="error">❌ <strong>CRON ARRÊTÉ</strong> - Dernière exécution il y a ' . $minutes_since_last_run . ' minute(s)</p>';
+                echo '<p>Le cron devrait s\'exécuter toutes les 5 minutes. Il semble arrêté depuis plus de 10 minutes.</p>';
+            }
+            echo '<p><strong>Dernière exécution :</strong> ' . ($last_end ?: $last_start) . '</p>';
+        } else {
+            echo '<p class="error">❌ <strong>AUCUNE EXÉCUTION DÉTECTÉE</strong></p>';
+            echo '<p>Aucune trace d\'exécution du cron dans les logs. Le cron ne semble jamais avoir démarré.</p>';
+        }
+
+        echo '</div>';
+
+        // Erreurs récentes
+        if (!empty($errors)) {
+            echo '<div class="error-box">';
+            echo '<h3>⚠️ Erreurs récentes (' . count($errors) . ')</h3>';
+            echo '<table>';
+            echo '<tr><th>Date</th><th>Message</th></tr>';
+            foreach (array_slice($errors, 0, 10) as $error) {
+                echo '<tr>';
+                echo '<td class="timestamp">' . htmlspecialchars($error['date']) . '</td>';
+                echo '<td class="error">' . htmlspecialchars($error['description']) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+            echo '</div>';
+        }
+
+        // Historique des exécutions
+        echo '<h2>📊 Historique des 20 dernières exécutions</h2>';
+
+        if (!empty($cron_executions)) {
+            echo '<table>';
+            echo '<tr><th>Date</th><th>Résultat</th></tr>';
+            foreach (array_slice($cron_executions, 0, 20) as $exec) {
+                echo '<tr>';
+                echo '<td class="timestamp">' . htmlspecialchars($exec['date']) . '</td>';
+                echo '<td>' . htmlspecialchars($exec['description']) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        } else {
+            echo '<div class="error-box"><p>Aucune exécution complète enregistrée.</p></div>';
+        }
+
+        // Recommandations
+        echo '<h2>💡 Diagnostic et Solutions</h2>';
+
+        if (!$last_run_time || $minutes_since_last_run > 10) {
+            echo '<div class="error-box">';
+            echo '<h3>❌ Problème: Le cron ne s\'exécute pas automatiquement</h3>';
+            echo '<p><strong>Configuration actuelle du cron serveur :</strong></p>';
+            echo '<code>*/5 * * * * /usr/bin/php /home/trpuftja/app/index.php cron/index</code>';
+            echo '<p><strong>Vérifications à effectuer :</strong></p>';
+            echo '<ol>';
+            echo '<li><strong>Vérifier que le cron est bien configuré dans cPanel :</strong>';
+            echo '<ul>';
+            echo '<li>Connectez-vous à cPanel</li>';
+            echo '<li>Allez dans "Cron Jobs"</li>';
+            echo '<li>Vérifiez que la tâche existe et est active</li>';
+            echo '<li>Vérifiez que le chemin est correct : <code>/usr/bin/php /home/trpuftja/app/index.php cron/index</code></li>';
+            echo '</ul></li>';
+            echo '<li><strong>Tester manuellement le cron via SSH :</strong>';
+            echo '<pre style="background:#f5f5f5;padding:10px;border-radius:4px;">cd /home/trpuftja/app
+php index.php cron/index</pre>';
+            echo '<p>Puis rechargez cette page pour voir si une nouvelle exécution apparaît.</p>';
+            echo '</li>';
+            echo '<li><strong>Vérifier les permissions :</strong>';
+            echo '<pre style="background:#f5f5f5;padding:10px;border-radius:4px;">ls -la /home/trpuftja/app/index.php</pre>';
+            echo '<p>Le fichier doit être lisible et exécutable.</p>';
+            echo '</li>';
+            echo '<li><strong>Vérifier les logs du serveur :</strong>';
+            echo '<ul>';
+            echo '<li>Dans cPanel, consultez les logs d\'erreurs</li>';
+            echo '<li>Cherchez des erreurs liées au cron</li>';
+            echo '</ul></li>';
+            echo '</ol>';
+            echo '</div>';
+        } else {
+            echo '<div class="success-box">';
+            echo '<h3>✅ Le cron fonctionne correctement</h3>';
+            echo '<p>Le cron s\'exécute automatiquement toutes les 5 minutes comme prévu.</p>';
+            echo '<p>Si vous ne recevez toujours pas de notifications, le problème se situe dans la logique de détection des rappels à envoyer.</p>';
+            echo '</div>';
+        }
+
+        echo '<div class="info">';
+        echo '<h3>ℹ️ Comment fonctionne le système</h3>';
+        echo '<p><strong>1. Cron du serveur</strong> (toutes les 5 minutes) :</p>';
+        echo '<code>*/5 * * * * /usr/bin/php /home/trpuftja/app/index.php cron/index</code>';
+        echo '<p>↓</p>';
+        echo '<p><strong>2. Perfex exécute son cron</strong> (<code>/application/controllers/Cron.php</code>)</p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>3. Perfex déclenche le hook</strong> <code>after_cron_run</code></p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>4. Notre fonction s\'exécute</strong> : <code>dietetic_send_scheduled_reminders()</code></p>';
+        echo '<p>↓</p>';
+        echo '<p><strong>5. Les notifications sont envoyées</strong> selon les configurations des patients</p>';
+        echo '</div>';
+
+        echo '<div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 4px;">';
+        echo '<p><strong>🔄 Actions rapides :</strong></p>';
+        echo '<ul>';
+        echo '<li><a href="' . base_url('dietetic/portal/check_perfex_cron') . '" style="color: #2196F3;">Recharger cette page</a> pour voir les nouvelles exécutions</li>';
+        echo '<li><a href="' . base_url('dietetic/portal/debug_meal_reminder?meal_type=breakfast') . '" style="color: #2196F3;">Tester la détection des rappels de petit-déjeuner</a></li>';
+        echo '<li><a href="' . base_url('dietetic/portal/check_cron_execution') . '" style="color: #2196F3;">Voir l\'historique des notifications envoyées</a></li>';
+        echo '</ul>';
+        echo '</div>';
+
+        echo '
+    </div>
+</body>
+</html>';
+    }
+
+    /**
+     * Tester l'exécution complète du cron manuellement
+     * URL: /dietetic/portal/test_cron_complete
+     */
+    public function test_cron_complete()
+    {
+        // Permettre l'accès aux admins et clients connectés
+        if (!is_staff_logged_in() && !is_client_logged_in()) {
+            redirect('authentication/login');
+        }
+
+        $this->load->model('dietetic_notifications_model');
+
+        $start_time = microtime(true);
+        $total_sent = 0;
+        $total_failed = 0;
+        $details = [];
+        $errors = [];
+
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Cron Complet - Dietetic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #2196F3; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #4CAF50; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 3px; font-size: 0.9em; font-weight: bold; }
+        .badge-success { background: #4CAF50; color: white; }
+        .badge-error { background: #f44336; color: white; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; border-radius: 4px; }
+        .success { background: #e8f5e9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px; }
+        .warning { background: #fff3e0; padding: 15px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }
+        .error { background: #ffebee; padding: 15px; border-left: 4px solid #f44336; margin: 20px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Complet du Cron Dietetic</h1>
+        <p><strong>Date/Heure :</strong> ' . date('Y-m-d H:i:s') . ' (Timezone: Africa/Dakar)</p>';
+
+        try {
+            // ==================== MEAL REMINDERS ====================
+            $meal_types = ['breakfast' => '🥐 Petit-Déjeuner', 'lunch' => '🍽️ Déjeuner', 'dinner' => '🍴 Dîner'];
+            foreach ($meal_types as $meal_type => $meal_label) {
+                echo '<h2>' . $meal_label . '</h2>';
+
+                $meal_patients = $this->dietetic_notifications_model->get_patients_for_meal_reminder($meal_type);
+
+                // Afficher la fenêtre de temps
+                $current_time = date('H:i:00');
+                $time_5min_ago = date('H:i:00', strtotime('-5 minutes'));
+                echo '<div class="info">';
+                echo '<p><strong>Fenêtre de temps :</strong> ' . $time_5min_ago . ' &lt; heure_configurée ≤ ' . $current_time . '</p>';
+                echo '<p><strong>Patients trouvés :</strong> ' . count($meal_patients) . '</p>';
+                echo '</div>';
+
+                if (!empty($meal_patients)) {
+                    echo '<table><tr><th>Patient</th><th>Heure configurée</th><th>Email</th><th>Téléphone</th><th>Résultat</th></tr>';
+                    foreach ($meal_patients as $patient) {
+                        $result = $this->dietetic_notifications_model->send_meal_reminder($patient, $meal_type);
+                        $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                        $total_sent += $success_count;
+                        if (empty($success_count)) {
+                            $total_failed++;
+                        }
+
+                        $configured_time = $patient->{'reminder_' . $meal_type . '_time'} ?? 'N/A';
+
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                        echo '<td><strong>' . htmlspecialchars($configured_time) . '</strong></td>';
+                        echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                        echo '<td>' . htmlspecialchars($patient->phonenumber ?? 'N/A') . '</td>';
+                        echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ Envoyé (' . $success_count . ')</span>' : '<span class="badge badge-error">✗ Échec</span>') . '</td>';
+                        echo '</tr>';
+                    }
+                    echo '</table>';
+                } else {
+                    echo '<p class="warning">Aucun patient dans la fenêtre de temps.</p>';
+                }
+            }
+
+            // ==================== WEIGHT REMINDERS ====================
+            echo '<h2>⚖️ Rappels de Pesée</h2>';
+            $weight_patients = $this->dietetic_notifications_model->get_patients_for_weight_reminder();
+            echo '<p><strong>Patients trouvés :</strong> ' . count($weight_patients) . '</p>';
+
+            if (!empty($weight_patients)) {
+                echo '<table><tr><th>Patient</th><th>Email</th><th>Résultat</th></tr>';
+                foreach ($weight_patients as $patient) {
+                    $result = $this->dietetic_notifications_model->send_weight_reminder($patient);
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // ==================== WATER REMINDERS ====================
+            echo '<h2>💧 Rappels d\'Hydratation</h2>';
+            $water_patients = $this->dietetic_notifications_model->get_patients_for_water_reminder();
+            echo '<p><strong>Patients trouvés :</strong> ' . count($water_patients) . '</p>';
+
+            if (!empty($water_patients)) {
+                echo '<table><tr><th>Patient</th><th>Email</th><th>Résultat</th></tr>';
+                foreach ($water_patients as $patient) {
+                    $result = $this->dietetic_notifications_model->send_water_reminder($patient);
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($patient->firstname ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($patient->email ?? 'N/A') . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            // ==================== CONSULTATION REMINDERS ====================
+            echo '<h2>📅 Rappels de Consultation (J-1)</h2>';
+            $consultations_day = $this->dietetic_notifications_model->get_consultations_for_day_reminder();
+            echo '<p><strong>Consultations trouvées :</strong> ' . count($consultations_day) . '</p>';
+
+            if (!empty($consultations_day)) {
+                echo '<table><tr><th>Patient</th><th>Date</th><th>Heure</th><th>Diététicien</th><th>Résultat</th></tr>';
+                foreach ($consultations_day as $consultation) {
+                    $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                    $result = $this->dietetic_notifications_model->notify_consultation_reminder_day(
+                        $consultation->patient_id,
+                        $consultation->consultation_date,
+                        $consultation->consultation_time,
+                        $dietitian_name
+                    );
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>Patient #' . $consultation->patient_id . '</td>';
+                    echo '<td>' . date('Y-m-d', strtotime($consultation->consultation_date)) . '</td>';
+                    echo '<td>' . htmlspecialchars($consultation->consultation_time ?? 'N/A') . '</td>';
+                    echo '<td>' . htmlspecialchars($dietitian_name) . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+            echo '<h2>⏰ Rappels de Consultation (H-1)</h2>';
+            $consultations_hour = $this->dietetic_notifications_model->get_consultations_for_hour_reminder();
+            echo '<p><strong>Consultations trouvées :</strong> ' . count($consultations_hour) . '</p>';
+
+            if (!empty($consultations_hour)) {
+                echo '<table><tr><th>Patient</th><th>Date/Heure</th><th>Diététicien</th><th>Résultat</th></tr>';
+                foreach ($consultations_hour as $consultation) {
+                    $dietitian_name = $consultation->dietitian_firstname . ' ' . $consultation->dietitian_lastname;
+                    $result = $this->dietetic_notifications_model->notify_consultation_reminder_hour(
+                        $consultation->patient_id,
+                        $consultation->consultation_time,
+                        $dietitian_name
+                    );
+                    $success_count = is_array($result) ? count(array_filter($result, function($r) { return $r === true; })) : 0;
+                    $total_sent += $success_count;
+
+                    echo '<tr>';
+                    echo '<td>Patient #' . $consultation->patient_id . '</td>';
+                    echo '<td>' . htmlspecialchars($consultation->consultation_date) . '</td>';
+                    echo '<td>' . htmlspecialchars($dietitian_name) . '</td>';
+                    echo '<td>' . ($success_count > 0 ? '<span class="badge badge-success">✓ ' . $success_count . '</span>' : '<span class="badge badge-error">✗</span>') . '</td>';
+                    echo '</tr>';
+                }
+                echo '</table>';
+            }
+
+        } catch (Exception $e) {
+            echo '<div class="error">';
+            echo '<h3>❌ Erreur</h3>';
+            echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
+            echo '</div>';
+            $errors[] = $e->getMessage();
+        }
+
+        $execution_time = round((microtime(true) - $start_time) * 1000, 2);
+
+        echo '<h2>📊 Résumé</h2>';
+        echo '<div class="' . ($total_sent > 0 ? 'success' : 'warning') . '">';
+        echo '<p><strong>Notifications envoyées :</strong> <span class="badge badge-success">' . $total_sent . '</span></p>';
+        echo '<p><strong>Échecs :</strong> <span class="badge badge-' . ($total_failed > 0 ? 'error' : 'success') . '">' . $total_failed . '</span></p>';
+        echo '<p><strong>Temps d\'exécution :</strong> ' . $execution_time . ' ms</p>';
+        echo '<p><strong>Erreurs :</strong> ' . count($errors) . '</p>';
+        echo '</div>';
+
+        // Logs récents
+        echo '<h2>📝 Logs Récents (5 derniers)</h2>';
+        $logs = $this->db->order_by('id', 'DESC')
+                        ->limit(5)
+                        ->like('description', 'Dietetic Cron', 'both')
+                        ->get(db_prefix() . 'activity_log')
+                        ->result_array();
+
+        if (!empty($logs)) {
+            echo '<table><tr><th>Date</th><th>Description</th></tr>';
+            foreach ($logs as $log) {
+                echo '<tr><td>' . htmlspecialchars($log['date']) . '</td><td>' . htmlspecialchars($log['description']) . '</td></tr>';
+            }
+            echo '</table>';
+        } else {
+            echo '<p class="warning">Aucun log trouvé. Le fichier dietetic.php doit être mis à jour sur le serveur.</p>';
+        }
+
+        echo '<div style="margin-top: 30px;"><a href="' . base_url('dietetic/portal/test_cron_complete') . '" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:4px;">🔄 Relancer le test</a></div>';
+
+        echo '
+    </div>
+</body>
+</html>';
     }
 }
 

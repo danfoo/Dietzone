@@ -155,6 +155,34 @@ class Dietetic_consultations_model extends App_Model
     }
 
     /**
+     * Get upcoming consultations for a specific patient
+     * Retourne uniquement les consultations futures (scheduled et date future)
+     *
+     * @param int $patient_id
+     * @param int $limit
+     * @return array
+     */
+    public function get_upcoming_by_patient($patient_id, $limit = 10)
+    {
+        // Check access permissions
+        if (!dietetic_can_access_patient($patient_id)) {
+            log_activity('Unauthorized attempt to access consultations for Patient ID ' . $patient_id);
+            return [];
+        }
+
+        $this->db->where('patient_id', $patient_id);
+        $this->db->where('status', 'scheduled');
+        $this->db->where('consultation_date >=', date('Y-m-d H:i:s'));
+        $this->db->order_by('consultation_date', 'ASC');
+
+        if ($limit) {
+            $this->db->limit($limit);
+        }
+
+        return $this->db->get(db_prefix() . $this->table)->result();
+    }
+
+    /**
      * Get upcoming consultations
      *
      * @param int $limit
@@ -483,5 +511,32 @@ class Dietetic_consultations_model extends App_Model
 
         // Create new reminder
         return $this->create_consultation_reminder($consultation_id);
+    }
+
+    /**
+     * Mettre à jour automatiquement les consultations passées
+     * Met le statut à 'completed' pour les consultations dont la date est dépassée
+     *
+     * @return int Nombre de consultations mises à jour
+     */
+    public function update_past_consultations()
+    {
+        $now = date('Y-m-d H:i:s');
+
+        // Mettre à jour les consultations dont la date est passée
+        $this->db->where('status', 'scheduled');
+        $this->db->where('consultation_date <', $now);
+        $this->db->update(db_prefix() . $this->table, [
+            'status' => 'completed',
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $affected_rows = $this->db->affected_rows();
+
+        if ($affected_rows > 0) {
+            log_activity("Auto-completed $affected_rows past consultations");
+        }
+
+        return $affected_rows;
     }
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DietSenegal</string>
+    <string name="loading">Chargement…</string>
+    <string name="no_internet">Pas de connexion Internet</string>
+    <string name="error_occurred">Une erreur s\'est produite</string>
+</resources>

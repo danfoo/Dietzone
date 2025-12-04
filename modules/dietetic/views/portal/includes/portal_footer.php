@@ -105,7 +105,7 @@
 
         // Store all notifications globally for filtering
         let allNotifications = [];
-        let currentFilter = 'all';
+        let currentFilter = 'unread'; // Default to unread notifications
         let previousUnreadCount = 0;
         let autoRefreshInterval = null;
 
@@ -237,17 +237,21 @@
                     html += `<div class="notification-date-separator"><span>${group.label}</span></div>`;
 
                     // Add notifications in this group
+                    let notificationIndex = 0;
                     group.notifications.forEach(notification => {
                         const unreadClass = notification.is_read ? '' : 'unread';
                         const clickableClass = notification.url ? 'clickable' : '';
                         const cursorStyle = notification.url ? 'cursor: pointer;' : '';
+                        const animationDelay = `animation-delay: ${notificationIndex * 0.05}s;`;
+                        notificationIndex++;
 
                         html += `
                             <div class="notification-item ${unreadClass} ${clickableClass}"
                                  data-notification-id="${notification.id}"
+                                 data-type="${notification.type || 'info'}"
                                  data-url="${notification.url || ''}"
                                  data-is-read="${notification.is_read ? '1' : '0'}"
-                                 style="${cursorStyle}"
+                                 style="${cursorStyle} ${animationDelay}"
                                  onclick="handleNotificationClick(this, event)">
                                 <button class="notification-item-delete" onclick="deleteNotification(this, event)">
                                     <i class="fa fa-times"></i>
@@ -283,14 +287,13 @@
 
         // Filter notifications based on current filter
         function filterNotifications(notifications) {
-            if (currentFilter === 'all') {
-                return notifications;
-            } else if (currentFilter === 'unread') {
+            if (currentFilter === 'unread') {
                 return notifications.filter(n => !n.is_read);
             } else if (currentFilter === 'read') {
                 return notifications.filter(n => n.is_read);
             }
-            return notifications;
+            // Default to unread if filter is invalid
+            return notifications.filter(n => !n.is_read);
         }
 
         // Apply filter and update display
@@ -447,9 +450,10 @@
         // ============================================
         // MARK ALL AS READ FUNCTIONALITY
         // ============================================
-        const markAllReadBtn = document.getElementById('markAllReadBtn');
-        if (markAllReadBtn) {
-            markAllReadBtn.addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function() {
                 // Disable button during request
                 const originalHtml = this.innerHTML;
                 this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>Chargement...</span>';
@@ -503,6 +507,7 @@
                 });
             });
         }
+        });
 
         // ============================================
         // NOTIFICATION CLICK HANDLER

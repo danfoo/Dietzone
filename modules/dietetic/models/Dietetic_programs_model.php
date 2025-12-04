@@ -123,8 +123,15 @@ class Dietetic_programs_model extends App_Model
             return null;
         }
 
+        $today = date('Y-m-d');
+
         $this->db->where('patient_id', $patient_id);
         $this->db->where('status', 'active');
+        // Exclure les programmes dont la date de fin est dépassée
+        $this->db->group_start();
+        $this->db->where('end_date >=', $today);
+        $this->db->or_where('end_date IS NULL');
+        $this->db->group_end();
         $this->db->order_by('start_date', 'DESC');
         $this->db->limit(1);
 
@@ -334,5 +341,33 @@ class Dietetic_programs_model extends App_Model
         $stats->ending_soon = $this->db->count_all_results(db_prefix() . $this->table);
 
         return $stats;
+    }
+
+    /**
+     * Mettre à jour automatiquement les programmes expirés
+     * Met le statut à 'completed' pour les programmes dont la end_date est dépassée
+     *
+     * @return int Nombre de programmes mis à jour
+     */
+    public function update_expired_programs()
+    {
+        $today = date('Y-m-d');
+
+        // Mettre à jour les programmes dont la date de fin est dépassée
+        $this->db->where('status', 'active');
+        $this->db->where('end_date <', $today);
+        $this->db->where('end_date IS NOT NULL');
+        $this->db->update(db_prefix() . $this->table, [
+            'status' => 'completed',
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $affected_rows = $this->db->affected_rows();
+
+        if ($affected_rows > 0) {
+            log_activity("Auto-completed $affected_rows expired programs");
+        }
+
+        return $affected_rows;
     }
 }

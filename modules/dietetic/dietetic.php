@@ -453,6 +453,9 @@ function dietetic_send_scheduled_reminders()
     $CI = &get_instance();
     $CI->load->model('dietetic/dietetic_notifications_model');
 
+    // TOUJOURS logger le début d'exécution pour vérifier que le cron fonctionne
+    log_activity('Dietetic Cron: Démarrage à ' . date('Y-m-d H:i:s'));
+
     // Compteurs pour le reporting
     $total_sent = 0;
     $total_failed = 0;
@@ -559,14 +562,13 @@ function dietetic_send_scheduled_reminders()
             }
         }
 
-        // Log activity si des notifications ont été envoyées
-        if ($total_sent > 0 || $total_failed > 0) {
-            log_activity(sprintf(
-                'Dietetic Cron: %d notifications envoyées, %d échecs',
-                $total_sent,
-                $total_failed
-            ));
-        }
+        // TOUJOURS logger la fin d'exécution, même si aucune notification envoyée
+        log_activity(sprintf(
+            'Dietetic Cron: Fin à %s - %d notifications envoyées, %d échecs',
+            date('Y-m-d H:i:s'),
+            $total_sent,
+            $total_failed
+        ));
 
     } catch (Exception $e) {
         log_activity('Dietetic Cron Error: ' . $e->getMessage());
