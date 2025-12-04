@@ -346,11 +346,21 @@
             transition: transform 0.3s ease;
         }
 
-        a[aria-expanded="true"] .expand-icon {
+        .expand-icon.open {
             transform: rotate(180deg);
         }
 
         /* Panel Body */
+        .panel-collapse {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .panel-collapse.open {
+            max-height: 5000px;
+        }
+
         .panel-body {
             padding: 20px !important;
             background: #f8f9fa;
@@ -796,10 +806,7 @@
                     <div class="consultation-panel <?php echo $panel_class; ?>">
                         <div class="panel-heading" role="tab" id="heading<?php echo $consultation->id; ?>">
                             <h4 class="panel-title">
-                                <a role="button" data-toggle="collapse"
-                                   href="#collapse<?php echo $consultation->id; ?>"
-                                   aria-expanded="<?php echo $index === 0 ? 'true' : 'false'; ?>"
-                                   aria-controls="collapse<?php echo $consultation->id; ?>">
+                                <div role="button" onclick="toggleConsultationAccordion('consultation-<?php echo $consultation->id; ?>')" style="display: flex; align-items: center; justify-content: space-between; padding: 20px; cursor: pointer; user-select: none;">
                                     <div class="consultation-summary">
                                         <div class="consultation-date-header">
                                             <div class="date-icon">
@@ -819,14 +826,12 @@
                                             <?php echo $status_text; ?>
                                         </span>
                                     </div>
-                                    <i class="fa fa-chevron-down expand-icon"></i>
-                                </a>
+                                    <i class="fa fa-chevron-down expand-icon <?php echo $index === 0 ? 'open' : ''; ?>" id="icon-consultation-<?php echo $consultation->id; ?>"></i>
+                                </div>
                             </h4>
                         </div>
-                        <div id="collapse<?php echo $consultation->id; ?>"
-                             class="panel-collapse collapse <?php echo $index === 0 ? 'in' : ''; ?>"
-                             role="tabpanel"
-                             aria-labelledby="heading<?php echo $consultation->id; ?>">
+                        <div id="content-consultation-<?php echo $consultation->id; ?>"
+                             class="panel-collapse <?php echo $index === 0 ? 'open' : ''; ?>">
                             <div class="panel-body">
                                 <!-- Details Section -->
                                 <div class="detail-section">
@@ -1043,11 +1048,33 @@
     <!-- Bottom Navigation (Mobile Only) -->
     <?php $this->load->view('portal/includes/portal_footer'); ?>
 
+    <script>
+        // Toggle consultation accordion function
+        function toggleConsultationAccordion(accordionId) {
+            const content = document.getElementById('content-' + accordionId);
+            const icon = document.getElementById('icon-' + accordionId);
+
+            if (content && icon) {
+                const isOpen = content.classList.contains('open');
+
+                if (isOpen) {
+                    // Close
+                    content.classList.remove('open');
+                    icon.classList.remove('open');
+                } else {
+                    // Open
+                    content.classList.add('open');
+                    icon.classList.add('open');
+                }
+            }
+        }
+    </script>
+
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
         // Touch feedback for mobile
-        document.querySelectorAll('.panel-title a, .btn-action-panel').forEach(function(element) {
+        document.querySelectorAll('.panel-title, .btn-action-panel').forEach(function(element) {
             element.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.97)';
             });
@@ -1064,16 +1091,6 @@
                 });
             });
         }
-
-        // Auto-scroll to first opened panel
-        $(document).ready(function() {
-            $('.panel-collapse').on('shown.bs.collapse', function() {
-                var panel = $(this).closest('.consultation-panel');
-                $('html, body').animate({
-                    scrollTop: panel.offset().top - 80
-                }, 300);
-            });
-        });
     </script>
 </body>
 </html>
