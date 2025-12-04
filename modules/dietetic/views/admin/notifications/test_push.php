@@ -20,12 +20,12 @@
                         <!-- Statistics Cards -->
                         <div class="row mtop20">
                             <div class="col-md-3">
-                                <div class="panel_s" style="border-left: 4px solid #01807B;">
+                                <div class="panel_s" style="border-left: 4px solid #FF5722;">
                                     <div class="panel-body text-center">
-                                        <h3 class="bold no-margin" style="color: #01807B;" id="totalTokens">
+                                        <h3 class="bold no-margin" style="color: #FF5722;" id="totalPlayers">
                                             <i class="fa fa-spinner fa-spin"></i>
                                         </h3>
-                                        <p class="text-muted no-margin">Tokens FCM Actifs</p>
+                                        <p class="text-muted no-margin">Player IDs OneSignal</p>
                                     </div>
                                 </div>
                             </div>
@@ -64,7 +64,7 @@
                         <!-- Test Form -->
                         <div class="panel_s mtop20">
                             <div class="panel-body">
-                                <h4><i class="fa fa-paper-plane"></i> Envoyer une Notification de Test</h4>
+                                <h4><i class="fa fa-paper-plane"></i> Envoyer une Notification de Test (OneSignal)</h4>
                                 <hr>
 
                                 <form id="testPushForm">
@@ -78,22 +78,20 @@
                                                     <option value="">-- Choisir un patient --</option>
                                                     <?php if (!empty($patients)): ?>
                                                         <?php foreach ($patients as $patient): ?>
-                                                            <?php if ($patient['fcm_tokens'] > 0): ?>
-                                                                <option value="<?php echo $patient['id']; ?>" data-tokens="<?php echo $patient['fcm_tokens']; ?>">
+                                                            <?php if ($patient['player_ids'] > 0): ?>
+                                                                <option value="<?php echo $patient['id']; ?>" data-players="<?php echo $patient['player_ids']; ?>">
                                                                     <?php echo htmlspecialchars($patient['patient_name']); ?>
-                                                                    (<?php echo $patient['fcm_tokens']; ?> appareil<?php echo $patient['fcm_tokens'] > 1 ? 's' : ''; ?>)
+                                                                    (<?php echo $patient['player_ids']; ?> appareil<?php echo $patient['player_ids'] > 1 ? 's' : ''; ?>)
                                                                 </option>
                                                             <?php endif; ?>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
                                                 </select>
-                                                <?php if (empty($patients) || !array_filter($patients, function($p) { return $p['fcm_tokens'] > 0; })): ?>
+                                                <?php if (empty($patients) || !array_filter($patients, function($p) { return $p['player_ids'] > 0; })): ?>
                                                     <p class="text-warning mtop10">
                                                         <i class="fa fa-exclamation-triangle"></i>
-                                                        Aucun patient n'a de token FCM enregistré.
-                                                        <a href="<?php echo admin_url('dietetic/setup/diagnose_push'); ?>">
-                                                            Voir le diagnostic
-                                                        </a>
+                                                        Aucun patient n'a de Player ID OneSignal enregistré.
+                                                        Les patients doivent activer les notifications dans le portail patient.
                                                     </p>
                                                 <?php endif; ?>
                                             </div>
@@ -128,7 +126,7 @@
                                                     <i class="fa fa-comment"></i> Message *
                                                 </label>
                                                 <textarea name="message" id="message" class="form-control" rows="3"
-                                                          required maxlength="200">Ceci est une notification de test depuis DietZone. Si vous la recevez, les notifications push fonctionnent correctement ! 👍</textarea>
+                                                          required maxlength="200">Ceci est une notification de test depuis DietZone via OneSignal. Si vous la recevez, les notifications push fonctionnent correctement ! 👍</textarea>
                                                 <small class="text-muted">Maximum 200 caractères</small>
                                             </div>
                                         </div>
@@ -137,12 +135,8 @@
                                     <div class="row mtop15">
                                         <div class="col-md-12">
                                             <button type="submit" class="btn btn-primary btn-lg" id="sendBtn">
-                                                <i class="fa fa-paper-plane"></i> Envoyer la Notification de Test
+                                                <i class="fa fa-paper-plane"></i> Envoyer la Notification de Test (OneSignal)
                                             </button>
-
-                                            <a href="<?php echo admin_url('dietetic/setup/diagnose_push'); ?>" class="btn btn-info">
-                                                <i class="fa fa-stethoscope"></i> Diagnostic Push
-                                            </a>
 
                                             <a href="<?php echo admin_url('dietetic/notifications/logs'); ?>" class="btn btn-default">
                                                 <i class="fa fa-list"></i> Voir les Logs
@@ -168,9 +162,9 @@
 
                         <!-- Instructions -->
                         <div class="alert alert-info mtop20">
-                            <h4><i class="fa fa-info-circle"></i> Comment tester les notifications push ?</h4>
+                            <h4><i class="fa fa-info-circle"></i> Comment tester les notifications push avec OneSignal ?</h4>
                             <ol class="mtop10">
-                                <li>Sélectionnez un patient qui a au moins 1 token FCM enregistré</li>
+                                <li>Sélectionnez un patient qui a au moins 1 Player ID OneSignal enregistré</li>
                                 <li>Personnalisez le titre et le message si nécessaire</li>
                                 <li>Cliquez sur "Envoyer la Notification de Test"</li>
                                 <li>Le patient devrait recevoir la notification sur son appareil</li>
@@ -178,7 +172,7 @@
                             </ol>
                             <p class="mtop10 bold">
                                 <i class="fa fa-lightbulb-o"></i> Astuce :
-                                Les patients doivent avoir cliqué sur "Activer les Notifications" dans le portail patient pour avoir un token FCM.
+                                Les patients doivent avoir cliqué sur "Activer les Notifications" dans le portail patient pour avoir un Player ID OneSignal.
                             </p>
                         </div>
                     </div>
@@ -221,17 +215,17 @@ $(document).ready(function() {
         }
 
         // Disable button
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...').prop('disabled', true);
+        btn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours via OneSignal...').prop('disabled', true);
 
-        // Send test notification
+        // Send test notification via OneSignal
         $.ajax({
-            url: '<?php echo admin_url('dietetic/notifications/send_test_push'); ?>',
+            url: '<?php echo admin_url('dietetic/notifications/send_test_onesignal'); ?>',
             type: 'POST',
             data: {
                 patient_id: patientId,
                 notification_type: $('#notification_type').val(),
                 title: title,
-                body: message, // Changed from 'message' to 'body' to match controller
+                body: message,
                 url: '<?php echo site_url('dietetic/portal'); ?>'
             },
             dataType: 'json',
@@ -256,19 +250,19 @@ $(document).ready(function() {
     // Load push notification statistics
     function loadPushStats() {
         $.ajax({
-            url: '<?php echo admin_url('dietetic/notifications/get_push_stats'); ?>',
+            url: '<?php echo admin_url('dietetic/notifications/get_onesignal_stats'); ?>',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    $('#totalTokens').text(response.stats.total_tokens);
-                    $('#totalPatients').text(response.stats.patients_with_tokens);
+                    $('#totalPlayers').text(response.stats.total_players);
+                    $('#totalPatients').text(response.stats.patients_with_players);
                     $('#totalDevices').text(response.stats.total_devices);
                     $('#sentToday').text(response.stats.sent_today);
                 }
             },
             error: function() {
-                $('#totalTokens').text('--');
+                $('#totalPlayers').text('--');
                 $('#totalPatients').text('--');
                 $('#totalDevices').text('--');
                 $('#sentToday').text('--');
@@ -287,7 +281,7 @@ $(document).ready(function() {
 
         const timestamp = new Date().toLocaleString('fr-FR');
         const statusBadge = result.success
-            ? '<span class="label label-success"><i class="fa fa-check"></i> Envoyé</span>'
+            ? '<span class="label label-success"><i class="fa fa-check"></i> Envoyé via OneSignal</span>'
             : '<span class="label label-danger"><i class="fa fa-times"></i> Échec</span>';
 
         const html = `
@@ -295,13 +289,14 @@ $(document).ready(function() {
                 <div class="row">
                     <div class="col-md-8">
                         <strong>${result.title}</strong><br>
-                        <small>${result.message}</small>
+                        <small>${result.body || result.message}</small>
                     </div>
                     <div class="col-md-4 text-right">
                         ${statusBadge}<br>
                         <small class="text-muted">${timestamp}</small><br>
                         <small class="text-muted">Patient #${$('#patient_id option:selected').text()}</small>
                         ${result.devices_count ? '<br><small>' + result.devices_count + ' appareil(s)</small>' : ''}
+                        ${result.notification_id ? '<br><small class="text-info">OneSignal ID: ' + result.notification_id.substr(0, 8) + '...</small>' : ''}
                     </div>
                 </div>
             </div>
