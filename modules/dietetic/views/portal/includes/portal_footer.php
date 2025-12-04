@@ -957,6 +957,124 @@
         // ONESIGNAL PUSH NOTIFICATIONS (NEW - FOR MEDIAN)
         // ============================================
 
+        // Fonction pour afficher une bannière d'invitation aux notifications
+        function showNotificationPromptBanner(OneSignal) {
+            // Vérifier si la bannière a déjà été fermée
+            if (localStorage.getItem('onesignal_prompt_dismissed') === 'true') {
+                console.log('[OneSignal] Prompt banner was previously dismissed');
+                return;
+            }
+
+            // Créer la bannière
+            const banner = document.createElement('div');
+            banner.id = 'onesignal-prompt-banner';
+            banner.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                max-width: 400px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 99999;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                animation: slideInUp 0.5s ease-out;
+            `;
+
+            banner.innerHTML = `
+                <div style="display: flex; align-items: start; gap: 15px;">
+                    <div style="font-size: 32px; flex-shrink: 0;">🔔</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">
+                            Restez informé !
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.95; line-height: 1.5; margin-bottom: 15px;">
+                            Recevez des notifications pour vos rendez-vous, rappels et nouveaux messages.
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="onesignal-allow-btn" style="
+                                background: white;
+                                color: #667eea;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                font-size: 14px;
+                                flex: 1;
+                            ">
+                                ✓ Activer
+                            </button>
+                            <button id="onesignal-dismiss-btn" style="
+                                background: rgba(255,255,255,0.2);
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                font-size: 14px;
+                            ">
+                                Plus tard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Ajouter l'animation CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInUp {
+                    from {
+                        transform: translateY(100px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+                #onesignal-allow-btn:hover {
+                    transform: scale(1.05);
+                    transition: transform 0.2s;
+                }
+                #onesignal-dismiss-btn:hover {
+                    background: rgba(255,255,255,0.3);
+                    transition: background 0.2s;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Ajouter au body
+            document.body.appendChild(banner);
+
+            // Gérer le clic sur "Activer"
+            document.getElementById('onesignal-allow-btn').addEventListener('click', async function() {
+                banner.remove();
+                try {
+                    await OneSignal.Notifications.requestPermission();
+                    console.log('[OneSignal] User clicked to enable notifications');
+                } catch (error) {
+                    console.error('[OneSignal] Permission request failed:', error);
+                }
+            });
+
+            // Gérer le clic sur "Plus tard"
+            document.getElementById('onesignal-dismiss-btn').addEventListener('click', function() {
+                banner.remove();
+                localStorage.setItem('onesignal_prompt_dismissed', 'true');
+                console.log('[OneSignal] User dismissed notification prompt');
+            });
+
+            // Afficher la bannière après 2 secondes
+            setTimeout(() => {
+                banner.style.display = 'block';
+            }, 2000);
+        }
+
         // Initialize OneSignal on page load
         // Using OneSignalDeferred to wait for SDK to load (since it uses defer)
         window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -1066,17 +1184,21 @@
                                 console.log('[OneSignal] Already subscribed, Player ID:', subscription.id);
                             }
                         } else if (permission === 'default') {
-                            // Demander automatiquement la permission après 3 secondes
-                            setTimeout(async function() {
-                                console.log('[OneSignal] Requesting permission...');
-                                try {
-                                    await OneSignal.Notifications.requestPermission();
-                                } catch (error) {
-                                    console.warn('[OneSignal] Permission request failed:', error);
-                                }
-                            }, 3000);
+                            // Afficher une bannière d'invitation (ne PAS demander automatiquement)
+                            console.log('[OneSignal] Permission not granted. Showing prompt banner.');
+                            showNotificationPromptBanner(OneSignal);
                         }
                     }
+
+                    // Fonction globale pour demander la permission (utilisée depuis les préférences)
+                    window.requestOneSignalPermission = async function() {
+                        try {
+                            console.log('[OneSignal] User clicked to enable notifications');
+                            await OneSignal.Notifications.requestPermission();
+                        } catch (error) {
+                            console.error('[OneSignal] Permission request failed:', error);
+                        }
+                    };
 
                 } else {
                     console.error('❌ [ONESIGNAL] OneSignal not configured or disabled');
