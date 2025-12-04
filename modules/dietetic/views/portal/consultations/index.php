@@ -232,24 +232,6 @@
             margin: 0;
         }
 
-        .panel-title a {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px;
-            text-decoration: none;
-            color: #2c3e50;
-            transition: background 0.3s ease;
-        }
-
-        .panel-title a:hover {
-            background: #f8f9fa;
-        }
-
-        .panel-title a[aria-expanded="true"] {
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-        }
 
         .consultation-summary {
             display: flex;
