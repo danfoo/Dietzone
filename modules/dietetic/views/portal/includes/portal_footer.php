@@ -1129,7 +1129,7 @@
                             const postData = {
                                 player_id: playerId,
                                 device_type: 'web',
-                                user_agent: navigator.userAgent,
+                                device_name: navigator.userAgent.substring(0, 100),
                                 '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
                             };
 
@@ -1153,13 +1153,13 @@
                             })
                             .then(result => {
                                 if (result.success) {
-                                    console.log('[OneSignal] Player ID saved successfully');
+                                    console.log('[OneSignal] ✅ Player ID saved successfully on subscription change');
                                 } else {
-                                    console.error('[OneSignal] Failed to save Player ID:', result.message);
+                                    console.error('[OneSignal] ❌ Failed to save Player ID:', result.message);
                                 }
                             })
                             .catch(error => {
-                                console.error('[OneSignal] Error saving Player ID:', error);
+                                console.error('[OneSignal] ❌ Error saving Player ID:', error);
                             });
 
                             // Ajouter des tags (OneSignal v16 - méthode synchrone)
@@ -1198,6 +1198,54 @@
                             const subscription = OneSignal.User.PushSubscription;
                             if (subscription.id) {
                                 console.log('[OneSignal] Already subscribed, Player ID:', subscription.id);
+
+                                // 🔥 FIX: Enregistrer le Player ID sur le serveur (cas où l'utilisateur est déjà abonné)
+                                const postData = {
+                                    player_id: subscription.id,
+                                    device_type: 'web',
+                                    device_name: navigator.userAgent.substring(0, 100),
+                                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                                };
+
+                                fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify(postData)
+                                })
+                                .then(async res => {
+                                    const contentType = res.headers.get('content-type');
+                                    if (!contentType || !contentType.includes('application/json')) {
+                                        const text = await res.text();
+                                        console.error('[OneSignal] Server returned non-JSON response:', text.substring(0, 200));
+                                        throw new Error('Server returned non-JSON response (Status: ' + res.status + ')');
+                                    }
+                                    return res.json();
+                                })
+                                .then(result => {
+                                    if (result.success) {
+                                        console.log('[OneSignal] ✅ Player ID saved successfully on page load');
+                                    } else {
+                                        console.error('[OneSignal] ❌ Failed to save Player ID:', result.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('[OneSignal] ❌ Error saving Player ID:', error);
+                                });
+
+                                // Ajouter des tags
+                                try {
+                                    OneSignal.User.addTags({
+                                        platform: 'web',
+                                        browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)/i)?.[0] || 'unknown'
+                                    });
+                                    console.log('[OneSignal] Tags set successfully');
+                                } catch (error) {
+                                    console.error('[OneSignal] Error setting tags:', error);
+                                }
                             }
                         } else if (permission === 'default') {
                             // Afficher une bannière d'invitation (ne PAS demander automatiquement)
