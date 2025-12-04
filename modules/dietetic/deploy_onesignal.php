@@ -1,25 +1,42 @@
-#!/usr/bin/env php
 <?php
 /**
  * Script de déploiement OneSignal Migration
  * Exécute la migration SQL avec les credentials Perfex CRM
  *
- * Usage:
- *   php deploy_onesignal.php
+ * Usage CLI:
+ *   php modules/dietetic/deploy_onesignal.php
  *
- * Ou depuis le navigateur:
+ * Usage Web:
  *   https://app.dietsenegal.net/modules/dietetic/deploy_onesignal.php
  */
 
 // Détecter si on est en CLI ou Web
 $is_cli = (php_sapi_name() === 'cli');
 
+// Mode web - vérifier les permissions
 if (!$is_cli) {
-    // Mode web - vérifier qu'on est admin
-    define('APP_MODULES_PATH', dirname(__FILE__) . '/../../');
-    require_once(APP_MODULES_PATH . '../application/config/app-config.php');
+    // Charger Perfex CRM
+    $perfex_path = dirname(__FILE__) . '/../../index.php';
+    if (!file_exists($perfex_path)) {
+        die('⛔ Perfex CRM not found');
+    }
 
-    if (!is_admin()) {
+    // Démarrer Perfex sans exécuter index.php
+    define('ENVIRONMENT', 'production');
+    define('FCPATH', dirname(__FILE__) . '/../../');
+
+    // Charger CodeIgniter bootstrap minimum
+    $system_path = dirname(__FILE__) . '/../../application/system';
+    $application_folder = dirname(__FILE__) . '/../../application';
+
+    define('BASEPATH', $system_path . '/');
+    define('APPPATH', $application_folder . '/');
+
+    // Charger la config
+    require_once(APPPATH . 'config/app-config.php');
+
+    // Vérifier qu'on est admin
+    if (!function_exists('is_admin') || !is_admin()) {
         die('⛔ Access denied. Admin only.');
     }
 
@@ -36,37 +53,43 @@ echo "╚═══════════════════════�
 // Étape 1: Charger la configuration de la base de données
 echo "📋 Étape 1/6 : Chargement de la configuration...\n";
 
-$config_path = dirname(__FILE__) . '/../../application/config/app-config.php';
-if (!file_exists($config_path)) {
-    die("❌ ERREUR: Fichier de configuration introuvable: $config_path\n");
+// Lire database.php directement
+$db_config_path = dirname(__FILE__) . '/../../application/config/database.php';
+if (!file_exists($db_config_path)) {
+    die("❌ ERREUR: Fichier database.php introuvable: $db_config_path\n");
 }
 
-require_once($config_path);
+// Charger database.php dans un scope isolé
+$db = null;
+$active_group = null;
+$query_builder = null;
 
-// Charger aussi database.php
-$db_config_path = dirname(__FILE__) . '/../../application/config/database.php';
-if (file_exists($db_config_path)) {
-    require_once($db_config_path);
+// Inclure le fichier
+include($db_config_path);
+
+// Extraire les credentials
+if (!isset($db) || !is_array($db)) {
+    die("❌ ERREUR: Configuration de base de données invalide\n");
+}
+
+// Déterminer le groupe actif
+$active_group = $active_group ?? 'default';
+$db_config = $db[$active_group] ?? [];
+
+$hostname = $db_config['hostname'] ?? 'localhost';
+$username = $db_config['username'] ?? '';
+$password = $db_config['password'] ?? '';
+$database = $db_config['database'] ?? '';
+$db_prefix = $db_config['dbprefix'] ?? 'tbl';
+
+if (empty($username) || empty($database)) {
+    die("❌ ERREUR: Credentials de base de données manquants\n");
 }
 
 echo "✅ Configuration chargée\n\n";
 
 // Étape 2: Se connecter à la base de données
 echo "📋 Étape 2/6 : Connexion à la base de données...\n";
-
-// Récupérer les credentials depuis la config
-$db = $db ?? [];
-$db_config = $db['default'] ?? [];
-
-$hostname = $db_config['hostname'] ?? 'localhost';
-$username = $db_config['username'] ?? '';
-$password = $db_config['password'] ?? '';
-$database = $db_config['database'] ?? '';
-
-if (empty($username) || empty($database)) {
-    die("❌ ERREUR: Configuration de base de données invalide\n");
-}
-
 echo "   Host: $hostname\n";
 echo "   User: $username\n";
 echo "   Database: $database\n";
@@ -91,7 +114,7 @@ echo "📋 Étape 3/6 : Vérification de l'état actuel...\n";
 $migration_needed = false;
 
 // Vérifier si la colonne onesignal_player_id existe déjà
-$result = $conn->query("SHOW COLUMNS FROM tbldietic_fcm_tokens LIKE 'onesignal_player_id'");
+$result = $conn->query("SHOW COLUMNS FROM {$db_prefix}dietic_fcm_tokens LIKE 'onesignal_player_id'");
 if ($result->num_rows == 0) {
     echo "⚠️  Colonne onesignal_player_id manquante\n";
     $migration_needed = true;
@@ -100,7 +123,7 @@ if ($result->num_rows == 0) {
 }
 
 // Vérifier si les settings OneSignal existent
-$result = $conn->query("SELECT COUNT(*) as count FROM tbldietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
+$result = $conn->query("SELECT COUNT(*) as count FROM {$db_prefix}dietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
 $row = $result->fetch_assoc();
 if ($row['count'] == 0) {
     echo "⚠️  Settings OneSignal manquants\n";
@@ -122,7 +145,7 @@ if (!$migration_needed) {
             SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_devices,
             SUM(CASE WHEN onesignal_player_id IS NOT NULL THEN 1 ELSE 0 END) as onesignal_registered,
             SUM(CASE WHEN token IS NOT NULL THEN 1 ELSE 0 END) as firebase_tokens
-        FROM tbldietic_fcm_tokens
+        FROM {$db_prefix}dietic_fcm_tokens
     ");
 
     if ($result) {
@@ -154,6 +177,9 @@ if (!file_exists($sql_file)) {
 }
 
 $sql_content = file_get_contents($sql_file);
+
+// Remplacer les préfixes de table
+$sql_content = str_replace('tbl', $db_prefix, $sql_content);
 
 // Nettoyer le SQL (supprimer les commentaires et lignes vides)
 $sql_lines = explode("\n", $sql_content);
@@ -223,7 +249,7 @@ $checks_total = 0;
 
 // Check 1: Colonne onesignal_player_id
 $checks_total++;
-$result = $conn->query("SHOW COLUMNS FROM tbldietic_fcm_tokens LIKE 'onesignal_player_id'");
+$result = $conn->query("SHOW COLUMNS FROM {$db_prefix}dietic_fcm_tokens LIKE 'onesignal_player_id'");
 if ($result->num_rows > 0) {
     echo "   ✅ Colonne onesignal_player_id créée\n";
     $checks_passed++;
@@ -233,7 +259,7 @@ if ($result->num_rows > 0) {
 
 // Check 2: Index sur onesignal_player_id
 $checks_total++;
-$result = $conn->query("SHOW INDEX FROM tbldietic_fcm_tokens WHERE Key_name = 'idx_player_id'");
+$result = $conn->query("SHOW INDEX FROM {$db_prefix}dietic_fcm_tokens WHERE Key_name = 'idx_player_id'");
 if ($result->num_rows > 0) {
     echo "   ✅ Index idx_player_id créé\n";
     $checks_passed++;
@@ -244,7 +270,7 @@ if ($result->num_rows > 0) {
 
 // Check 3: Settings OneSignal
 $checks_total++;
-$result = $conn->query("SELECT COUNT(*) as count FROM tbldietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
+$result = $conn->query("SELECT COUNT(*) as count FROM {$db_prefix}dietic_notification_settings WHERE setting_key LIKE 'onesignal%'");
 $row = $result->fetch_assoc();
 if ($row['count'] >= 3) {
     echo "   ✅ Settings OneSignal créés (" . $row['count'] . " entrées)\n";
@@ -254,7 +280,7 @@ if ($row['count'] >= 3) {
 }
 
 // Check 4: Table de migration (optionnelle)
-$result = $conn->query("SHOW TABLES LIKE 'tbldietic_onesignal_migration'");
+$result = $conn->query("SHOW TABLES LIKE '{$db_prefix}dietic_onesignal_migration'");
 if ($result->num_rows > 0) {
     echo "   ✅ Table de migration créée\n";
 } else {
@@ -280,7 +306,7 @@ $result = $conn->query("
         SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_devices,
         SUM(CASE WHEN onesignal_player_id IS NOT NULL THEN 1 ELSE 0 END) as onesignal_registered,
         SUM(CASE WHEN token IS NOT NULL THEN 1 ELSE 0 END) as firebase_tokens
-    FROM tbldietic_fcm_tokens
+    FROM {$db_prefix}dietic_fcm_tokens
 ");
 
 if ($result) {
@@ -300,7 +326,7 @@ $result = $conn->query("
                WHEN setting_value = '' THEN '(vide)'
                ELSE setting_value
            END as setting_value
-    FROM tbldietic_notification_settings
+    FROM {$db_prefix}dietic_notification_settings
     WHERE setting_key LIKE 'onesignal%'
     ORDER BY setting_key
 ");
