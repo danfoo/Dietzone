@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#01807B">
+    <meta name="csrf-token-name" content="<?php echo $this->security->get_csrf_token_name(); ?>">
+    <meta name="csrf-token-hash" content="<?php echo $this->security->get_csrf_hash(); ?>">
     <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Portail Patient</title>
     <?php if (file_exists(FCPATH . 'assets/images/favicon.ico')) { ?>
         <link rel="shortcut icon" href="<?php echo base_url('assets/images/favicon.ico'); ?>">

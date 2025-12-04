@@ -2452,12 +2452,16 @@ class Portal extends App_Controller
             if ($result) {
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Player ID registered successfully'
+                    'message' => 'Player ID registered successfully',
+                    'csrf_token_name' => $this->security->get_csrf_token_name(),
+                    'csrf_token_hash' => $this->security->get_csrf_hash()
                 ]);
             } else {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Failed to register player ID'
+                    'message' => 'Failed to register player ID',
+                    'csrf_token_name' => $this->security->get_csrf_token_name(),
+                    'csrf_token_hash' => $this->security->get_csrf_hash()
                 ]);
             }
         } catch (Exception $e) {
@@ -2466,7 +2470,9 @@ class Portal extends App_Controller
 
             echo json_encode([
                 'success' => false,
-                'message' => 'Server error: ' . $e->getMessage()
+                'message' => 'Server error: ' . $e->getMessage(),
+                'csrf_token_name' => $this->security->get_csrf_token_name(),
+                'csrf_token_hash' => $this->security->get_csrf_hash()
             ]);
         }
     }

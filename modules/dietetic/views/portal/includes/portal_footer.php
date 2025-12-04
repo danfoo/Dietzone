@@ -44,6 +44,57 @@
     <script>
         // Define site_url for dietetic_portal.js
         var site_url = '<?php echo site_url(); ?>';
+
+        // ============================================
+        // CSRF TOKEN HELPER FUNCTIONS
+        // ============================================
+        // Get CSRF token dynamically from meta tag or cookie
+        function getCSRFToken() {
+            // Try to get from meta tag first
+            const tokenNameMeta = document.querySelector('meta[name="csrf-token-name"]');
+            const tokenHashMeta = document.querySelector('meta[name="csrf-token-hash"]');
+
+            if (tokenNameMeta && tokenHashMeta) {
+                return {
+                    name: tokenNameMeta.getAttribute('content'),
+                    hash: tokenHashMeta.getAttribute('content')
+                };
+            }
+
+            // Fallback: Try to get from cookie
+            const tokenName = '<?php echo $this->security->get_csrf_token_name(); ?>';
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(tokenName + '=')) {
+                    return {
+                        name: tokenName,
+                        hash: cookie.substring(tokenName.length + 1)
+                    };
+                }
+            }
+
+            // Last resort: Use hardcoded values (may be stale)
+            return {
+                name: '<?php echo $this->security->get_csrf_token_name(); ?>',
+                hash: '<?php echo $this->security->get_csrf_hash(); ?>'
+            };
+        }
+
+        // Update CSRF token meta tags with new values from server response
+        function updateCSRFToken(tokenName, tokenHash) {
+            if (!tokenName || !tokenHash) return;
+
+            const tokenNameMeta = document.querySelector('meta[name="csrf-token-name"]');
+            const tokenHashMeta = document.querySelector('meta[name="csrf-token-hash"]');
+
+            if (tokenNameMeta) {
+                tokenNameMeta.setAttribute('content', tokenName);
+            }
+            if (tokenHashMeta) {
+                tokenHashMeta.setAttribute('content', tokenHash);
+            }
+        }
     </script>
     <script src="<?php echo module_dir_url('dietetic', 'assets/js/dietetic_portal.js'); ?>"></script>
     <script>
@@ -879,12 +930,15 @@
 
         // Save FCM token to server
         function saveFCMToken(token) {
-            // Use URLSearchParams for form-encoded POST (better CSRF compatibility)
+            // Get CSRF token dynamically
+            const csrf = getCSRFToken();
+
+            // Use URLSearchParams for form-encoded POST
             const formData = new URLSearchParams();
             formData.append('token', token);
             formData.append('device_type', 'web');
             formData.append('device_name', navigator.userAgent.substring(0, 100));
-            formData.append('<?php echo $this->security->get_csrf_token_name(); ?>', '<?php echo $this->security->get_csrf_hash(); ?>');
+            formData.append(csrf.name, csrf.hash);
 
             fetch('<?php echo site_url("dietetic/portal/save_fcm_token"); ?>', {
                 method: 'POST',
@@ -1125,12 +1179,13 @@
                             const playerId = event.current.id;
                             console.log('[OneSignal] Player ID:', playerId);
 
-                            // Enregistrer sur le serveur (avec CSRF token)
+                            // Enregistrer sur le serveur (avec CSRF token dynamique)
+                            const csrf = getCSRFToken();
                             const postData = {
                                 player_id: playerId,
                                 device_type: 'web',
                                 device_name: navigator.userAgent.substring(0, 100),
-                                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                                [csrf.name]: csrf.hash
                             };
 
                             fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
@@ -1152,6 +1207,11 @@
                                 return res.json();
                             })
                             .then(result => {
+                                // Update CSRF token from response
+                                if (result.csrf_token_name && result.csrf_token_hash) {
+                                    updateCSRFToken(result.csrf_token_name, result.csrf_token_hash);
+                                }
+
                                 if (result.success) {
                                     console.log('[OneSignal] ✅ Player ID saved successfully on subscription change');
                                 } else {
@@ -1200,11 +1260,12 @@
                                 console.log('[OneSignal] Already subscribed, Player ID:', subscription.id);
 
                                 // 🔥 FIX: Enregistrer le Player ID sur le serveur (cas où l'utilisateur est déjà abonné)
+                                const csrf = getCSRFToken();
                                 const postData = {
                                     player_id: subscription.id,
                                     device_type: 'web',
                                     device_name: navigator.userAgent.substring(0, 100),
-                                    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                                    [csrf.name]: csrf.hash
                                 };
 
                                 fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
@@ -1226,6 +1287,11 @@
                                     return res.json();
                                 })
                                 .then(result => {
+                                    // Update CSRF token from response
+                                    if (result.csrf_token_name && result.csrf_token_hash) {
+                                        updateCSRFToken(result.csrf_token_name, result.csrf_token_hash);
+                                    }
+
                                     if (result.success) {
                                         console.log('[OneSignal] ✅ Player ID saved successfully on page load');
                                     } else {
