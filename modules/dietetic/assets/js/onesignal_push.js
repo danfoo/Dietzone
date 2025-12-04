@@ -1,7 +1,6 @@
 /**
  * OneSignal Push Notifications for DietZone Portal
- * Remplace firebase_push.js pour une meilleure intégration avec Median
- *
+ * Compatible avec OneSignal Web SDK v16+
  * Gère les push notifications via OneSignal Web SDK
  * Compatible avec Web + Median APK
  */
@@ -22,7 +21,7 @@
         /**
          * Initialize OneSignal
          */
-        init: function(config) {
+        init: async function(config) {
             if (!config || !config.appId) {
                 console.warn('[OneSignal] No app ID provided');
                 return;
@@ -37,8 +36,8 @@
                 console.log('[OneSignal] Running in Median app - using native SDK');
                 this.initMedianApp();
             } else {
-                console.log('[OneSignal] Running in web browser - using Web SDK');
-                this.initWebSDK();
+                console.log('[OneSignal] Running in web browser - using Web SDK v16');
+                await this.initWebSDK();
             }
         },
 
@@ -70,10 +69,10 @@
                     console.log('[OneSignal] Player ID received from Median:', userId);
 
                     // Enregistrer le Player ID sur le serveur
-                    DietzonePushNotifications.savePlayerIdToServer(userId);
+                    window.DietzonePushNotifications.savePlayerIdToServer(userId);
 
                     // Configurer les tags
-                    DietzonePushNotifications.setupPlayerTags();
+                    window.DietzonePushNotifications.setupPlayerTags();
                 } else {
                     console.warn('[OneSignal] No player ID received from Median');
                 }
@@ -99,90 +98,107 @@
         },
 
         /**
-         * Initialiser le SDK Web OneSignal
+         * Initialiser le SDK Web OneSignal v16
          */
-        initWebSDK: function() {
-            // Charger le SDK OneSignal si pas déjà chargé
+        initWebSDK: async function() {
+            // Attendre que OneSignal soit chargé
             if (typeof OneSignal === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.onesignal.com/sdks/OneSignalSDK.js';
-                script.async = true;
-                script.onload = () => {
-                    this.configureWebSDK();
-                };
-                document.head.appendChild(script);
-            } else {
-                this.configureWebSDK();
-            }
-        },
-
-        /**
-         * Configurer le SDK Web
-         */
-        configureWebSDK: function() {
-            if (typeof OneSignal === 'undefined') {
-                console.error('[OneSignal] SDK not loaded');
+                console.error('[OneSignal] SDK not loaded - make sure OneSignalSDK.page.js is included');
                 return;
             }
 
-            window.OneSignal = window.OneSignal || [];
-
-            OneSignal.push(function() {
-                OneSignal.init({
+            try {
+                // Configuration pour OneSignal v16
+                await OneSignal.init({
                     appId: oneSignalConfig.appId,
-                    safari_web_id: oneSignalConfig.safari_web_id,
-                    notifyButton: {
-                        enable: false // On gère manuellement
-                    },
-                    autoRegister: false, // On va demander manuellement
+                    allowLocalhostAsSecureOrigin: oneSignalConfig.allowLocalhostAsSecureOrigin || false,
+
+                    // Service Worker configuration
+                    serviceWorkerParam: { scope: '/' },
+                    serviceWorkerPath: oneSignalConfig.serviceWorkerPath || 'OneSignalSDKWorker.js',
+
+                    // Notification settings
+                    notifyButton: { enable: false }, // On gère manuellement
+
+                    // Comportement
                     autoResubscribe: true,
-                    notificationClickHandlerMatch: 'origin',
-                    notificationClickHandlerAction: 'navigate',
-                    serviceWorkerParam: {
-                        scope: '/push/onesignal/'
-                    },
-                    serviceWorkerPath: 'OneSignalSDKWorker.js'
+
+                    // Click handlers
+                    notificationClickHandlerMatch: oneSignalConfig.notificationClickHandlerMatch || 'origin',
+                    notificationClickHandlerAction: oneSignalConfig.notificationClickHandlerAction || 'focus'
                 });
 
-                // Écouter les événements
-                OneSignal.on('subscriptionChange', function(isSubscribed) {
-                    console.log('[OneSignal] Subscription state changed:', isSubscribed);
+                console.log('[OneSignal] Web SDK v16 initialized');
 
-                    if (isSubscribed) {
-                        OneSignal.getUserId(function(userId) {
-                            currentPlayerId = userId;
-                            console.log('[OneSignal] Player ID:', userId);
-                            DietzonePushNotifications.savePlayerIdToServer(userId);
-                        });
+                // Écouter les changements de subscription
+                OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+                    console.log('[OneSignal] Subscription state changed:', event);
+
+                    if (event.current.id) {
+                        currentPlayerId = event.current.id;
+                        console.log('[OneSignal] Player ID:', currentPlayerId);
+                        window.DietzonePushNotifications.savePlayerIdToServer(currentPlayerId);
+                        window.DietzonePushNotifications.setupPlayerTags();
                     }
                 });
 
-                OneSignal.on('notificationDisplay', function(event) {
-                    console.log('[OneSignal] Notification displayed:', event);
+                // Écouter les notifications affichées
+                OneSignal.Notifications.addEventListener('foregroundWillDisplay', function(event) {
+                    console.log('[OneSignal] Notification will display:', event);
 
                     // Afficher notification in-app si fonction existe
                     if (typeof showInAppNotification === 'function') {
+                        const notification = event.notification;
                         showInAppNotification(
-                            event.heading || 'DietZone',
-                            event.content || '',
-                            event.url
+                            notification.title || 'DietZone',
+                            notification.body || '',
+                            notification.launchURL
                         );
                     }
                 });
 
-                OneSignal.on('notificationDismiss', function(event) {
-                    console.log('[OneSignal] Notification dismissed:', event);
+                // Écouter les clics sur les notifications
+                OneSignal.Notifications.addEventListener('click', function(event) {
+                    console.log('[OneSignal] Notification clicked:', event);
+
+                    // Déclencher un événement custom
+                    const customEvent = new CustomEvent('dietzone:notification-clicked', {
+                        detail: event
+                    });
+                    document.dispatchEvent(customEvent);
                 });
 
+                // Vérifier si déjà inscrit
+                const isPushSupported = await OneSignal.Notifications.isPushSupported();
+                console.log('[OneSignal] Push supported:', isPushSupported);
+
+                if (isPushSupported) {
+                    const permission = await OneSignal.Notifications.permissionNative;
+                    console.log('[OneSignal] Current permission:', permission);
+
+                    // Si permission accordée, récupérer le Player ID
+                    if (permission === 'granted') {
+                        const subscription = OneSignal.User.PushSubscription;
+                        if (subscription.id) {
+                            currentPlayerId = subscription.id;
+                            console.log('[OneSignal] Already subscribed, Player ID:', currentPlayerId);
+                            this.savePlayerIdToServer(currentPlayerId);
+                            this.setupPlayerTags();
+                        }
+                    }
+                }
+
                 isInitialized = true;
-                console.log('[OneSignal] Web SDK initialized');
-            });
+
+            } catch (error) {
+                console.error('[OneSignal] Initialization error:', error);
+            }
         },
 
         /**
          * Demander la permission pour les notifications
          */
-        requestPermission: function(callback) {
+        requestPermission: async function(callback) {
             if (!isInitialized) {
                 console.warn('[OneSignal] Not initialized');
                 if (callback) callback(false, 'Not initialized');
@@ -196,38 +212,38 @@
                 return;
             }
 
-            // Web SDK
-            if (typeof OneSignal === 'undefined') {
-                if (callback) callback(false, 'OneSignal SDK not loaded');
-                return;
-            }
+            // Web SDK v16
+            try {
+                console.log('[OneSignal] Requesting permission...');
 
-            OneSignal.push(function() {
-                OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-                    if (isEnabled) {
-                        // Déjà abonné
-                        OneSignal.getUserId(function(userId) {
-                            currentPlayerId = userId;
-                            if (callback) callback(true, userId);
-                        });
+                // Demander la permission
+                const permission = await OneSignal.Notifications.requestPermission();
+                console.log('[OneSignal] Permission response:', permission);
+
+                if (permission) {
+                    // Récupérer le Player ID après inscription
+                    const subscription = OneSignal.User.PushSubscription;
+                    if (subscription.id) {
+                        currentPlayerId = subscription.id;
+                        console.log('[OneSignal] User subscribed, Player ID:', currentPlayerId);
+
+                        // Enregistrer sur le serveur
+                        this.savePlayerIdToServer(currentPlayerId);
+                        this.setupPlayerTags();
+
+                        if (callback) callback(true, currentPlayerId);
                     } else {
-                        // Demander la permission
-                        OneSignal.showNativePrompt();
-
-                        // Attendre la réponse
-                        OneSignal.on('subscriptionChange', function(isSubscribed) {
-                            if (isSubscribed) {
-                                OneSignal.getUserId(function(userId) {
-                                    currentPlayerId = userId;
-                                    if (callback) callback(true, userId);
-                                });
-                            } else {
-                                if (callback) callback(false, 'Permission denied');
-                            }
-                        });
+                        console.warn('[OneSignal] Permission granted but no Player ID');
+                        if (callback) callback(false, 'No Player ID');
                     }
-                });
-            });
+                } else {
+                    console.warn('[OneSignal] Permission denied');
+                    if (callback) callback(false, 'Permission denied');
+                }
+            } catch (error) {
+                console.error('[OneSignal] Permission request error:', error);
+                if (callback) callback(false, error.message);
+            }
         },
 
         /**
@@ -235,221 +251,124 @@
          */
         savePlayerIdToServer: function(playerId) {
             if (!playerId) {
-                console.warn('[OneSignal] No player ID to save');
+                console.warn('[OneSignal] No Player ID to save');
                 return;
             }
 
-            const data = {
-                player_id: playerId,
-                device_type: isMedianApp ? 'median_app' : 'web',
-                device_name: this.getDeviceName(),
-                user_agent: navigator.userAgent
-            };
+            console.log('[OneSignal] Saving Player ID to server:', playerId);
 
-            fetch(site_url + 'dietetic/portal/save_onesignal_player_id', {
+            // Déterminer le type d'appareil
+            const deviceType = isMedianApp ?
+                (navigator.userAgent.indexOf('GoNativeIOS') > -1 ? 'ios' : 'android') :
+                'web';
+
+            // Envoyer au serveur
+            fetch(window.location.origin + '/dietetic/portal/save_onesignal_player_id', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    player_id: playerId,
+                    device_type: deviceType,
+                    user_agent: navigator.userAgent
+                })
             })
             .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    console.log('[OneSignal] Player ID saved to server');
+            .then(data => {
+                if (data.success) {
+                    console.log('[OneSignal] Player ID saved successfully');
                 } else {
-                    console.error('[OneSignal] Failed to save player ID:', result.message);
+                    console.error('[OneSignal] Failed to save Player ID:', data.message);
                 }
             })
             .catch(error => {
-                console.error('[OneSignal] Error saving player ID:', error);
+                console.error('[OneSignal] Error saving Player ID:', error);
             });
         },
 
         /**
-         * Configurer les tags du player
+         * Configurer les tags du joueur
          */
-        setupPlayerTags: function() {
-            if (!currentPlayerId) {
+        setupPlayerTags: async function() {
+            if (!isInitialized) {
+                console.warn('[OneSignal] Not initialized, cannot set tags');
                 return;
             }
-
-            const tags = {
-                platform: isMedianApp ? 'median_app' : 'web',
-                language: navigator.language || 'fr',
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Dakar'
-            };
 
             if (isMedianApp && typeof gonative !== 'undefined' && gonative.onesignal) {
-                // Median app
-                gonative.onesignal.idsAvailable(function(result) {
-                    if (result.pushToken) {
-                        tags.push_token = result.pushToken;
-                    }
+                // Tags pour Median
+                gonative.onesignal.sendTags({
+                    platform: 'median',
+                    app_version: gonative.appVersion || 'unknown'
                 });
-
-                gonative.onesignal.setTags(tags);
             } else if (typeof OneSignal !== 'undefined') {
-                // Web SDK
-                OneSignal.push(function() {
-                    OneSignal.sendTags(tags);
-                });
-            }
-
-            console.log('[OneSignal] Player tags set:', tags);
-        },
-
-        /**
-         * Supprimer l'abonnement
-         */
-        unsubscribe: function(callback) {
-            if (!isInitialized) {
-                if (callback) callback(false);
-                return;
-            }
-
-            if (isMedianApp) {
-                console.warn('[OneSignal] Cannot unsubscribe from Median app (use device settings)');
-                if (callback) callback(false);
-                return;
-            }
-
-            if (typeof OneSignal === 'undefined') {
-                if (callback) callback(false);
-                return;
-            }
-
-            OneSignal.push(function() {
-                OneSignal.setSubscription(false);
-
-                // Supprimer du serveur
-                if (currentPlayerId) {
-                    fetch(site_url + 'dietetic/portal/delete_onesignal_player_id', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ player_id: currentPlayerId })
+                // Tags pour Web v16
+                try {
+                    await OneSignal.User.addTags({
+                        platform: 'web',
+                        browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)/i)?.[0] || 'unknown'
                     });
+                    console.log('[OneSignal] Tags set successfully');
+                } catch (error) {
+                    console.error('[OneSignal] Error setting tags:', error);
                 }
-
-                currentPlayerId = null;
-                if (callback) callback(true);
-            });
-        },
-
-        /**
-         * Obtenir le nom de l'appareil
-         */
-        getDeviceName: function() {
-            if (isMedianApp) {
-                if (window.navigator.userAgent.indexOf('GoNativeIOS') > -1) {
-                    return 'iPhone/iPad';
-                } else if (window.navigator.userAgent.indexOf('GoNativeAndroid') > -1) {
-                    return 'Android';
-                }
-                return 'Median App';
             }
-
-            const ua = navigator.userAgent;
-            if (ua.includes('Chrome')) return 'Chrome';
-            if (ua.includes('Firefox')) return 'Firefox';
-            if (ua.includes('Safari')) return 'Safari';
-            if (ua.includes('Edge')) return 'Edge';
-            if (ua.includes('Opera')) return 'Opera';
-            return 'Unknown Browser';
-        },
-
-        /**
-         * Vérifier le statut des permissions
-         */
-        getPermissionStatus: function() {
-            if (isMedianApp) {
-                return 'granted'; // Dans Median c'est géré automatiquement
-            }
-
-            if (!('Notification' in window)) {
-                return 'unsupported';
-            }
-
-            return Notification.permission;
         },
 
         /**
          * Vérifier si les notifications sont activées
          */
-        isEnabled: function() {
-            if (isMedianApp) {
-                return !!currentPlayerId;
+        isEnabled: async function() {
+            if (!isInitialized) {
+                return false;
             }
 
-            return isInitialized && Notification.permission === 'granted';
+            if (isMedianApp) {
+                return true; // Dans Median, on suppose que c'est activé
+            }
+
+            try {
+                const permission = await OneSignal.Notifications.permissionNative;
+                return permission === 'granted';
+            } catch (error) {
+                console.error('[OneSignal] Error checking permission:', error);
+                return false;
+            }
         },
 
         /**
          * Obtenir le Player ID actuel
          */
-        getCurrentPlayerId: function() {
-            return currentPlayerId;
-        },
-
-        /**
-         * Vérifier si on est dans Median
-         */
-        isMedianApp: function() {
-            return isMedianApp;
-        }
-    };
-
-    /**
-     * Afficher une notification in-app (réutilisé de firebase_push.js)
-     */
-    window.showInAppNotification = function(title, message, clickUrl) {
-        // Créer l'élément de notification
-        const notification = document.createElement('div');
-        notification.className = 'dietzone-in-app-notification';
-        notification.innerHTML = `
-            <div class="notification-icon">
-                <i class="fa fa-bell"></i>
-            </div>
-            <div class="notification-content">
-                <div class="notification-title">${title}</div>
-                <div class="notification-message">${message}</div>
-            </div>
-            <div class="notification-close">
-                <i class="fa fa-times"></i>
-            </div>
-        `;
-
-        // Ajouter le gestionnaire de clic
-        if (clickUrl) {
-            notification.style.cursor = 'pointer';
-            notification.addEventListener('click', function(e) {
-                if (!e.target.closest('.notification-close')) {
-                    window.location.href = clickUrl;
-                }
-            });
-        }
-
-        // Ajouter le gestionnaire de fermeture
-        notification.querySelector('.notification-close').addEventListener('click', function() {
-            notification.classList.add('hiding');
-            setTimeout(() => notification.remove(), 300);
-        });
-
-        // Ajouter à la page
-        document.body.appendChild(notification);
-
-        // Afficher avec animation
-        setTimeout(() => notification.classList.add('show'), 100);
-
-        // Masquer automatiquement après 5 secondes
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.classList.add('hiding');
-                setTimeout(() => notification.remove(), 300);
+        getPlayerId: async function() {
+            if (currentPlayerId) {
+                return currentPlayerId;
             }
-        }, 5000);
+
+            if (isMedianApp && typeof gonative !== 'undefined' && gonative.onesignal) {
+                return new Promise((resolve) => {
+                    gonative.onesignal.getUserId(function(userId) {
+                        currentPlayerId = userId;
+                        resolve(userId);
+                    });
+                });
+            } else if (typeof OneSignal !== 'undefined') {
+                try {
+                    const subscription = OneSignal.User.PushSubscription;
+                    currentPlayerId = subscription.id;
+                    return currentPlayerId;
+                } catch (error) {
+                    console.error('[OneSignal] Error getting Player ID:', error);
+                    return null;
+                }
+            }
+
+            return null;
+        }
     };
 
+    // Auto-initialisation si config fournie via window
+    if (window.oneSignalConfig) {
+        window.DietzonePushNotifications.init(window.oneSignalConfig);
+    }
 })();
