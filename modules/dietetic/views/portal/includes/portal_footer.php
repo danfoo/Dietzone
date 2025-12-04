@@ -1125,17 +1125,32 @@
                             const playerId = event.current.id;
                             console.log('[OneSignal] Player ID:', playerId);
 
-                            // Enregistrer sur le serveur
+                            // Enregistrer sur le serveur (avec CSRF token)
+                            const postData = {
+                                player_id: playerId,
+                                device_type: 'web',
+                                user_agent: navigator.userAgent,
+                                '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+                            };
+
                             fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    player_id: playerId,
-                                    device_type: 'web',
-                                    user_agent: navigator.userAgent
-                                })
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                credentials: 'same-origin',
+                                body: JSON.stringify(postData)
                             })
-                            .then(res => res.json())
+                            .then(async res => {
+                                const contentType = res.headers.get('content-type');
+                                if (!contentType || !contentType.includes('application/json')) {
+                                    const text = await res.text();
+                                    console.error('[OneSignal] Server returned non-JSON response:', text.substring(0, 200));
+                                    throw new Error('Server returned non-JSON response (Status: ' + res.status + ')');
+                                }
+                                return res.json();
+                            })
                             .then(result => {
                                 if (result.success) {
                                     console.log('[OneSignal] Player ID saved successfully');
@@ -1147,15 +1162,16 @@
                                 console.error('[OneSignal] Error saving Player ID:', error);
                             });
 
-                            // Ajouter des tags
-                            OneSignal.User.addTags({
-                                platform: 'web',
-                                browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)/i)?.[0] || 'unknown'
-                            }).then(() => {
+                            // Ajouter des tags (OneSignal v16 - méthode synchrone)
+                            try {
+                                OneSignal.User.addTags({
+                                    platform: 'web',
+                                    browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)/i)?.[0] || 'unknown'
+                                });
                                 console.log('[OneSignal] Tags set successfully');
-                            }).catch(error => {
+                            } catch (error) {
                                 console.error('[OneSignal] Error setting tags:', error);
-                            });
+                            }
                         }
                     });
 

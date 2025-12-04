@@ -2393,6 +2393,21 @@ class Portal extends App_Controller
             if (empty($player_id)) {
                 $json = file_get_contents('php://input');
                 $data = json_decode($json, true);
+
+                // Validate CSRF token from JSON
+                $csrf_token_name = $this->security->get_csrf_token_name();
+                $csrf_token_sent = $data[$csrf_token_name] ?? null;
+                $csrf_token_expected = $this->security->get_csrf_hash();
+
+                log_activity('[OneSignal] CSRF token sent: ' . ($csrf_token_sent ? 'YES' : 'NO'));
+                log_activity('[OneSignal] CSRF validation: ' . ($csrf_token_sent === $csrf_token_expected ? 'PASS' : 'FAIL'));
+
+                // For now, just log CSRF mismatch but don't block (for debugging)
+                // TODO: Enable strict CSRF validation after testing
+                if ($csrf_token_sent !== $csrf_token_expected) {
+                    log_activity('[OneSignal] WARNING: CSRF token mismatch but proceeding');
+                }
+
                 $player_id = $data['player_id'] ?? null;
                 $device_type = $data['device_type'] ?? null;
                 $device_name = $data['device_name'] ?? null;
