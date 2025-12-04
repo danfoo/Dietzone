@@ -42,7 +42,7 @@ class Onesignal_cloud_messaging
     private function load_settings()
     {
         $settings = $this->CI->db->where_in('setting_key', [
-            'push_enabled',
+            'onesignal_web_enabled',
             'onesignal_app_id',
             'onesignal_rest_api_key',
             'onesignal_user_auth_key'
@@ -50,7 +50,7 @@ class Onesignal_cloud_messaging
 
         foreach ($settings as $setting) {
             switch ($setting->setting_key) {
-                case 'push_enabled':
+                case 'onesignal_web_enabled':
                     $this->enabled = (bool)$setting->setting_value;
                     break;
                 case 'onesignal_app_id':
@@ -531,7 +531,14 @@ class Onesignal_cloud_messaging
      */
     public function get_web_config()
     {
+        // Log settings for debugging
+        log_activity('🔍 [OneSignal] get_web_config called');
+        log_activity('🔍 [OneSignal] enabled: ' . var_export($this->enabled, true));
+        log_activity('🔍 [OneSignal] app_id: ' . var_export($this->app_id, true));
+        log_activity('🔍 [OneSignal] rest_api_key: ' . (empty($this->rest_api_key) ? 'EMPTY' : 'SET'));
+
         if (!$this->enabled || empty($this->app_id)) {
+            log_activity('❌ [OneSignal] Not enabled or app_id empty');
             return false;
         }
 
