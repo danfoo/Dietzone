@@ -958,7 +958,10 @@
         // ============================================
 
         // Initialize OneSignal on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Using OneSignalDeferred to wait for SDK to load (since it uses defer)
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+        OneSignalDeferred.push(async function(OneSignal) {
             console.log('🚀 [ONESIGNAL] Initializing OneSignal Push Notifications...');
 
             // Check if browser supports notifications
@@ -967,49 +970,121 @@
                 return;
             }
 
-            // Fetch OneSignal config from server
-            console.log('📡 [ONESIGNAL] Fetching OneSignal config from server...');
-            fetch('<?php echo site_url("dietetic/portal/get_onesignal_config"); ?>')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('📡 [ONESIGNAL] Server response:', data);
+            try {
+                // Fetch OneSignal config from server
+                console.log('📡 [ONESIGNAL] Fetching OneSignal config from server...');
+                const response = await fetch('<?php echo site_url("dietetic/portal/get_onesignal_config"); ?>');
+                const data = await response.json();
 
-                    if (data.success && data.config && data.config.appId) {
-                        console.log('✅ [ONESIGNAL] Config received, App ID:', data.config.appId);
+                console.log('📡 [ONESIGNAL] Server response:', data);
 
-                        // Check if DietzonePushNotifications is loaded
-                        if (typeof window.DietzonePushNotifications !== 'undefined') {
-                            console.log('✅ [ONESIGNAL] DietzonePushNotifications library loaded');
+                if (data.success && data.config && data.config.appId) {
+                    console.log('✅ [ONESIGNAL] Config received, App ID:', data.config.appId);
 
-                            // Initialize OneSignal
-                            window.DietzonePushNotifications.init({
-                                appId: data.config.appId,
-                                allowLocalhostAsSecureOrigin: data.config.allowLocalhostAsSecureOrigin || false,
-                                serviceWorkerPath: data.config.serviceWorkerPath || 'OneSignalSDKWorker.js',
-                                notificationClickHandlerMatch: 'origin',
-                                notificationClickHandlerAction: 'focus'
+                    // Initialize OneSignal v16
+                    await OneSignal.init({
+                        appId: data.config.appId,
+                        allowLocalhostAsSecureOrigin: data.config.allowLocalhostAsSecureOrigin || false,
+
+                        // Service Worker configuration
+                        serviceWorkerParam: { scope: '/' },
+                        serviceWorkerPath: data.config.serviceWorkerPath || 'OneSignalSDKWorker.js',
+
+                        // Notification settings
+                        notifyButton: { enable: false },
+
+                        // Comportement
+                        autoResubscribe: true
+                    });
+
+                    console.log('✅ [ONESIGNAL] OneSignal initialized successfully');
+
+                    // Écouter les changements de subscription
+                    OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+                        console.log('[OneSignal] Subscription state changed:', event);
+
+                        if (event.current.id) {
+                            const playerId = event.current.id;
+                            console.log('[OneSignal] Player ID:', playerId);
+
+                            // Enregistrer sur le serveur
+                            fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    player_id: playerId,
+                                    device_type: 'web',
+                                    user_agent: navigator.userAgent
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(result => {
+                                if (result.success) {
+                                    console.log('[OneSignal] Player ID saved successfully');
+                                } else {
+                                    console.error('[OneSignal] Failed to save Player ID:', result.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('[OneSignal] Error saving Player ID:', error);
                             });
 
-                            console.log('✅ [ONESIGNAL] OneSignal initialized successfully');
-
-                            // Auto-request permission if user previously granted it
-                            if (Notification.permission === 'granted') {
-                                console.log('✅ [ONESIGNAL] Permission already granted');
-                                window.DietzonePushNotifications.requestPermission();
-                            } else {
-                                console.log('⚠️ [ONESIGNAL] Permission not granted yet, status:', Notification.permission);
-                            }
-                        } else {
-                            console.error('❌ [ONESIGNAL] DietzonePushNotifications library not loaded');
+                            // Ajouter des tags
+                            OneSignal.User.addTags({
+                                platform: 'web',
+                                browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)/i)?.[0] || 'unknown'
+                            }).then(() => {
+                                console.log('[OneSignal] Tags set successfully');
+                            }).catch(error => {
+                                console.error('[OneSignal] Error setting tags:', error);
+                            });
                         }
-                    } else {
-                        console.error('❌ [ONESIGNAL] OneSignal not configured or disabled');
-                        console.error('❌ [ONESIGNAL] Server message:', data.message);
+                    });
+
+                    // Écouter les notifications affichées
+                    OneSignal.Notifications.addEventListener('foregroundWillDisplay', function(event) {
+                        console.log('[OneSignal] Notification will display:', event);
+                    });
+
+                    // Écouter les clics sur les notifications
+                    OneSignal.Notifications.addEventListener('click', function(event) {
+                        console.log('[OneSignal] Notification clicked:', event);
+                    });
+
+                    // Vérifier si déjà inscrit
+                    const isPushSupported = await OneSignal.Notifications.isPushSupported();
+                    console.log('[OneSignal] Push supported:', isPushSupported);
+
+                    if (isPushSupported) {
+                        const permission = await OneSignal.Notifications.permissionNative;
+                        console.log('[OneSignal] Current permission:', permission);
+
+                        // Si permission accordée, récupérer le Player ID
+                        if (permission === 'granted') {
+                            const subscription = OneSignal.User.PushSubscription;
+                            if (subscription.id) {
+                                console.log('[OneSignal] Already subscribed, Player ID:', subscription.id);
+                            }
+                        } else if (permission === 'default') {
+                            // Demander automatiquement la permission après 3 secondes
+                            setTimeout(async function() {
+                                console.log('[OneSignal] Requesting permission...');
+                                try {
+                                    await OneSignal.Notifications.requestPermission();
+                                } catch (error) {
+                                    console.warn('[OneSignal] Permission request failed:', error);
+                                }
+                            }, 3000);
+                        }
                     }
-                })
-                .catch(error => {
-                    console.error('❌ [ONESIGNAL] Error fetching config:', error);
-                });
+
+                } else {
+                    console.error('❌ [ONESIGNAL] OneSignal not configured or disabled');
+                    console.error('❌ [ONESIGNAL] Server message:', data.message);
+                }
+            } catch (error) {
+                console.error('❌ [ONESIGNAL] Initialization error:', error);
+            }
         });
 
         // Expose function globally for use in preferences page
