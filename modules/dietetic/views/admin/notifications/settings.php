@@ -516,6 +516,138 @@ input:checked + .toggle-slider:before {
                     </div>
                 </div>
 
+                <!-- OneSignal Push Notifications (Pour Median) -->
+                <div class="settings-section" style="border-left: 4px solid #FF5722;">
+                    <h3><i class="fa fa-mobile"></i> Configuration OneSignal (Application Mobile)</h3>
+
+                    <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #FF5722 0%, #F4511E 100%); color: white; border-radius: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <h4 style="margin: 0 0 5px 0; font-size: 16px;">🚀 Migration Firebase → OneSignal</h4>
+                                <p style="margin: 0; opacity: 0.9; font-size: 13px;">
+                                    OneSignal est requis pour générer l'APK mobile avec Median.
+                                    Il remplace Firebase pour une meilleure compatibilité.
+                                </p>
+                            </div>
+                            <a href="<?php echo admin_url('dietetic/notifications/deploy_onesignal'); ?>"
+                               class="btn btn-default btn-sm"
+                               style="background: white; color: #FF5722; border: none; font-weight: bold;">
+                                <i class="fa fa-rocket"></i> Déployer OneSignal
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>OneSignal App ID <span style="color: #e53e3e;">*</span></label>
+                        <input type="text"
+                               name="onesignal_app_id"
+                               value="<?php echo $settings['onesignal_app_id'] ?? ''; ?>"
+                               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                               style="font-family: monospace;">
+                        <span class="help-text">
+                            Votre identifiant d'application OneSignal (format UUID).<br>
+                            <strong>Où le trouver :</strong> OneSignal Dashboard → Settings → Keys & IDs
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>OneSignal REST API Key <span style="color: #e53e3e;">*</span></label>
+                        <input type="password"
+                               name="onesignal_rest_api_key"
+                               value="<?php echo $settings['onesignal_rest_api_key'] ?? ''; ?>"
+                               placeholder="OS-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                               style="font-family: monospace;">
+                        <span class="help-text">
+                            Clé API REST pour envoyer des notifications depuis le backend.<br>
+                            <strong>Où la trouver :</strong> OneSignal Dashboard → Settings → Keys & IDs → REST API Key
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>OneSignal User Auth Key <small>(Optionnel)</small></label>
+                        <input type="password"
+                               name="onesignal_user_auth_key"
+                               value="<?php echo $settings['onesignal_user_auth_key'] ?? ''; ?>"
+                               placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                               style="font-family: monospace;">
+                        <span class="help-text">
+                            Clé d'authentification utilisateur pour les opérations admin avancées (optionnel).<br>
+                            <strong>Où la trouver :</strong> OneSignal Dashboard → Account & API Keys
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Activer OneSignal Web Push</label>
+                        <select name="onesignal_web_enabled">
+                            <option value="1" <?php echo ($settings['onesignal_web_enabled'] ?? '1') == '1' ? 'selected' : ''; ?>>✅ Activé (Web + Mobile)</option>
+                            <option value="0" <?php echo ($settings['onesignal_web_enabled'] ?? '1') == '0' ? 'selected' : ''; ?>>📱 Mobile uniquement</option>
+                        </select>
+                        <span class="help-text">
+                            Activez les notifications web en plus du mobile, ou utilisez OneSignal uniquement pour l'app mobile.
+                        </span>
+                    </div>
+
+                    <div class="provider-info" style="background: #fff3e0; border-left: 4px solid #FF9800;">
+                        <strong>📱 Configuration OneSignal :</strong><br>
+                        <ol style="margin: 10px 0 0 20px;">
+                            <li><strong>Créer un compte</strong> : Allez sur <a href="https://onesignal.com" target="_blank" style="color: #FF5722; font-weight: bold;">onesignal.com</a> et inscrivez-vous</li>
+                            <li><strong>Créer une app</strong> : Dashboard → New App/Website → Nommez "Dietzone"</li>
+                            <li><strong>Configurer Google Android (FCM)</strong> :
+                                <ul style="margin: 5px 0 0 20px;">
+                                    <li>Uploadez votre <code>google-services.json</code> de Firebase</li>
+                                    <li>Ou configurez avec Firebase Server Key</li>
+                                </ul>
+                            </li>
+                            <li><strong>Configurer Web Push</strong> (si activé) :
+                                <ul style="margin: 5px 0 0 20px;">
+                                    <li>Sélectionnez "Typical Site"</li>
+                                    <li>Entrez votre domaine : <code>app.dietsenegal.net</code></li>
+                                    <li>Téléchargez <code>OneSignalSDKWorker.js</code></li>
+                                    <li>Placez-le à la racine de votre site</li>
+                                </ul>
+                            </li>
+                            <li><strong>Récupérer les clés</strong> : Settings → Keys & IDs
+                                <ul style="margin: 5px 0 0 20px;">
+                                    <li><strong>App ID</strong> : Format UUID (xxxxxxxx-xxxx-...)</li>
+                                    <li><strong>REST API Key</strong> : Commence par "OS-..."</li>
+                                </ul>
+                            </li>
+                        </ol>
+
+                        <div style="margin-top: 15px; padding: 12px; background: white; border-radius: 5px; border: 1px solid #FFB74D;">
+                            <strong>🎯 Configuration Median :</strong><br>
+                            Une fois OneSignal configuré ici :
+                            <ol style="margin: 5px 0 0 20px;">
+                                <li>Allez sur <a href="https://median.co/dashboard" target="_blank" style="color: #FF5722;">Median Dashboard</a></li>
+                                <li>Sélectionnez votre app Dietzone</li>
+                                <li>App Settings → <strong>Push Notifications</strong></li>
+                                <li>Sélectionnez <strong>OneSignal</strong></li>
+                                <li>Entrez votre <strong>OneSignal App ID</strong> (celui d'en haut)</li>
+                                <li>Save & <strong>Rebuild APK</strong></li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 5px;">
+                            <strong>✅ Avantages OneSignal :</strong>
+                            <ul style="margin: 5px 0 0 20px;">
+                                <li>✅ Compatible nativement avec Median (génération APK)</li>
+                                <li>✅ Dashboard unifié pour Web + Mobile</li>
+                                <li>✅ Analytics avancés (taux d'ouverture, conversion)</li>
+                                <li>✅ Segmentation automatique des utilisateurs</li>
+                                <li>✅ A/B Testing intégré</li>
+                                <li>✅ Gratuit jusqu'à 10,000 abonnés</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <strong>📚 Documentation:</strong><br>
+                            • <a href="https://documentation.onesignal.com/docs/web-push-quickstart" target="_blank">OneSignal Web Push Setup</a><br>
+                            • <a href="https://median.co/docs/onesignal" target="_blank">Median + OneSignal Integration</a><br>
+                            • <a href="<?php echo base_url('ONESIGNAL_MIGRATION.md'); ?>" target="_blank">Guide complet de migration (ONESIGNAL_MIGRATION.md)</a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Test Notification -->
                 <div class="settings-section">
                     <h3><i class="fa fa-flask"></i> Tester les Notifications</h3>
