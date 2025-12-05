@@ -21,12 +21,12 @@ $this->load->view('portal/includes/portal_header');
    MODERN MOBILE-FIRST LEGAL PAGE DESIGN
    ============================================ */
 
-/* CSS Variables for easy theming */
+/* CSS Variables - Dietzone Branding Colors */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-color: #667eea;
-    --primary-dark: #5568d3;
-    --accent-color: #764ba2;
+    --primary-gradient: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+    --primary-color: #01807B;
+    --primary-dark: #01655f;
+    --accent-color: #019690;
     --text-primary: #1a202c;
     --text-secondary: #4a5568;
     --text-muted: #718096;
@@ -78,8 +78,8 @@ body {
     width: 100%;
     height: 100%;
     background-image:
-        radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(1, 128, 123, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(1, 101, 95, 0.08) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
 }
@@ -91,7 +91,7 @@ body {
     max-width: 100%;
     margin: 0 auto;
     padding: 16px;
-    padding-bottom: 80px; /* Space for floating button */
+    padding-bottom: 32px;
 }
 
 /* Hero Header with Glassmorphism */
@@ -318,93 +318,6 @@ body {
     color: var(--primary-color);
 }
 
-/* Floating Action Button (FAB) */
-.back-button-wrapper {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    animation: slideInBottom 0.5s ease;
-}
-
-@keyframes slideInBottom {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(100px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-.back-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px 28px;
-    background: var(--primary-gradient);
-    background-size: 200% 200%;
-    color: white;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 15px;
-    box-shadow: var(--shadow-lg);
-    transition: var(--transition-base);
-    border: none;
-    cursor: pointer;
-    animation: gradientFlow 8s ease infinite;
-}
-
-.back-button:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-xl);
-    color: white;
-    text-decoration: none;
-}
-
-.back-button:active {
-    transform: translateY(-1px);
-}
-
-.back-button i {
-    margin-right: 8px;
-    font-size: 16px;
-}
-
-/* Scroll to top button */
-.scroll-top-button {
-    position: fixed;
-    bottom: 100px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    background: var(--primary-gradient);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-md);
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition-base);
-    cursor: pointer;
-    z-index: 99;
-}
-
-.scroll-top-button.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-.scroll-top-button:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
 /* ============================================
    TABLET STYLES (768px+)
    ============================================ */
@@ -412,7 +325,7 @@ body {
     .legal-page-container {
         max-width: 720px;
         padding: 24px;
-        padding-bottom: 100px;
+        padding-bottom: 40px;
     }
 
     .legal-page-header {
@@ -458,11 +371,6 @@ body {
     .legal-footer {
         padding: 20px;
         font-size: 14px;
-    }
-
-    .back-button {
-        padding: 16px 36px;
-        font-size: 16px;
     }
 }
 
@@ -518,17 +426,6 @@ body {
     .legal-content ol {
         padding-left: 32px;
     }
-
-    .back-button-wrapper {
-        bottom: 32px;
-    }
-
-    .scroll-top-button {
-        bottom: 120px;
-        right: 32px;
-        width: 56px;
-        height: 56px;
-    }
 }
 
 /* ============================================
@@ -558,11 +455,6 @@ body {
         border: 1px solid #ddd;
     }
 
-    .back-button-wrapper,
-    .scroll-top-button {
-        display: none;
-    }
-
     .legal-content {
         color: black;
     }
@@ -579,13 +471,6 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-}
-
-/* Focus styles for accessibility */
-.back-button:focus,
-.scroll-top-button:focus {
-    outline: 3px solid var(--primary-color);
-    outline-offset: 3px;
 }
 
 /* Selection color */
@@ -622,45 +507,11 @@ body {
             <i class="fa fa-clock-o"></i> Dernière mise à jour : <?php echo date('d/m/Y'); ?>
         </div>
     </div>
-
-    <!-- Floating Action Button -->
-    <div class="back-button-wrapper">
-        <a href="<?php echo site_url('dietetic/portal'); ?>" class="back-button">
-            <i class="fa fa-arrow-left"></i> Retour au Portail
-        </a>
-    </div>
-
-    <!-- Scroll to Top Button -->
-    <div class="scroll-top-button" id="scrollTopBtn">
-        <i class="fa fa-chevron-up"></i>
-    </div>
 </div>
 
 <script>
-// Scroll to top functionality
+// Smooth scroll for anchor links
 (function() {
-    const scrollTopBtn = document.getElementById('scrollTopBtn');
-
-    if (scrollTopBtn) {
-        // Show/hide button based on scroll position
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-
-        // Scroll to top on click
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-    }
-
-    // Smooth scroll for anchor links
     document.querySelectorAll('.legal-content a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
