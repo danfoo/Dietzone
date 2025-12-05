@@ -1763,9 +1763,12 @@ class Notifications extends AdminController
                 $this->db->where('is_active', 1);
                 $player_ids_records = $this->db->get(db_prefix() . 'dietic_fcm_tokens')->result();
 
+                log_activity('[OneSignal Test] Patient ' . $patient_id . ': Found ' . count($player_ids_records) . ' Player IDs');
+
                 if (empty($player_ids_records)) {
                     $failed_count++;
                     $errors[] = "Patient ID $patient_id: Aucun Player ID actif";
+                    log_activity('[OneSignal Test] Patient ' . $patient_id . ': No active Player IDs');
                     continue;
                 }
 
@@ -1773,6 +1776,10 @@ class Notifications extends AdminController
                 $player_ids = array_map(function($record) {
                     return $record->onesignal_player_id;
                 }, $player_ids_records);
+
+                log_activity('[OneSignal Test] Sending to Player IDs: ' . implode(', ', $player_ids));
+                log_activity('[OneSignal Test] Title: ' . $title);
+                log_activity('[OneSignal Test] Message: ' . substr($message, 0, 100));
 
                 // Send notification using send_to_players (public method)
                 $url = $this->input->post('url') ?? site_url('dietetic/portal');
@@ -1789,14 +1796,25 @@ class Notifications extends AdminController
                     ]
                 );
 
+                log_activity('[OneSignal Test] OneSignal API Response: ' . json_encode($result));
+
                 if ($result['success']) {
                     $sent_count++;
-                    log_activity('[OneSignal Test] Notification sent to patient ' . $patient_id . ' (' . count($player_ids) . ' devices)');
+                    $recipients = $result['recipients'] ?? count($player_ids);
+                    log_activity('[OneSignal Test] ✓ SUCCESS - Notification sent to patient ' . $patient_id . ' (' . $recipients . ' recipients)');
                 } else {
                     $failed_count++;
                     $error_msg = "Patient ID $patient_id: " . ($result['error'] ?? 'Unknown error');
                     $errors[] = $error_msg;
-                    log_activity('[OneSignal Test] Failed to send to patient ' . $patient_id . ': ' . $error_msg);
+                    log_activity('[OneSignal Test] ✗ FAILED - Patient ' . $patient_id . ': ' . $error_msg);
+
+                    // Log full error details
+                    if (isset($result['http_code'])) {
+                        log_activity('[OneSignal Test] HTTP Code: ' . $result['http_code']);
+                    }
+                    if (isset($result['response'])) {
+                        log_activity('[OneSignal Test] Full Response: ' . json_encode($result['response']));
+                    }
                 }
             }
 
