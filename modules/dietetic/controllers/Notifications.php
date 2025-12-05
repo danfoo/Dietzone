@@ -509,12 +509,15 @@ class Notifications extends AdminController
                                            ->count_all_results(db_prefix() . 'dietic_fcm_tokens');
             log_activity('[TEST_PUSH DEBUG] Total active tokens in DB: ' . $total_tokens_check);
 
-            // Get all patients with FCM tokens
+            // Get all patients with OneSignal Player IDs
             // Note: In Perfex, tblclients only has 'company' field, not firstname/lastname
             $sql = "SELECT p.id,
                     c.company as patient_name,
                     (SELECT COUNT(*) FROM " . db_prefix() . "dietic_fcm_tokens f
-                     WHERE f.patient_id = p.id AND f.is_active = 1) as fcm_tokens
+                     WHERE f.patient_id = p.id
+                     AND f.is_active = 1
+                     AND f.onesignal_player_id IS NOT NULL
+                     AND f.onesignal_player_id != '') as player_ids
                     FROM " . db_prefix() . "dietic_patients p
                     LEFT JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
                     ORDER BY c.company ASC";
@@ -526,11 +529,11 @@ class Notifications extends AdminController
 
             log_activity('[TEST_PUSH DEBUG] Total patients retrieved: ' . count($data['patients']));
 
-            // Log first few patients with tokens
-            $patients_with_tokens = array_filter($data['patients'], function($p) {
-                return $p['fcm_tokens'] > 0;
+            // Log patients with OneSignal Player IDs
+            $patients_with_players = array_filter($data['patients'], function($p) {
+                return $p['player_ids'] > 0;
             });
-            log_activity('[TEST_PUSH DEBUG] Patients with tokens: ' . count($patients_with_tokens));
+            log_activity('[TEST_PUSH DEBUG] Patients with Player IDs: ' . count($patients_with_players));
 
         } catch (Exception $e) {
             log_activity('[TEST_PUSH ERROR] Exception: ' . $e->getMessage());
@@ -1717,10 +1720,16 @@ class Notifications extends AdminController
         header('Content-Type: application/json');
 
         try {
-            // Get POST data
+            // Get POST data - support both single patient_id and array patient_ids
             $patient_ids = $this->input->post('patient_ids'); // Array of patient IDs
+            $patient_id = $this->input->post('patient_id'); // Single patient ID
             $title = $this->input->post('title');
-            $message = $this->input->post('message');
+            $message = $this->input->post('message') ?? $this->input->post('body'); // Support both 'message' and 'body'
+
+            // Convert single patient_id to array
+            if (!empty($patient_id) && empty($patient_ids)) {
+                $patient_ids = [$patient_id];
+            }
 
             if (empty($patient_ids) || !is_array($patient_ids)) {
                 echo json_encode([
