@@ -660,27 +660,6 @@ function dietetic_process_recurring_payments()
 }
 
 /**
- * Add modern login page styling
- */
-hooks()->add_action('app_external_head', 'dietetic_add_login_styling');
-hooks()->add_action('app_admin_head', 'dietetic_add_login_styling');
-
-function dietetic_add_login_styling()
-{
-    $module_path = module_dir_url(DIETETIC_MODULE_NAME);
-
-    // Try both inline and external CSS for maximum compatibility
-    echo '<link href="' . $module_path . 'assets/css/login-modern.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
-
-    // Also add a small inline CSS as fallback to ensure at least basic styling works
-    echo '<style>
-    body.login, body.authentication, body[class*="login"], body[class*="auth"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    </style>';
-}
-
-/**
  * Add permissions
  */
 hooks()->add_action('admin_init', 'dietetic_permissions');
