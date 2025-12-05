@@ -770,6 +770,98 @@
                             </table>
                         </div>
 
+                        <!-- Nutrition Card (Manual Values from Program) -->
+                        <?php if ($program->daily_calories || $program->daily_protein || $program->daily_carbs || $program->daily_fats || $program->daily_fiber) { ?>
+                        <div class="info-card-modern animate-in delay-3">
+                            <div class="info-card-header">
+                                <div class="info-card-icon icon-nutrition">
+                                    <i class="fa fa-apple"></i>
+                                </div>
+                                <h3 class="info-card-title">
+                                    <?php echo _l('dietetic_daily_targets'); ?>
+                                    <span style="font-size: 12px; font-weight: 500; color: #999; display: block; margin-top: 5px;">
+                                        <i class="fa fa-pencil"></i> Valeurs saisies manuellement
+                                    </span>
+                                </h3>
+                            </div>
+
+                            <div class="nutrition-grid">
+                                <?php if ($program->daily_calories) { ?>
+                                    <div class="nutrition-card calories">
+                                        <div class="nutrition-icon">🔥</div>
+                                        <div class="nutrition-label">Calories</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_calories, 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">kcal / jour</div>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if ($program->daily_protein) { ?>
+                                    <div class="nutrition-card protein">
+                                        <div class="nutrition-icon">💪</div>
+                                        <div class="nutrition-label">Protéines</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_protein, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $protein_cal = $program->daily_protein * 4;
+                                                $protein_pct = round(($protein_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $protein_pct . '%';
+                                            } ?>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if ($program->daily_carbs) { ?>
+                                    <div class="nutrition-card carbs">
+                                        <div class="nutrition-icon">🌾</div>
+                                        <div class="nutrition-label">Glucides</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_carbs, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $carbs_cal = $program->daily_carbs * 4;
+                                                $carbs_pct = round(($carbs_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $carbs_pct . '%';
+                                            } ?>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if ($program->daily_fats) { ?>
+                                    <div class="nutrition-card fats">
+                                        <div class="nutrition-icon">🥑</div>
+                                        <div class="nutrition-label">Lipides</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_fats, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour
+                                            <?php if ($program->daily_calories) {
+                                                $fats_cal = $program->daily_fats * 9;
+                                                $fats_pct = round(($fats_cal / $program->daily_calories) * 100, 1);
+                                                echo ' • ' . $fats_pct . '%';
+                                            } ?>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if ($program->daily_fiber) { ?>
+                                    <div class="nutrition-card fiber">
+                                        <div class="nutrition-icon">🌿</div>
+                                        <div class="nutrition-label">Fibres</div>
+                                        <div class="nutrition-value"><?php echo number_format($program->daily_fiber, 1, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour</div>
+                                    </div>
+                                <?php } ?>
+                            </div>
+
+                            <?php if ($program->daily_calories && $program->daily_protein && $program->daily_carbs && $program->daily_fats) { ?>
+                                <!-- Macro Distribution Chart -->
+                                <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <h4 style="font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 20px; text-align: center;">
+                                        <i class="fa fa-pie-chart" style="color: #11998e;"></i> Distribution des Macronutriments
+                                    </h4>
+                                    <canvas id="macroDistributionChart" style="max-height: 250px;"></canvas>
+                                </div>
+                            <?php } ?>
+                        </div>
+                        <?php } ?>
+
                         <!-- Calculated Objectives from Anamnesis -->
                         <?php if ($calculated_objectives) { ?>
                             <div class="info-card-modern animate-in delay-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #01807B;">
@@ -892,98 +984,6 @@
                                     </div>
                                 <?php } ?>
                             </div>
-                        <?php } ?>
-
-                        <!-- Nutrition Card (Manual Values from Program) -->
-                        <?php if ($program->daily_calories || $program->daily_protein || $program->daily_carbs || $program->daily_fats || $program->daily_fiber) { ?>
-                        <div class="info-card-modern animate-in delay-3">
-                            <div class="info-card-header">
-                                <div class="info-card-icon icon-nutrition">
-                                    <i class="fa fa-apple"></i>
-                                </div>
-                                <h3 class="info-card-title">
-                                    <?php echo _l('dietetic_daily_targets'); ?>
-                                    <span style="font-size: 12px; font-weight: 500; color: #999; display: block; margin-top: 5px;">
-                                        <i class="fa fa-pencil"></i> Valeurs saisies manuellement
-                                    </span>
-                                </h3>
-                            </div>
-
-                            <div class="nutrition-grid">
-                                <?php if ($program->daily_calories) { ?>
-                                    <div class="nutrition-card calories">
-                                        <div class="nutrition-icon">🔥</div>
-                                        <div class="nutrition-label">Calories</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_calories, 0, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">kcal / jour</div>
-                                    </div>
-                                <?php } ?>
-
-                                <?php if ($program->daily_protein) { ?>
-                                    <div class="nutrition-card protein">
-                                        <div class="nutrition-icon">💪</div>
-                                        <div class="nutrition-label">Protéines</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_protein, 1, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">g / jour
-                                            <?php if ($program->daily_calories) {
-                                                $protein_cal = $program->daily_protein * 4;
-                                                $protein_pct = round(($protein_cal / $program->daily_calories) * 100, 1);
-                                                echo ' • ' . $protein_pct . '%';
-                                            } ?>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-
-                                <?php if ($program->daily_carbs) { ?>
-                                    <div class="nutrition-card carbs">
-                                        <div class="nutrition-icon">🌾</div>
-                                        <div class="nutrition-label">Glucides</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_carbs, 1, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">g / jour
-                                            <?php if ($program->daily_calories) {
-                                                $carbs_cal = $program->daily_carbs * 4;
-                                                $carbs_pct = round(($carbs_cal / $program->daily_calories) * 100, 1);
-                                                echo ' • ' . $carbs_pct . '%';
-                                            } ?>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-
-                                <?php if ($program->daily_fats) { ?>
-                                    <div class="nutrition-card fats">
-                                        <div class="nutrition-icon">🥑</div>
-                                        <div class="nutrition-label">Lipides</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_fats, 1, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">g / jour
-                                            <?php if ($program->daily_calories) {
-                                                $fats_cal = $program->daily_fats * 9;
-                                                $fats_pct = round(($fats_cal / $program->daily_calories) * 100, 1);
-                                                echo ' • ' . $fats_pct . '%';
-                                            } ?>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-
-                                <?php if ($program->daily_fiber) { ?>
-                                    <div class="nutrition-card fiber">
-                                        <div class="nutrition-icon">🌿</div>
-                                        <div class="nutrition-label">Fibres</div>
-                                        <div class="nutrition-value"><?php echo number_format($program->daily_fiber, 1, ',', ' '); ?></div>
-                                        <div class="nutrition-unit">g / jour</div>
-                                    </div>
-                                <?php } ?>
-                            </div>
-
-                            <?php if ($program->daily_calories && $program->daily_protein && $program->daily_carbs && $program->daily_fats) { ?>
-                                <!-- Macro Distribution Chart -->
-                                <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <h4 style="font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 20px; text-align: center;">
-                                        <i class="fa fa-pie-chart" style="color: #11998e;"></i> Distribution des Macronutriments
-                                    </h4>
-                                    <canvas id="macroDistributionChart" style="max-height: 250px;"></canvas>
-                                </div>
-                            <?php } ?>
-                        </div>
                         <?php } ?>
 
                         <!-- Description -->
