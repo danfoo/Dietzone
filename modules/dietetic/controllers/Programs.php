@@ -194,6 +194,65 @@ class Programs extends AdminController
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
 
+        // Auto-calculate nutritional objectives from anamnesis data if patient_id is provided
+        $data['calculated_objectives'] = null;
+        $patient_id = $this->input->get('patient_id');
+
+        if ($patient_id) {
+            $patient = $this->dietetic_patients_model->get($patient_id);
+
+            if ($patient) {
+                $this->load->library('dietetic/Dietetic_nutrition_calculator');
+
+                // Get patient latest measurement for current weight
+                $this->db->where('patient_id', $patient->id);
+                $this->db->order_by('measurement_date', 'DESC');
+                $this->db->limit(1);
+                $latest_measurement = $this->db->get(db_prefix() . 'dietic_measurements')->row();
+
+                $current_weight = $latest_measurement ? $latest_measurement->weight : null;
+
+                // Calculate age from birth_date
+                $age = null;
+                if ($patient->birth_date) {
+                    $birthdate = new DateTime($patient->birth_date);
+                    $today = new DateTime();
+                    $age = $birthdate->diff($today)->y;
+                }
+
+                // Only calculate if we have the minimum required data
+                if ($current_weight && $patient->height && $age) {
+                    // Map activity level from patient data to calculator constants
+                    $activity_map = [
+                        'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
+                        'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
+                        'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
+                        'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
+                        'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE
+                    ];
+
+                    $activity_level = $activity_map[$patient->activity_level] ?? Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
+
+                    // Default to maintenance for new programs
+                    $goal = Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
+
+                    $patient_data = [
+                        'weight' => $current_weight,
+                        'height' => $patient->height,
+                        'age' => $age,
+                        'gender' => $patient->gender,
+                        'activity_level' => $activity_level,
+                        'goal' => $goal,
+                        'waist' => $patient->waist_circumference ?? null,
+                        'neck' => $patient->neck_circumference ?? null,
+                        'hip' => $patient->hip_circumference ?? null
+                    ];
+
+                    $data['calculated_objectives'] = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_data);
+                }
+            }
+        }
+
         $this->load->view('admin/programs/form', $data);
     }
 
@@ -252,6 +311,71 @@ class Programs extends AdminController
         $data['title'] = _l('dietetic_edit_program');
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
+
+        // Auto-calculate nutritional objectives from anamnesis data
+        $data['calculated_objectives'] = null;
+        $patient = $this->dietetic_patients_model->get($data['program']->patient_id);
+
+        if ($patient) {
+            $this->load->library('dietetic/Dietetic_nutrition_calculator');
+
+            // Get patient latest measurement for current weight
+            $this->db->where('patient_id', $patient->id);
+            $this->db->order_by('measurement_date', 'DESC');
+            $this->db->limit(1);
+            $latest_measurement = $this->db->get(db_prefix() . 'dietic_measurements')->row();
+
+            $current_weight = $latest_measurement ? $latest_measurement->weight : null;
+
+            // Calculate age from birth_date
+            $age = null;
+            if ($patient->birth_date) {
+                $birthdate = new DateTime($patient->birth_date);
+                $today = new DateTime();
+                $age = $birthdate->diff($today)->y;
+            }
+
+            // Only calculate if we have the minimum required data
+            if ($current_weight && $patient->height && $age) {
+                // Map activity level from patient data to calculator constants
+                $activity_map = [
+                    'sedentary' => Dietetic_nutrition_calculator::ACTIVITY_SEDENTARY,
+                    'light' => Dietetic_nutrition_calculator::ACTIVITY_LIGHT,
+                    'moderate' => Dietetic_nutrition_calculator::ACTIVITY_MODERATE,
+                    'active' => Dietetic_nutrition_calculator::ACTIVITY_ACTIVE,
+                    'very_active' => Dietetic_nutrition_calculator::ACTIVITY_VERY_ACTIVE
+                ];
+
+                $activity_level = $activity_map[$patient->activity_level] ?? Dietetic_nutrition_calculator::ACTIVITY_MODERATE;
+
+                // Determine goal from program objective or default to maintenance
+                $goal = Dietetic_nutrition_calculator::GOAL_MAINTENANCE;
+                if ($data['program']->objective) {
+                    $objective_lower = strtolower($data['program']->objective);
+                    if (strpos($objective_lower, 'perte') !== false || strpos($objective_lower, 'perd') !== false || strpos($objective_lower, 'maigrir') !== false) {
+                        $goal = Dietetic_nutrition_calculator::GOAL_WEIGHT_LOSS;
+                    } elseif (strpos($objective_lower, 'prise') !== false || strpos($objective_lower, 'gagn') !== false || strpos($objective_lower, 'gross') !== false) {
+                        $goal = Dietetic_nutrition_calculator::GOAL_WEIGHT_GAIN;
+                    } elseif (strpos($objective_lower, 'muscle') !== false || strpos($objective_lower, 'muscul') !== false) {
+                        $goal = Dietetic_nutrition_calculator::GOAL_MUSCLE_GAIN;
+                    }
+                }
+
+                $patient_data = [
+                    'weight' => $current_weight,
+                    'height' => $patient->height,
+                    'age' => $age,
+                    'gender' => $patient->gender,
+                    'activity_level' => $activity_level,
+                    'goal' => $goal,
+                    'waist' => $patient->waist_circumference ?? null,
+                    'neck' => $patient->neck_circumference ?? null,
+                    'hip' => $patient->hip_circumference ?? null
+                ];
+
+                $data['calculated_objectives'] = $this->dietetic_nutrition_calculator->complete_nutrition_analysis($patient_data);
+            }
+        }
 
         $this->load->view('admin/programs/form', $data);
     }
