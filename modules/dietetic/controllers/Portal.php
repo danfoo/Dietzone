@@ -129,6 +129,8 @@ class Portal extends App_Controller
             // Subscription management methods
             'subscriptions',
             'subscription',
+            // Freemium upgrade page
+            'upgrade',
             // Diagnostic methods
             'diagnostic_onesignal'
         ];

@@ -1381,7 +1381,10 @@
     <div class="content-container">
 
     <!-- Freemium Upgrade Banner (shown only for free users) -->
-    <?php if (!is_premium_user()): ?>
+    <?php
+    // Safety check: only show banner if is_premium_user function exists
+    if (function_exists('is_premium_user') && !is_premium_user()):
+    ?>
     <div class="freemium-upgrade-banner" style="
         background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
         color: white;
