@@ -39,19 +39,34 @@ class Legal_pages extends AdminController
 
     /**
      * Save legal pages content
+     * IMPORTANT: XSS filtering is DISABLED to allow full HTML/CSS styling
      */
     private function save_legal_pages()
     {
-        $privacy_policy = $this->input->post('privacy_policy', false);
-        $terms_of_service = $this->input->post('terms_of_service', false);
+        // Get raw POST data without ANY filtering (allows full HTML/CSS)
+        // Using $_POST directly to completely bypass CodeIgniter's XSS filtering
+        $privacy_policy = isset($_POST['privacy_policy']) ? $_POST['privacy_policy'] : '';
+        $terms_of_service = isset($_POST['terms_of_service']) ? $_POST['terms_of_service'] : '';
+
+        // Additional security: Only allow if user is confirmed admin
+        if (!is_admin()) {
+            set_alert('danger', 'Accès refusé. Vous devez être administrateur.');
+            redirect(admin_url('dietetic/legal_pages/manage'));
+            return;
+        }
 
         // Update or insert privacy policy
-        $this->dietetic_settings_model->update_setting('privacy_policy', $privacy_policy);
+        $privacy_result = $this->dietetic_settings_model->update_setting('privacy_policy', $privacy_policy);
 
         // Update or insert terms of service
-        $this->dietetic_settings_model->update_setting('terms_of_service', $terms_of_service);
+        $terms_result = $this->dietetic_settings_model->update_setting('terms_of_service', $terms_of_service);
 
-        set_alert('success', 'Pages légales mises à jour avec succès');
+        if ($privacy_result !== false || $terms_result !== false) {
+            set_alert('success', 'Pages légales mises à jour avec succès. HTML et CSS complets acceptés.');
+        } else {
+            set_alert('danger', 'Erreur lors de la mise à jour. Vérifiez les logs.');
+        }
+
         redirect(admin_url('dietetic/legal_pages/manage'));
     }
 
