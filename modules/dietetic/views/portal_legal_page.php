@@ -1,6 +1,6 @@
 <?php
 /**
- * Portal Legal Page View
+ * Portal Legal Page View - Ultra Modern Mobile-First Design
  * Displays Privacy Policy and Terms of Service
  */
 
@@ -17,202 +17,663 @@ $this->load->view('portal/includes/portal_header');
 ?>
 
 <style>
+/* ============================================
+   MODERN MOBILE-FIRST LEGAL PAGE DESIGN
+   ============================================ */
+
+/* CSS Variables for easy theming */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #667eea;
+    --primary-dark: #5568d3;
+    --accent-color: #764ba2;
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7fafc;
+    --bg-glass: rgba(255, 255, 255, 0.85);
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Modern font stack */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animated gradient background */
+.legal-page-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    padding: 0;
+    position: relative;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Floating particles effect (optional decorative elements) */
+.legal-page-wrapper::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Container - Mobile First */
 .legal-page-container {
-    max-width: 1000px;
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 40px 20px;
+    padding: 16px;
+    padding-bottom: 80px; /* Space for floating button */
 }
 
+/* Hero Header with Glassmorphism */
 .legal-page-header {
-    background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+    background: var(--primary-gradient);
+    background-size: 200% 200%;
+    animation: gradientFlow 8s ease infinite;
     color: white;
-    padding: 40px 30px;
-    border-radius: 16px;
-    margin-bottom: 40px;
+    padding: 32px 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
     text-align: center;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
-.legal-page-header h1 {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 700;
-    color: white;
+@keyframes gradientFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Decorative circles in header */
+.legal-page-header::before,
+.legal-page-header::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.legal-page-header::before {
+    width: 200px;
+    height: 200px;
+    top: -100px;
+    right: -50px;
+}
+
+.legal-page-header::after {
+    width: 150px;
+    height: 150px;
+    bottom: -75px;
+    left: -30px;
 }
 
 .legal-page-header .icon {
     font-size: 48px;
-    margin-bottom: 15px;
-    opacity: 0.9;
+    margin-bottom: 12px;
+    opacity: 0.95;
+    display: inline-block;
+    animation: floatIcon 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
 }
 
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.legal-page-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    z-index: 1;
+    line-height: 1.3;
+}
+
+/* Content Card with Glassmorphism */
 .legal-content-wrapper {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-xl);
+    padding: 24px 20px;
+    box-shadow: var(--shadow-xl);
+    margin-bottom: 24px;
+    animation: fadeInUp 0.6s ease;
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Content Typography */
 .legal-content {
-    line-height: 1.8;
+    line-height: 1.75;
     font-size: 15px;
-    color: #555;
+    color: var(--text-secondary);
 }
 
 .legal-content h1 {
-    font-size: 28px;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    color: #333;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 10px;
+    font-size: 22px;
+    margin-top: 28px;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    font-weight: 700;
+    border-bottom: 3px solid transparent;
+    border-image: var(--primary-gradient);
+    border-image-slice: 1;
+    padding-bottom: 8px;
+    position: relative;
+}
+
+.legal-content h1:first-child {
+    margin-top: 0;
 }
 
 .legal-content h2 {
-    font-size: 24px;
-    margin-top: 25px;
-    margin-bottom: 12px;
-    color: #01807B;
+    font-size: 19px;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.legal-content h2::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 20px;
+    background: var(--primary-gradient);
+    margin-right: 10px;
+    border-radius: 2px;
 }
 
 .legal-content h3 {
-    font-size: 20px;
+    font-size: 17px;
     margin-top: 20px;
-    margin-bottom: 10px;
-    color: #555;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .legal-content p {
-    margin-bottom: 15px;
-    text-align: justify;
+    margin-bottom: 16px;
+    text-align: left;
+    line-height: 1.8;
 }
 
-.legal-content ul, .legal-content ol {
-    margin-bottom: 15px;
-    padding-left: 30px;
+.legal-content ul,
+.legal-content ol {
+    margin-bottom: 16px;
+    padding-left: 24px;
 }
 
 .legal-content li {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    position: relative;
+    line-height: 1.7;
+}
+
+.legal-content ul li::marker {
+    color: var(--primary-color);
 }
 
 .legal-content strong {
-    color: #333;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .legal-content a {
-    color: #01807B;
-    text-decoration: underline;
-}
-
-.legal-content a:hover {
-    color: #01655f;
-}
-
-.legal-content code {
-    background: #f4f4f4;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    font-size: 90%;
-}
-
-.legal-content blockquote {
-    border-left: 4px solid #01807B;
-    padding-left: 20px;
-    margin: 20px 0;
-    color: #666;
-    font-style: italic;
-}
-
-.legal-footer {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    color: #999;
-    font-size: 13px;
-    margin-bottom: 30px;
-}
-
-.legal-footer i {
-    margin-right: 5px;
-}
-
-.back-button {
-    display: inline-block;
-    padding: 12px 30px;
-    background: #01807B;
-    color: white;
-    border-radius: 8px;
+    color: var(--primary-color);
     text-decoration: none;
-    transition: all 0.3s;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-base);
     font-weight: 500;
 }
 
+.legal-content a:hover {
+    color: var(--primary-dark);
+    border-bottom-color: var(--primary-color);
+}
+
+.legal-content code {
+    background: var(--bg-secondary);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+}
+
+.legal-content blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding: 16px 20px;
+    margin: 20px 0;
+    background: var(--bg-secondary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Info Footer Card */
+.legal-footer {
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    padding: 16px 20px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: var(--shadow-sm);
+}
+
+.legal-footer i {
+    margin-right: 6px;
+    color: var(--primary-color);
+}
+
+/* Floating Action Button (FAB) */
+.back-button-wrapper {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    animation: slideInBottom 0.5s ease;
+}
+
+@keyframes slideInBottom {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    background: var(--primary-gradient);
+    background-size: 200% 200%;
+    color: white;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-base);
+    border: none;
+    cursor: pointer;
+    animation: gradientFlow 8s ease infinite;
+}
+
 .back-button:hover {
-    background: #01655f;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-xl);
     color: white;
     text-decoration: none;
+}
+
+.back-button:active {
+    transform: translateY(-1px);
 }
 
 .back-button i {
     margin-right: 8px;
+    font-size: 16px;
 }
 
-@media (max-width: 768px) {
-    .legal-content-wrapper {
-        padding: 25px;
+/* Scroll to top button */
+.scroll-top-button {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-base);
+    cursor: pointer;
+    z-index: 99;
+}
+
+.scroll-top-button.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-top-button:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   TABLET STYLES (768px+)
+   ============================================ */
+@media (min-width: 768px) {
+    .legal-page-container {
+        max-width: 720px;
+        padding: 24px;
+        padding-bottom: 100px;
     }
 
     .legal-page-header {
-        padding: 30px 20px;
+        padding: 48px 40px;
+        border-radius: var(--radius-xl);
+        margin-bottom: 32px;
+    }
+
+    .legal-page-header .icon {
+        font-size: 64px;
+        margin-bottom: 16px;
     }
 
     .legal-page-header h1 {
-        font-size: 24px;
+        font-size: 32px;
+    }
+
+    .legal-content-wrapper {
+        padding: 40px 36px;
+        border-radius: var(--radius-xl);
+    }
+
+    .legal-content {
+        font-size: 16px;
     }
 
     .legal-content h1 {
-        font-size: 22px;
+        font-size: 28px;
+        margin-top: 32px;
+        margin-bottom: 16px;
     }
 
     .legal-content h2 {
-        font-size: 20px;
+        font-size: 22px;
+        margin-top: 28px;
+        margin-bottom: 12px;
     }
+
+    .legal-content h3 {
+        font-size: 19px;
+    }
+
+    .legal-footer {
+        padding: 20px;
+        font-size: 14px;
+    }
+
+    .back-button {
+        padding: 16px 36px;
+        font-size: 16px;
+    }
+}
+
+/* ============================================
+   DESKTOP STYLES (1024px+)
+   ============================================ */
+@media (min-width: 1024px) {
+    .legal-page-container {
+        max-width: 920px;
+        padding: 40px;
+    }
+
+    .legal-page-header {
+        padding: 60px 50px;
+        margin-bottom: 40px;
+    }
+
+    .legal-page-header .icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+    }
+
+    .legal-page-header h1 {
+        font-size: 40px;
+    }
+
+    .legal-content-wrapper {
+        padding: 50px 48px;
+    }
+
+    .legal-content {
+        font-size: 17px;
+        line-height: 1.85;
+    }
+
+    .legal-content h1 {
+        font-size: 32px;
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
+
+    .legal-content h2 {
+        font-size: 25px;
+        margin-top: 32px;
+        margin-bottom: 14px;
+    }
+
+    .legal-content h3 {
+        font-size: 21px;
+    }
+
+    .legal-content ul,
+    .legal-content ol {
+        padding-left: 32px;
+    }
+
+    .back-button-wrapper {
+        bottom: 32px;
+    }
+
+    .scroll-top-button {
+        bottom: 120px;
+        right: 32px;
+        width: 56px;
+        height: 56px;
+    }
+}
+
+/* ============================================
+   LARGE DESKTOP STYLES (1280px+)
+   ============================================ */
+@media (min-width: 1280px) {
+    .legal-page-container {
+        max-width: 1100px;
+    }
+
+    .legal-content-wrapper {
+        padding: 60px 60px;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .legal-page-wrapper {
+        background: white;
+    }
+
+    .legal-page-header,
+    .legal-content-wrapper {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .back-button-wrapper,
+    .scroll-top-button {
+        display: none;
+    }
+
+    .legal-content {
+        color: black;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus styles for accessibility */
+.back-button:focus,
+.scroll-top-button:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
+}
+
+/* Selection color */
+::selection {
+    background: var(--primary-color);
+    color: white;
+}
+
+::-moz-selection {
+    background: var(--primary-color);
+    color: white;
 }
 </style>
 
-<div class="legal-page-container">
-    <!-- Page Header -->
-    <div class="legal-page-header">
-        <div class="icon">
-            <i class="fa fa-<?php echo strpos($title, 'Confidentialité') !== false ? 'shield' : 'file-text'; ?>"></i>
+<div class="legal-page-wrapper">
+    <div class="legal-page-container">
+        <!-- Hero Header -->
+        <div class="legal-page-header">
+            <div class="icon">
+                <i class="fa fa-<?php echo strpos($title, 'Confidentialité') !== false ? 'shield' : 'file-text'; ?>"></i>
+            </div>
+            <h1><?php echo htmlspecialchars($title); ?></h1>
         </div>
-        <h1><?php echo htmlspecialchars($title); ?></h1>
-    </div>
 
-    <!-- Content Wrapper -->
-    <div class="legal-content-wrapper">
-        <div class="legal-content">
-            <?php echo $content; ?>
+        <!-- Glass Content Card -->
+        <div class="legal-content-wrapper">
+            <div class="legal-content">
+                <?php echo $content; ?>
+            </div>
+        </div>
+
+        <!-- Info Footer -->
+        <div class="legal-footer">
+            <i class="fa fa-clock-o"></i> Dernière mise à jour : <?php echo date('d/m/Y'); ?>
         </div>
     </div>
 
-    <!-- Footer Info -->
-    <div class="legal-footer">
-        <i class="fa fa-clock-o"></i> Dernière mise à jour : <?php echo date('d/m/Y'); ?>
-    </div>
-
-    <!-- Back Button -->
-    <div style="text-align: center;">
+    <!-- Floating Action Button -->
+    <div class="back-button-wrapper">
         <a href="<?php echo site_url('dietetic/portal'); ?>" class="back-button">
             <i class="fa fa-arrow-left"></i> Retour au Portail
         </a>
     </div>
+
+    <!-- Scroll to Top Button -->
+    <div class="scroll-top-button" id="scrollTopBtn">
+        <i class="fa fa-chevron-up"></i>
+    </div>
 </div>
+
+<script>
+// Scroll to top functionality
+(function() {
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    if (scrollTopBtn) {
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+
+        // Scroll to top on click
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('.legal-content a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+})();
+</script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
