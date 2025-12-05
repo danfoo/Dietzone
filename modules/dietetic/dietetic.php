@@ -666,15 +666,10 @@ hooks()->add_action('app_external_head', 'dietetic_add_login_styling');
 
 function dietetic_add_login_styling()
 {
-    $CI = &get_instance();
     $module_path = module_dir_url(DIETETIC_MODULE_NAME);
 
-    // Only load on authentication/login pages
-    if (strpos($CI->uri->uri_string(), 'authentication') !== false ||
-        strpos($CI->uri->uri_string(), 'admin/login') !== false ||
-        $CI->uri->uri_string() === 'admin' && !is_staff_logged_in()) {
-        echo '<link href="' . $module_path . 'assets/css/login-modern.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
-    }
+    // Load modern login CSS on all external pages (will only affect login page)
+    echo '<link href="' . $module_path . 'assets/css/login-modern.css?v=' . time() . '" rel="stylesheet" type="text/css" />';
 }
 
 /**
