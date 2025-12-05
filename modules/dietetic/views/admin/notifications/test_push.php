@@ -207,16 +207,30 @@ $(document).ready(function() {
     // Reload stats every 30 seconds
     setInterval(loadPushStats, 30000);
 
-    // Handle form submission
-    $('#testPushForm').on('submit', function(e) {
-        e.preventDefault();
+    // Toggle patient selection based on send mode
+    $('#send_mode').on('change', function() {
+        const mode = $(this).val();
+        if (mode === 'patient') {
+            $('#patient_selection').slideDown();
+            $('#patient_id').prop('required', true);
+        } else {
+            $('#patient_selection').slideUp();
+            $('#patient_id').prop('required', false);
+        }
+    });
 
-        const btn = $('#sendBtn');
+    // Send Test Push Notification
+    $('#btnSendTest').on('click', function(e) {
+        e.preventDefault();
+        const btn = $(this);
         const originalHtml = btn.html();
 
-        // Validate
+        // Get send mode
+        const sendMode = $('#send_mode').val();
         const patientId = $('#patient_id').val();
-        if (!patientId) {
+
+        // Validate
+        if (sendMode === 'patient' && !patientId) {
             showAlert('warning', 'Veuillez sélectionner un patient');
             return;
         }
@@ -230,29 +244,45 @@ $(document).ready(function() {
         }
 
         // Disable button
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours via OneSignal...').prop('disabled', true);
+        const btnText = sendMode === 'all' ? 'Envoi à tous les utilisateurs...' : 'Envoi en cours...';
+        btn.html('<i class="fa fa-spinner fa-spin"></i> ' + btnText).prop('disabled', true);
+
+        // Prepare data
+        const data = {
+            send_mode: sendMode,
+            notification_type: $('#notification_type').val(),
+            title: title,
+            body: message,
+            url: '<?php echo site_url('dietetic/portal'); ?>'
+        };
+
+        // Add patient_id only if patient mode
+        if (sendMode === 'patient') {
+            data.patient_id = patientId;
+        }
 
         // Send test notification via OneSignal
         $.ajax({
             url: '<?php echo admin_url('dietetic/notifications/send_test_onesignal'); ?>',
             type: 'POST',
-            data: {
-                patient_id: patientId,
-                notification_type: $('#notification_type').val(),
-                title: title,
-                body: message,
-                url: '<?php echo site_url('dietetic/portal'); ?>'
-            },
+            data: data,
             dataType: 'json',
             success: function(response) {
                 btn.html(originalHtml).prop('disabled', false);
 
                 if (response.success) {
-                    showAlert('success', response.message);
+                    let msg = response.message;
+                    if (response.recipients !== undefined) {
+                        msg += ' (' + response.recipients + ' destinataire' + (response.recipients > 1 ? 's' : '') + ')';
+                    }
+                    showAlert('success', msg);
                     addToHistory(response);
                     loadPushStats(); // Refresh stats
                 } else {
                     showAlert('danger', response.message || 'Erreur lors de l\'envoi');
+                    if (response.errors && response.errors.length > 0) {
+                        showAlert('warning', response.errors.join('<br>'));
+                    }
                 }
             },
             error: function(xhr, status, error) {
