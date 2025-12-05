@@ -1744,9 +1744,8 @@ class Notifications extends AdminController
             if ($send_mode === 'all') {
                 log_activity('[OneSignal Test] Sending to ALL users via segment');
 
-                $url = $this->input->post('url') ?? site_url('dietetic/portal');
-
-                // Try 'All' segment first (universal), fallback to 'Subscribed Users'
+                // Don't send URL for mobile apps - it would open browser instead of app
+                // Just open the app on its main screen when notification is tapped
                 $result = $this->onesignal_cloud_messaging->send_to_segment(
                     'All', // OneSignal built-in segment for all users
                     $title,
@@ -1755,9 +1754,7 @@ class Notifications extends AdminController
                         'type' => 'test',
                         'timestamp' => date('Y-m-d H:i:s')
                     ],
-                    [
-                        'click_action' => $url
-                    ]
+                    [] // No click_action URL - app will just open to main screen
                 );
 
                 log_activity('[OneSignal Test] Segment send result: ' . json_encode($result));
