@@ -1745,8 +1745,10 @@ class Notifications extends AdminController
                 log_activity('[OneSignal Test] Sending to ALL users via segment');
 
                 $url = $this->input->post('url') ?? site_url('dietetic/portal');
+
+                // Try 'All' segment first (universal), fallback to 'Subscribed Users'
                 $result = $this->onesignal_cloud_messaging->send_to_segment(
-                    'Subscribed Users', // OneSignal built-in segment for all active subscribers
+                    'All', // OneSignal built-in segment for all users
                     $title,
                     $message,
                     [
