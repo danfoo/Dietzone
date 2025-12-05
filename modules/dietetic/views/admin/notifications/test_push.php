@@ -149,8 +149,8 @@
 
                                     <div class="row mtop15">
                                         <div class="col-md-12">
-                                            <button type="submit" class="btn btn-primary btn-lg" id="sendBtn">
-                                                <i class="fa fa-paper-plane"></i> Envoyer la Notification de Test (OneSignal)
+                                            <button type="button" class="btn btn-primary btn-lg" id="btnSendTest">
+                                                <i class="fa fa-paper-plane"></i> Envoyer la Notification
                                             </button>
 
                                             <a href="<?php echo admin_url('dietetic/notifications/logs'); ?>" class="btn btn-default">
