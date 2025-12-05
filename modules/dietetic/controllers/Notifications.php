@@ -1720,12 +1720,70 @@ class Notifications extends AdminController
         header('Content-Type: application/json');
 
         try {
-            // Get POST data - support both single patient_id and array patient_ids
+            // Get POST data
+            $send_mode = $this->input->post('send_mode') ?? 'patient'; // 'all' or 'patient'
             $patient_ids = $this->input->post('patient_ids'); // Array of patient IDs
             $patient_id = $this->input->post('patient_id'); // Single patient ID
             $title = $this->input->post('title');
             $message = $this->input->post('message') ?? $this->input->post('body'); // Support both 'message' and 'body'
 
+            log_activity('[OneSignal Test] Send mode: ' . $send_mode);
+
+            if (empty($title) || empty($message)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le titre et le message sont requis'
+                ]);
+                return;
+            }
+
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            // MODE 1: Send to ALL users (web + mobile) using OneSignal segments
+            if ($send_mode === 'all') {
+                log_activity('[OneSignal Test] Sending to ALL users via segment');
+
+                $url = $this->input->post('url') ?? site_url('dietetic/portal');
+                $result = $this->onesignal_cloud_messaging->send_to_segment(
+                    'Subscribed Users', // OneSignal built-in segment for all active subscribers
+                    $title,
+                    $message,
+                    [
+                        'type' => 'test',
+                        'timestamp' => date('Y-m-d H:i:s')
+                    ],
+                    [
+                        'click_action' => $url
+                    ]
+                );
+
+                log_activity('[OneSignal Test] Segment send result: ' . json_encode($result));
+
+                if ($result['success']) {
+                    $recipients = $result['recipients'] ?? 0;
+                    log_activity('[OneSignal Test] ✓ SUCCESS - Sent to all users (' . $recipients . ' recipients)');
+
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Notification envoyée à tous les utilisateurs',
+                        'recipients' => $recipients,
+                        'notification_id' => $result['notification_id'] ?? null
+                    ]);
+                } else {
+                    $error_msg = $result['error'] ?? 'Unknown error';
+                    log_activity('[OneSignal Test] ✗ FAILED - ' . $error_msg);
+
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Erreur lors de l\'envoi: ' . $error_msg,
+                        'http_code' => $result['http_code'] ?? null
+                    ]);
+                }
+                return;
+            }
+
+            // MODE 2: Send to specific patient(s)
             // Convert single patient_id to array
             if (!empty($patient_id) && empty($patient_ids)) {
                 $patient_ids = [$patient_id];
@@ -1739,16 +1797,7 @@ class Notifications extends AdminController
                 return;
             }
 
-            if (empty($title) || empty($message)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Le titre et le message sont requis'
-                ]);
-                return;
-            }
-
-            // Load OneSignal library
-            $this->load->library('dietetic/onesignal_cloud_messaging');
+            log_activity('[OneSignal Test] Sending to specific patients: ' . implode(', ', $patient_ids));
 
             $sent_count = 0;
             $failed_count = 0;

@@ -71,10 +71,25 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
+                                                <label for="send_mode">
+                                                    <i class="fa fa-users"></i> Mode d'envoi *
+                                                </label>
+                                                <select name="send_mode" id="send_mode" class="form-control" required>
+                                                    <option value="all">📢 Tous les utilisateurs (Web + Mobile)</option>
+                                                    <option value="patient">👤 Patient spécifique</option>
+                                                </select>
+                                                <p class="help-block">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    <strong>Tous les utilisateurs</strong> : Envoie à tous les appareils enregistrés (Web + APK)<br>
+                                                    <strong>Patient spécifique</strong> : Envoie uniquement aux appareils enregistrés dans Perfex
+                                                </p>
+                                            </div>
+
+                                            <div class="form-group" id="patient_selection" style="display: none;">
                                                 <label for="patient_id">
                                                     <i class="fa fa-user"></i> Sélectionner un Patient *
                                                 </label>
-                                                <select name="patient_id" id="patient_id" class="form-control selectpicker" data-live-search="true" required>
+                                                <select name="patient_id" id="patient_id" class="form-control selectpicker" data-live-search="true">
                                                     <option value="">-- Choisir un patient --</option>
                                                     <?php if (!empty($patients)): ?>
                                                         <?php foreach ($patients as $patient): ?>
