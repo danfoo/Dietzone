@@ -1667,4 +1667,145 @@ class Notifications extends AdminController
             ]);
         }
     }
+
+    /**
+     * Get OneSignal statistics (Player IDs count, patients list)
+     * Called by AJAX from test_push.php
+     */
+    public function get_onesignal_stats()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Count total active Player IDs
+            $this->db->where('onesignal_player_id IS NOT NULL');
+            $this->db->where('onesignal_player_id !=', '');
+            $this->db->where('is_active', 1);
+            $total_player_ids = $this->db->count_all_results(db_prefix() . 'dietic_fcm_tokens');
+
+            // Get patients with Player IDs
+            $this->db->select('f.id, f.patient_id, f.onesignal_player_id, f.device_type, f.created_at, f.updated_at, p.id as patient_id, c.company as patient_name, c.email as patient_email');
+            $this->db->from(db_prefix() . 'dietic_fcm_tokens f');
+            $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = f.patient_id');
+            $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');
+            $this->db->where('f.onesignal_player_id IS NOT NULL');
+            $this->db->where('f.onesignal_player_id !=', '');
+            $this->db->where('f.is_active', 1);
+            $this->db->order_by('f.updated_at', 'DESC');
+            $patients = $this->db->get()->result();
+
+            echo json_encode([
+                'success' => true,
+                'total' => $total_player_ids,
+                'patients' => $patients
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Send test OneSignal notification
+     * Called by AJAX from test_push.php
+     */
+    public function send_test_onesignal()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Get POST data
+            $patient_ids = $this->input->post('patient_ids'); // Array of patient IDs
+            $title = $this->input->post('title');
+            $message = $this->input->post('message');
+
+            if (empty($patient_ids) || !is_array($patient_ids)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Aucun patient sélectionné'
+                ]);
+                return;
+            }
+
+            if (empty($title) || empty($message)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le titre et le message sont requis'
+                ]);
+                return;
+            }
+
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            $sent_count = 0;
+            $failed_count = 0;
+            $errors = [];
+
+            foreach ($patient_ids as $patient_id) {
+                // Get patient Player IDs
+                $this->db->select('onesignal_player_id');
+                $this->db->where('patient_id', $patient_id);
+                $this->db->where('onesignal_player_id IS NOT NULL');
+                $this->db->where('onesignal_player_id !=', '');
+                $this->db->where('is_active', 1);
+                $player_ids_records = $this->db->get(db_prefix() . 'dietic_fcm_tokens')->result();
+
+                if (empty($player_ids_records)) {
+                    $failed_count++;
+                    $errors[] = "Patient ID $patient_id: Aucun Player ID actif";
+                    continue;
+                }
+
+                // Extract Player IDs
+                $player_ids = array_map(function($record) {
+                    return $record->onesignal_player_id;
+                }, $player_ids_records);
+
+                // Send notification
+                $result = $this->onesignal_cloud_messaging->send_notification(
+                    $player_ids,
+                    $title,
+                    $message,
+                    [
+                        'type' => 'test',
+                        'url' => site_url('dietetic/portal')
+                    ]
+                );
+
+                if ($result['success']) {
+                    $sent_count++;
+                    log_activity('[OneSignal Test] Notification sent to patient ' . $patient_id . ' (' . count($player_ids) . ' devices)');
+                } else {
+                    $failed_count++;
+                    $error_msg = "Patient ID $patient_id: " . ($result['message'] ?? 'Unknown error');
+                    $errors[] = $error_msg;
+                    log_activity('[OneSignal Test] Failed to send to patient ' . $patient_id . ': ' . $error_msg);
+                }
+            }
+
+            $response = [
+                'success' => $sent_count > 0,
+                'sent' => $sent_count,
+                'failed' => $failed_count,
+                'message' => "$sent_count notification(s) envoyée(s), $failed_count échec(s)"
+            ];
+
+            if (!empty($errors)) {
+                $response['errors'] = $errors;
+            }
+
+            echo json_encode($response);
+
+        } catch (Exception $e) {
+            log_activity('[OneSignal Test] Exception: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
