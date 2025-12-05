@@ -1,0 +1,451 @@
+-- ============================================================
+-- SCRIPT SQL D'INSTALLATION POLITIQUE DE CONFIDENTIALITÉ
+-- Pour Dietzone by Maestrodan
+-- ============================================================
+
+-- INSTRUCTIONS:
+-- 1. Accédez à phpMyAdmin sur votre hébergement
+-- 2. Sélectionnez votre base de données Perfex
+-- 3. Cliquez sur l'onglet "SQL"
+-- 4. Copiez-collez ce script complet
+-- 5. Cliquez sur "Exécuter"
+-- 6. Vérifiez ensuite : https://app.dietsenegal.net/admin/dietetic/legal_pages/privacy
+
+-- Vérifier si l'entrée existe déjà
+SELECT COUNT(*) as existe FROM tbldietic_settings WHERE setting_key = 'privacy_policy';
+
+-- Si existe = 0, exécutez la requête INSERT ci-dessous
+-- Si existe = 1, exécutez la requête UPDATE ci-dessous
+
+-- ============================================================
+-- OPTION 1 : INSERT (si n'existe pas encore)
+-- ============================================================
+INSERT INTO tbldietic_settings (setting_key, setting_value, created_at, updated_at)
+VALUES (
+    'privacy_policy',
+    '<div style="max-width: 900px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, ''Segoe UI'', Roboto, sans-serif; line-height: 1.6;">
+
+<div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #667eea;">
+    <h1 style="font-size: 32px; color: #1a202c; margin-bottom: 10px;">Politique de Confidentialité</h1>
+    <p style="color: #64748b; font-size: 14px; font-style: italic;">Dernière mise à jour : Décembre 2024</p>
+</div>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p><strong>Dietzone</strong> est une application de coaching nutritionnel développée et exploitée par <strong>Maestrodan</strong>, représentée par Eric Gilles SAGNA. Nous nous engageons à protéger votre vie privée et vos données personnelles.</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">1. Identité du Responsable de Traitement</h2>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Raison sociale :</strong> Maestrodan</p>
+    <p><strong>Représentant légal :</strong> Eric Gilles SAGNA</p>
+    <p><strong>Adresse du site web :</strong> <a href="https://app.dietsenegal.net" style="color: #667eea;">https://app.dietsenegal.net</a></p>
+    <p><strong>Email de contact :</strong> contact@dietsenegal.net</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">2. Données Personnelles Collectées</h2>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.1. Données d''identification et de contact</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Nom et prénom</li>
+    <li>Adresse email</li>
+    <li>Numéro de téléphone</li>
+    <li>Date de naissance</li>
+    <li>Genre</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.2. Données de santé et nutritionnelles</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Poids et mesures corporelles (tour de taille, tour de hanches, etc.)</li>
+    <li>Taille</li>
+    <li>Objectifs nutritionnels et de perte de poids</li>
+    <li>Historique des consultations avec votre diététicien(ne)</li>
+    <li>Plans alimentaires et recommandations nutritionnelles</li>
+    <li>Allergies et intolérances alimentaires</li>
+    <li>Antécédents médicaux pertinents pour le suivi nutritionnel</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.3. Données de connexion et d''utilisation</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Adresse IP</li>
+    <li>Type d''appareil et système d''exploitation</li>
+    <li>Navigateur utilisé</li>
+    <li>Dates et heures de connexion</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.4. Données de paiement</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Informations de facturation</li>
+    <li>Historique des paiements</li>
+    <li>Mode de paiement (les données bancaires sont traitées par des prestataires de paiement sécurisés)</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">3. Finalités du Traitement des Données</h2>
+
+<p>Vos données personnelles sont collectées et traitées pour les finalités suivantes :</p>
+
+<ol style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Fourniture du service de coaching nutritionnel :</strong> Création de votre profil patient, suivi de votre évolution, élaboration de plans alimentaires personnalisés</li>
+    <li><strong>Communication avec votre diététicien(ne) :</strong> Prise de rendez-vous, suivi des consultations</li>
+    <li><strong>Envoi de notifications et rappels :</strong> Rappels de pesée, rappels de repas, rappels d''hydratation, rappels de rendez-vous</li>
+    <li><strong>Amélioration du service :</strong> Analyse statistique anonymisée</li>
+    <li><strong>Gestion des paiements :</strong> Facturation et suivi des abonnements</li>
+    <li><strong>Respect des obligations légales :</strong> Conservation des données pour la durée légale requise</li>
+</ol>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">4. Base Légale du Traitement</h2>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Exécution du contrat :</strong> Les données nécessaires à la fourniture du service</li>
+    <li><strong>Consentement :</strong> Pour les données sensibles (données de santé), nous recueillons votre consentement explicite</li>
+    <li><strong>Obligation légale :</strong> Conservation des données de facturation conformément aux obligations comptables</li>
+    <li><strong>Intérêt légitime :</strong> Amélioration de nos services et sécurisation de notre plateforme</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">5. Destinataires des Données</h2>
+
+<p>Vos données personnelles sont accessibles uniquement aux personnes suivantes :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Votre diététicien(ne) attitré(e) :</strong> Pour assurer votre suivi nutritionnel</li>
+    <li><strong>L''équipe technique de Maestrodan :</strong> Pour la maintenance et le support technique</li>
+    <li><strong>Prestataires de services :</strong>
+        <ul>
+            <li>OneSignal (notifications push)</li>
+            <li>LAM SMS (envoi de SMS) - Sénégal</li>
+            <li>Hébergeur web sécurisé</li>
+        </ul>
+    </li>
+</ul>
+
+<p><strong style="color: #dc2626;">Aucune donnée n''est vendue ou partagée à des tiers à des fins commerciales.</strong></p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">6. Durée de Conservation des Données</h2>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Données de compte actif :</strong> Tant que votre compte est actif</li>
+    <li><strong>Données de santé et consultations :</strong> 5 ans après la dernière consultation</li>
+    <li><strong>Données de facturation :</strong> 10 ans (obligation légale comptable)</li>
+    <li><strong>Données de connexion :</strong> 12 mois maximum</li>
+    <li><strong>Après suppression de compte :</strong> Suppression immédiate des données personnelles, sauf obligation légale</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">7. Sécurité des Données</h2>
+
+<p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Chiffrement SSL/TLS pour toutes les communications (HTTPS)</li>
+    <li>Hébergement sécurisé avec sauvegardes régulières</li>
+    <li>Accès restreint aux données par authentification forte</li>
+    <li>Protection contre les injections SQL et les failles XSS</li>
+    <li>Protection CSRF (Cross-Site Request Forgery)</li>
+    <li>Journalisation des accès</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">8. Vos Droits</h2>
+
+<p>Conformément à la législation sur la protection des données personnelles, vous disposez des droits suivants :</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.1. Droit d''accès</h3>
+<p>Vous pouvez obtenir une copie de toutes les données que nous détenons à votre sujet.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.2. Droit de rectification</h3>
+<p>Vous pouvez demander la correction de données inexactes ou incomplètes.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.3. Droit à l''effacement ("droit à l''oubli")</h3>
+<p>Vous pouvez demander la suppression de vos données personnelles, sauf obligation légale de conservation.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.4. Droit à la portabilité</h3>
+<p>Vous pouvez recevoir vos données dans un format structuré et couramment utilisé.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.5. Droit d''opposition</h3>
+<p>Vous pouvez vous opposer au traitement de vos données pour des raisons tenant à votre situation particulière.</p>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p><strong>Comment exercer vos droits ?</strong></p>
+    <p>Pour exercer l''un de ces droits :</p>
+    <ul style="margin-left: 20px;">
+        <li>Contactez-nous par email : <strong>contact@dietsenegal.net</strong></li>
+        <li>Accédez directement à votre espace personnel pour modifier vos informations</li>
+        <li>Contactez votre diététicien(ne)</li>
+    </ul>
+    <p>Nous nous engageons à répondre dans un délai maximum de <strong>30 jours</strong>.</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">9. Notifications Push</h2>
+
+<p>Avec votre consentement, nous envoyons des notifications push pour :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Rappels de repas (petit-déjeuner, déjeuner, dîner)</li>
+    <li>Rappels d''hydratation</li>
+    <li>Rappels de pesée hebdomadaire</li>
+    <li>Rappels de rendez-vous</li>
+</ul>
+
+<p>Vous pouvez désactiver les notifications à tout moment dans les paramètres de votre appareil.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">10. Utilisation par les Mineurs</h2>
+
+<p>Notre service est destiné aux personnes majeures (18 ans et plus). Les mineurs doivent obtenir l''autorisation de leurs parents ou tuteurs légaux.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">11. Modifications</h2>
+
+<p>Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. En cas de modification substantielle, nous vous informerons par email ou notification dans l''application.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">12. Contact et Réclamations</h2>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Pour toute question concernant cette politique :</strong></p>
+    <p>📧 Email : <a href="mailto:contact@dietsenegal.net" style="color: #667eea;">contact@dietsenegal.net</a></p>
+    <p>🌐 Site web : <a href="https://app.dietsenegal.net" style="color: #667eea;">https://app.dietsenegal.net</a></p>
+</div>
+
+<p><strong>Droit de réclamation auprès de l''autorité de contrôle :</strong></p>
+<p>Vous avez le droit d''introduire une réclamation auprès de la Commission de Protection des Données Personnelles (CDP) du Sénégal.</p>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Commission de Protection des Données Personnelles (CDP)</strong></p>
+    <p>Adresse : Dakar, Sénégal</p>
+    <p>Site web : <a href="https://cdp.sn" target="_blank" style="color: #667eea;">https://cdp.sn</a></p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">13. Consentement</h2>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p>En utilisant notre application Dietzone, vous reconnaissez avoir lu et compris cette politique de confidentialité et vous consentez au traitement de vos données personnelles tel que décrit ci-dessus.</p>
+    <p>Pour les données sensibles (données de santé), un consentement explicite vous sera demandé lors de votre première utilisation de l''application.</p>
+</div>
+
+<div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; color: #64748b; font-size: 14px;">
+    <p>&copy; 2024 Maestrodan - Tous droits réservés</p>
+    <p>Dietzone - Application de Coaching Nutritionnel</p>
+</div>
+
+</div>',
+    NOW(),
+    NOW()
+);
+
+-- ============================================================
+-- OPTION 2 : UPDATE (si existe déjà)
+-- ============================================================
+UPDATE tbldietic_settings
+SET setting_value = '<div style="max-width: 900px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, ''Segoe UI'', Roboto, sans-serif; line-height: 1.6;">
+
+<div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #667eea;">
+    <h1 style="font-size: 32px; color: #1a202c; margin-bottom: 10px;">Politique de Confidentialité</h1>
+    <p style="color: #64748b; font-size: 14px; font-style: italic;">Dernière mise à jour : Décembre 2024</p>
+</div>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p><strong>Dietzone</strong> est une application de coaching nutritionnel développée et exploitée par <strong>Maestrodan</strong>, représentée par Eric Gilles SAGNA. Nous nous engageons à protéger votre vie privée et vos données personnelles.</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">1. Identité du Responsable de Traitement</h2>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Raison sociale :</strong> Maestrodan</p>
+    <p><strong>Représentant légal :</strong> Eric Gilles SAGNA</p>
+    <p><strong>Adresse du site web :</strong> <a href="https://app.dietsenegal.net" style="color: #667eea;">https://app.dietsenegal.net</a></p>
+    <p><strong>Email de contact :</strong> contact@dietsenegal.net</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">2. Données Personnelles Collectées</h2>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.1. Données d''identification et de contact</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Nom et prénom</li>
+    <li>Adresse email</li>
+    <li>Numéro de téléphone</li>
+    <li>Date de naissance</li>
+    <li>Genre</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.2. Données de santé et nutritionnelles</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Poids et mesures corporelles (tour de taille, tour de hanches, etc.)</li>
+    <li>Taille</li>
+    <li>Objectifs nutritionnels et de perte de poids</li>
+    <li>Historique des consultations avec votre diététicien(ne)</li>
+    <li>Plans alimentaires et recommandations nutritionnelles</li>
+    <li>Allergies et intolérances alimentaires</li>
+    <li>Antécédents médicaux pertinents pour le suivi nutritionnel</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.3. Données de connexion et d''utilisation</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Adresse IP</li>
+    <li>Type d''appareil et système d''exploitation</li>
+    <li>Navigateur utilisé</li>
+    <li>Dates et heures de connexion</li>
+</ul>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">2.4. Données de paiement</h3>
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Informations de facturation</li>
+    <li>Historique des paiements</li>
+    <li>Mode de paiement (les données bancaires sont traitées par des prestataires de paiement sécurisés)</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">3. Finalités du Traitement des Données</h2>
+
+<p>Vos données personnelles sont collectées et traitées pour les finalités suivantes :</p>
+
+<ol style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Fourniture du service de coaching nutritionnel :</strong> Création de votre profil patient, suivi de votre évolution, élaboration de plans alimentaires personnalisés</li>
+    <li><strong>Communication avec votre diététicien(ne) :</strong> Prise de rendez-vous, suivi des consultations</li>
+    <li><strong>Envoi de notifications et rappels :</strong> Rappels de pesée, rappels de repas, rappels d''hydratation, rappels de rendez-vous</li>
+    <li><strong>Amélioration du service :</strong> Analyse statistique anonymisée</li>
+    <li><strong>Gestion des paiements :</strong> Facturation et suivi des abonnements</li>
+    <li><strong>Respect des obligations légales :</strong> Conservation des données pour la durée légale requise</li>
+</ol>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">4. Base Légale du Traitement</h2>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Exécution du contrat :</strong> Les données nécessaires à la fourniture du service</li>
+    <li><strong>Consentement :</strong> Pour les données sensibles (données de santé), nous recueillons votre consentement explicite</li>
+    <li><strong>Obligation légale :</strong> Conservation des données de facturation conformément aux obligations comptables</li>
+    <li><strong>Intérêt légutime :</strong> Amélioration de nos services et sécurisation de notre plateforme</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">5. Destinataires des Données</h2>
+
+<p>Vos données personnelles sont accessibles uniquement aux personnes suivantes :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Votre diététicien(ne) attitré(e) :</strong> Pour assurer votre suivi nutritionnel</li>
+    <li><strong>L''équipe technique de Maestrodan :</strong> Pour la maintenance et le support technique</li>
+    <li><strong>Prestataires de services :</strong>
+        <ul>
+            <li>OneSignal (notifications push)</li>
+            <li>LAM SMS (envoi de SMS) - Sénégal</li>
+            <li>Hébergeur web sécurisé</li>
+        </ul>
+    </li>
+</ul>
+
+<p><strong style="color: #dc2626;">Aucune donnée n''est vendue ou partagée à des tiers à des fins commerciales.</strong></p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">6. Durée de Conservation des Données</h2>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li><strong>Données de compte actif :</strong> Tant que votre compte est actif</li>
+    <li><strong>Données de santé et consultations :</strong> 5 ans après la dernière consultation</li>
+    <li><strong>Données de facturation :</strong> 10 ans (obligation légale comptable)</li>
+    <li><strong>Données de connexion :</strong> 12 mois maximum</li>
+    <li><strong>Après suppression de compte :</strong> Suppression immédiate des données personnelles, sauf obligation légale</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">7. Sécurité des Données</h2>
+
+<p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Chiffrement SSL/TLS pour toutes les communications (HTTPS)</li>
+    <li>Hébergement sécurisé avec sauvegardes régulières</li>
+    <li>Accès restreint aux données par authentification forte</li>
+    <li>Protection contre les injections SQL et les failles XSS</li>
+    <li>Protection CSRF (Cross-Site Request Forgery)</li>
+    <li>Journalisation des accès</li>
+</ul>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">8. Vos Droits</h2>
+
+<p>Conformément à la législation sur la protection des données personnelles, vous disposez des droits suivants :</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.1. Droit d''accès</h3>
+<p>Vous pouvez obtenir une copie de toutes les données que nous détenons à votre sujet.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.2. Droit de rectification</h3>
+<p>Vous pouvez demander la correction de données inexactes ou incomplètes.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.3. Droit à l''effacement ("droit à l''oubli")</h3>
+<p>Vous pouvez demander la suppression de vos données personnelles, sauf obligation légale de conservation.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.4. Droit à la portabilité</h3>
+<p>Vous pouvez recevoir vos données dans un format structuré et couramment utilisé.</p>
+
+<h3 style="font-size: 18px; color: #475569; margin-top: 20px; margin-bottom: 10px;">8.5. Droit d''opposition</h3>
+<p>Vous pouvez vous opposer au traitement de vos données pour des raisons tenant à votre situation particulière.</p>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p><strong>Comment exercer vos droits ?</strong></p>
+    <p>Pour exercer l''un de ces droits :</p>
+    <ul style="margin-left: 20px;">
+        <li>Contactez-nous par email : <strong>contact@dietsenegal.net</strong></li>
+        <li>Accédez directement à votre espace personnel pour modifier vos informations</li>
+        <li>Contactez votre diététicien(ne)</li>
+    </ul>
+    <p>Nous nous engageons à répondre dans un délai maximum de <strong>30 jours</strong>.</p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">9. Notifications Push</h2>
+
+<p>Avec votre consentement, nous envoyons des notifications push pour :</p>
+
+<ul style="margin-left: 30px; margin-bottom: 15px;">
+    <li>Rappels de repas (petit-déjeuner, déjeuner, dîner)</li>
+    <li>Rappels d''hydratation</li>
+    <li>Rappels de pesée hebdomadaire</li>
+    <li>Rappels de rendez-vous</li>
+</ul>
+
+<p>Vous pouvez désactiver les notifications à tout moment dans les paramètres de votre appareil.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">10. Utilisation par les Mineurs</h2>
+
+<p>Notre service est destiné aux personnes majeures (18 ans et plus). Les mineurs doivent obtenir l''autorisation de leurs parents ou tuteurs légaux.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">11. Modifications</h2>
+
+<p>Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. En cas de modification substantielle, nous vous informerons par email ou notification dans l''application.</p>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">12. Contact et Réclamations</h2>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Pour toute question concernant cette politique :</strong></p>
+    <p>📧 Email : <a href="mailto:contact@dietsenegal.net" style="color: #667eea;">contact@dietsenegal.net</a></p>
+    <p>🌐 Site web : <a href="https://app.dietsenegal.net" style="color: #667eea;">https://app.dietsenegal.net</a></p>
+</div>
+
+<p><strong>Droit de réclamation auprès de l''autorité de contrôle :</strong></p>
+<p>Vous avez le droit d''introduire une réclamation auprès de la Commission de Protection des Données Personnelles (CDP) du Sénégal.</p>
+
+<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p><strong>Commission de Protection des Données Personnelles (CDP)</strong></p>
+    <p>Adresse : Dakar, Sénégal</p>
+    <p>Site web : <a href="https://cdp.sn" target="_blank" style="color: #667eea;">https://cdp.sn</a></p>
+</div>
+
+<h2 style="font-size: 24px; color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">13. Consentement</h2>
+
+<div style="background: #f0f4ff; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;">
+    <p>En utilisant notre application Dietzone, vous reconnaissez avoir lu et compris cette politique de confidentialité et vous consentez au traitement de vos données personnelles tel que décrit ci-dessus.</p>
+    <p>Pour les données sensibles (données de santé), un consentement explicite vous sera demandé lors de votre première utilisation de l''application.</p>
+</div>
+
+<div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; color: #64748b; font-size: 14px;">
+    <p>&copy; 2024 Maestrodan - Tous droits réservés</p>
+    <p>Dietzone - Application de Coaching Nutritionnel</p>
+</div>
+
+</div>',
+    updated_at = NOW()
+WHERE setting_key = 'privacy_policy';
+
+-- ============================================================
+-- VERIFICATION
+-- ============================================================
+-- Exécutez cette requête pour vérifier que l'insertion a réussi
+SELECT setting_key, LEFT(setting_value, 100) as apercu, created_at, updated_at
+FROM tbldietic_settings
+WHERE setting_key = 'privacy_policy';
+
+-- ============================================================
+-- FIN DU SCRIPT
+-- ============================================================
+-- Après exécution avec succès, vérifiez à :
+-- https://app.dietsenegal.net/admin/dietetic/legal_pages/privacy
