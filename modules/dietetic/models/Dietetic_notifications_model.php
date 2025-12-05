@@ -718,6 +718,202 @@ class Dietetic_notifications_model extends App_Model
         }
     }
 
+    /**
+     * Send broadcast weight reminder to ALL users (web + mobile)
+     * Uses OneSignal segment broadcasting instead of individual notifications
+     *
+     * @return array Result with success status and details
+     */
+    public function send_broadcast_weight_reminder()
+    {
+        $subject = "⚖️ Rappel : Pesée Hebdomadaire";
+
+        // Message without personalization (for broadcast)
+        $message = "📊 C'est l'heure de votre pesée hebdomadaire !\n\n";
+        $message .= "Prenez quelques minutes pour enregistrer votre poids. Cela nous aide à suivre vos progrès ensemble.\n\n";
+        $message .= "Courage, vous faites du super travail ! 💪";
+
+        log_activity("send_broadcast_weight_reminder: Sending weight reminder to ALL users");
+
+        try {
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            if (!$this->onesignal_cloud_messaging->is_enabled()) {
+                throw new Exception('Push notifications are not enabled');
+            }
+
+            // Send to ALL users using OneSignal segment
+            $result = $this->onesignal_cloud_messaging->send_to_segment(
+                'All', // OneSignal built-in segment for all subscribed users
+                $subject,
+                $message,
+                [
+                    'type' => 'reminder_weight',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ],
+                [] // No click_action URL - app will open to main screen
+            );
+
+            if ($result['success']) {
+                log_activity("send_broadcast_weight_reminder: Weight reminder sent successfully - Recipients: " . ($result['recipients'] ?? 'unknown'));
+
+                // Log the broadcast in notification logs (patient_id = 0 for broadcast)
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0, // 0 = broadcast to all
+                    'notification_type' => 'reminder_weight_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'sent',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'sent_at' => date('Y-m-d H:i:s'),
+                    'external_id' => $result['notification_id'] ?? null
+                ]);
+
+                return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
+            } else {
+                log_activity("send_broadcast_weight_reminder: Failed to send weight reminder - Error: " . ($result['error'] ?? 'unknown'));
+
+                // Log the failure
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0,
+                    'notification_type' => 'reminder_weight_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'failed',
+                    'error_message' => $result['error'] ?? 'Unknown error',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+
+                return ['success' => false, 'error' => $result['error'] ?? 'Unknown error'];
+            }
+        } catch (Exception $e) {
+            log_activity("send_broadcast_weight_reminder: Exception - " . $e->getMessage());
+
+            // Log the exception
+            $this->db->insert(db_prefix() . $this->table_logs, [
+                'patient_id' => 0,
+                'notification_type' => 'reminder_weight_broadcast',
+                'channel' => 'push',
+                'recipient' => 'all_users',
+                'subject' => $subject ?? 'Weight Reminder',
+                'message' => $message ?? '',
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Send broadcast water reminder to ALL users (web + mobile)
+     * Uses OneSignal segment broadcasting instead of individual notifications
+     *
+     * @return array Result with success status and details
+     */
+    public function send_broadcast_water_reminder()
+    {
+        $subject = "💧 Rappel Hydratation";
+
+        // Random messages for variety
+        $messages = [
+            "💧 N'oubliez pas de boire de l'eau ! Votre corps vous remerciera.",
+            "🚰 Hydratez-vous ! Un verre d'eau maintenant pour rester en forme.",
+            "💦 Pause hydratation ! Prenez un moment pour boire un verre d'eau.",
+            "🌊 Gardez le cap ! Buvez un verre d'eau pour atteindre votre objectif quotidien."
+        ];
+
+        $random_message = $messages[array_rand($messages)];
+
+        // Message without personalization (for broadcast)
+        $message = "{$random_message}\n\n";
+        $message .= "🎯 Objectif : 2 litres par jour\n\n";
+        $message .= "Chaque gorgée compte ! 😊";
+
+        log_activity("send_broadcast_water_reminder: Sending water reminder to ALL users");
+
+        try {
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            if (!$this->onesignal_cloud_messaging->is_enabled()) {
+                throw new Exception('Push notifications are not enabled');
+            }
+
+            // Send to ALL users using OneSignal segment
+            $result = $this->onesignal_cloud_messaging->send_to_segment(
+                'All', // OneSignal built-in segment for all subscribed users
+                $subject,
+                $message,
+                [
+                    'type' => 'reminder_water',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ],
+                [] // No click_action URL - app will open to main screen
+            );
+
+            if ($result['success']) {
+                log_activity("send_broadcast_water_reminder: Water reminder sent successfully - Recipients: " . ($result['recipients'] ?? 'unknown'));
+
+                // Log the broadcast in notification logs (patient_id = 0 for broadcast)
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0, // 0 = broadcast to all
+                    'notification_type' => 'reminder_water_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'sent',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'sent_at' => date('Y-m-d H:i:s'),
+                    'external_id' => $result['notification_id'] ?? null
+                ]);
+
+                return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
+            } else {
+                log_activity("send_broadcast_water_reminder: Failed to send water reminder - Error: " . ($result['error'] ?? 'unknown'));
+
+                // Log the failure
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0,
+                    'notification_type' => 'reminder_water_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'failed',
+                    'error_message' => $result['error'] ?? 'Unknown error',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+
+                return ['success' => false, 'error' => $result['error'] ?? 'Unknown error'];
+            }
+        } catch (Exception $e) {
+            log_activity("send_broadcast_water_reminder: Exception - " . $e->getMessage());
+
+            // Log the exception
+            $this->db->insert(db_prefix() . $this->table_logs, [
+                'patient_id' => 0,
+                'notification_type' => 'reminder_water_broadcast',
+                'channel' => 'push',
+                'recipient' => 'all_users',
+                'subject' => $subject ?? 'Water Reminder',
+                'message' => $message ?? '',
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     // ==================== MILESTONES ====================
 
     /**

@@ -462,28 +462,38 @@ function dietetic_send_scheduled_reminders()
 
     try {
         // ==================== WEIGHT REMINDERS ====================
+        // NEW APPROACH: Broadcast to ALL users (web + mobile) using OneSignal segments
         $weight_patients = $CI->dietetic_notifications_model->get_patients_for_weight_reminder();
         if (!empty($weight_patients)) {
-            foreach ($weight_patients as $patient) {
-                $result = $CI->dietetic_notifications_model->send_weight_reminder($patient);
-                $success_count = array_filter($result, function($r) { return $r === true; });
-                $total_sent += count($success_count);
-                if (empty($success_count)) {
-                    $total_failed++;
-                }
+            log_activity("Dietetic Cron: Sending weight reminder to ALL users (broadcast mode)");
+
+            // Send ONE broadcast notification to ALL users (web + mobile)
+            $result = $CI->dietetic_notifications_model->send_broadcast_weight_reminder();
+
+            if ($result['success']) {
+                $total_sent++;
+                log_activity("Dietetic Cron: Weight broadcast sent successfully - Recipients: " . ($result['recipients'] ?? 0));
+            } else {
+                $total_failed++;
+                log_activity("Dietetic Cron: Weight broadcast failed - Error: " . ($result['error'] ?? 'unknown'));
             }
         }
 
         // ==================== WATER REMINDERS ====================
+        // NEW APPROACH: Broadcast to ALL users (web + mobile) using OneSignal segments
         $water_patients = $CI->dietetic_notifications_model->get_patients_for_water_reminder();
         if (!empty($water_patients)) {
-            foreach ($water_patients as $patient) {
-                $result = $CI->dietetic_notifications_model->send_water_reminder($patient);
-                $success_count = array_filter($result, function($r) { return $r === true; });
-                $total_sent += count($success_count);
-                if (empty($success_count)) {
-                    $total_failed++;
-                }
+            log_activity("Dietetic Cron: Sending water reminder to ALL users (broadcast mode)");
+
+            // Send ONE broadcast notification to ALL users (web + mobile)
+            $result = $CI->dietetic_notifications_model->send_broadcast_water_reminder();
+
+            if ($result['success']) {
+                $total_sent++;
+                log_activity("Dietetic Cron: Water broadcast sent successfully - Recipients: " . ($result['recipients'] ?? 0));
+            } else {
+                $total_failed++;
+                log_activity("Dietetic Cron: Water broadcast failed - Error: " . ($result['error'] ?? 'unknown'));
             }
         }
 
