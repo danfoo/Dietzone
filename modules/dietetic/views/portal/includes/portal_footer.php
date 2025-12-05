@@ -1180,22 +1180,22 @@
                             console.log('[OneSignal] Player ID:', playerId);
 
                             // Enregistrer sur le serveur (avec CSRF token dynamique)
+                            // Use form-encoded instead of JSON for better CSRF compatibility
                             const csrf = getCSRFToken();
-                            const postData = {
-                                player_id: playerId,
-                                device_type: 'web',
-                                device_name: navigator.userAgent.substring(0, 100),
-                                [csrf.name]: csrf.hash
-                            };
+                            const formData = new URLSearchParams();
+                            formData.append('player_id', playerId);
+                            formData.append('device_type', 'web');
+                            formData.append('device_name', navigator.userAgent.substring(0, 100));
+                            formData.append(csrf.name, csrf.hash);
 
                             fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
                                 method: 'POST',
                                 headers: {
-                                    'Content-Type': 'application/json',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
                                     'X-Requested-With': 'XMLHttpRequest'
                                 },
                                 credentials: 'same-origin',
-                                body: JSON.stringify(postData)
+                                body: formData.toString()
                             })
                             .then(async res => {
                                 const contentType = res.headers.get('content-type');
@@ -1260,22 +1260,22 @@
                                 console.log('[OneSignal] Already subscribed, Player ID:', subscription.id);
 
                                 // 🔥 FIX: Enregistrer le Player ID sur le serveur (cas où l'utilisateur est déjà abonné)
+                                // Use form-encoded instead of JSON for better CSRF compatibility
                                 const csrf = getCSRFToken();
-                                const postData = {
-                                    player_id: subscription.id,
-                                    device_type: 'web',
-                                    device_name: navigator.userAgent.substring(0, 100),
-                                    [csrf.name]: csrf.hash
-                                };
+                                const formData = new URLSearchParams();
+                                formData.append('player_id', subscription.id);
+                                formData.append('device_type', 'web');
+                                formData.append('device_name', navigator.userAgent.substring(0, 100));
+                                formData.append(csrf.name, csrf.hash);
 
                                 fetch('<?php echo site_url("dietetic/portal/save_onesignal_player_id"); ?>', {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json',
+                                        'Content-Type': 'application/x-www-form-urlencoded',
                                         'X-Requested-With': 'XMLHttpRequest'
                                     },
                                     credentials: 'same-origin',
-                                    body: JSON.stringify(postData)
+                                    body: formData.toString()
                                 })
                                 .then(async res => {
                                     const contentType = res.headers.get('content-type');

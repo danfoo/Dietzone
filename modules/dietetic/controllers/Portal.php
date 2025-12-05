@@ -10,26 +10,6 @@ class Portal extends App_Controller
     {
         parent::__construct();
 
-        // Disable CSRF validation for specific AJAX endpoints that handle it manually
-        // This is necessary because CodeIgniter's CSRF token regeneration causes issues
-        // with async JavaScript requests (OneSignal, Firebase)
-        $csrf_exempt_methods = [
-            'save_onesignal_player_id',
-            'delete_onesignal_player_id',
-            'save_fcm_token',
-            'delete_fcm_token'
-        ];
-
-        // Get current method from URI
-        $uri_string = uri_string();
-        foreach ($csrf_exempt_methods as $method) {
-            if (strpos($uri_string, 'dietetic/portal/' . $method) !== false) {
-                $this->config->set_item('csrf_protection', false);
-                log_activity('[CSRF] Disabled for: ' . $method);
-                break;
-            }
-        }
-
         // Load helper functions
         $this->load->helper('dietetic/dietetic');
 
