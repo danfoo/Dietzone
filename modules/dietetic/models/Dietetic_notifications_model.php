@@ -582,6 +582,142 @@ class Dietetic_notifications_model extends App_Model
         return $result;
     }
 
+    /**
+     * Send broadcast meal reminder to ALL users (web + mobile)
+     * Uses OneSignal segment broadcasting instead of individual notifications
+     *
+     * @param string $meal_type Type of meal: 'breakfast', 'lunch', or 'dinner'
+     * @return array Result with success status and details
+     */
+    public function send_broadcast_meal_reminder($meal_type)
+    {
+        $meal_config = [
+            'breakfast' => [
+                'icon' => '🥐',
+                'title' => 'Petit Dejeuner',
+                'messages' => [
+                    "C est l heure du petit dejeuner ! Un bon depart pour une belle journee.",
+                    "Bonjour ! N oubliez pas votre petit dejeuner, le repas le plus important de la journee.",
+                    "Reveillez vos papilles ! Votre petit dejeuner vous attend.",
+                    "Prenez le temps de bien dejeuner ce matin. Votre corps a besoin d energie !"
+                ]
+            ],
+            'lunch' => [
+                'icon' => '🍽️',
+                'title' => 'Dejeuner',
+                'messages' => [
+                    "C est l heure du dejeuner ! Prenez une pause bien meritee.",
+                    "Il est midi ! N oubliez pas de dejeuner pour garder votre energie.",
+                    "Pause dejeuner ! Rechargez vos batteries avec un bon repas.",
+                    "Midi sonne ! Pensez a vous restaurer pour tenir jusqu au soir."
+                ]
+            ],
+            'dinner' => [
+                'icon' => '🍲',
+                'title' => 'Diner',
+                'messages' => [
+                    "C est l heure du diner ! Terminez la journee avec un bon repas.",
+                    "Le diner est servi ! Pensez a manger leger ce soir.",
+                    "Bonsoir ! N oubliez pas votre diner avant de vous reposer.",
+                    "Il est temps de diner. Un repas equilibre pour une bonne nuit !"
+                ]
+            ]
+        ];
+
+        if (!isset($meal_config[$meal_type])) {
+            log_activity("send_broadcast_meal_reminder: Invalid meal type '{$meal_type}'");
+            return ['success' => false, 'error' => 'Invalid meal type'];
+        }
+
+        $config = $meal_config[$meal_type];
+        $random_message = $config['messages'][array_rand($config['messages'])];
+
+        $icon = $config['icon'];
+        $title = $config['title'];
+        $subject = "{$icon} Rappel {$title}";
+
+        // Message without personalization (for broadcast)
+        $message = "{$icon} {$random_message}\n\nRestez fidele a vos objectifs nutritionnels !\n\nBon appetit !";
+
+        log_activity("send_broadcast_meal_reminder: Sending {$meal_type} reminder to ALL users");
+
+        try {
+            // Load OneSignal library
+            $this->load->library('dietetic/onesignal_cloud_messaging');
+
+            if (!$this->onesignal_cloud_messaging->is_enabled()) {
+                throw new Exception('Push notifications are not enabled');
+            }
+
+            // Send to ALL users using OneSignal segment
+            $result = $this->onesignal_cloud_messaging->send_to_segment(
+                'All', // OneSignal built-in segment for all subscribed users
+                $subject,
+                $message,
+                [
+                    'type' => 'reminder_' . $meal_type,
+                    'meal_type' => $meal_type,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ],
+                [] // No click_action URL - app will open to main screen
+            );
+
+            if ($result['success']) {
+                log_activity("send_broadcast_meal_reminder: {$meal_type} reminder sent successfully - Recipients: " . ($result['recipients'] ?? 'unknown'));
+
+                // Log the broadcast in notification logs (patient_id = 0 for broadcast)
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0, // 0 = broadcast to all
+                    'notification_type' => 'reminder_' . $meal_type . '_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'sent',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'sent_at' => date('Y-m-d H:i:s'),
+                    'external_id' => $result['notification_id'] ?? null
+                ]);
+
+                return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
+            } else {
+                log_activity("send_broadcast_meal_reminder: Failed to send {$meal_type} reminder - Error: " . ($result['error'] ?? 'unknown'));
+
+                // Log the failure
+                $this->db->insert(db_prefix() . $this->table_logs, [
+                    'patient_id' => 0,
+                    'notification_type' => 'reminder_' . $meal_type . '_broadcast',
+                    'channel' => 'push',
+                    'recipient' => 'all_users',
+                    'subject' => $subject,
+                    'message' => $message,
+                    'status' => 'failed',
+                    'error_message' => $result['error'] ?? 'Unknown error',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+
+                return ['success' => false, 'error' => $result['error'] ?? 'Unknown error'];
+            }
+        } catch (Exception $e) {
+            log_activity("send_broadcast_meal_reminder: Exception - " . $e->getMessage());
+
+            // Log the exception
+            $this->db->insert(db_prefix() . $this->table_logs, [
+                'patient_id' => 0,
+                'notification_type' => 'reminder_' . $meal_type . '_broadcast',
+                'channel' => 'push',
+                'recipient' => 'all_users',
+                'subject' => $subject ?? 'Meal Reminder',
+                'message' => $message ?? '',
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     // ==================== MILESTONES ====================
 
     /**

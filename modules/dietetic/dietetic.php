@@ -488,17 +488,25 @@ function dietetic_send_scheduled_reminders()
         }
 
         // ==================== MEAL REMINDERS ====================
+        // NEW APPROACH: Broadcast to ALL users (web + mobile) using OneSignal segments
+        // This ensures reminders reach everyone, including mobile app users
         $meal_types = ['breakfast', 'lunch', 'dinner'];
         foreach ($meal_types as $meal_type) {
+            // Check if any patient has this meal reminder enabled
             $meal_patients = $CI->dietetic_notifications_model->get_patients_for_meal_reminder($meal_type);
+
             if (!empty($meal_patients)) {
-                foreach ($meal_patients as $patient) {
-                    $result = $CI->dietetic_notifications_model->send_meal_reminder($patient, $meal_type);
-                    $success_count = array_filter($result, function($r) { return $r === true; });
-                    $total_sent += count($success_count);
-                    if (empty($success_count)) {
-                        $total_failed++;
-                    }
+                log_activity("Dietetic Cron: Sending {$meal_type} reminder to ALL users (broadcast mode)");
+
+                // Send ONE broadcast notification to ALL users (web + mobile)
+                $result = $CI->dietetic_notifications_model->send_broadcast_meal_reminder($meal_type);
+
+                if ($result['success']) {
+                    $total_sent++;
+                    log_activity("Dietetic Cron: {$meal_type} broadcast sent successfully - Recipients: " . ($result['recipients'] ?? 0));
+                } else {
+                    $total_failed++;
+                    log_activity("Dietetic Cron: {$meal_type} broadcast failed - Error: " . ($result['error'] ?? 'unknown'));
                 }
             }
         }
