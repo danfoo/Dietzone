@@ -770,13 +770,143 @@
                             </table>
                         </div>
 
-                        <!-- Nutrition Card -->
+                        <!-- Calculated Objectives from Anamnesis -->
+                        <?php if ($calculated_objectives) { ?>
+                            <div class="info-card-modern animate-in delay-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #01807B;">
+                                <div class="info-card-header">
+                                    <div class="info-card-icon" style="background: linear-gradient(135deg, #01807B 0%, #01655f 100%);">
+                                        <i class="fa fa-calculator"></i>
+                                    </div>
+                                    <h3 class="info-card-title">
+                                        Objectifs Calculés depuis l'Anamnèse
+                                        <span style="font-size: 12px; font-weight: 500; color: #01807B; display: block; margin-top: 5px;">
+                                            <i class="fa fa-info-circle"></i> Basés sur les données patient (âge, taille, poids, activité, objectif)
+                                        </span>
+                                    </h3>
+                                </div>
+
+                                <!-- Metabolic Summary -->
+                                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #2c3e50; margin-bottom: 15px;">
+                                        <i class="fa fa-heartbeat" style="color: #01807B;"></i> Métabolisme
+                                    </h4>
+                                    <div class="nutrition-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                                        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+                                            <div style="font-size: 11px; opacity: 0.9; margin-bottom: 5px;">MB (Mifflin)</div>
+                                            <div style="font-size: 24px; font-weight: 700;"><?php echo number_format($calculated_objectives['bmr']['value'], 0); ?></div>
+                                            <div style="font-size: 11px; opacity: 0.9;">kcal/jour</div>
+                                        </div>
+                                        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 10px; color: white;">
+                                            <div style="font-size: 11px; opacity: 0.9; margin-bottom: 5px;">TDEE</div>
+                                            <div style="font-size: 24px; font-weight: 700;"><?php echo number_format($calculated_objectives['tdee']['tdee'], 0); ?></div>
+                                            <div style="font-size: 11px; opacity: 0.9;"><?php echo $calculated_objectives['tdee']['activity_description']; ?></div>
+                                        </div>
+                                        <?php if ($calculated_objectives['calorie_needs']['deficit_surplus'] != 0) { ?>
+                                            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 10px; color: white;">
+                                                <div style="font-size: 11px; opacity: 0.9; margin-bottom: 5px;">Ajustement</div>
+                                                <div style="font-size: 24px; font-weight: 700;">
+                                                    <?php echo ($calculated_objectives['calorie_needs']['deficit_surplus'] > 0 ? '+' : '') . $calculated_objectives['calorie_needs']['deficit_surplus']; ?>
+                                                </div>
+                                                <div style="font-size: 11px; opacity: 0.9;">kcal/jour</div>
+                                            </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+
+                                <!-- Calculated Macros -->
+                                <div class="nutrition-grid">
+                                    <div class="nutrition-card calories">
+                                        <div class="nutrition-icon">🔥</div>
+                                        <div class="nutrition-label">Calories Cible</div>
+                                        <div class="nutrition-value"><?php echo number_format($calculated_objectives['macros']['calories'], 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">kcal / jour</div>
+                                    </div>
+
+                                    <div class="nutrition-card protein">
+                                        <div class="nutrition-icon">💪</div>
+                                        <div class="nutrition-label">Protéines</div>
+                                        <div class="nutrition-value"><?php echo number_format($calculated_objectives['macros']['protein']['grams'], 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour • <?php echo $calculated_objectives['macros']['protein']['percentage']; ?>%</div>
+                                    </div>
+
+                                    <div class="nutrition-card carbs">
+                                        <div class="nutrition-icon">🌾</div>
+                                        <div class="nutrition-label">Glucides</div>
+                                        <div class="nutrition-value"><?php echo number_format($calculated_objectives['macros']['carbs']['grams'], 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour • <?php echo $calculated_objectives['macros']['carbs']['percentage']; ?>%</div>
+                                    </div>
+
+                                    <div class="nutrition-card fats">
+                                        <div class="nutrition-icon">🥑</div>
+                                        <div class="nutrition-label">Lipides</div>
+                                        <div class="nutrition-value"><?php echo number_format($calculated_objectives['macros']['fats']['grams'], 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour • <?php echo $calculated_objectives['macros']['fats']['percentage']; ?>%</div>
+                                    </div>
+
+                                    <div class="nutrition-card fiber">
+                                        <div class="nutrition-icon">🌿</div>
+                                        <div class="nutrition-label">Fibres</div>
+                                        <div class="nutrition-value"><?php echo number_format($calculated_objectives['macros']['fiber'], 0, ',', ' '); ?></div>
+                                        <div class="nutrition-unit">g / jour</div>
+                                    </div>
+
+                                    <?php if ($calculated_objectives['water_needs']) { ?>
+                                        <div class="nutrition-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                                            <div class="nutrition-icon">💧</div>
+                                            <div class="nutrition-label">Eau</div>
+                                            <div class="nutrition-value"><?php echo number_format($calculated_objectives['water_needs']['daily_liters'], 1, ',', ' '); ?></div>
+                                            <div class="nutrition-unit">L / jour • <?php echo $calculated_objectives['water_needs']['glasses_250ml']; ?> verres</div>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+
+                                <?php if ($calculated_objectives['body_composition']) { ?>
+                                    <!-- Body Composition -->
+                                    <div style="background: white; border-radius: 12px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                        <h4 style="font-size: 15px; font-weight: 700; color: #2c3e50; margin-bottom: 15px;">
+                                            <i class="fa fa-pie-chart" style="color: #01807B;"></i> Composition Corporelle (US Navy)
+                                        </h4>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 3px;">Masse Grasse</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #f093fb;"><?php echo $calculated_objectives['body_composition']['body_fat_percentage']; ?>%</div>
+                                                <div style="font-size: 10px; color: #7f8c8d;"><?php echo $calculated_objectives['body_composition']['fat_mass']; ?> kg</div>
+                                            </div>
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 3px;">Masse Maigre</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #43e97b;"><?php echo $calculated_objectives['body_composition']['lean_body_mass']; ?> kg</div>
+                                            </div>
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 3px;">Masse Musculaire</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #667eea;"><?php echo $calculated_objectives['body_composition']['muscle_mass']; ?> kg</div>
+                                            </div>
+                                            <div style="text-align: center; padding: 10px;">
+                                                <div style="font-size: 11px; color: #7f8c8d; margin-bottom: 3px;">Eau Corporelle</div>
+                                                <div style="font-size: 20px; font-weight: 700; color: #4facfe;"><?php echo $calculated_objectives['body_composition']['body_water']; ?> kg</div>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 15px; text-align: center; padding: 10px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px;">
+                                            <span style="font-size: 13px; font-weight: 600; color: #2c3e50;">Catégorie:</span>
+                                            <span style="font-size: 13px; font-weight: 700; color: #01807B; margin-left: 8px;"><?php echo $calculated_objectives['body_composition']['category']; ?></span>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+                            </div>
+                        <?php } ?>
+
+                        <!-- Nutrition Card (Manual Values from Program) -->
+                        <?php if ($program->daily_calories || $program->daily_protein || $program->daily_carbs || $program->daily_fats || $program->daily_fiber) { ?>
                         <div class="info-card-modern animate-in delay-3">
                             <div class="info-card-header">
                                 <div class="info-card-icon icon-nutrition">
                                     <i class="fa fa-apple"></i>
                                 </div>
-                                <h3 class="info-card-title"><?php echo _l('dietetic_daily_targets'); ?></h3>
+                                <h3 class="info-card-title">
+                                    <?php echo _l('dietetic_daily_targets'); ?>
+                                    <span style="font-size: 12px; font-weight: 500; color: #999; display: block; margin-top: 5px;">
+                                        <i class="fa fa-pencil"></i> Valeurs saisies manuellement
+                                    </span>
+                                </h3>
                             </div>
 
                             <div class="nutrition-grid">
@@ -854,6 +984,7 @@
                                 </div>
                             <?php } ?>
                         </div>
+                        <?php } ?>
 
                         <!-- Description -->
                         <?php if ($program->description) { ?>
