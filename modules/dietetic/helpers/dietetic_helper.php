@@ -1086,3 +1086,380 @@ function dietetic_consultation_type_label($type)
 
     return $labels[$type] ?? ucfirst(str_replace('_', ' ', $type));
 }
+
+// ==================== FREEMIUM MODEL ====================
+
+/**
+ * Check if a patient has an active premium program
+ * Returns true if patient has at least one active program that hasn't expired
+ *
+ * @param int $patient_id Patient ID
+ * @return bool True if user is premium (has active program), false if free tier
+ */
+function is_premium_user($patient_id = null)
+{
+    // If no patient_id provided, try to get current patient from client session
+    if ($patient_id === null) {
+        if (!is_client_logged_in()) {
+            return false;
+        }
+
+        $CI = &get_instance();
+        $client_id = get_client_user_id();
+
+        // Get patient from client_id
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['client_id' => $client_id])->row();
+
+        if (!$patient) {
+            return false;
+        }
+
+        $patient_id = $patient->id;
+    }
+
+    if (!$patient_id) {
+        return false;
+    }
+
+    $CI = &get_instance();
+
+    // Check if patient has at least one active program
+    // Program is considered active if:
+    // 1. status = 'active'
+    // 2. end_date is NULL (unlimited) OR end_date >= today
+    $CI->db->where('patient_id', $patient_id);
+    $CI->db->where('status', 'active');
+    $CI->db->group_start();
+    $CI->db->where('end_date IS NULL');
+    $CI->db->or_where('end_date >=', date('Y-m-d'));
+    $CI->db->group_end();
+
+    $active_programs = $CI->db->get(db_prefix() . 'dietic_programs')->num_rows();
+
+    return $active_programs > 0;
+}
+
+/**
+ * Verify if current user has access to a premium feature
+ * If not premium, redirects to upgrade page or returns error
+ *
+ * @param string $feature_name Name of the feature being checked (for logging/display)
+ * @param bool $redirect If true, redirects to upgrade page. If false, returns boolean
+ * @param string $redirect_url Custom redirect URL (default: portal upgrade page)
+ * @return bool True if has access, false otherwise (only when $redirect = false)
+ */
+function verify_premium_feature($feature_name = 'premium feature', $redirect = true, $redirect_url = null)
+{
+    // Get current patient ID
+    $patient_id = null;
+
+    if (is_client_logged_in()) {
+        $CI = &get_instance();
+        $client_id = get_client_user_id();
+
+        $patient = $CI->db->get_where(db_prefix() . 'dietic_patients', ['client_id' => $client_id])->row();
+
+        if ($patient) {
+            $patient_id = $patient->id;
+        }
+    }
+
+    // Check if user is premium
+    if (is_premium_user($patient_id)) {
+        return true;
+    }
+
+    // User is NOT premium - handle based on $redirect parameter
+    if ($redirect) {
+        // Log the blocked access attempt
+        log_activity(sprintf(
+            'Blocked free user from accessing premium feature: %s (Patient ID: %s)',
+            $feature_name,
+            $patient_id ?? 'unknown'
+        ));
+
+        // Set alert message
+        set_alert('warning', sprintf(
+            'Cette fonctionnalité est réservée aux abonnés Premium. Mettez à niveau votre programme pour y accéder.',
+            $feature_name
+        ));
+
+        // Determine redirect URL
+        if ($redirect_url === null) {
+            $redirect_url = site_url('dietetic/portal/upgrade');
+        }
+
+        // Redirect to upgrade page
+        redirect($redirect_url);
+        return false; // Never reached, but for clarity
+    }
+
+    // Don't redirect, just return false
+    return false;
+}
+
+/**
+ * Get premium badge HTML component
+ * Displays a "Premium" or "Free" badge with styling
+ *
+ * @param int $patient_id Patient ID (null = current patient)
+ * @param string $size Size: 'small', 'medium', 'large' (default: 'medium')
+ * @param bool $show_free If true, shows "Free" badge for non-premium users. If false, shows nothing
+ * @return string HTML badge
+ */
+function get_premium_badge($patient_id = null, $size = 'medium', $show_free = true)
+{
+    $is_premium = is_premium_user($patient_id);
+
+    // Size configurations
+    $sizes = [
+        'small' => [
+            'padding' => '4px 8px',
+            'font_size' => '11px',
+            'icon_size' => '12px',
+        ],
+        'medium' => [
+            'padding' => '6px 12px',
+            'font_size' => '13px',
+            'icon_size' => '14px',
+        ],
+        'large' => [
+            'padding' => '10px 16px',
+            'font_size' => '15px',
+            'icon_size' => '16px',
+        ],
+    ];
+
+    $size_config = $sizes[$size] ?? $sizes['medium'];
+
+    if ($is_premium) {
+        // Premium badge - Gold gradient
+        return sprintf(
+            '<span class="premium-badge premium-badge-%s" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: linear-gradient(135deg, #FFD700 0%%, #FFA500 100%%);
+                color: #000;
+                font-weight: 600;
+                border-radius: 20px;
+                padding: %s;
+                font-size: %s;
+                box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+                border: 1px solid rgba(255, 215, 0, 0.5);
+            ">
+                <i class="fa fa-crown" style="font-size: %s;"></i>
+                Premium
+            </span>',
+            htmlspecialchars($size),
+            $size_config['padding'],
+            $size_config['font_size'],
+            $size_config['icon_size']
+        );
+    } else {
+        // Free badge - Gray
+        if (!$show_free) {
+            return '';
+        }
+
+        return sprintf(
+            '<span class="free-badge free-badge-%s" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #f0f0f0;
+                color: #666;
+                font-weight: 500;
+                border-radius: 20px;
+                padding: %s;
+                font-size: %s;
+                border: 1px solid #ddd;
+            ">
+                <i class="fa fa-user" style="font-size: %s;"></i>
+                Gratuit
+            </span>',
+            htmlspecialchars($size),
+            $size_config['padding'],
+            $size_config['font_size'],
+            $size_config['icon_size']
+        );
+    }
+}
+
+/**
+ * Get premium feature lock HTML component
+ * Displays a lock overlay for premium features
+ *
+ * @param string $feature_name Feature name to display
+ * @param string $upgrade_url URL to upgrade page (default: portal/upgrade)
+ * @param bool $inline If true, displays inline. If false, displays as overlay
+ * @return string HTML lock component
+ */
+function get_premium_lock($feature_name = 'cette fonctionnalité', $upgrade_url = null, $inline = false)
+{
+    if ($upgrade_url === null) {
+        $upgrade_url = site_url('dietetic/portal/upgrade');
+    }
+
+    if ($inline) {
+        // Inline lock (for buttons, small elements)
+        return sprintf(
+            '<div class="premium-lock-inline" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: linear-gradient(135deg, #01807B 0%%, #01655f 100%%);
+                color: white;
+                padding: 10px 16px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: transform 0.2s;
+            " onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'">
+                <i class="fa fa-lock"></i>
+                <span>Premium Requis</span>
+            </div>'
+        );
+    } else {
+        // Overlay lock (for larger sections)
+        return sprintf(
+            '<div class="premium-lock-overlay" style="
+                position: relative;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border: 2px dashed #01807B;
+                border-radius: 12px;
+                padding: 40px 20px;
+                text-align: center;
+                min-height: 200px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+            ">
+                <div style="
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #01807B 0%%, #01655f 100%%);
+                    border-radius: 50%%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 20px rgba(1, 128, 123, 0.3);
+                ">
+                    <i class="fa fa-lock" style="font-size: 36px; color: white;"></i>
+                </div>
+
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #333;">Fonctionnalité Premium</h4>
+                    <p style="color: #666; margin: 0 0 20px 0;">
+                        %s est réservée aux abonnés Premium.
+                    </p>
+                </div>
+
+                <a href="%s" class="btn btn-primary" style="
+                    background: linear-gradient(135deg, #01807B 0%%, #01655f 100%%);
+                    border: none;
+                    padding: 12px 30px;
+                    border-radius: 25px;
+                    color: white;
+                    text-decoration: none;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 4px 15px rgba(1, 128, 123, 0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'">
+                    <i class="fa fa-crown"></i>
+                    Passer à Premium
+                </a>
+            </div>',
+            htmlspecialchars($feature_name),
+            htmlspecialchars($upgrade_url)
+        );
+    }
+}
+
+/**
+ * Get premium features comparison for free vs premium users
+ * Useful for upgrade pages
+ *
+ * @return array Associative array of features with free/premium availability
+ */
+function get_premium_features_comparison()
+{
+    return [
+        'historique' => [
+            'name' => 'Historique Complet',
+            'description' => 'Accès à tout votre historique (pesées, repas, photos)',
+            'free' => true,
+            'premium' => true,
+            'icon' => 'fa-history',
+        ],
+        'profil' => [
+            'name' => 'Gestion du Profil',
+            'description' => 'Modifier vos informations personnelles',
+            'free' => true,
+            'premium' => true,
+            'icon' => 'fa-user',
+        ],
+        'pesees' => [
+            'name' => 'Enregistrement Pesées',
+            'description' => 'Suivre votre poids régulièrement',
+            'free' => '1 par semaine',
+            'premium' => 'Illimité',
+            'icon' => 'fa-balance-scale',
+        ],
+        'journal' => [
+            'name' => 'Journal Alimentaire',
+            'description' => 'Noter vos repas quotidiens',
+            'free' => 'Basique (sans analyse)',
+            'premium' => 'Complet avec analyse nutritionnelle',
+            'icon' => 'fa-cutlery',
+        ],
+        'photos' => [
+            'name' => 'Photos de Progression',
+            'description' => 'Suivre votre transformation visuellement',
+            'free' => 'Consultation uniquement',
+            'premium' => 'Ajout illimité',
+            'icon' => 'fa-camera',
+        ],
+        'messagerie' => [
+            'name' => 'Messagerie Diététicien',
+            'description' => 'Communiquer avec votre diététicien',
+            'free' => false,
+            'premium' => true,
+            'icon' => 'fa-comments',
+        ],
+        'plans' => [
+            'name' => 'Plans de Repas',
+            'description' => 'Plans nutritionnels personnalisés',
+            'free' => false,
+            'premium' => true,
+            'icon' => 'fa-file-text',
+        ],
+        'notifications' => [
+            'name' => 'Rappels Automatiques',
+            'description' => 'Notifications pour repas, hydratation, pesée',
+            'free' => false,
+            'premium' => true,
+            'icon' => 'fa-bell',
+        ],
+        'rdv' => [
+            'name' => 'Prise de Rendez-vous',
+            'description' => 'Réserver des consultations en ligne',
+            'free' => false,
+            'premium' => true,
+            'icon' => 'fa-calendar',
+        ],
+        'recettes' => [
+            'name' => 'Bibliothèque Recettes',
+            'description' => 'Accès aux recettes diététiques',
+            'free' => '5 recettes',
+            'premium' => 'Bibliothèque complète',
+            'icon' => 'fa-book',
+        ],
+    ];
+}
