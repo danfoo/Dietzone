@@ -1380,83 +1380,318 @@
 
     <div class="content-container">
 
-    <!-- Freemium Upgrade Banner (shown only for free users) -->
+    <!-- Freemium Upgrade Popup Modal (shown only for free users) -->
     <?php
-    // Safety check: only show banner if is_premium_user function exists
+    // Safety check: only show popup if is_premium_user function exists
     if (function_exists('is_premium_user') && !is_premium_user()):
     ?>
-    <div class="freemium-upgrade-banner" style="
-        background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
-        color: white;
-        padding: 16px 20px;
-        margin: -20px -20px 20px -20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(1, 128, 123, 0.3);
-        animation: slideInBanner 0.5s ease;
-    ">
-        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <div style="flex-shrink: 0;">
-                <i class="fa fa-crown" style="font-size: 32px; opacity: 0.9;"></i>
+    <!-- Modal Overlay -->
+    <div id="freemium-modal-overlay" class="freemium-modal-overlay">
+        <div class="freemium-modal">
+            <!-- Close Button -->
+            <button class="freemium-modal-close" onclick="closeFreemiumModal()">
+                <i class="fa fa-times"></i>
+            </button>
+
+            <!-- Crown Icon -->
+            <div class="freemium-modal-icon">
+                <i class="fa fa-crown"></i>
             </div>
-            <div style="flex: 1; min-width: 200px;">
-                <h4 style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600;">
-                    Version Gratuite
-                </h4>
-                <p style="margin: 0; font-size: 14px; opacity: 0.95; line-height: 1.4;">
-                    Passez à Premium pour débloquer la messagerie, les plans de repas, les rappels automatiques et plus encore !
-                </p>
+
+            <!-- Title -->
+            <h3 class="freemium-modal-title">Version Gratuite</h3>
+
+            <!-- Description -->
+            <p class="freemium-modal-description">
+                Votre programme a expiré. Passez à Premium pour débloquer toutes les fonctionnalités :
+                messagerie, plans de repas, statistiques détaillées, rappels automatiques et plus encore !
+            </p>
+
+            <!-- Features List -->
+            <div class="freemium-modal-features">
+                <div class="freemium-feature">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Messagerie avec votre diététicien</span>
+                </div>
+                <div class="freemium-feature">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Plans de repas personnalisés</span>
+                </div>
+                <div class="freemium-feature">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Statistiques et graphiques détaillés</span>
+                </div>
+                <div class="freemium-feature">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Rappels automatiques</span>
+                </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <a href="<?php echo site_url('dietetic/portal/upgrade'); ?>"
-                   style="
-                       display: inline-flex;
-                       align-items: center;
-                       gap: 8px;
-                       background: white;
-                       color: #01807B;
-                       padding: 10px 20px;
-                       border-radius: 25px;
-                       text-decoration: none;
-                       font-weight: 600;
-                       font-size: 14px;
-                       box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-                       transition: all 0.3s;
-                   "
-                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.25)'"
-                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.15)'">
-                    <i class="fa fa-star"></i>
-                    Découvrir Premium
-                </a>
-            </div>
+
+            <!-- CTA Button -->
+            <a href="<?php echo site_url('dietetic/portal/upgrade'); ?>" class="freemium-modal-cta">
+                <i class="fa fa-star"></i>
+                Découvrir Premium
+            </a>
+
+            <!-- Close Link -->
+            <button class="freemium-modal-close-link" onclick="closeFreemiumModal()">
+                Continuer en version gratuite
+            </button>
         </div>
     </div>
+
     <style>
-    @keyframes slideInBanner {
+    /* Modal Overlay */
+    .freemium-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 99999;
+        animation: fadeIn 0.3s ease;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .freemium-modal-overlay.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Modal Card */
+    .freemium-modal {
+        background: white;
+        border-radius: 24px;
+        max-width: 500px;
+        width: 100%;
+        padding: 40px 30px;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideInModal 0.4s ease;
+        text-align: center;
+    }
+
+    /* Close Button */
+    .freemium-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #666;
+        font-size: 18px;
+    }
+
+    .freemium-modal-close:hover {
+        background: #e0e0e0;
+        transform: rotate(90deg);
+    }
+
+    /* Crown Icon */
+    .freemium-modal-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        color: white;
+        box-shadow: 0 10px 25px rgba(1, 128, 123, 0.3);
+    }
+
+    /* Title */
+    .freemium-modal-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+        margin: 0 0 15px 0;
+    }
+
+    /* Description */
+    .freemium-modal-description {
+        font-size: 15px;
+        color: #666;
+        line-height: 1.6;
+        margin: 0 0 25px 0;
+    }
+
+    /* Features List */
+    .freemium-modal-features {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 0 0 25px 0;
+        text-align: left;
+    }
+
+    .freemium-feature {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .freemium-feature:last-child {
+        margin-bottom: 0;
+    }
+
+    .freemium-feature i {
+        color: #01807B;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    /* CTA Button */
+    .freemium-modal-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+        color: white;
+        padding: 14px 32px;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        box-shadow: 0 4px 15px rgba(1, 128, 123, 0.3);
+        transition: all 0.3s;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .freemium-modal-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(1, 128, 123, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Close Link */
+    .freemium-modal-close-link {
+        display: block;
+        margin-top: 15px;
+        color: #999;
+        font-size: 14px;
+        text-decoration: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .freemium-modal-close-link:hover {
+        color: #666;
+        text-decoration: underline;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
         from {
             opacity: 0;
-            transform: translateY(-20px);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
         }
     }
+
+    @keyframes slideInModal {
+        from {
+            opacity: 0;
+            transform: translateY(-30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Mobile Responsive */
     @media (max-width: 576px) {
-        .freemium-upgrade-banner {
-            margin: -20px -15px 20px -15px !important;
-            padding: 14px 15px !important;
+        .freemium-modal {
+            padding: 30px 20px;
+            margin: 10px;
         }
-        .freemium-upgrade-banner > div {
-            flex-direction: column;
-            text-align: center;
-            gap: 12px;
+
+        .freemium-modal-icon {
+            width: 70px;
+            height: 70px;
+            font-size: 35px;
         }
-        .freemium-upgrade-banner h4 {
-            font-size: 15px !important;
+
+        .freemium-modal-title {
+            font-size: 20px;
         }
-        .freemium-upgrade-banner p {
-            font-size: 13px !important;
+
+        .freemium-modal-description {
+            font-size: 14px;
+        }
+
+        .freemium-modal-features {
+            padding: 15px;
+        }
+
+        .freemium-feature {
+            font-size: 13px;
+        }
+
+        .freemium-modal-cta {
+            font-size: 15px;
+            padding: 12px 28px;
         }
     }
     </style>
+
+    <script>
+    // Show modal on page load (if not previously dismissed)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user has dismissed the modal in this session
+        const modalDismissed = sessionStorage.getItem('freemium_modal_dismissed');
+
+        if (!modalDismissed) {
+            setTimeout(function() {
+                const modal = document.getElementById('freemium-modal-overlay');
+                if (modal) {
+                    modal.classList.add('show');
+                }
+            }, 800); // Show after 800ms delay
+        }
+    });
+
+    // Close modal function
+    function closeFreemiumModal() {
+        const modal = document.getElementById('freemium-modal-overlay');
+        if (modal) {
+            modal.classList.remove('show');
+            // Store dismissal in sessionStorage (will reset on browser close/new session)
+            sessionStorage.setItem('freemium_modal_dismissed', 'true');
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('freemium-modal-overlay');
+        if (e.target === modal) {
+            closeFreemiumModal();
+        }
+    });
+    </script>
     <?php endif; ?>

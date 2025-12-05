@@ -487,7 +487,12 @@ class Portal extends App_Controller
             die();
         }
 
-        // Step 3: Handle form submission
+        // Step 3: Verify premium access (add_measurement is a premium feature)
+        if (!verify_premium_feature('Ajout de pesées', true)) {
+            return;
+        }
+
+        // Step 4: Handle form submission
         if ($this->input->post()) {
             log_activity('Portal add_measurement - POST received for patient: ' . $patient->id);
 
@@ -5159,6 +5164,11 @@ class Portal extends App_Controller
             return;
         }
 
+        // Verify premium access (recipes is a premium feature)
+        if (!verify_premium_feature('Bibliothèque de recettes', true)) {
+            return;
+        }
+
         // Get client data for header
         $this->load->model('clients_model');
         $client = $this->clients_model->get($patient->client_id);
@@ -7078,6 +7088,11 @@ class Portal extends App_Controller
 
         if (!$patient) {
             $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Verify premium access (statistics is a premium feature)
+        if (!verify_premium_feature('Statistiques détaillées', true)) {
             return;
         }
 
