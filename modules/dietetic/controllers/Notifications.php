@@ -1774,14 +1774,18 @@ class Notifications extends AdminController
                     return $record->onesignal_player_id;
                 }, $player_ids_records);
 
-                // Send notification
-                $result = $this->onesignal_cloud_messaging->send_notification(
+                // Send notification using send_to_players (public method)
+                $url = $this->input->post('url') ?? site_url('dietetic/portal');
+                $result = $this->onesignal_cloud_messaging->send_to_players(
                     $player_ids,
                     $title,
                     $message,
                     [
                         'type' => 'test',
-                        'url' => site_url('dietetic/portal')
+                        'timestamp' => date('Y-m-d H:i:s')
+                    ],
+                    [
+                        'click_action' => $url
                     ]
                 );
 
@@ -1790,7 +1794,7 @@ class Notifications extends AdminController
                     log_activity('[OneSignal Test] Notification sent to patient ' . $patient_id . ' (' . count($player_ids) . ' devices)');
                 } else {
                     $failed_count++;
-                    $error_msg = "Patient ID $patient_id: " . ($result['message'] ?? 'Unknown error');
+                    $error_msg = "Patient ID $patient_id: " . ($result['error'] ?? 'Unknown error');
                     $errors[] = $error_msg;
                     log_activity('[OneSignal Test] Failed to send to patient ' . $patient_id . ': ' . $error_msg);
                 }
