@@ -1379,3 +1379,81 @@
     </div>
 
     <div class="content-container">
+
+    <!-- Freemium Upgrade Banner (shown only for free users) -->
+    <?php if (!is_premium_user()): ?>
+    <div class="freemium-upgrade-banner" style="
+        background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+        color: white;
+        padding: 16px 20px;
+        margin: -20px -20px 20px -20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(1, 128, 123, 0.3);
+        animation: slideInBanner 0.5s ease;
+    ">
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <div style="flex-shrink: 0;">
+                <i class="fa fa-crown" style="font-size: 32px; opacity: 0.9;"></i>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <h4 style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600;">
+                    Version Gratuite
+                </h4>
+                <p style="margin: 0; font-size: 14px; opacity: 0.95; line-height: 1.4;">
+                    Passez à Premium pour débloquer la messagerie, les plans de repas, les rappels automatiques et plus encore !
+                </p>
+            </div>
+            <div style="flex-shrink: 0;">
+                <a href="<?php echo site_url('dietetic/portal/upgrade'); ?>"
+                   style="
+                       display: inline-flex;
+                       align-items: center;
+                       gap: 8px;
+                       background: white;
+                       color: #01807B;
+                       padding: 10px 20px;
+                       border-radius: 25px;
+                       text-decoration: none;
+                       font-weight: 600;
+                       font-size: 14px;
+                       box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+                       transition: all 0.3s;
+                   "
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.25)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.15)'">
+                    <i class="fa fa-star"></i>
+                    Découvrir Premium
+                </a>
+            </div>
+        </div>
+    </div>
+    <style>
+    @keyframes slideInBanner {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @media (max-width: 576px) {
+        .freemium-upgrade-banner {
+            margin: -20px -15px 20px -15px !important;
+            padding: 14px 15px !important;
+        }
+        .freemium-upgrade-banner > div {
+            flex-direction: column;
+            text-align: center;
+            gap: 12px;
+        }
+        .freemium-upgrade-banner h4 {
+            font-size: 15px !important;
+        }
+        .freemium-upgrade-banner p {
+            font-size: 13px !important;
+        }
+    }
+    </style>
+    <?php endif; ?>

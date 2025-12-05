@@ -414,6 +414,42 @@ class Portal extends App_Controller
     }
 
     /**
+     * Upgrade page - Show freemium comparison
+     */
+    public function upgrade()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Passer à Premium';
+
+        // Check if user is currently premium
+        $data['is_premium'] = is_premium_user($patient->id);
+
+        // Get features comparison
+        $data['features'] = get_premium_features_comparison();
+
+        $this->load->view('portal/upgrade', $data);
+    }
+
+    /**
      * Add measurement from portal - Rewritten for robustness
      */
     public function add_measurement()
