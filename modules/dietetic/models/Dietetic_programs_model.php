@@ -231,24 +231,9 @@ class Dietetic_programs_model extends App_Model
         if ($this->db->update(db_prefix() . $this->table, $data)) {
             log_activity('Dietetic Program Updated [ID: ' . $id . ']');
 
-            // Notify patient of program update
-            $this->load->model('dietetic/dietetic_notifications_model');
-
-            // Get dietitian name
-            $dietitian_id = isset($data['dietitian_id']) ? $data['dietitian_id'] : $program->dietitian_id;
-            $this->db->select('CONCAT(firstname, " ", lastname) as name');
-            $this->db->where('staffid', $dietitian_id);
-            $dietitian = $this->db->get(db_prefix() . 'staff')->row();
-            $dietitian_name = $dietitian ? $dietitian->name : 'Votre diététicien';
-
-            // Get program name (use new name if provided, otherwise use existing)
-            $program_name = isset($data['name']) ? $data['name'] : $program->name;
-
-            $this->dietetic_notifications_model->notify_program_updated(
-                $program->patient_id,
-                $program_name,
-                $dietitian_name
-            );
+            // NOTE: Notification is now handled in the controller (Programs.php)
+            // with proper try-catch and table existence checks
+            // Removed duplicate notification call to prevent errors
 
             return true;
         }
