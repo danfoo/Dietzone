@@ -75,7 +75,7 @@
                                                     <i class="fa fa-users"></i> Mode d'envoi *
                                                 </label>
                                                 <select name="send_mode" id="send_mode" class="form-control" required>
-                                                    <option value="all">📢 Tous les utilisateurs (Web + Mobile)</option>
+                                                    <option value="all" selected="selected">📢 Tous les utilisateurs (Web + Mobile)</option>
                                                     <option value="patient">👤 Patient spécifique</option>
                                                 </select>
                                                 <p class="help-block">
@@ -228,6 +228,9 @@ $(document).ready(function() {
         // Get send mode
         const sendMode = $('#send_mode').val();
         const patientId = $('#patient_id').val();
+
+        console.log('[Debug] Send mode:', sendMode);
+        console.log('[Debug] Patient ID:', patientId);
 
         // Validate
         if (sendMode === 'patient' && !patientId) {
