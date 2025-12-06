@@ -263,11 +263,6 @@ foreach ($invoices as $invoice) {
                                        class="btn-action btn-primary">
                                         <i class="fa fa-eye"></i> Voir la facture
                                     </a>
-                                    <a href="<?php echo site_url('invoice/' . $invoice->id . '/' . $invoice->hash . '/pdf'); ?>"
-                                       class="btn-action btn-secondary"
-                                       target="_blank">
-                                        <i class="fa fa-download"></i> Télécharger PDF
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -338,7 +333,7 @@ foreach ($invoices as $invoice) {
 /* Statistics Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0;
     border-top: 1px solid #e9ecef;
 }
@@ -349,10 +344,20 @@ foreach ($invoices as $invoice) {
     gap: 15px;
     padding: 20px;
     border-bottom: 1px solid #e9ecef;
+    border-right: 1px solid #e9ecef;
     transition: background 0.3s ease;
 }
 
+.stat-card:nth-child(2n) {
+    border-right: none;
+}
+
 .stat-card:last-child {
+    border-bottom: none;
+    grid-column: 1 / -1;
+}
+
+.stat-card:nth-last-child(2) {
     border-bottom: none;
 }
 
@@ -492,7 +497,7 @@ foreach ($invoices as $invoice) {
 }
 
 .invoice-number {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     color: #01807B;
 }
@@ -667,9 +672,6 @@ foreach ($invoices as $invoice) {
 
 /* Action Buttons */
 .details-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     padding-top: 20px;
 }
 
@@ -741,24 +743,9 @@ foreach ($invoices as $invoice) {
     text-decoration: none;
 }
 
-/* Tablet - Stats in 2 columns */
+/* Tablet - Stats keep 2 columns */
 @media (min-width: 600px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .stat-card {
-        border-right: 1px solid #e9ecef;
-        border-bottom: none;
-    }
-
-    .stat-card:last-child {
-        border-right: none;
-    }
-
-    .stat-card:nth-child(2n) {
-        border-right: none;
-    }
+    /* Stats already in 2 columns by default */
 }
 
 /* Tablet & Desktop */
@@ -785,31 +772,12 @@ foreach ($invoices as $invoice) {
         font-size: 28px;
     }
 
-    .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .stat-card {
-        border-right: 1px solid #e9ecef;
-        border-bottom: none;
-    }
-
-    .stat-card:last-child {
-        border-right: none;
-    }
+    /* Keep stats in 2 columns */
 
     .invoices-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
-    }
-
-    .details-actions {
-        flex-direction: row;
-    }
-
-    .btn-action {
-        flex: 1;
     }
 }
 
@@ -820,8 +788,8 @@ foreach ($invoices as $invoice) {
     }
 
     .invoices-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 25px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
     }
 }
 </style>
