@@ -586,56 +586,101 @@ class Programs extends AdminController
             $data['recipes'] = $this->dietetic_recipes_model->get_all();
 
             if ($this->input->post()) {
-                $recipe_id = $this->input->post('recipe_id');
+                try {
+                    // DEBUG: Log all POST data
+                    log_message('debug', 'MEAL CREATE - POST Data: ' . print_r($this->input->post(), true));
 
-                // If a recipe is selected, get recipe data
-                if ($recipe_id) {
-                    $recipe = $this->dietetic_recipes_model->get($recipe_id);
-                    if (!$recipe) {
-                        set_alert('danger', 'Recipe not found');
-                        redirect($_SERVER['HTTP_REFERER']);
-                        return;
-                    }
-                }
+                    $recipe_id = $this->input->post('recipe_id');
+                    log_message('debug', 'MEAL CREATE - Recipe ID: ' . ($recipe_id ? $recipe_id : 'NONE'));
 
-                // Map form fields to database columns
-                $meal_data = [
-                    'meal_plan_id' => $this->input->post('meal_plan_id'),
-                    'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
-                    'meal_type' => $this->input->post('meal_type'),
-                    'meal_name' => $recipe_id && $recipe ? $recipe->name : $this->input->post('meal_name'),
-                    'meal_time' => $this->input->post('meal_time'),
-                    'instructions' => $recipe_id && $recipe ? $recipe->description : $this->input->post('instructions'),
-                    'display_order' => 0
-                ];
+                    // If a recipe is selected, get recipe data
+                    $recipe = null;
+                    if ($recipe_id) {
+                        $recipe = $this->dietetic_recipes_model->get($recipe_id);
+                        log_message('debug', 'MEAL CREATE - Recipe loaded: ' . ($recipe ? 'YES' : 'NO'));
+                        if ($recipe) {
+                            log_message('debug', 'MEAL CREATE - Recipe details: ' . print_r($recipe, true));
+                        }
 
-                $meal_id = $this->dietetic_meal_plans_model->add_meal($meal_data);
-
-                if ($meal_id) {
-                    // If a recipe was selected, copy ingredients to meal
-                    if ($recipe_id && isset($recipe) && $recipe && !empty($recipe->ingredients)) {
-                        foreach ($recipe->ingredients as $ingredient) {
-                            // Get food by name - search in food database
-                            $this->db->where('food_name', $ingredient->ingredient_name);
-                            $food = $this->db->get(db_prefix() . 'dietic_foods')->row();
-
-                            if ($food) {
-                                // Use ingredient quantity and unit from recipe
-                                $meal_food_data = [
-                                    'meal_id' => $meal_id,
-                                    'food_id' => $food->id,
-                                    'quantity' => $ingredient->quantity ?? 100, // Default 100g if not specified
-                                    'display_order' => isset($ingredient->order) ? $ingredient->order : 0
-                                ];
-                                $this->dietetic_meal_plans_model->add_meal_food($meal_food_data);
-                            }
+                        if (!$recipe) {
+                            log_message('error', 'MEAL CREATE - Recipe not found: ' . $recipe_id);
+                            set_alert('danger', 'Recipe not found');
+                            redirect($_SERVER['HTTP_REFERER']);
+                            return;
                         }
                     }
 
-                    set_alert('success', 'Meal created successfully' . ($recipe_id ? ' from recipe' : ''));
-                    redirect(admin_url('dietetic/programs/meal/edit/' . $meal_id));
-                } else {
-                    set_alert('danger', 'Failed to create meal');
+                    // Map form fields to database columns
+                    $meal_data = [
+                        'meal_plan_id' => $this->input->post('meal_plan_id'),
+                        'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
+                        'meal_type' => $this->input->post('meal_type'),
+                        'meal_name' => $recipe_id && $recipe ? $recipe->name : $this->input->post('meal_name'),
+                        'meal_time' => $this->input->post('meal_time'),
+                        'instructions' => $recipe_id && $recipe ? $recipe->description : $this->input->post('instructions'),
+                        'display_order' => 0
+                    ];
+
+                    log_message('debug', 'MEAL CREATE - Meal data to insert: ' . print_r($meal_data, true));
+
+                    $meal_id = $this->dietetic_meal_plans_model->add_meal($meal_data);
+                    log_message('debug', 'MEAL CREATE - Meal ID created: ' . ($meal_id ? $meal_id : 'FAILED'));
+
+                    if ($meal_id) {
+                        // If a recipe was selected, copy ingredients to meal
+                        if ($recipe_id && isset($recipe) && $recipe && !empty($recipe->ingredients)) {
+                            log_message('debug', 'MEAL CREATE - Processing ' . count($recipe->ingredients) . ' ingredients');
+
+                            $ingredient_count = 0;
+                            foreach ($recipe->ingredients as $ingredient) {
+                                $ingredient_count++;
+                                log_message('debug', 'MEAL CREATE - Ingredient #' . $ingredient_count . ': ' . print_r($ingredient, true));
+
+                                // Get food by name - search in food database
+                                $this->db->where('food_name', $ingredient->ingredient_name);
+                                $food = $this->db->get(db_prefix() . 'dietic_foods')->row();
+
+                                log_message('debug', 'MEAL CREATE - Food found for "' . $ingredient->ingredient_name . '": ' . ($food ? 'YES (ID: ' . $food->id . ')' : 'NO'));
+
+                                if ($food) {
+                                    // Use ingredient quantity and unit from recipe
+                                    $meal_food_data = [
+                                        'meal_id' => $meal_id,
+                                        'food_id' => $food->id,
+                                        'quantity' => $ingredient->quantity ?? 100, // Default 100g if not specified
+                                        'display_order' => isset($ingredient->order) ? $ingredient->order : 0
+                                    ];
+
+                                    log_message('debug', 'MEAL CREATE - Adding meal_food: ' . print_r($meal_food_data, true));
+
+                                    $result = $this->dietetic_meal_plans_model->add_meal_food($meal_food_data);
+                                    log_message('debug', 'MEAL CREATE - Meal food added: ' . ($result ? 'SUCCESS' : 'FAILED'));
+                                } else {
+                                    log_message('warning', 'MEAL CREATE - Food not found in database: ' . $ingredient->ingredient_name);
+                                }
+                            }
+
+                            log_message('debug', 'MEAL CREATE - Finished processing ingredients');
+                        } else {
+                            log_message('debug', 'MEAL CREATE - No ingredients to process (recipe_id: ' . ($recipe_id ? $recipe_id : 'none') . ')');
+                        }
+
+                        log_message('debug', 'MEAL CREATE - SUCCESS - Redirecting to meal edit page');
+                        set_alert('success', 'Meal created successfully' . ($recipe_id ? ' from recipe' : ''));
+                        redirect(admin_url('dietetic/programs/meal/edit/' . $meal_id));
+                    } else {
+                        log_message('error', 'MEAL CREATE - Failed to create meal in database');
+                        set_alert('danger', 'Failed to create meal');
+                    }
+
+                } catch (Exception $e) {
+                    // Log the full exception
+                    log_message('error', 'MEAL CREATE - EXCEPTION: ' . $e->getMessage());
+                    log_message('error', 'MEAL CREATE - Stack trace: ' . $e->getTraceAsString());
+
+                    // Show error to user
+                    set_alert('danger', 'Error creating meal: ' . $e->getMessage());
+                    redirect($_SERVER['HTTP_REFERER']);
                 }
             }
 
