@@ -603,7 +603,7 @@ class Programs extends AdminController
                     'meal_plan_id' => $this->input->post('meal_plan_id'),
                     'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
                     'meal_type' => $this->input->post('meal_type'),
-                    'meal_name' => $recipe_id && $recipe ? $recipe->recipe_name : $this->input->post('meal_name'),
+                    'meal_name' => $recipe_id && $recipe ? $recipe->name : $this->input->post('meal_name'),
                     'meal_time' => $this->input->post('meal_time'),
                     'instructions' => $recipe_id && $recipe ? $recipe->description : $this->input->post('instructions'),
                     'display_order' => 0
