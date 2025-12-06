@@ -17,6 +17,7 @@ class Programs extends AdminController
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('dietetic/dietetic_meal_plans_model');
         $this->load->model('dietetic/dietetic_foods_model');
+        $this->load->model('dietetic/dietetic_recipes_model');
         $this->load->helper('dietetic/dietetic');
 
         if (!dietetic_has_permission('view')) {
