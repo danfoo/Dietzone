@@ -108,40 +108,77 @@
                                     $balance = $total - $total_paid;
                                     ?>
                                     <tr style="transition: all 0.3s ease;">
-                                        <td style="padding: 15px; vertical-align: middle;">
+                                        <td data-label="Numéro" style="padding: 15px; vertical-align: middle;">
                                             <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>"
                                                style="color: #01807B; font-weight: 600; text-decoration: none;">
-                                                #<?php echo format_invoice_number($invoice->id); ?>
+                                                <?php
+                                                // Format invoice number
+                                                if (function_exists('format_invoice_number')) {
+                                                    echo '#' . format_invoice_number($invoice->id);
+                                                } else {
+                                                    echo '#' . str_pad($invoice->number, 6, '0', STR_PAD_LEFT);
+                                                }
+                                                ?>
                                             </a>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle;">
-                                            <?php echo _d($invoice->date); ?>
+                                        <td data-label="Date" style="padding: 15px; vertical-align: middle;">
+                                            <?php
+                                            // Format date
+                                            if (function_exists('_d')) {
+                                                echo _d($invoice->date);
+                                            } else {
+                                                echo date('d/m/Y', strtotime($invoice->date));
+                                            }
+                                            ?>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle;">
-                                            <?php echo _d($invoice->duedate); ?>
+                                        <td data-label="Échéance" style="padding: 15px; vertical-align: middle;">
+                                            <?php
+                                            // Format due date
+                                            if (function_exists('_d')) {
+                                                echo _d($invoice->duedate);
+                                            } else {
+                                                echo date('d/m/Y', strtotime($invoice->duedate));
+                                            }
+                                            ?>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle; font-weight: 600;">
-                                            <?php echo app_format_money($total, $invoice->currency_name); ?>
+                                        <td data-label="Montant" style="padding: 15px; vertical-align: middle; font-weight: 600;">
+                                            <?php
+                                            // Format money
+                                            if (function_exists('app_format_money')) {
+                                                echo app_format_money($total, $invoice->currency_name);
+                                            } else {
+                                                $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
+                                                echo number_format($total, 0, ',', ' ') . ' ' . $currency;
+                                            }
+                                            ?>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle; color: #43a047;">
-                                            <?php echo app_format_money($total_paid, $invoice->currency_name); ?>
+                                        <td data-label="Payé" style="padding: 15px; vertical-align: middle; color: #43a047;">
+                                            <?php
+                                            // Format money paid
+                                            if (function_exists('app_format_money')) {
+                                                echo app_format_money($total_paid, $invoice->currency_name);
+                                            } else {
+                                                $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
+                                                echo number_format($total_paid, 0, ',', ' ') . ' ' . $currency;
+                                            }
+                                            ?>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle;">
+                                        <td data-label="Statut" style="padding: 15px; vertical-align: middle;">
                                             <span class="label <?php echo $status_class; ?>"
                                                   style="padding: 6px 12px; font-size: 12px; border-radius: 20px;">
                                                 <i class="fa <?php echo $status_icon; ?>"></i> <?php echo $status_text; ?>
                                             </span>
                                         </td>
-                                        <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                                        <td data-label="Actions" style="padding: 15px; vertical-align: middle; text-align: center;">
                                             <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>"
                                                class="btn btn-sm btn-primary"
-                                               style="background: linear-gradient(135deg, #01807B 0%, #01655f 100%); border: none; padding: 6px 12px; border-radius: 6px;">
+                                               style="background: linear-gradient(135deg, #01807B 0%, #01655f 100%); border: none; padding: 6px 12px; border-radius: 6px; margin: 3px;">
                                                 <i class="fa fa-eye"></i> Voir
                                             </a>
                                             <a href="<?php echo site_url('invoice/' . $invoice->id . '/' . $invoice->hash . '/pdf'); ?>"
                                                class="btn btn-sm btn-default"
                                                target="_blank"
-                                               style="padding: 6px 12px; border-radius: 6px;">
+                                               style="padding: 6px 12px; border-radius: 6px; margin: 3px;">
                                                 <i class="fa fa-download"></i> PDF
                                             </a>
                                         </td>

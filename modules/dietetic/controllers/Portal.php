@@ -8578,15 +8578,24 @@ class Portal extends App_Controller
         // Load Perfex invoices model
         $this->load->model('invoices_model');
 
-        // Get all invoices for this client (from Perfex)
-        $invoices = $this->invoices_model->get('', [
-            'clientid' => $patient->client_id
-        ]);
+        // Get all invoices for this client (from Perfex) using database directly
+        $this->db->where('clientid', $patient->client_id);
+        $this->db->order_by('date', 'DESC');
+        $invoices = $this->db->get(db_prefix() . 'invoices')->result();
+
+        // For each invoice, get payments to calculate total paid
+        if ($invoices) {
+            foreach ($invoices as $invoice) {
+                $this->db->where('invoiceid', $invoice->id);
+                $invoice->payments = $this->db->get(db_prefix() . 'invoicepaymentrecords')->result();
+            }
+        }
 
         $data = [];
         $data['patient'] = $patient;
         $data['title'] = 'Mes Factures';
         $data['invoices'] = $invoices;
+        $data['active_page'] = 'invoices';
 
         $this->load->view('portal/invoices', $data);
     }
