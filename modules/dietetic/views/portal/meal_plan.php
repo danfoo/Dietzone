@@ -512,6 +512,28 @@ $this->load->view('portal/includes/portal_header');
             margin-right: 8px;
         }
 
+        .meal-instructions-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meal-instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .meal-instructions ol li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+
+        .meal-instructions ol li:last-child {
+            margin-bottom: 0;
+        }
+
         .notes-card {
             background: white;
             border-left: 4px solid #F3911D;
@@ -770,7 +792,29 @@ $this->load->view('portal/includes/portal_header');
 
                             <?php if ($meal->instructions) { ?>
                                 <div class="meal-instructions">
-                                    <i class="fa fa-info-circle"></i> <?php echo nl2br(htmlspecialchars($meal->instructions)); ?>
+                                    <div class="meal-instructions-title">
+                                        <i class="fa fa-info-circle"></i> Instructions
+                                    </div>
+                                    <?php
+                                    // Split instructions by line breaks
+                                    $instruction_lines = preg_split('/\r\n|\r|\n/', trim($meal->instructions));
+                                    // Remove empty lines
+                                    $instruction_lines = array_filter($instruction_lines, function($line) {
+                                        return trim($line) !== '';
+                                    });
+
+                                    if (count($instruction_lines) > 1) {
+                                        // Multiple lines - display as numbered list
+                                        echo '<ol>';
+                                        foreach ($instruction_lines as $line) {
+                                            echo '<li>' . htmlspecialchars(trim($line)) . '</li>';
+                                        }
+                                        echo '</ol>';
+                                    } else {
+                                        // Single line - display as simple text
+                                        echo htmlspecialchars($meal->instructions);
+                                    }
+                                    ?>
                                 </div>
                             <?php } ?>
                         </div>
