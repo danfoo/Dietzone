@@ -4,320 +4,422 @@
 
 <div class="portal-content">
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header-modern">
-            <div class="header-content">
-                <div class="header-icon" style="background: linear-gradient(135deg, #01807B 0%, #01655f 100%);">
-                    <i class="fa fa-file-text"></i>
-                </div>
-                <div class="header-text">
-                    <h1 class="page-title">Mes Factures</h1>
-                    <p class="page-subtitle">Consultez et téléchargez vos factures</p>
-                </div>
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="header-icon">
+                <i class="fa fa-file-text"></i>
+            </div>
+            <div class="header-text">
+                <h1>Mes Factures</h1>
+                <p><?php echo count($invoices); ?> facture<?php echo count($invoices) > 1 ? 's' : ''; ?></p>
             </div>
         </div>
 
-        <!-- Invoices Table -->
-        <div class="card-modern">
-            <div class="card-body">
-                <?php if (empty($invoices)): ?>
-                    <!-- Empty State -->
-                    <div class="empty-state" style="text-align: center; padding: 60px 20px;">
-                        <div style="font-size: 64px; color: #e0e0e0; margin-bottom: 20px;">
-                            <i class="fa fa-file-text-o"></i>
+        <?php if (empty($invoices)): ?>
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fa fa-file-text-o"></i>
+                </div>
+                <h3>Aucune facture</h3>
+                <p>Vous n'avez pas encore de factures.</p>
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
+                    <i class="fa fa-arrow-left"></i> Retour au tableau de bord
+                </a>
+            </div>
+        <?php else: ?>
+            <!-- Invoices Cards -->
+            <div class="invoices-grid">
+                <?php foreach ($invoices as $invoice): ?>
+                    <?php
+                    // Determine status
+                    $status_class = '';
+                    $status_text = '';
+                    $status_icon = '';
+
+                    if ($invoice->status == 1) {
+                        $status_class = 'status-unpaid';
+                        $status_text = 'Impayée';
+                        $status_icon = 'fa-exclamation-circle';
+                    } elseif ($invoice->status == 2) {
+                        $status_class = 'status-paid';
+                        $status_text = 'Payée';
+                        $status_icon = 'fa-check-circle';
+                    } elseif ($invoice->status == 3) {
+                        $status_class = 'status-partial';
+                        $status_text = 'Partiellement payée';
+                        $status_icon = 'fa-adjust';
+                    } elseif ($invoice->status == 4) {
+                        $status_class = 'status-overdue';
+                        $status_text = 'En retard';
+                        $status_icon = 'fa-clock-o';
+                    } elseif ($invoice->status == 5) {
+                        $status_class = 'status-cancelled';
+                        $status_text = 'Annulée';
+                        $status_icon = 'fa-ban';
+                    } elseif ($invoice->status == 6) {
+                        $status_class = 'status-draft';
+                        $status_text = 'Brouillon';
+                        $status_icon = 'fa-file-o';
+                    }
+                    ?>
+
+                    <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>" class="invoice-card">
+                        <div class="invoice-card-header">
+                            <div class="invoice-number">
+                                <i class="fa fa-hashtag"></i>
+                                <?php
+                                // Format invoice number
+                                if (function_exists('format_invoice_number')) {
+                                    echo format_invoice_number($invoice->id);
+                                } else {
+                                    echo str_pad($invoice->number, 6, '0', STR_PAD_LEFT);
+                                }
+                                ?>
+                            </div>
+                            <span class="invoice-status <?php echo $status_class; ?>">
+                                <i class="fa <?php echo $status_icon; ?>"></i>
+                                <?php echo $status_text; ?>
+                            </span>
                         </div>
-                        <h3 style="color: #666; font-size: 20px; margin-bottom: 10px;">Aucune facture</h3>
-                        <p style="color: #999; font-size: 14px;">
-                            Vous n'avez pas encore de factures.
-                        </p>
-                    </div>
-                <?php else: ?>
-                    <!-- Invoices Table -->
-                    <div class="table-responsive">
-                        <table class="table table-hover" style="margin-bottom: 0;">
-                            <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 2px solid #01807B;">
-                                <tr>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-hashtag" style="color: #01807B;"></i> Numéro
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-calendar" style="color: #01807B;"></i> Date
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-calendar-check-o" style="color: #01807B;"></i> Échéance
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-money" style="color: #01807B;"></i> Montant
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-credit-card" style="color: #01807B;"></i> Payé
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50;">
-                                        <i class="fa fa-info-circle" style="color: #01807B;"></i> Statut
-                                    </th>
-                                    <th style="padding: 15px; font-weight: 700; color: #2c3e50; text-align: center;">
-                                        <i class="fa fa-cog" style="color: #01807B;"></i> Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($invoices as $invoice): ?>
+
+                        <div class="invoice-card-body">
+                            <div class="invoice-date">
+                                <div class="date-label">
+                                    <i class="fa fa-calendar"></i> Date
+                                </div>
+                                <div class="date-value">
                                     <?php
-                                    // Determine status
-                                    $status_class = '';
-                                    $status_text = '';
-                                    $status_icon = '';
-
-                                    if ($invoice->status == 1) {
-                                        $status_class = 'label-danger';
-                                        $status_text = 'Impayée';
-                                        $status_icon = 'fa-exclamation-circle';
-                                    } elseif ($invoice->status == 2) {
-                                        $status_class = 'label-success';
-                                        $status_text = 'Payée';
-                                        $status_icon = 'fa-check-circle';
-                                    } elseif ($invoice->status == 3) {
-                                        $status_class = 'label-warning';
-                                        $status_text = 'Partiellement payée';
-                                        $status_icon = 'fa-adjust';
-                                    } elseif ($invoice->status == 4) {
-                                        $status_class = 'label-warning';
-                                        $status_text = 'En retard';
-                                        $status_icon = 'fa-clock-o';
-                                    } elseif ($invoice->status == 5) {
-                                        $status_class = 'label-default';
-                                        $status_text = 'Annulée';
-                                        $status_icon = 'fa-ban';
-                                    } elseif ($invoice->status == 6) {
-                                        $status_class = 'label-info';
-                                        $status_text = 'Brouillon';
-                                        $status_icon = 'fa-file-o';
+                                    // Format date
+                                    if (function_exists('_d')) {
+                                        echo _d($invoice->date);
+                                    } else {
+                                        echo date('d/m/Y', strtotime($invoice->date));
                                     }
-
-                                    // Calculate amounts
-                                    $total = $invoice->total;
-                                    $total_paid = 0;
-
-                                    // Get total paid amount
-                                    if (isset($invoice->payments) && is_array($invoice->payments)) {
-                                        foreach ($invoice->payments as $payment) {
-                                            $total_paid += $payment->amount;
-                                        }
-                                    }
-
-                                    $balance = $total - $total_paid;
                                     ?>
-                                    <tr style="transition: all 0.3s ease;">
-                                        <td data-label="Numéro" style="padding: 15px; vertical-align: middle;">
-                                            <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>"
-                                               style="color: #01807B; font-weight: 600; text-decoration: none;">
-                                                <?php
-                                                // Format invoice number
-                                                if (function_exists('format_invoice_number')) {
-                                                    echo '#' . format_invoice_number($invoice->id);
-                                                } else {
-                                                    echo '#' . str_pad($invoice->number, 6, '0', STR_PAD_LEFT);
-                                                }
-                                                ?>
-                                            </a>
-                                        </td>
-                                        <td data-label="Date" style="padding: 15px; vertical-align: middle;">
-                                            <?php
-                                            // Format date
-                                            if (function_exists('_d')) {
-                                                echo _d($invoice->date);
-                                            } else {
-                                                echo date('d/m/Y', strtotime($invoice->date));
-                                            }
-                                            ?>
-                                        </td>
-                                        <td data-label="Échéance" style="padding: 15px; vertical-align: middle;">
-                                            <?php
-                                            // Format due date
-                                            if (function_exists('_d')) {
-                                                echo _d($invoice->duedate);
-                                            } else {
-                                                echo date('d/m/Y', strtotime($invoice->duedate));
-                                            }
-                                            ?>
-                                        </td>
-                                        <td data-label="Montant" style="padding: 15px; vertical-align: middle; font-weight: 600;">
-                                            <?php
-                                            // Format money
-                                            if (function_exists('app_format_money')) {
-                                                echo app_format_money($total, $invoice->currency_name);
-                                            } else {
-                                                $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
-                                                echo number_format($total, 0, ',', ' ') . ' ' . $currency;
-                                            }
-                                            ?>
-                                        </td>
-                                        <td data-label="Payé" style="padding: 15px; vertical-align: middle; color: #43a047;">
-                                            <?php
-                                            // Format money paid
-                                            if (function_exists('app_format_money')) {
-                                                echo app_format_money($total_paid, $invoice->currency_name);
-                                            } else {
-                                                $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
-                                                echo number_format($total_paid, 0, ',', ' ') . ' ' . $currency;
-                                            }
-                                            ?>
-                                        </td>
-                                        <td data-label="Statut" style="padding: 15px; vertical-align: middle;">
-                                            <span class="label <?php echo $status_class; ?>"
-                                                  style="padding: 6px 12px; font-size: 12px; border-radius: 20px;">
-                                                <i class="fa <?php echo $status_icon; ?>"></i> <?php echo $status_text; ?>
-                                            </span>
-                                        </td>
-                                        <td data-label="Actions" style="padding: 15px; vertical-align: middle; text-align: center;">
-                                            <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>"
-                                               class="btn btn-sm btn-primary"
-                                               style="background: linear-gradient(135deg, #01807B 0%, #01655f 100%); border: none; padding: 6px 12px; border-radius: 6px; margin: 3px;">
-                                                <i class="fa fa-eye"></i> Voir
-                                            </a>
-                                            <a href="<?php echo site_url('invoice/' . $invoice->id . '/' . $invoice->hash . '/pdf'); ?>"
-                                               class="btn btn-sm btn-default"
-                                               target="_blank"
-                                               style="padding: 6px 12px; border-radius: 6px; margin: 3px;">
-                                                <i class="fa fa-download"></i> PDF
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Summary -->
-                    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border-left: 4px solid #01807B;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-                            <div>
-                                <div style="font-size: 14px; color: #666; margin-bottom: 5px;">Total des factures</div>
-                                <div style="font-size: 24px; font-weight: 700; color: #2c3e50;">
-                                    <?php echo count($invoices); ?> facture<?php echo count($invoices) > 1 ? 's' : ''; ?>
                                 </div>
                             </div>
-                            <div style="text-align: right;">
-                                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn btn-default">
-                                    <i class="fa fa-arrow-left"></i> Retour au tableau de bord
-                                </a>
+
+                            <div class="invoice-date">
+                                <div class="date-label">
+                                    <i class="fa fa-calendar-check-o"></i> Échéance
+                                </div>
+                                <div class="date-value">
+                                    <?php
+                                    // Format due date
+                                    if (function_exists('_d')) {
+                                        echo _d($invoice->duedate);
+                                    } else {
+                                        echo date('d/m/Y', strtotime($invoice->duedate));
+                                    }
+                                    ?>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endif; ?>
+
+                        <div class="invoice-card-footer">
+                            <span class="view-link">
+                                Voir les détails <i class="fa fa-arrow-right"></i>
+                            </span>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
             </div>
-        </div>
+
+            <!-- Back Button -->
+            <div class="back-section">
+                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
+                    <i class="fa fa-arrow-left"></i> Retour au tableau de bord
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
 <style>
+/* Mobile-First Design */
 .portal-content {
-    padding: 30px 0;
+    padding: 20px 15px;
     min-height: calc(100vh - 200px);
+    background: #f8f9fa;
 }
 
-.page-header-modern {
-    margin-bottom: 30px;
-}
-
-.header-content {
+/* Dashboard Header */
+.dashboard-header {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .header-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
-    color: white;
-    box-shadow: 0 4px 15px rgba(1, 128, 123, 0.3);
-}
-
-.header-text {
-    flex: 1;
-}
-
-.page-title {
     font-size: 28px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.header-text h1 {
+    font-size: 24px;
     font-weight: 700;
     color: #2c3e50;
     margin: 0 0 5px 0;
 }
 
-.page-subtitle {
+.header-text p {
     font-size: 14px;
     color: #7f8c8d;
     margin: 0;
 }
 
-.card-modern {
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    font-size: 64px;
+    color: #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    color: #666;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* Invoices Grid - Mobile First */
+.invoices-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+/* Invoice Card */
+.invoice-card {
+    display: block;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
 }
 
-.card-body {
-    padding: 0;
+.invoice-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    border-color: #01807B;
+    text-decoration: none;
 }
 
-.table > thead > tr > th,
-.table > tbody > tr > td {
-    border-top: 1px solid #ecf0f1;
-}
-
-.table > tbody > tr:hover {
+.invoice-card-header {
+    padding: 20px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-@media (max-width: 768px) {
+.invoice-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #01807B;
+}
+
+.invoice-number i {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Status Badges */
+.invoice-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-unpaid {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-partial {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-cancelled {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.status-draft {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Card Body */
+.invoice-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.invoice-date {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.date-label {
+    font-size: 14px;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.date-label i {
+    color: #01807B;
+}
+
+.date-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Card Footer */
+.invoice-card-footer {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    text-align: right;
+}
+
+.view-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: #01807B;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-link i {
+    transition: transform 0.3s ease;
+}
+
+.invoice-card:hover .view-link i {
+    transform: translateX(4px);
+}
+
+/* Back Section */
+.back-section {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: white;
+    color: #2c3e50;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: #01807B;
+    color: white;
+    border-color: #01807B;
+    text-decoration: none;
+}
+
+/* Tablet & Desktop - 2 columns grid */
+@media (min-width: 768px) {
+    .portal-content {
+        padding: 30px 20px;
+    }
+
+    .dashboard-header {
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
     .header-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
+        width: 70px;
+        height: 70px;
+        font-size: 32px;
     }
 
-    .page-title {
-        font-size: 22px;
+    .header-text h1 {
+        font-size: 28px;
     }
 
-    .page-subtitle {
-        font-size: 13px;
+    .invoices-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+
+/* Large Desktop - 3 columns grid */
+@media (min-width: 1200px) {
+    .portal-content {
+        padding: 40px 30px;
     }
 
-    .table-responsive {
-        border: none;
-    }
-
-    .table thead {
-        display: none;
-    }
-
-    .table tbody tr {
-        display: block;
-        margin-bottom: 20px;
-        border: 1px solid #ecf0f1;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .table tbody td {
-        display: block;
-        text-align: right;
-        padding: 10px 15px !important;
-        border: none;
-    }
-
-    .table tbody td:before {
-        content: attr(data-label);
-        float: left;
-        font-weight: 600;
-        color: #7f8c8d;
+    .invoices-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
     }
 }
 </style>
