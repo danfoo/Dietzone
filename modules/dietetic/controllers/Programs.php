@@ -613,18 +613,19 @@ class Programs extends AdminController
 
                 if ($meal_id) {
                     // If a recipe was selected, copy ingredients to meal
-                    if ($recipe_id && $recipe && !empty($recipe->ingredients)) {
+                    if ($recipe_id && isset($recipe) && $recipe && !empty($recipe->ingredients)) {
                         foreach ($recipe->ingredients as $ingredient) {
-                            // Get food by name or create reference
+                            // Get food by name - search in food database
                             $this->db->where('food_name', $ingredient->ingredient_name);
                             $food = $this->db->get(db_prefix() . 'dietic_foods')->row();
 
                             if ($food) {
+                                // Use ingredient quantity and unit from recipe
                                 $meal_food_data = [
                                     'meal_id' => $meal_id,
                                     'food_id' => $food->id,
-                                    'quantity' => $ingredient->quantity,
-                                    'display_order' => $ingredient->order_number
+                                    'quantity' => $ingredient->quantity ?? 100, // Default 100g if not specified
+                                    'display_order' => isset($ingredient->order) ? $ingredient->order : 0
                                 ];
                                 $this->dietetic_meal_plans_model->add_meal_food($meal_food_data);
                             }
