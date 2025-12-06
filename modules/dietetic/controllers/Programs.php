@@ -615,13 +615,29 @@ class Programs extends AdminController
                     }
 
                     // Map form fields to database columns
+                    // Build instructions from recipe if selected
+                    $instructions = $this->input->post('instructions');
+                    if ($recipe_id && $recipe) {
+                        // Join all recipe instructions with line breaks for proper numbering
+                        if (!empty($recipe->instructions)) {
+                            $instruction_lines = [];
+                            foreach ($recipe->instructions as $inst) {
+                                $instruction_lines[] = $inst->instruction;
+                            }
+                            $instructions = implode("\n", $instruction_lines);
+                        } else {
+                            // Fallback to description if no structured instructions
+                            $instructions = $recipe->description;
+                        }
+                    }
+
                     $meal_data = [
                         'meal_plan_id' => $this->input->post('meal_plan_id'),
                         'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
                         'meal_type' => $this->input->post('meal_type'),
                         'meal_name' => $recipe_id && $recipe ? $recipe->name : $this->input->post('meal_name'),
                         'meal_time' => $this->input->post('meal_time'),
-                        'instructions' => $recipe_id && $recipe ? $recipe->description : $this->input->post('instructions'),
+                        'instructions' => $instructions,
                         'display_order' => 0
                     ];
 
