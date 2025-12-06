@@ -2,17 +2,79 @@
 
 <?php $this->load->view('portal/includes/portal_header'); ?>
 
+<?php
+// Calculate statistics
+$stats = [
+    'total' => count($invoices),
+    'paid' => 0,
+    'unpaid' => 0,
+    'overdue' => 0,
+    'partial' => 0
+];
+
+foreach ($invoices as $invoice) {
+    if ($invoice->status == 2) {
+        $stats['paid']++;
+    } elseif ($invoice->status == 1) {
+        $stats['unpaid']++;
+    } elseif ($invoice->status == 4) {
+        $stats['overdue']++;
+    } elseif ($invoice->status == 3) {
+        $stats['partial']++;
+    }
+}
+?>
+
 <div class="portal-content">
     <div class="container-fluid">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
-            <div class="header-icon">
-                <i class="fa fa-file-text"></i>
+            <div class="header-main">
+                <div class="header-icon">
+                    <i class="fa fa-file-text"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Mes Factures</h1>
+                    <p><?php echo $stats['total']; ?> facture<?php echo $stats['total'] > 1 ? 's' : ''; ?> au total</p>
+                </div>
             </div>
-            <div class="header-text">
-                <h1>Mes Factures</h1>
-                <p><?php echo count($invoices); ?> facture<?php echo count($invoices) > 1 ? 's' : ''; ?></p>
-            </div>
+
+            <?php if (!empty($invoices)): ?>
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-paid">
+                        <div class="stat-icon">
+                            <i class="fa fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value"><?php echo $stats['paid']; ?></div>
+                            <div class="stat-label">Payée<?php echo $stats['paid'] > 1 ? 's' : ''; ?></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-unpaid">
+                        <div class="stat-icon">
+                            <i class="fa fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value"><?php echo $stats['unpaid']; ?></div>
+                            <div class="stat-label">Impayée<?php echo $stats['unpaid'] > 1 ? 's' : ''; ?></div>
+                        </div>
+                    </div>
+
+                    <?php if ($stats['overdue'] > 0): ?>
+                        <div class="stat-card stat-overdue">
+                            <div class="stat-icon">
+                                <i class="fa fa-clock-o"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value"><?php echo $stats['overdue']; ?></div>
+                                <div class="stat-label">En retard</div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
 
         <?php if (empty($invoices)): ?>
@@ -28,7 +90,7 @@
                 </a>
             </div>
         <?php else: ?>
-            <!-- Invoices Cards -->
+            <!-- Invoices Accordion -->
             <div class="invoices-grid">
                 <?php foreach ($invoices as $invoice): ?>
                     <?php
@@ -62,25 +124,43 @@
                         $status_text = 'Brouillon';
                         $status_icon = 'fa-file-o';
                     }
+
+                    // Calculate amounts
+                    $total = $invoice->total;
+                    $total_paid = 0;
+
+                    // Get total paid amount
+                    if (isset($invoice->payments) && is_array($invoice->payments)) {
+                        foreach ($invoice->payments as $payment) {
+                            $total_paid += $payment->amount;
+                        }
+                    }
+
+                    $balance = $total - $total_paid;
                     ?>
 
-                    <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>" class="invoice-card">
-                        <div class="invoice-card-header">
-                            <div class="invoice-number">
-                                <i class="fa fa-hashtag"></i>
-                                <?php
-                                // Format invoice number
-                                if (function_exists('format_invoice_number')) {
-                                    echo format_invoice_number($invoice->id);
-                                } else {
-                                    echo str_pad($invoice->number, 6, '0', STR_PAD_LEFT);
-                                }
-                                ?>
+                    <div class="invoice-card accordion-item" data-invoice-id="<?php echo $invoice->id; ?>">
+                        <div class="invoice-card-header accordion-trigger">
+                            <div class="header-left">
+                                <div class="invoice-number">
+                                    <i class="fa fa-hashtag"></i>
+                                    <?php
+                                    // Format invoice number
+                                    if (function_exists('format_invoice_number')) {
+                                        echo format_invoice_number($invoice->id);
+                                    } else {
+                                        echo str_pad($invoice->number, 6, '0', STR_PAD_LEFT);
+                                    }
+                                    ?>
+                                </div>
+                                <span class="invoice-status <?php echo $status_class; ?>">
+                                    <i class="fa <?php echo $status_icon; ?>"></i>
+                                    <?php echo $status_text; ?>
+                                </span>
                             </div>
-                            <span class="invoice-status <?php echo $status_class; ?>">
-                                <i class="fa <?php echo $status_icon; ?>"></i>
-                                <?php echo $status_text; ?>
-                            </span>
+                            <div class="chevron-icon">
+                                <i class="fa fa-chevron-down"></i>
+                            </div>
                         </div>
 
                         <div class="invoice-card-body">
@@ -117,12 +197,81 @@
                             </div>
                         </div>
 
-                        <div class="invoice-card-footer">
-                            <span class="view-link">
-                                Voir les détails <i class="fa fa-arrow-right"></i>
-                            </span>
+                        <!-- Collapsible Content -->
+                        <div class="invoice-details-collapse">
+                            <div class="invoice-details">
+                                <div class="details-section">
+                                    <h4>Informations financières</h4>
+                                    <div class="financial-grid">
+                                        <div class="financial-item">
+                                            <div class="financial-label">
+                                                <i class="fa fa-money"></i> Montant total
+                                            </div>
+                                            <div class="financial-value">
+                                                <?php
+                                                // Format money
+                                                if (function_exists('app_format_money')) {
+                                                    echo app_format_money($total, $invoice->currency_name);
+                                                } else {
+                                                    $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
+                                                    echo number_format($total, 0, ',', ' ') . ' ' . $currency;
+                                                }
+                                                ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="financial-item">
+                                            <div class="financial-label">
+                                                <i class="fa fa-credit-card"></i> Montant payé
+                                            </div>
+                                            <div class="financial-value text-success">
+                                                <?php
+                                                // Format money paid
+                                                if (function_exists('app_format_money')) {
+                                                    echo app_format_money($total_paid, $invoice->currency_name);
+                                                } else {
+                                                    $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
+                                                    echo number_format($total_paid, 0, ',', ' ') . ' ' . $currency;
+                                                }
+                                                ?>
+                                            </div>
+                                        </div>
+
+                                        <?php if ($balance > 0): ?>
+                                            <div class="financial-item">
+                                                <div class="financial-label">
+                                                    <i class="fa fa-calculator"></i> Solde restant
+                                                </div>
+                                                <div class="financial-value text-danger">
+                                                    <?php
+                                                    // Format balance
+                                                    if (function_exists('app_format_money')) {
+                                                        echo app_format_money($balance, $invoice->currency_name);
+                                                    } else {
+                                                        $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
+                                                        echo number_format($balance, 0, ',', ' ') . ' ' . $currency;
+                                                    }
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="details-actions">
+                                    <a href="<?php echo site_url('dietetic/portal/invoice/' . $invoice->id); ?>"
+                                       class="btn-action btn-primary">
+                                        <i class="fa fa-eye"></i> Voir la facture
+                                    </a>
+                                    <a href="<?php echo site_url('invoice/' . $invoice->id . '/' . $invoice->hash . '/pdf'); ?>"
+                                       class="btn-action btn-secondary"
+                                       target="_blank">
+                                        <i class="fa fa-download"></i> Télécharger PDF
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </a>
+                    </div>
                 <?php endforeach; ?>
             </div>
 
@@ -146,14 +295,18 @@
 
 /* Dashboard Header */
 .dashboard-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    padding: 20px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+
+.header-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
 }
 
 .header-icon {
@@ -180,6 +333,86 @@
     font-size: 14px;
     color: #7f8c8d;
     margin: 0;
+}
+
+/* Statistics Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border-top: 1px solid #e9ecef;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background 0.3s ease;
+}
+
+.stat-card:last-child {
+    border-bottom: none;
+}
+
+.stat-card:hover {
+    background: #f8f9fa;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.stat-paid .stat-icon {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stat-unpaid .stat-icon {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.stat-overdue .stat-icon {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.stat-paid .stat-value {
+    color: #155724;
+}
+
+.stat-unpaid .stat-value {
+    color: #721c24;
+}
+
+.stat-overdue .stat-value {
+    color: #856404;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #7f8c8d;
+    font-weight: 500;
 }
 
 /* Empty State */
@@ -217,23 +450,28 @@
     margin-bottom: 25px;
 }
 
-/* Invoice Card */
+/* Invoice Card - Accordion */
 .invoice-card {
-    display: block;
     background: white;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    text-decoration: none;
     transition: all 0.3s ease;
     border: 2px solid transparent;
 }
 
 .invoice-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.15);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
+}
+
+.invoice-card.active {
     border-color: #01807B;
-    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(1, 128, 123, 0.2);
+}
+
+.accordion-trigger {
+    cursor: pointer;
+    user-select: none;
 }
 
 .invoice-card-header {
@@ -242,8 +480,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
     gap: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
 }
 
 .invoice-number {
@@ -255,6 +500,26 @@
 .invoice-number i {
     font-size: 14px;
     opacity: 0.7;
+}
+
+.chevron-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #01807B;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.invoice-card.active .chevron-icon {
+    background: #01807B;
+    color: white;
+    transform: rotate(180deg);
 }
 
 /* Status Badges */
@@ -331,28 +596,121 @@
     color: #2c3e50;
 }
 
-/* Card Footer */
-.invoice-card-footer {
-    padding: 15px 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    text-align: right;
+/* Collapsible Details */
+.invoice-details-collapse {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
 }
 
-.view-link {
+.invoice-card.active .invoice-details-collapse {
+    max-height: 1000px;
+}
+
+.invoice-details {
+    padding: 0 20px 20px 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.details-section {
+    padding: 20px 0;
+}
+
+.details-section h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 15px 0;
+}
+
+.financial-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.financial-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.financial-label {
+    font-size: 13px;
+    color: #7f8c8d;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.financial-label i {
+    color: #01807B;
+}
+
+.financial-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.financial-value.text-success {
+    color: #155724;
+}
+
+.financial-value.text-danger {
+    color: #721c24;
+}
+
+/* Action Buttons */
+.details-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 20px;
+}
+
+.btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 10px;
     font-size: 14px;
     font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #01807B 0%, #01655f 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #01655f 0%, #014d49 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+    text-decoration: none;
+    color: white;
+}
+
+.btn-secondary {
+    background: white;
+    color: #2c3e50;
+    border: 2px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+    background: #f8f9fa;
+    border-color: #01807B;
     color: #01807B;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.view-link i {
-    transition: transform 0.3s ease;
-}
-
-.invoice-card:hover .view-link i {
-    transform: translateX(4px);
+    text-decoration: none;
 }
 
 /* Back Section */
@@ -383,15 +741,38 @@
     text-decoration: none;
 }
 
-/* Tablet & Desktop - 2 columns grid */
+/* Tablet - Stats in 2 columns */
+@media (min-width: 600px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-card {
+        border-right: 1px solid #e9ecef;
+        border-bottom: none;
+    }
+
+    .stat-card:last-child {
+        border-right: none;
+    }
+
+    .stat-card:nth-child(2n) {
+        border-right: none;
+    }
+}
+
+/* Tablet & Desktop */
 @media (min-width: 768px) {
     .portal-content {
         padding: 30px 20px;
     }
 
     .dashboard-header {
-        padding: 25px;
         margin-bottom: 30px;
+    }
+
+    .header-main {
+        padding: 25px;
     }
 
     .header-icon {
@@ -404,14 +785,35 @@
         font-size: 28px;
     }
 
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stat-card {
+        border-right: 1px solid #e9ecef;
+        border-bottom: none;
+    }
+
+    .stat-card:last-child {
+        border-right: none;
+    }
+
     .invoices-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
+
+    .details-actions {
+        flex-direction: row;
+    }
+
+    .btn-action {
+        flex: 1;
+    }
 }
 
-/* Large Desktop - 3 columns grid */
+/* Large Desktop */
 @media (min-width: 1200px) {
     .portal-content {
         padding: 40px 30px;
@@ -423,5 +825,36 @@
     }
 }
 </style>
+
+<script>
+// Accordion functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const accordionTriggers = document.querySelectorAll('.accordion-trigger');
+
+    accordionTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const card = this.closest('.invoice-card');
+            const isActive = card.classList.contains('active');
+
+            // Close all other accordions
+            document.querySelectorAll('.invoice-card.active').forEach(activeCard => {
+                if (activeCard !== card) {
+                    activeCard.classList.remove('active');
+                }
+            });
+
+            // Toggle current accordion
+            if (isActive) {
+                card.classList.remove('active');
+            } else {
+                card.classList.add('active');
+            }
+        });
+    });
+});
+</script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
