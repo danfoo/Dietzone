@@ -582,8 +582,8 @@ class Programs extends AdminController
 
             $data['program'] = $this->dietetic_programs_model->get($data['meal_plan']->program_id);
 
-            // Load approved recipes for selection
-            $data['recipes'] = $this->dietetic_recipes_model->get_all([], 'approved');
+            // Load all recipes for selection (dietitians can use all recipes from library)
+            $data['recipes'] = $this->dietetic_recipes_model->get_all();
 
             if ($this->input->post()) {
                 $recipe_id = $this->input->post('recipe_id');

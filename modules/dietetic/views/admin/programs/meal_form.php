@@ -47,9 +47,16 @@
                                                 <?php }
                                             } ?>
                                         </select>
-                                        <p class="help-block">
-                                            <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_recipe_select_help'); ?>
-                                        </p>
+                                        <?php if (!empty($recipes)) { ?>
+                                            <p class="help-block">
+                                                <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_recipe_select_help'); ?>
+                                                <small class="text-muted">(<?php echo count($recipes); ?> recette<?php echo count($recipes) > 1 ? 's' : ''; ?> disponible<?php echo count($recipes) > 1 ? 's' : ''; ?>)</small>
+                                            </p>
+                                        <?php } else { ?>
+                                            <p class="help-block text-warning">
+                                                <i class="fa fa-exclamation-triangle"></i> Aucune recette disponible dans la bibliothèque. <a href="<?php echo admin_url('dietetic/recipes/create'); ?>">Créer une recette</a>
+                                            </p>
+                                        <?php } ?>
                                     </div>
 
                                     <div id="recipe-preview" class="alert alert-info" style="display: none;">
