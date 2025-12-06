@@ -796,6 +796,10 @@ $this->load->view('portal/includes/portal_header');
                                         <i class="fa fa-info-circle"></i> Instructions
                                     </div>
                                     <?php
+                                    // DEBUG: Show raw instructions
+                                    echo '<pre style="font-size: 11px; background: #eee; padding: 5px; margin-bottom: 10px;">RAW: ' . htmlspecialchars(var_export($meal->instructions, true)) . '</pre>';
+
+                                    // Always display as numbered list
                                     // Split instructions by line breaks
                                     $instruction_lines = preg_split('/\r\n|\r|\n/', trim($meal->instructions));
                                     // Remove empty lines
@@ -803,17 +807,15 @@ $this->load->view('portal/includes/portal_header');
                                         return trim($line) !== '';
                                     });
 
-                                    if (count($instruction_lines) > 1) {
-                                        // Multiple lines - display as numbered list
-                                        echo '<ol>';
-                                        foreach ($instruction_lines as $line) {
-                                            echo '<li>' . htmlspecialchars(trim($line)) . '</li>';
-                                        }
-                                        echo '</ol>';
-                                    } else {
-                                        // Single line - display as simple text
-                                        echo htmlspecialchars($meal->instructions);
+                                    // DEBUG: Show line count
+                                    echo '<div style="font-size: 11px; color: red; margin-bottom: 10px;">Lines found: ' . count($instruction_lines) . '</div>';
+
+                                    // Always show as numbered list (force it)
+                                    echo '<ol>';
+                                    foreach ($instruction_lines as $line) {
+                                        echo '<li>' . htmlspecialchars(trim($line)) . '</li>';
                                     }
+                                    echo '</ol>';
                                     ?>
                                 </div>
                             <?php } ?>
