@@ -8557,31 +8557,38 @@ class Portal extends App_Controller
      */
     public function invoices()
     {
-        $patient = $this->get_logged_in_patient();
-
-        if (!$patient) {
+        if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
         }
 
-        $this->load->model('dietetic/dietetic_invoices_model');
-        $this->load->model('dietetic/dietetic_subscriptions_model');
+        $client_id = get_client_user_id();
 
-        // Get patient's invoices
-        $invoices = $this->dietetic_invoices_model->get_by_patient($patient->id);
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
 
-        $data['invoices'] = $invoices;
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Load Perfex invoices model
+        $this->load->model('invoices_model');
+
+        // Get all invoices for this client (from Perfex)
+        $invoices = $this->invoices_model->get('', [
+            'clientid' => $patient->client_id
+        ]);
+
+        $data = [];
         $data['patient'] = $patient;
         $data['title'] = 'Mes Factures';
+        $data['invoices'] = $invoices;
 
-        // Check which payment methods are enabled
-        $data['paypal_enabled'] = (bool) dietetic_get_option('paypal_enabled');
-        $data['wave_enabled'] = (bool) dietetic_get_option('wave_enabled');
-        $data['orange_money_enabled'] = (bool) dietetic_get_option('orange_money_enabled');
-        $data['any_payment_enabled'] = $data['paypal_enabled'] || $data['wave_enabled'] || $data['orange_money_enabled'];
-
-        $this->data($data);
-        $this->view('portal/invoices');
-        $this->layout();
+        $this->load->view('portal/invoices', $data);
     }
 
     /**

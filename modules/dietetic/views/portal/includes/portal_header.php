@@ -1278,9 +1278,9 @@
             </a>
             <?php } ?>
 
-            <a href="<?php echo site_url('clients/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
-                <i class="fa fa-file-text"></i>
-                <span>Mon plan</span>
+            <a href="<?php echo site_url('dietetic/portal/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
+                <i class="fa fa-file-text-o"></i>
+                <span>Mes Factures</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'statistics') ? 'active' : ''; ?>">
