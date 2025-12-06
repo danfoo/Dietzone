@@ -586,6 +586,10 @@ class Programs extends AdminController
             $data['recipes'] = $this->dietetic_recipes_model->get_all();
 
             if ($this->input->post()) {
+                // Enable error display for debugging
+                ini_set('display_errors', 1);
+                error_reporting(E_ALL);
+
                 try {
                     // DEBUG: Log all POST data
                     log_message('debug', 'MEAL CREATE - POST Data: ' . print_r($this->input->post(), true));
@@ -677,10 +681,21 @@ class Programs extends AdminController
                     // Log the full exception
                     log_message('error', 'MEAL CREATE - EXCEPTION: ' . $e->getMessage());
                     log_message('error', 'MEAL CREATE - Stack trace: ' . $e->getTraceAsString());
+                    log_message('error', 'MEAL CREATE - File: ' . $e->getFile() . ' Line: ' . $e->getLine());
 
-                    // Show error to user
-                    set_alert('danger', 'Error creating meal: ' . $e->getMessage());
-                    redirect($_SERVER['HTTP_REFERER']);
+                    // Show detailed error to user for debugging
+                    $error_msg = 'Error creating meal: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ':' . $e->getLine() . ')';
+                    set_alert('danger', $error_msg);
+
+                    // Also output error directly for debugging
+                    echo '<div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 20px; border-radius: 5px;">';
+                    echo '<h4>DEBUG - Error Details:</h4>';
+                    echo '<p><strong>Message:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>';
+                    echo '<p><strong>File:</strong> ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>';
+                    echo '<p><strong>Trace:</strong></p>';
+                    echo '<pre style="background: white; padding: 10px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                    echo '</div>';
+                    exit; // Stop execution to show the error
                 }
             }
 
