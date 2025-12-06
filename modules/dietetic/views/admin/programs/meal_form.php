@@ -18,6 +18,20 @@
                         <input type="hidden" name="meal_plan_id" value="<?php echo $meal_plan->id; ?>">
 
                         <?php if (!isset($meal)) { ?>
+                            <!-- DEBUG: Afficher le nombre de recettes -->
+                            <?php if (isset($recipes)) { ?>
+                                <div class="alert alert-info">
+                                    <strong>DEBUG:</strong> <?php echo count($recipes); ?> recette(s) chargée(s)
+                                    <?php if (!empty($recipes)) { ?>
+                                        <br>Première recette: <?php echo isset($recipes[0]->recipe_name) ? $recipes[0]->recipe_name : 'Nom non disponible'; ?>
+                                    <?php } ?>
+                                </div>
+                            <?php } else { ?>
+                                <div class="alert alert-danger">
+                                    <strong>DEBUG:</strong> Variable $recipes non définie !
+                                </div>
+                            <?php } ?>
+
                             <div class="panel panel-primary">
                                 <div class="panel-heading">
                                     <h4 class="panel-title">
@@ -27,18 +41,18 @@
                                 <div class="panel-body">
                                     <div class="form-group">
                                         <label><?php echo _l('dietetic_recipe'); ?></label>
-                                        <select name="recipe_id" id="recipe_select" class="form-control selectpicker" data-live-search="true" data-none-selected-text="<?php echo _l('dietetic_no_recipe_selected'); ?>">
-                                            <option value=""><?php echo _l('dietetic_create_meal_manually'); ?></option>
+                                        <select name="recipe_id" id="recipe_select" class="form-control" data-live-search="true">
+                                            <option value="">Sélectionnez une recette ou créez manuellement</option>
                                             <?php if (!empty($recipes)) {
                                                 foreach ($recipes as $recipe) { ?>
                                                     <option value="<?php echo $recipe->id; ?>"
                                                         data-name="<?php echo htmlspecialchars($recipe->recipe_name); ?>"
-                                                        data-description="<?php echo htmlspecialchars($recipe->description); ?>"
-                                                        data-prep-time="<?php echo $recipe->prep_time; ?>"
-                                                        data-cook-time="<?php echo $recipe->cook_time; ?>"
-                                                        data-servings="<?php echo $recipe->servings; ?>">
-                                                        <?php echo $recipe->recipe_name; ?>
-                                                        <?php if ($recipe->prep_time || $recipe->cook_time) { ?>
+                                                        data-description="<?php echo htmlspecialchars($recipe->description ?? ''); ?>"
+                                                        data-prep-time="<?php echo $recipe->prep_time ?? ''; ?>"
+                                                        data-cook-time="<?php echo $recipe->cook_time ?? ''; ?>"
+                                                        data-servings="<?php echo $recipe->servings ?? ''; ?>">
+                                                        <?php echo htmlspecialchars($recipe->recipe_name); ?>
+                                                        <?php if (!empty($recipe->prep_time) || !empty($recipe->cook_time)) { ?>
                                                             (<?php if ($recipe->prep_time) echo $recipe->prep_time . 'min prep'; ?>
                                                             <?php if ($recipe->prep_time && $recipe->cook_time) echo ' + '; ?>
                                                             <?php if ($recipe->cook_time) echo $recipe->cook_time . 'min cuisson'; ?>)
@@ -49,7 +63,7 @@
                                         </select>
                                         <?php if (!empty($recipes)) { ?>
                                             <p class="help-block">
-                                                <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_recipe_select_help'); ?>
+                                                <i class="fa fa-info-circle"></i> Sélectionnez une recette pour pré-remplir automatiquement le repas
                                                 <small class="text-muted">(<?php echo count($recipes); ?> recette<?php echo count($recipes) > 1 ? 's' : ''; ?> disponible<?php echo count($recipes) > 1 ? 's' : ''; ?>)</small>
                                             </p>
                                         <?php } else { ?>
@@ -242,13 +256,15 @@
 <?php if (!isset($meal)) { ?>
 <script>
 $(document).ready(function() {
-    // Initialize selectpicker
-    $('#recipe_select').selectpicker();
+    console.log('Recipe selection script loaded');
 
     // Handle recipe selection
     $('#recipe_select').on('change', function() {
+        console.log('Recipe select changed');
         var selectedOption = $(this).find('option:selected');
         var recipeId = $(this).val();
+
+        console.log('Selected recipe ID:', recipeId);
 
         if (recipeId) {
             // Get recipe data from option attributes
@@ -257,6 +273,9 @@ $(document).ready(function() {
             var prepTime = selectedOption.data('prep-time');
             var cookTime = selectedOption.data('cook-time');
             var servings = selectedOption.data('servings');
+
+            console.log('Recipe name:', recipeName);
+            console.log('Recipe description:', recipeDescription);
 
             // Fill form fields
             $('#meal_name').val(recipeName);
@@ -272,13 +291,13 @@ $(document).ready(function() {
 
             var detailsHtml = '<small>';
             if (prepTime) {
-                detailsHtml += '<i class="fa fa-clock-o"></i> <?php echo _l("dietetic_prep_time"); ?>: ' + prepTime + ' min &nbsp;&nbsp;';
+                detailsHtml += '<i class="fa fa-clock-o"></i> Temps de préparation: ' + prepTime + ' min &nbsp;&nbsp;';
             }
             if (cookTime) {
-                detailsHtml += '<i class="fa fa-fire"></i> <?php echo _l("dietetic_cook_time"); ?>: ' + cookTime + ' min &nbsp;&nbsp;';
+                detailsHtml += '<i class="fa fa-fire"></i> Temps de cuisson: ' + cookTime + ' min &nbsp;&nbsp;';
             }
             if (servings) {
-                detailsHtml += '<i class="fa fa-users"></i> <?php echo _l("dietetic_servings"); ?>: ' + servings;
+                detailsHtml += '<i class="fa fa-users"></i> Portions: ' + servings;
             }
             detailsHtml += '</small>';
 
@@ -290,6 +309,7 @@ $(document).ready(function() {
             $('#instructions').prop('readonly', true).css('background-color', '#f9f9f9');
 
         } else {
+            console.log('No recipe selected, clearing fields');
             // Clear form fields
             $('#meal_name').val('').prop('readonly', false).css('background-color', '');
             $('#instructions').val('').prop('readonly', false).css('background-color', '');
@@ -300,6 +320,8 @@ $(document).ready(function() {
             $('#recipe-preview').hide();
         }
     });
+
+    console.log('Number of recipe options:', $('#recipe_select option').length);
 });
 </script>
 <?php } ?>
