@@ -652,12 +652,13 @@ class Programs extends AdminController
                                         'meal_id' => $meal_id,
                                         'food_id' => $food->id,
                                         'quantity' => $ingredient->quantity ?? 100, // Default 100g if not specified
+                                        'unit' => $ingredient->unit ?? 'g', // Default to grams if not specified
                                         'display_order' => isset($ingredient->order) ? $ingredient->order : 0
                                     ];
 
                                     log_message('debug', 'MEAL CREATE - Adding meal_food: ' . print_r($meal_food_data, true));
 
-                                    $result = $this->dietetic_meal_plans_model->add_meal_food($meal_food_data);
+                                    $result = $this->dietetic_meal_plans_model->add_food_to_meal($meal_food_data);
                                     log_message('debug', 'MEAL CREATE - Meal food added: ' . ($result ? 'SUCCESS' : 'FAILED'));
                                 } else {
                                     log_message('warning', 'MEAL CREATE - Food not found in database: ' . $ingredient->ingredient_name);
