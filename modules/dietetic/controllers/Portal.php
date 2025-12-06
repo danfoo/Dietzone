@@ -8601,42 +8601,40 @@ class Portal extends App_Controller
     }
 
     /**
-     * View single invoice
+     * View single invoice - Redirect to Perfex invoice view
      */
     public function invoice($id)
     {
-        $patient = $this->get_logged_in_patient();
-
-        if (!$patient) {
+        if (!is_client_logged_in()) {
             redirect(site_url('authentication/login'));
         }
 
-        $this->load->model('dietetic/dietetic_invoices_model');
-        $this->load->model('dietetic/dietetic_payments_model');
+        $client_id = get_client_user_id();
 
-        $invoice = $this->dietetic_invoices_model->get($id);
-
-        if (!$invoice || $invoice->patient_id != $patient->id) {
-            show_404();
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
         }
 
-        // Get payments for this invoice
-        $payments = $this->dietetic_payments_model->get_all(['p.invoice_id' => $id]);
+        if (!$patient) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
 
-        $data['invoice'] = $invoice;
-        $data['payments'] = $payments;
-        $data['patient'] = $patient;
-        $data['title'] = 'Facture ' . $invoice->invoice_number;
+        // Get invoice from Perfex to verify it belongs to this client
+        $this->db->where('id', $id);
+        $this->db->where('clientid', $patient->client_id);
+        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
 
-        // Check which payment methods are enabled
-        $data['paypal_enabled'] = (bool) dietetic_get_option('paypal_enabled');
-        $data['wave_enabled'] = (bool) dietetic_get_option('wave_enabled');
-        $data['orange_money_enabled'] = (bool) dietetic_get_option('orange_money_enabled');
-        $data['any_payment_enabled'] = $data['paypal_enabled'] || $data['wave_enabled'] || $data['orange_money_enabled'];
+        if (!$invoice) {
+            show_404();
+            return;
+        }
 
-        $this->data($data);
-        $this->view('portal/invoice');
-        $this->layout();
+        // Redirect to Perfex invoice view page
+        redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
     }
 
     // ==================== BLOG / CONSEILS ====================
