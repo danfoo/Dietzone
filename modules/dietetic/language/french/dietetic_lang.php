@@ -289,6 +289,18 @@ $lang['dietetic_reminder_consultation_message'] = 'Bonjour %s, ceci est un rappe
 $lang['dietetic_reminder_renewal_subject'] = 'Rappel de Renouvellement de Programme';
 $lang['dietetic_reminder_renewal_message'] = 'Bonjour %s, votre programme "%s" se termine le %s. Veuillez nous contacter pour discuter du renouvellement.';
 
+// Recipes
+$lang['dietetic_recipe'] = 'Recette';
+$lang['dietetic_recipes'] = 'Recettes';
+$lang['dietetic_select_from_recipe_library'] = 'Sélectionner depuis la bibliothèque de recettes';
+$lang['dietetic_no_recipe_selected'] = 'Aucune recette sélectionnée';
+$lang['dietetic_create_meal_manually'] = 'Créer le repas manuellement';
+$lang['dietetic_recipe_select_help'] = 'Sélectionnez une recette pour pré-remplir automatiquement le repas avec ses ingrédients, ou laissez vide pour créer un repas manuellement.';
+$lang['dietetic_auto_filled_from_recipe'] = 'Rempli automatiquement depuis la recette sélectionnée';
+$lang['dietetic_prep_time'] = 'Temps de préparation';
+$lang['dietetic_cook_time'] = 'Temps de cuisson';
+$lang['dietetic_servings'] = 'Portions';
+
 // Permissions
 $lang['permission_dietetic'] = 'Module Diététique';
 $lang['dietetic_permission_settings'] = 'Accéder aux Paramètres';

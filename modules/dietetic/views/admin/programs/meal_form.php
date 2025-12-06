@@ -17,6 +17,50 @@
 
                         <input type="hidden" name="meal_plan_id" value="<?php echo $meal_plan->id; ?>">
 
+                        <?php if (!isset($meal)) { ?>
+                            <div class="panel panel-primary">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <i class="fa fa-book"></i> <?php echo _l('dietetic_select_from_recipe_library'); ?>
+                                    </h4>
+                                </div>
+                                <div class="panel-body">
+                                    <div class="form-group">
+                                        <label><?php echo _l('dietetic_recipe'); ?></label>
+                                        <select name="recipe_id" id="recipe_select" class="form-control selectpicker" data-live-search="true" data-none-selected-text="<?php echo _l('dietetic_no_recipe_selected'); ?>">
+                                            <option value=""><?php echo _l('dietetic_create_meal_manually'); ?></option>
+                                            <?php if (!empty($recipes)) {
+                                                foreach ($recipes as $recipe) { ?>
+                                                    <option value="<?php echo $recipe->id; ?>"
+                                                        data-name="<?php echo htmlspecialchars($recipe->recipe_name); ?>"
+                                                        data-description="<?php echo htmlspecialchars($recipe->description); ?>"
+                                                        data-prep-time="<?php echo $recipe->prep_time; ?>"
+                                                        data-cook-time="<?php echo $recipe->cook_time; ?>"
+                                                        data-servings="<?php echo $recipe->servings; ?>">
+                                                        <?php echo $recipe->recipe_name; ?>
+                                                        <?php if ($recipe->prep_time || $recipe->cook_time) { ?>
+                                                            (<?php if ($recipe->prep_time) echo $recipe->prep_time . 'min prep'; ?>
+                                                            <?php if ($recipe->prep_time && $recipe->cook_time) echo ' + '; ?>
+                                                            <?php if ($recipe->cook_time) echo $recipe->cook_time . 'min cuisson'; ?>)
+                                                        <?php } ?>
+                                                    </option>
+                                                <?php }
+                                            } ?>
+                                        </select>
+                                        <p class="help-block">
+                                            <i class="fa fa-info-circle"></i> <?php echo _l('dietetic_recipe_select_help'); ?>
+                                        </p>
+                                    </div>
+
+                                    <div id="recipe-preview" class="alert alert-info" style="display: none;">
+                                        <h5><strong id="preview-name"></strong></h5>
+                                        <p id="preview-description"></p>
+                                        <div id="preview-details"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } ?>
+
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -75,12 +119,18 @@
 
                         <div class="form-group">
                             <label><?php echo _l('dietetic_meal_name'); ?></label>
-                            <input type="text" name="meal_name" class="form-control" value="<?php echo isset($meal) ? $meal->meal_name : ''; ?>" placeholder="<?php echo _l('dietetic_meal_placeholder'); ?>">
+                            <input type="text" name="meal_name" id="meal_name" class="form-control" value="<?php echo isset($meal) ? $meal->meal_name : ''; ?>" placeholder="<?php echo _l('dietetic_meal_placeholder'); ?>">
+                            <p class="help-block" id="meal-name-help" style="display: none;">
+                                <i class="fa fa-magic"></i> <?php echo _l('dietetic_auto_filled_from_recipe'); ?>
+                            </p>
                         </div>
 
                         <div class="form-group">
                             <label><?php echo _l('dietetic_instructions_preparation'); ?></label>
-                            <textarea name="instructions" class="form-control" rows="4"><?php echo isset($meal) ? $meal->instructions : ''; ?></textarea>
+                            <textarea name="instructions" id="instructions" class="form-control" rows="4"><?php echo isset($meal) ? $meal->instructions : ''; ?></textarea>
+                            <p class="help-block" id="instructions-help" style="display: none;">
+                                <i class="fa fa-magic"></i> <?php echo _l('dietetic_auto_filled_from_recipe'); ?>
+                            </p>
                         </div>
 
                         <?php if (isset($meal)) { ?>
@@ -181,3 +231,68 @@
 </div>
 
 <?php init_tail(); ?>
+
+<?php if (!isset($meal)) { ?>
+<script>
+$(document).ready(function() {
+    // Initialize selectpicker
+    $('#recipe_select').selectpicker();
+
+    // Handle recipe selection
+    $('#recipe_select').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        var recipeId = $(this).val();
+
+        if (recipeId) {
+            // Get recipe data from option attributes
+            var recipeName = selectedOption.data('name');
+            var recipeDescription = selectedOption.data('description');
+            var prepTime = selectedOption.data('prep-time');
+            var cookTime = selectedOption.data('cook-time');
+            var servings = selectedOption.data('servings');
+
+            // Fill form fields
+            $('#meal_name').val(recipeName);
+            $('#instructions').val(recipeDescription);
+
+            // Show help texts
+            $('#meal-name-help').show();
+            $('#instructions-help').show();
+
+            // Show preview
+            $('#preview-name').text(recipeName);
+            $('#preview-description').text(recipeDescription);
+
+            var detailsHtml = '<small>';
+            if (prepTime) {
+                detailsHtml += '<i class="fa fa-clock-o"></i> <?php echo _l("dietetic_prep_time"); ?>: ' + prepTime + ' min &nbsp;&nbsp;';
+            }
+            if (cookTime) {
+                detailsHtml += '<i class="fa fa-fire"></i> <?php echo _l("dietetic_cook_time"); ?>: ' + cookTime + ' min &nbsp;&nbsp;';
+            }
+            if (servings) {
+                detailsHtml += '<i class="fa fa-users"></i> <?php echo _l("dietetic_servings"); ?>: ' + servings;
+            }
+            detailsHtml += '</small>';
+
+            $('#preview-details').html(detailsHtml);
+            $('#recipe-preview').show();
+
+            // Disable manual editing of name and instructions
+            $('#meal_name').prop('readonly', true).css('background-color', '#f9f9f9');
+            $('#instructions').prop('readonly', true).css('background-color', '#f9f9f9');
+
+        } else {
+            // Clear form fields
+            $('#meal_name').val('').prop('readonly', false).css('background-color', '');
+            $('#instructions').val('').prop('readonly', false).css('background-color', '');
+
+            // Hide help texts and preview
+            $('#meal-name-help').hide();
+            $('#instructions-help').hide();
+            $('#recipe-preview').hide();
+        }
+    });
+});
+</script>
+<?php } ?>

@@ -581,22 +581,56 @@ class Programs extends AdminController
 
             $data['program'] = $this->dietetic_programs_model->get($data['meal_plan']->program_id);
 
+            // Load approved recipes for selection
+            $data['recipes'] = $this->dietetic_recipes_model->get_all([], 'approved');
+
             if ($this->input->post()) {
+                $recipe_id = $this->input->post('recipe_id');
+
+                // If a recipe is selected, get recipe data
+                if ($recipe_id) {
+                    $recipe = $this->dietetic_recipes_model->get($recipe_id);
+                    if (!$recipe) {
+                        set_alert('danger', 'Recipe not found');
+                        redirect($_SERVER['HTTP_REFERER']);
+                        return;
+                    }
+                }
+
                 // Map form fields to database columns
                 $meal_data = [
                     'meal_plan_id' => $this->input->post('meal_plan_id'),
                     'day_of_week' => $this->input->post('day_number'), // Map day_number to day_of_week
                     'meal_type' => $this->input->post('meal_type'),
-                    'meal_name' => $this->input->post('meal_name'),
+                    'meal_name' => $recipe_id && $recipe ? $recipe->recipe_name : $this->input->post('meal_name'),
                     'meal_time' => $this->input->post('meal_time'),
-                    'instructions' => $this->input->post('instructions'),
+                    'instructions' => $recipe_id && $recipe ? $recipe->description : $this->input->post('instructions'),
                     'display_order' => 0
                 ];
 
                 $meal_id = $this->dietetic_meal_plans_model->add_meal($meal_data);
 
                 if ($meal_id) {
-                    set_alert('success', 'Meal created successfully');
+                    // If a recipe was selected, copy ingredients to meal
+                    if ($recipe_id && $recipe && !empty($recipe->ingredients)) {
+                        foreach ($recipe->ingredients as $ingredient) {
+                            // Get food by name or create reference
+                            $this->db->where('food_name', $ingredient->ingredient_name);
+                            $food = $this->db->get(db_prefix() . 'dietic_foods')->row();
+
+                            if ($food) {
+                                $meal_food_data = [
+                                    'meal_id' => $meal_id,
+                                    'food_id' => $food->id,
+                                    'quantity' => $ingredient->quantity,
+                                    'display_order' => $ingredient->order_number
+                                ];
+                                $this->dietetic_meal_plans_model->add_meal_food($meal_food_data);
+                            }
+                        }
+                    }
+
+                    set_alert('success', 'Meal created successfully' . ($recipe_id ? ' from recipe' : ''));
                     redirect(admin_url('dietetic/programs/meal/edit/' . $meal_id));
                 } else {
                     set_alert('danger', 'Failed to create meal');
