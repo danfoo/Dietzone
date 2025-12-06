@@ -85,9 +85,6 @@ foreach ($invoices as $invoice) {
                 </div>
                 <h3>Aucune facture</h3>
                 <p>Vous n'avez pas encore de factures.</p>
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
-                    <i class="fa fa-arrow-left"></i> Retour au tableau de bord
-                </a>
             </div>
         <?php else: ?>
             <!-- Invoices Accordion -->
@@ -269,13 +266,6 @@ foreach ($invoices as $invoice) {
                     </div>
                 <?php endforeach; ?>
             </div>
-
-            <!-- Back Button -->
-            <div class="back-section">
-                <a href="<?php echo site_url('dietetic/portal'); ?>" class="btn-back">
-                    <i class="fa fa-arrow-left"></i> Retour au tableau de bord
-                </a>
-            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -283,7 +273,7 @@ foreach ($invoices as $invoice) {
 <style>
 /* Mobile-First Design */
 .portal-content {
-    padding: 20px 15px;
+    padding: 15px 10px;
     min-height: calc(100vh - 200px);
     background: #f8f9fa;
 }
@@ -341,8 +331,8 @@ foreach ($invoices as $invoice) {
 .stat-card {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 20px;
+    gap: 10px;
+    padding: 15px;
     border-bottom: 1px solid #e9ecef;
     border-right: 1px solid #e9ecef;
     transition: background 0.3s ease;
@@ -366,13 +356,13 @@ foreach ($invoices as $invoice) {
 }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     flex-shrink: 0;
 }
 
@@ -396,10 +386,10 @@ foreach ($invoices as $invoice) {
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .stat-paid .stat-value {
@@ -444,7 +434,7 @@ foreach ($invoices as $invoice) {
 .empty-state p {
     color: #999;
     font-size: 14px;
-    margin-bottom: 25px;
+    margin: 0;
 }
 
 /* Invoices Grid - Mobile First */
@@ -715,34 +705,6 @@ foreach ($invoices as $invoice) {
     text-decoration: none;
 }
 
-/* Back Section */
-.back-section {
-    text-align: center;
-    padding: 20px 0;
-}
-
-.btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    background: white;
-    color: #2c3e50;
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.btn-back:hover {
-    background: #01807B;
-    color: white;
-    border-color: #01807B;
-    text-decoration: none;
-}
-
 /* Tablet - Stats keep 2 columns */
 @media (min-width: 600px) {
     /* Stats already in 2 columns by default */
@@ -751,7 +713,7 @@ foreach ($invoices as $invoice) {
 /* Tablet & Desktop */
 @media (min-width: 768px) {
     .portal-content {
-        padding: 30px 20px;
+        padding: 20px 15px;
     }
 
     .dashboard-header {
@@ -784,7 +746,7 @@ foreach ($invoices as $invoice) {
 /* Large Desktop */
 @media (min-width: 1200px) {
     .portal-content {
-        padding: 40px 30px;
+        padding: 20px 15px;
     }
 
     .invoices-grid {
