@@ -3884,45 +3884,6 @@ if (!$current_weight || !$target_weight) {
 <!-- =====================================================
      SECTION: MA JOURNÉE (Daily Tracking)
      ===================================================== -->
-
-<!-- DEBUG BOX - TEMPORARY -->
-<div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 15px 0; border-radius: 8px; font-family: monospace;">
-    <strong style="font-size: 16px;">🔍 DEBUG - Valeurs au chargement de la page:</strong><br><br>
-
-    <strong>Table Name:</strong> <?php echo isset($debug_table_name) ? $debug_table_name : 'N/A'; ?><br>
-    <strong>Table Exists:</strong> <?php echo isset($debug_table_exists) ? $debug_table_exists : 'N/A'; ?><br>
-    <strong>$daily_tracking variable exists:</strong> <?php echo isset($daily_tracking) ? 'YES' : 'NO'; ?><br>
-    <strong>$daily_tracking type:</strong> <?php echo isset($daily_tracking) ? gettype($daily_tracking) : 'N/A'; ?><br>
-    <strong>$patient->id:</strong> <?php echo isset($patient) && isset($patient->id) ? $patient->id : 'N/A'; ?><br><br>
-
-    <?php if (isset($debug_exception)) { ?>
-    <div style="background: #f8d7da; border: 2px solid #dc3545; padding: 10px; margin: 10px 0; border-radius: 5px;">
-        <strong style="color: #721c24; font-size: 14px;">❌ EXCEPTION CAUGHT:</strong><br>
-        <strong>Message:</strong> <?php echo htmlspecialchars($debug_exception); ?><br><br>
-        <strong>Stack Trace:</strong><br>
-        <pre style="background: #fff; padding: 5px; font-size: 10px; max-height: 300px; overflow-y: auto; white-space: pre-wrap;"><?php echo htmlspecialchars($debug_exception_trace); ?></pre>
-    </div>
-    <?php } ?>
-
-    <strong>Tracking ID:</strong> <?php echo isset($daily_tracking->id) ? $daily_tracking->id : 'NULL'; ?><br>
-    <strong>Date:</strong> <?php echo isset($daily_tracking->tracking_date) ? $daily_tracking->tracking_date : 'NULL'; ?><br>
-    <strong>Breakfast:</strong> <?php echo isset($daily_tracking->breakfast_checked) ? $daily_tracking->breakfast_checked : 'NOT SET'; ?>
-        (<?php echo isset($daily_tracking->breakfast_checked) && $daily_tracking->breakfast_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
-    <strong>Lunch:</strong> <?php echo isset($daily_tracking->lunch_checked) ? $daily_tracking->lunch_checked : 'NOT SET'; ?>
-        (<?php echo isset($daily_tracking->lunch_checked) && $daily_tracking->lunch_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
-    <strong>Dinner:</strong> <?php echo isset($daily_tracking->dinner_checked) ? $daily_tracking->dinner_checked : 'NOT SET'; ?>
-        (<?php echo isset($daily_tracking->dinner_checked) && $daily_tracking->dinner_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br><br>
-
-    <strong>Full object dump:</strong><br>
-    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px; font-size: 11px; max-height: 200px; overflow-y: auto;"><?php
-        if (isset($daily_tracking)) {
-            print_r($daily_tracking);
-        } else {
-            echo '$daily_tracking is NOT SET';
-        }
-    ?></pre>
-</div>
-
 <div class="my-day-section">
     <div class="my-day-header">
         <div class="my-day-title">
@@ -4643,21 +4604,6 @@ function toggleMeal(mealType, checked) {
     })
     .then(response => response.json())
     .then(data => {
-        // DEBUG: Log complete response
-        console.log('🔍 DEBUG - Toggle Meal Response:', data);
-
-        if (data.debug) {
-            console.log('📊 DEBUG INFO:', {
-                'Patient ID': data.debug.patient_id,
-                'Meal': data.debug.meal,
-                'Requested': data.debug.requested,
-                'Actual in DB': data.debug.actual_in_db,
-                'Tracking ID': data.debug.tracking_id,
-                'Date': data.debug.tracking_date,
-                'All Meal Values': data.debug.all_values
-            });
-        }
-
         if (data.success) {
             // Update progress bar
             updateMealsProgress();

@@ -323,31 +323,11 @@ class Portal extends App_Controller
 
         // Get daily tracking data
         try {
-            $table_exists = $this->db->table_exists(db_prefix() . 'dietic_daily_tracking');
-            $table_name = db_prefix() . 'dietic_daily_tracking';
-
-            // DEBUG: Log table check
-            log_message('debug', '=== Portal::index() - Table check: ' . $table_name . ' exists: ' . ($table_exists ? 'YES' : 'NO'));
-
-            if ($table_exists) {
-                // DEBUG: Log before calling get_today
-                log_message('debug', '=== Portal::index() - Calling get_today for patient_id: ' . $patient->id);
-
+            if ($this->db->table_exists(db_prefix() . 'dietic_daily_tracking')) {
                 $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_today($patient->id);
-
-                // DEBUG: Log what was returned
-                log_message('debug', 'Portal::index() - get_today returned: ' . json_encode($data['daily_tracking']));
-
-                // DEBUG: Store debug info for view
-                $data['debug_table_exists'] = 'YES';
-                $data['debug_table_name'] = $table_name;
-
                 $data['tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
                 $data['tracking_completion'] = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
             } else{
-                // DEBUG: Store debug info for view
-                $data['debug_table_exists'] = 'NO';
-                $data['debug_table_name'] = $table_name;
                 // Table doesn't exist yet, set default values
                 $data['daily_tracking'] = (object)[
                     'water_glasses' => 0,
@@ -361,11 +341,6 @@ class Portal extends App_Controller
                 $data['tracking_completion'] = 0;
             }
         } catch (Exception $e) {
-            // DEBUG: Store exception details for debugging
-            $data['debug_exception'] = $e->getMessage();
-            $data['debug_exception_trace'] = $e->getTraceAsString();
-            $data['debug_table_exists'] = 'EXCEPTION';
-
             log_activity('Error loading daily tracking: ' . $e->getMessage());
             $data['daily_tracking'] = (object)[
                 'water_glasses' => 0,
@@ -6444,23 +6419,9 @@ class Portal extends App_Controller
                     }
                 }
 
-                // DEBUG: Add debug information
                 echo json_encode([
                     'success' => true,
-                    'checked' => (bool)$tracking->$field,
-                    'debug' => [
-                        'patient_id' => $patient->id,
-                        'meal' => $meal,
-                        'requested' => $checked ? 'CHECKED' : 'UNCHECKED',
-                        'actual_in_db' => $tracking->$field ? 'CHECKED' : 'UNCHECKED',
-                        'tracking_id' => $tracking->id,
-                        'tracking_date' => $tracking->tracking_date,
-                        'all_values' => [
-                            'breakfast' => $tracking->breakfast_checked,
-                            'lunch' => $tracking->lunch_checked,
-                            'dinner' => $tracking->dinner_checked
-                        ]
-                    ]
+                    'checked' => (bool)$tracking->$field
                 ]);
             } else {
                 echo json_encode(['success' => false, 'error' => 'Update failed']);
