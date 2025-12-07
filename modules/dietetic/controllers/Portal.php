@@ -6391,11 +6391,17 @@ class Portal extends App_Controller
         }
 
         try {
+            // DEBUG: Log toggle attempt
+            log_message('debug', 'API_TOGGLE_MEAL - Patient: ' . $patient->id . ', Meal: ' . $meal . ', Checked: ' . ($checked ? 'true' : 'false'));
+
             $success = $this->dietetic_daily_tracking_model->toggle_meal($patient->id, $meal, $checked);
 
             if ($success) {
                 $tracking = $this->dietetic_daily_tracking_model->get_today($patient->id);
                 $field = $meal . '_checked';
+
+                // DEBUG: Check what was actually saved
+                log_message('debug', 'API_TOGGLE_MEAL - After toggle, ' . $field . ' = ' . $tracking->$field);
 
                 // Award points if meal was checked (validated)
                 if ($checked && $this->is_gamification_ready()) {
@@ -6421,14 +6427,25 @@ class Portal extends App_Controller
 
                 echo json_encode([
                     'success' => true,
-                    'checked' => (bool)$tracking->$field
+                    'checked' => (bool)$tracking->$field,
+                    // TEMPORARY DEBUG INFO
+                    'debug' => [
+                        'patient_id' => $patient->id,
+                        'meal' => $meal,
+                        'requested_checked' => $checked,
+                        'actual_value' => $tracking->$field,
+                        'tracking_id' => $tracking->id ?? null,
+                        'tracking_date' => $tracking->tracking_date ?? null
+                    ]
                 ]);
             } else {
+                log_message('error', 'API_TOGGLE_MEAL - Toggle failed for patient ' . $patient->id);
                 echo json_encode(['success' => false, 'error' => 'Update failed']);
             }
         } catch (Exception $e) {
             log_activity('Error toggling meal: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'error' => 'Server error']);
+            log_message('error', 'API_TOGGLE_MEAL - Exception: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
         }
     }
 

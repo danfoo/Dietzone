@@ -4604,7 +4604,29 @@ function toggleMeal(mealType, checked) {
     })
     .then(response => response.json())
     .then(data => {
+        // DEBUG: Log full response
+        console.log('🔍 DEBUG - Toggle Meal Response:', data);
+
         if (data.success) {
+            // DEBUG: Show debug info if available
+            if (data.debug) {
+                console.log('📊 DEBUG INFO:', {
+                    'Patient ID': data.debug.patient_id,
+                    'Meal': data.debug.meal,
+                    'Requested': data.debug.requested_checked ? 'CHECKED' : 'UNCHECKED',
+                    'Actual in DB': data.debug.actual_value == 1 ? 'CHECKED' : 'UNCHECKED',
+                    'Tracking ID': data.debug.tracking_id,
+                    'Date': data.debug.tracking_date
+                });
+
+                // Show alert if mismatch
+                if ((data.debug.requested_checked && data.debug.actual_value != 1) ||
+                    (!data.debug.requested_checked && data.debug.actual_value != 0)) {
+                    console.error('⚠️ MISMATCH: Requested ' + (data.debug.requested_checked ? 'checked' : 'unchecked') +
+                                  ' but DB has ' + (data.debug.actual_value == 1 ? 'checked' : 'unchecked'));
+                }
+            }
+
             // Update progress bar
             updateMealsProgress();
 
@@ -4617,6 +4639,7 @@ function toggleMeal(mealType, checked) {
             const icon = checked ? '✅' : '🔲';
             showToast(icon + ' ' + mealNames[mealType] + ' ' + (checked ? 'validé' : 'non validé'), 'success');
         } else {
+            console.error('❌ ERROR:', data.error);
             // Revert checkbox on error
             const checkbox = document.querySelector(`.daily-checkbox[data-meal="${mealType}"]`);
             if (checkbox) {

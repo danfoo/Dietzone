@@ -61,6 +61,13 @@ class Dietetic_daily_tracking_model extends App_Model
         $this->db->where('tracking_date', $today);
         $tracking = $this->db->get(db_prefix() . $this->table)->row();
 
+        // DEBUG: Log what we retrieved
+        log_message('debug', 'DAILY TRACKING GET_TODAY for patient ' . $patient_id . ' on ' . $today);
+        log_message('debug', 'DAILY TRACKING FOUND: ' . ($tracking ? 'YES' : 'NO'));
+        if ($tracking) {
+            log_message('debug', 'DAILY TRACKING DATA: ' . print_r($tracking, true));
+        }
+
         // Si pas de tracking aujourd'hui, retourner valeurs par défaut
         if (!$tracking) {
             return $this->get_empty_tracking($patient_id);
@@ -158,10 +165,24 @@ class Dietetic_daily_tracking_model extends App_Model
                 ON DUPLICATE KEY UPDATE " . implode(', ', $update_parts);
 
         try {
-            $this->db->query($sql, $values);
+            // DEBUG: Log the SQL query
+            log_message('debug', 'DAILY TRACKING SQL: ' . $sql);
+            log_message('debug', 'DAILY TRACKING VALUES: ' . print_r($values, true));
+
+            $result = $this->db->query($sql, $values);
+
+            // DEBUG: Check affected rows
+            log_message('debug', 'DAILY TRACKING AFFECTED ROWS: ' . $this->db->affected_rows());
+
+            // Verify the data was saved
+            $verify = $this->get_today($patient_id);
+            log_message('debug', 'DAILY TRACKING VERIFY AFTER SAVE: ' . print_r($verify, true));
+
             return true;
         } catch (Exception $e) {
             log_activity('Error updating daily tracking: ' . $e->getMessage());
+            log_message('error', 'DAILY TRACKING SQL ERROR: ' . $e->getMessage());
+            log_message('error', 'DAILY TRACKING SQL: ' . $sql);
             return false;
         }
     }
