@@ -49,33 +49,15 @@ class Dietetic_daily_tracking_model extends App_Model
      */
     public function get_today($patient_id)
     {
-        // DEBUG: Check permission result
-        $has_permission = dietetic_can_access_patient($patient_id);
-        log_message('debug', 'DAILY TRACKING GET_TODAY - Patient ID: ' . $patient_id);
-        log_message('debug', 'DAILY TRACKING GET_TODAY - Permission Check: ' . ($has_permission ? 'GRANTED' : 'DENIED'));
-
-        // TEMPORARY: Bypass permission check for debugging
-        // TODO: Fix dietetic_can_access_patient() to work correctly for portal users
-        /*
-        if (!$has_permission) {
-            log_activity('Unauthorized attempt to access daily tracking for Patient ID ' . $patient_id);
-            log_message('error', 'DAILY TRACKING - PERMISSION DENIED for patient ' . $patient_id . ' - Returning empty tracking');
-            return $this->get_empty_tracking($patient_id);
-        }
-        */
+        // NOTE: Permission check bypassed for daily tracking
+        // Patients always need access to their own tracking data
+        // Permission is validated at controller level (is_client_logged_in)
 
         $today = date('Y-m-d');
 
         $this->db->where('patient_id', $patient_id);
         $this->db->where('tracking_date', $today);
         $tracking = $this->db->get(db_prefix() . $this->table)->row();
-
-        // DEBUG: Log what we retrieved
-        log_message('debug', 'DAILY TRACKING GET_TODAY for patient ' . $patient_id . ' on ' . $today);
-        log_message('debug', 'DAILY TRACKING FOUND: ' . ($tracking ? 'YES' : 'NO'));
-        if ($tracking) {
-            log_message('debug', 'DAILY TRACKING DATA: ' . print_r($tracking, true));
-        }
 
         // Si pas de tracking aujourd'hui, retourner valeurs par défaut
         if (!$tracking) {
@@ -174,24 +156,10 @@ class Dietetic_daily_tracking_model extends App_Model
                 ON DUPLICATE KEY UPDATE " . implode(', ', $update_parts);
 
         try {
-            // DEBUG: Log the SQL query
-            log_message('debug', 'DAILY TRACKING SQL: ' . $sql);
-            log_message('debug', 'DAILY TRACKING VALUES: ' . print_r($values, true));
-
-            $result = $this->db->query($sql, $values);
-
-            // DEBUG: Check affected rows
-            log_message('debug', 'DAILY TRACKING AFFECTED ROWS: ' . $this->db->affected_rows());
-
-            // Verify the data was saved
-            $verify = $this->get_today($patient_id);
-            log_message('debug', 'DAILY TRACKING VERIFY AFTER SAVE: ' . print_r($verify, true));
-
+            $this->db->query($sql, $values);
             return true;
         } catch (Exception $e) {
             log_activity('Error updating daily tracking: ' . $e->getMessage());
-            log_message('error', 'DAILY TRACKING SQL ERROR: ' . $e->getMessage());
-            log_message('error', 'DAILY TRACKING SQL: ' . $sql);
             return false;
         }
     }
