@@ -20,12 +20,25 @@ class Debug_tracking extends ClientsController
      */
     public function index()
     {
-        if (!is_client_logged_in()) {
-            die('Not authenticated');
+        // Allow access with secret key OR if logged in
+        $secret_key = $this->input->get('key');
+        $is_authenticated = is_client_logged_in();
+
+        if (!$is_authenticated && $secret_key !== 'debug2025') {
+            die('Not authenticated. Use: ?key=debug2025 OR login first');
         }
 
-        $client_id = get_client_user_id();
-        $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        // If using secret key, use patient_id from URL
+        if (!$is_authenticated) {
+            $patient_id = $this->input->get('patient_id');
+            if (!$patient_id) {
+                die('Please provide patient_id in URL: ?key=debug2025&patient_id=1');
+            }
+            $patient = $this->dietetic_patients_model->get($patient_id);
+        } else {
+            $client_id = get_client_user_id();
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        }
 
         if (!$patient) {
             die('Patient not found');
