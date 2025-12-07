@@ -49,9 +49,15 @@ class Dietetic_daily_tracking_model extends App_Model
      */
     public function get_today($patient_id)
     {
+        // DEBUG: Check permission result
+        $has_permission = dietetic_can_access_patient($patient_id);
+        log_message('debug', 'DAILY TRACKING GET_TODAY - Patient ID: ' . $patient_id);
+        log_message('debug', 'DAILY TRACKING GET_TODAY - Permission Check: ' . ($has_permission ? 'GRANTED' : 'DENIED'));
+
         // Check access permissions
-        if (!dietetic_can_access_patient($patient_id)) {
+        if (!$has_permission) {
             log_activity('Unauthorized attempt to access daily tracking for Patient ID ' . $patient_id);
+            log_message('error', 'DAILY TRACKING - PERMISSION DENIED for patient ' . $patient_id . ' - Returning empty tracking');
             return $this->get_empty_tracking($patient_id);
         }
 
