@@ -6419,9 +6419,23 @@ class Portal extends App_Controller
                     }
                 }
 
+                // DEBUG: Add debug information
                 echo json_encode([
                     'success' => true,
-                    'checked' => (bool)$tracking->$field
+                    'checked' => (bool)$tracking->$field,
+                    'debug' => [
+                        'patient_id' => $patient->id,
+                        'meal' => $meal,
+                        'requested' => $checked ? 'CHECKED' : 'UNCHECKED',
+                        'actual_in_db' => $tracking->$field ? 'CHECKED' : 'UNCHECKED',
+                        'tracking_id' => $tracking->id,
+                        'tracking_date' => $tracking->tracking_date,
+                        'all_values' => [
+                            'breakfast' => $tracking->breakfast_checked,
+                            'lunch' => $tracking->lunch_checked,
+                            'dinner' => $tracking->dinner_checked
+                        ]
+                    ]
                 ]);
             } else {
                 echo json_encode(['success' => false, 'error' => 'Update failed']);
