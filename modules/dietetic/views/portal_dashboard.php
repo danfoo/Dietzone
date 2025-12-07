@@ -1713,8 +1713,9 @@ $this->load->view('portal/includes/portal_header');
 .meals-block .daily-tracking-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 10px;
+    width: 100%;
 }
 
 /* Compact horizontal item style */
@@ -1722,7 +1723,7 @@ $this->load->view('portal/includes/portal_header');
     background: white;
     border-radius: 12px;
     padding: 8px 14px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -1735,17 +1736,64 @@ $this->load->view('portal/includes/portal_header');
     justify-content: center;
     flex-direction: column;
     text-align: center;
-    padding: 18px 16px;
-    transition: all 0.3s ease;
+    padding: 20px 16px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
     width: 100%;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle animated background on hover */
+.meals-block .daily-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(1, 128, 123, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.meals-block .daily-item:hover::before {
+    left: 100%;
 }
 
 .meals-block .daily-item:hover {
     border-color: #01807B;
-    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
+    box-shadow: 0 6px 20px rgba(1, 128, 123, 0.2);
     background: #ffffff;
-    transform: translateY(-2px);
+    transform: translateY(-3px) scale(1.01);
+}
+
+/* Staggered fade-in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.meals-block .daily-item {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.meals-block .daily-item:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.meals-block .daily-item:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.meals-block .daily-item:nth-child(3) {
+    animation-delay: 0.3s;
 }
 
 /* Content wrapper for icon and label */
@@ -1795,6 +1843,21 @@ $this->load->view('portal/includes/portal_header');
     transform: translateY(-1px);
 }
 
+/* Icon entrance animation */
+@keyframes iconBounce {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.1) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
 .daily-item-icon {
     font-size: 24px;
     width: 50px;
@@ -1805,6 +1868,19 @@ $this->load->view('portal/includes/portal_header');
     flex-shrink: 0;
     border-radius: 14px;
     transition: all 0.3s ease;
+    animation: iconBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+.meals-block .breakfast-item .daily-item-icon {
+    animation-delay: 0.2s;
+}
+
+.meals-block .lunch-item .daily-item-icon {
+    animation-delay: 0.3s;
+}
+
+.meals-block .dinner-item .daily-item-icon {
+    animation-delay: 0.4s;
 }
 
 .breakfast-item .daily-item-icon {
@@ -1863,11 +1939,36 @@ $this->load->view('portal/includes/portal_header');
     margin-top: 4px;
 }
 
+/* Checkbox entrance animation */
+@keyframes checkboxSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
 /* Modern Checkbox Container */
 .modern-checkbox {
     position: relative;
     display: inline-block;
     cursor: pointer;
+    animation: checkboxSlideIn 0.4s ease backwards;
+}
+
+.meals-block .breakfast-item .modern-checkbox {
+    animation-delay: 0.4s;
+}
+
+.meals-block .lunch-item .modern-checkbox {
+    animation-delay: 0.5s;
+}
+
+.meals-block .dinner-item .modern-checkbox {
+    animation-delay: 0.6s;
 }
 
 /* Hide native checkbox */
