@@ -3888,6 +3888,13 @@ if (!$current_weight || !$target_weight) {
 <!-- DEBUG BOX - TEMPORARY -->
 <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 15px 0; border-radius: 8px; font-family: monospace;">
     <strong style="font-size: 16px;">🔍 DEBUG - Valeurs au chargement de la page:</strong><br><br>
+
+    <strong>Table Name:</strong> <?php echo isset($debug_table_name) ? $debug_table_name : 'N/A'; ?><br>
+    <strong>Table Exists:</strong> <?php echo isset($debug_table_exists) ? $debug_table_exists : 'N/A'; ?><br>
+    <strong>$daily_tracking variable exists:</strong> <?php echo isset($daily_tracking) ? 'YES' : 'NO'; ?><br>
+    <strong>$daily_tracking type:</strong> <?php echo isset($daily_tracking) ? gettype($daily_tracking) : 'N/A'; ?><br>
+    <strong>$patient->id:</strong> <?php echo isset($patient) && isset($patient->id) ? $patient->id : 'N/A'; ?><br><br>
+
     <strong>Tracking ID:</strong> <?php echo isset($daily_tracking->id) ? $daily_tracking->id : 'NULL'; ?><br>
     <strong>Date:</strong> <?php echo isset($daily_tracking->tracking_date) ? $daily_tracking->tracking_date : 'NULL'; ?><br>
     <strong>Breakfast:</strong> <?php echo isset($daily_tracking->breakfast_checked) ? $daily_tracking->breakfast_checked : 'NOT SET'; ?>
@@ -3895,7 +3902,16 @@ if (!$current_weight || !$target_weight) {
     <strong>Lunch:</strong> <?php echo isset($daily_tracking->lunch_checked) ? $daily_tracking->lunch_checked : 'NOT SET'; ?>
         (<?php echo isset($daily_tracking->lunch_checked) && $daily_tracking->lunch_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
     <strong>Dinner:</strong> <?php echo isset($daily_tracking->dinner_checked) ? $daily_tracking->dinner_checked : 'NOT SET'; ?>
-        (<?php echo isset($daily_tracking->dinner_checked) && $daily_tracking->dinner_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
+        (<?php echo isset($daily_tracking->dinner_checked) && $daily_tracking->dinner_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br><br>
+
+    <strong>Full object dump:</strong><br>
+    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px; font-size: 11px; max-height: 200px; overflow-y: auto;"><?php
+        if (isset($daily_tracking)) {
+            print_r($daily_tracking);
+        } else {
+            echo '$daily_tracking is NOT SET';
+        }
+    ?></pre>
 </div>
 
 <div class="my-day-section">
