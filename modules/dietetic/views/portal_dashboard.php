@@ -1731,11 +1731,27 @@ $this->load->view('portal/includes/portal_header');
 
 .meals-block .daily-item {
     box-shadow: none;
-    border: 1px solid #e0e0e0;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    padding: 10px 8px;
+    border: 2px solid #e8e8e8;
+    justify-content: space-between;
+    flex-direction: row;
+    text-align: left;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+}
+
+.meals-block .daily-item:hover {
+    border-color: #01807B;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
+    background: #ffffff;
+}
+
+/* Content wrapper for icon and label */
+.daily-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
 }
 
 /* Water item full width */
@@ -1777,25 +1793,45 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-icon {
-    font-size: 16px;
-    width: 24px;
-    height: 24px;
+    font-size: 18px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
 .breakfast-item .daily-item-icon {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
     color: #FF9800;
 }
 
+.breakfast-item:hover .daily-item-icon {
+    background: linear-gradient(135deg, #FFE0B2 0%, #FFCC80 100%);
+    transform: scale(1.05);
+}
+
 .lunch-item .daily-item-icon {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
     color: #4CAF50;
 }
 
+.lunch-item:hover .daily-item-icon {
+    background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
+    transform: scale(1.05);
+}
+
 .dinner-item .daily-item-icon {
+    background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
     color: #3F51B5;
+}
+
+.dinner-item:hover .daily-item-icon {
+    background: linear-gradient(135deg, #C5CAE9 0%, #9FA8DA 100%);
+    transform: scale(1.05);
 }
 
 .water-item .daily-item-icon {
@@ -1811,11 +1847,10 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-label {
-    font-size: 8px;
+    font-size: 15px;
     color: #2c3e50;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     white-space: nowrap;
 }
 
@@ -1826,13 +1861,73 @@ $this->load->view('portal/includes/portal_header');
     margin-top: 4px;
 }
 
-/* Checkbox custom style */
-.daily-checkbox {
-    width: 16px;
-    height: 16px;
+/* Modern Checkbox Container */
+.modern-checkbox {
+    position: relative;
+    display: inline-block;
     cursor: pointer;
-    flex-shrink: 0;
-    accent-color: #01807B;
+}
+
+/* Hide native checkbox */
+.modern-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Custom checkbox design */
+.checkbox-custom {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    border: 2.5px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Checkbox icon (checkmark) */
+.checkbox-icon {
+    color: white;
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0) rotate(-45deg);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Hover state */
+.modern-checkbox:hover .checkbox-custom {
+    border-color: #01807B;
+    box-shadow: 0 3px 8px rgba(1, 128, 123, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Checked state */
+.modern-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+    background: linear-gradient(135deg, #01807B 0%, #019a94 100%);
+    border-color: #01807B;
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .checkbox-custom .checkbox-icon {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+/* Active/Click animation */
+.modern-checkbox:active .checkbox-custom {
+    transform: scale(0.95);
+}
+
+/* Focus state for accessibility */
+.modern-checkbox input[type="checkbox"]:focus + .checkbox-custom {
+    outline: 2px solid #01807B;
+    outline-offset: 2px;
 }
 
 /* Progress bar for meals */
@@ -3902,35 +3997,56 @@ if (!$current_weight || !$target_weight) {
         <div class="daily-tracking-grid">
             <!-- Item 1: Petit déjeuner -->
             <div class="daily-item breakfast-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-coffee"></i>
+                <div class="daily-item-content">
+                    <div class="daily-item-icon">
+                        <i class="fa fa-coffee"></i>
+                    </div>
+                    <span class="daily-item-label">Petit déjeuner</span>
                 </div>
-                <span class="daily-item-label">Petit déjeuner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
-                       <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('breakfast', this.checked)">
+                <label class="modern-checkbox">
+                    <input type="checkbox" class="daily-checkbox" data-meal="breakfast"
+                           <?php echo $daily_tracking->breakfast_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('breakfast', this.checked)">
+                    <span class="checkbox-custom">
+                        <i class="fa fa-check checkbox-icon"></i>
+                    </span>
+                </label>
             </div>
 
             <!-- Item 2: Déjeuner -->
             <div class="daily-item lunch-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-cutlery"></i>
+                <div class="daily-item-content">
+                    <div class="daily-item-icon">
+                        <i class="fa fa-cutlery"></i>
+                    </div>
+                    <span class="daily-item-label">Déjeuner</span>
                 </div>
-                <span class="daily-item-label">Déjeuner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="lunch"
-                       <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('lunch', this.checked)">
+                <label class="modern-checkbox">
+                    <input type="checkbox" class="daily-checkbox" data-meal="lunch"
+                           <?php echo $daily_tracking->lunch_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('lunch', this.checked)">
+                    <span class="checkbox-custom">
+                        <i class="fa fa-check checkbox-icon"></i>
+                    </span>
+                </label>
             </div>
 
             <!-- Item 3: Dîner -->
             <div class="daily-item dinner-item">
-                <div class="daily-item-icon">
-                    <i class="fa fa-moon-o"></i>
+                <div class="daily-item-content">
+                    <div class="daily-item-icon">
+                        <i class="fa fa-moon-o"></i>
+                    </div>
+                    <span class="daily-item-label">Dîner</span>
                 </div>
-                <span class="daily-item-label">Dîner</span>
-                <input type="checkbox" class="daily-checkbox" data-meal="dinner"
-                       <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
-                       onchange="toggleMeal('dinner', this.checked)">
+                <label class="modern-checkbox">
+                    <input type="checkbox" class="daily-checkbox" data-meal="dinner"
+                           <?php echo $daily_tracking->dinner_checked ? 'checked' : ''; ?>
+                           onchange="toggleMeal('dinner', this.checked)">
+                    <span class="checkbox-custom">
+                        <i class="fa fa-check checkbox-icon"></i>
+                    </span>
+                </label>
             </div>
         </div>
 
