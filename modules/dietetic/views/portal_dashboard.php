@@ -3895,6 +3895,15 @@ if (!$current_weight || !$target_weight) {
     <strong>$daily_tracking type:</strong> <?php echo isset($daily_tracking) ? gettype($daily_tracking) : 'N/A'; ?><br>
     <strong>$patient->id:</strong> <?php echo isset($patient) && isset($patient->id) ? $patient->id : 'N/A'; ?><br><br>
 
+    <?php if (isset($debug_exception)) { ?>
+    <div style="background: #f8d7da; border: 2px solid #dc3545; padding: 10px; margin: 10px 0; border-radius: 5px;">
+        <strong style="color: #721c24; font-size: 14px;">❌ EXCEPTION CAUGHT:</strong><br>
+        <strong>Message:</strong> <?php echo htmlspecialchars($debug_exception); ?><br><br>
+        <strong>Stack Trace:</strong><br>
+        <pre style="background: #fff; padding: 5px; font-size: 10px; max-height: 300px; overflow-y: auto; white-space: pre-wrap;"><?php echo htmlspecialchars($debug_exception_trace); ?></pre>
+    </div>
+    <?php } ?>
+
     <strong>Tracking ID:</strong> <?php echo isset($daily_tracking->id) ? $daily_tracking->id : 'NULL'; ?><br>
     <strong>Date:</strong> <?php echo isset($daily_tracking->tracking_date) ? $daily_tracking->tracking_date : 'NULL'; ?><br>
     <strong>Breakfast:</strong> <?php echo isset($daily_tracking->breakfast_checked) ? $daily_tracking->breakfast_checked : 'NOT SET'; ?>

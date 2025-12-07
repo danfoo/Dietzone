@@ -361,6 +361,11 @@ class Portal extends App_Controller
                 $data['tracking_completion'] = 0;
             }
         } catch (Exception $e) {
+            // DEBUG: Store exception details for debugging
+            $data['debug_exception'] = $e->getMessage();
+            $data['debug_exception_trace'] = $e->getTraceAsString();
+            $data['debug_table_exists'] = 'EXCEPTION';
+
             log_activity('Error loading daily tracking: ' . $e->getMessage());
             $data['daily_tracking'] = (object)[
                 'water_glasses' => 0,
