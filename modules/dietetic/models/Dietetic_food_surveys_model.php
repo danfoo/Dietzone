@@ -4,6 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Dietetic_food_surveys_model extends App_Model
 {
+    // NOTE: Table names include the 'tbl' prefix - do NOT use db_prefix() with these
     private $table_surveys = 'tbldietic_food_surveys';
     private $table_entries = 'tbldietic_food_survey_entries';
     private $table_beverages = 'tbldietic_food_survey_beverages';
@@ -632,7 +633,8 @@ class Dietetic_food_surveys_model extends App_Model
         $this->db->group_end();
         $this->db->order_by('created_at', 'DESC');
 
-        return $this->db->get(db_prefix() . $this->table_surveys)->result();
+        // NOTE: $this->table_surveys already includes 'tbl' prefix
+        return $this->db->get($this->table_surveys)->result();
     }
 
     /**
