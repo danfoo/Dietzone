@@ -327,6 +327,13 @@ class Portal extends App_Controller
                 $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_today($patient->id);
                 $data['tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
                 $data['tracking_completion'] = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
+
+                // DEBUG: Log what we're passing to the view
+                log_message('debug', 'PORTAL_DASHBOARD - Loading for patient: ' . $patient->id);
+                log_message('debug', 'PORTAL_DASHBOARD - daily_tracking data: ' . print_r($data['daily_tracking'], true));
+                log_message('debug', 'PORTAL_DASHBOARD - breakfast_checked = ' . ($data['daily_tracking']->breakfast_checked ?? 'NULL'));
+                log_message('debug', 'PORTAL_DASHBOARD - lunch_checked = ' . ($data['daily_tracking']->lunch_checked ?? 'NULL'));
+                log_message('debug', 'PORTAL_DASHBOARD - dinner_checked = ' . ($data['daily_tracking']->dinner_checked ?? 'NULL'));
             } else {
                 // Table doesn't exist yet, set default values
                 $data['daily_tracking'] = (object)[

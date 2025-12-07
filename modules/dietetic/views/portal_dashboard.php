@@ -3884,6 +3884,19 @@ if (!$current_weight || !$target_weight) {
 <!-- =====================================================
      SECTION: MA JOURNÉE (Daily Tracking)
      ===================================================== -->
+<!-- DEBUG INFO (visible) -->
+<div style="background: #fff3cd; border: 2px solid #ffc107; padding: 10px; margin: 10px 0; border-radius: 8px; font-size: 12px; font-family: monospace;">
+    <strong>🔍 DEBUG - Valeurs au chargement de la page:</strong><br>
+    Tracking ID: <?php echo $daily_tracking->id ?? 'NULL'; ?><br>
+    Date: <?php echo $daily_tracking->tracking_date ?? 'NULL'; ?><br>
+    Breakfast: <?php echo isset($daily_tracking->breakfast_checked) ? $daily_tracking->breakfast_checked : 'NOT SET'; ?>
+    (<?php echo $daily_tracking->breakfast_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
+    Lunch: <?php echo isset($daily_tracking->lunch_checked) ? $daily_tracking->lunch_checked : 'NOT SET'; ?>
+    (<?php echo $daily_tracking->lunch_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
+    Dinner: <?php echo isset($daily_tracking->dinner_checked) ? $daily_tracking->dinner_checked : 'NOT SET'; ?>
+    (<?php echo $daily_tracking->dinner_checked ? 'TRUE/CHECKED' : 'FALSE/UNCHECKED'; ?>)<br>
+</div>
+
 <div class="my-day-section">
     <div class="my-day-header">
         <div class="my-day-title">
