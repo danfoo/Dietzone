@@ -1711,9 +1711,9 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .meals-block .daily-tracking-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin-bottom: 10px;
 }
 
@@ -1732,26 +1732,29 @@ $this->load->view('portal/includes/portal_header');
 .meals-block .daily-item {
     box-shadow: none;
     border: 2px solid #e8e8e8;
-    justify-content: space-between;
-    flex-direction: row;
-    text-align: left;
-    padding: 16px 20px;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 18px 16px;
     transition: all 0.3s ease;
     background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+    width: 100%;
 }
 
 .meals-block .daily-item:hover {
     border-color: #01807B;
     box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
     background: #ffffff;
+    transform: translateY(-2px);
 }
 
 /* Content wrapper for icon and label */
 .daily-item-content {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    flex: 1;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 /* Water item full width */
@@ -1793,14 +1796,14 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-icon {
-    font-size: 18px;
-    width: 42px;
-    height: 42px;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: 14px;
     transition: all 0.3s ease;
 }
 
@@ -1847,11 +1850,10 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-label {
-    font-size: 15px;
+    font-size: 14px;
     color: #2c3e50;
     font-weight: 600;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
+    letter-spacing: 0.3px;
 }
 
 .daily-value {
@@ -1882,19 +1884,19 @@ $this->load->view('portal/includes/portal_header');
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: #fff;
     border: 2.5px solid #ddd;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* Checkbox icon (checkmark) */
 .checkbox-icon {
     color: white;
-    font-size: 14px;
+    font-size: 16px;
     opacity: 0;
     transform: scale(0) rotate(-45deg);
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
