@@ -324,7 +324,14 @@ class Portal extends App_Controller
         // Get daily tracking data
         try {
             if ($this->db->table_exists(db_prefix() . 'dietic_daily_tracking')) {
+                // DEBUG: Log before calling get_today
+                log_message('debug', '=== Portal::index() - Calling get_today for patient_id: ' . $patient->id);
+
                 $data['daily_tracking'] = $this->dietetic_daily_tracking_model->get_today($patient->id);
+
+                // DEBUG: Log what was returned
+                log_message('debug', 'Portal::index() - get_today returned: ' . json_encode($data['daily_tracking']));
+
                 $data['tracking_streak'] = $this->dietetic_daily_tracking_model->calculate_streak($patient->id);
                 $data['tracking_completion'] = $this->dietetic_daily_tracking_model->get_completion_percentage($patient->id);
             } else{

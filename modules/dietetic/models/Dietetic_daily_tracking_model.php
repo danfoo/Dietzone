@@ -49,15 +49,27 @@ class Dietetic_daily_tracking_model extends App_Model
      */
     public function get_today($patient_id)
     {
+        // DEBUG: VERSION MARKER - Code updated 2025-12-07 15:30
+        log_message('debug', '=== get_today() VERSION 2025-12-07 15:30 - PERMISSION CHECK BYPASSED ===');
+        log_message('debug', '=== get_today() called for patient_id: ' . $patient_id);
+
         // NOTE: Permission check bypassed for daily tracking
         // Patients always need access to their own tracking data
         // Permission is validated at controller level (is_client_logged_in)
 
         $today = date('Y-m-d');
+        log_message('debug', 'Today date: ' . $today);
 
         $this->db->where('patient_id', $patient_id);
         $this->db->where('tracking_date', $today);
         $tracking = $this->db->get(db_prefix() . $this->table)->row();
+
+        // DEBUG: Log query result
+        if ($tracking) {
+            log_message('debug', 'Tracking found - ID: ' . $tracking->id . ', breakfast: ' . $tracking->breakfast_checked);
+        } else {
+            log_message('debug', 'NO tracking found - returning empty tracking');
+        }
 
         // Si pas de tracking aujourd'hui, retourner valeurs par défaut
         if (!$tracking) {
@@ -373,7 +385,10 @@ class Dietetic_daily_tracking_model extends App_Model
      */
     private function get_empty_tracking($patient_id)
     {
-        return (object)[
+        // DEBUG: Log when empty tracking is returned
+        log_message('debug', '=== get_empty_tracking() called - returning default values ===');
+
+        $empty = (object)[
             'id' => null,
             'patient_id' => $patient_id,
             'tracking_date' => date('Y-m-d'),
@@ -389,6 +404,9 @@ class Dietetic_daily_tracking_model extends App_Model
             'created_at' => null,
             'updated_at' => null
         ];
+
+        log_message('debug', 'Empty tracking object: ' . json_encode($empty));
+        return $empty;
     }
 
     /**
