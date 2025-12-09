@@ -3316,6 +3316,26 @@ class Dietetic_notifications_model extends App_Model
     // ==================== APPOINTMENT NOTIFICATIONS ====================
 
     /**
+     * Replace template variables with actual values
+     *
+     * @param string $template Template string with {variable} placeholders
+     * @param array $variables Associative array of variables to replace
+     * @return string Template with replaced variables
+     */
+    private function replace_template_variables($template, $variables)
+    {
+        if (empty($template)) {
+            return '';
+        }
+
+        foreach ($variables as $key => $value) {
+            $template = str_replace('{' . $key . '}', $value, $template);
+        }
+
+        return $template;
+    }
+
+    /**
      * Notify dietitian when patient requests an appointment
      *
      * @param int $consultation_id
@@ -3344,29 +3364,55 @@ class Dietetic_notifications_model extends App_Model
 
         $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
         $patient_name = $client->company;
-
-        // Full message for email
-        $message_full = "Bonjour Dr {$dietitian->name},\n\n";
-        $message_full .= "📅 Nouvelle demande de rendez-vous !\n\n";
-        $message_full .= "👤 Patient : {$patient_name}\n";
-        $message_full .= "📆 Date demandée : {$formatted_date}\n";
-        $message_full .= "🏥 Type : {$consultation_type}\n\n";
-        $message_full .= "Veuillez accepter ou refuser cette demande depuis votre interface.\n\n";
-        $message_full .= "👉 Voir la demande : " . admin_url('dietetic/consultations/view/' . $consultation_id);
-
-        // Short message for SMS/WhatsApp (MAX 160 characters)
         $first_name = explode(' ', $dietitian->name)[0];
         $patient_first_name = explode(' ', $patient_name)[0];
         $short_date = date('d/m H\hi', strtotime($consultation_date));
-        $message_short = "Dr {$first_name}, demande RDV {$patient_first_name} le {$short_date}. A valider";
+
+        // Load templates from database
+        $subject_template = $this->get_setting('template_appointment_request_subject');
+        $body_template = $this->get_setting('template_appointment_request_body');
+        $sms_template = $this->get_setting('template_appointment_request_sms_body');
+        $whatsapp_template = $this->get_setting('template_appointment_request_whatsapp_body');
+
+        // Default templates if not configured
+        if (empty($subject_template)) {
+            $subject_template = '📅 Nouvelle demande de rendez-vous';
+        }
+        if (empty($body_template)) {
+            $body_template = "Bonjour Dr {dietitian_name},\n\n📅 Nouvelle demande de rendez-vous !\n\n👤 Patient : {patient_name}\n📆 Date demandée : {consultation_date}\n🏥 Type : {consultation_type}\n\nVeuillez accepter ou refuser cette demande depuis votre interface.\n\n👉 Voir la demande : {consultation_url}";
+        }
+        if (empty($sms_template)) {
+            $sms_template = 'Dr {first_name}, demande RDV {patient_name} le {date}. A valider';
+        }
+        if (empty($whatsapp_template)) {
+            $whatsapp_template = $sms_template; // Use SMS template as fallback
+        }
+
+        // Prepare variables for replacement
+        $variables = [
+            'dietitian_name' => $dietitian->name,
+            'patient_name' => $patient_name,
+            'consultation_date' => $formatted_date,
+            'consultation_type' => $consultation_type,
+            'consultation_url' => admin_url('dietetic/consultations/view/' . $consultation_id),
+            'first_name' => $first_name,
+            'date' => $short_date
+        ];
+
+        // Replace variables in templates
+        $subject = $this->replace_template_variables($subject_template, $variables);
+        $message_full = $this->replace_template_variables($body_template, $variables);
+        $message_sms = $this->replace_template_variables($sms_template, $variables);
+        $message_whatsapp = $this->replace_template_variables($whatsapp_template, $variables);
 
         // Send notification to dietitian (always send to dietitian, no preferences)
         return $this->send_notification([
             'patient_id' => $patient_id,
             'type' => 'appointment_request',
-            'subject' => "Nouvelle demande de rendez-vous - {$patient_name}",
+            'subject' => $subject,
             'message' => $message_full,
-            'message_sms' => $message_short,
+            'message_sms' => $message_sms,
+            'message_whatsapp' => $message_whatsapp,
             'email' => $dietitian->email,
             'phone' => $dietitian->phonenumber,
             'channels' => [
@@ -3411,27 +3457,52 @@ class Dietetic_notifications_model extends App_Model
         $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
 
         $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
-
-        // Full message for email
-        $message_full = "Bonjour {$contact_name},\n\n";
-        $message_full .= "✅ Bonne nouvelle ! Votre demande de rendez-vous a été acceptée.\n\n";
-        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
-        $message_full .= "📆 Date : {$formatted_date}\n";
-        $message_full .= "🏥 Type : {$consultation_type}\n\n";
-        $message_full .= "Nous vous rappelons 24h avant votre consultation.\n";
-        $message_full .= "À bientôt ! 😊";
-
-        // Extract first name for SMS personalization (MAX 160 characters)
         $first_name = explode(' ', $contact_name)[0];
         $short_date = date('d/m H\hi', strtotime($consultation_date));
-        $message_short = "{$first_name}, RDV {$short_date} confirme. A bientot";
+
+        // Load templates from database
+        $subject_template = $this->get_setting('template_appointment_accepted_subject');
+        $body_template = $this->get_setting('template_appointment_accepted_body');
+        $sms_template = $this->get_setting('template_appointment_accepted_sms_body');
+        $whatsapp_template = $this->get_setting('template_appointment_accepted_whatsapp_body');
+
+        // Default templates if not configured
+        if (empty($subject_template)) {
+            $subject_template = '✅ Rendez-vous confirmé';
+        }
+        if (empty($body_template)) {
+            $body_template = "Bonjour {patient_name},\n\n✅ Bonne nouvelle ! Votre demande de rendez-vous a été acceptée.\n\n👨‍⚕️ Avec : {dietitian_name}\n📆 Date : {consultation_date}\n🏥 Type : {consultation_type}\n\nNous vous rappelons 24h avant votre consultation.\nÀ bientôt ! 😊";
+        }
+        if (empty($sms_template)) {
+            $sms_template = '{first_name}, RDV {date} confirme. A bientot';
+        }
+        if (empty($whatsapp_template)) {
+            $whatsapp_template = $sms_template; // Use SMS template as fallback
+        }
+
+        // Prepare variables for replacement
+        $variables = [
+            'patient_name' => $contact_name,
+            'dietitian_name' => $dietitian_name,
+            'consultation_date' => $formatted_date,
+            'consultation_type' => $consultation_type,
+            'first_name' => $first_name,
+            'date' => $short_date
+        ];
+
+        // Replace variables in templates
+        $subject = $this->replace_template_variables($subject_template, $variables);
+        $message_full = $this->replace_template_variables($body_template, $variables);
+        $message_sms = $this->replace_template_variables($sms_template, $variables);
+        $message_whatsapp = $this->replace_template_variables($whatsapp_template, $variables);
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'appointment_accepted',
-            'subject' => "Rendez-vous confirmé ✅",
+            'subject' => $subject,
             'message' => $message_full,
-            'message_sms' => $message_short,
+            'message_sms' => $message_sms,
+            'message_whatsapp' => $message_whatsapp,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'channels' => [
@@ -3479,29 +3550,52 @@ class Dietetic_notifications_model extends App_Model
         $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
 
         $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
-
-        // Full message for email
-        $message_full = "Bonjour {$contact_name},\n\n";
-        $message_full .= "❌ Votre demande de rendez-vous n'a pas pu être acceptée.\n\n";
-        $message_full .= "📆 Date demandée : {$formatted_date}\n";
-        $message_full .= "👨‍⚕️ Diététicien : {$dietitian_name}\n\n";
-        if ($reason) {
-            $message_full .= "Raison : {$reason}\n\n";
-        }
-        $message_full .= "Veuillez contacter votre diététicien ou proposer une autre date.\n";
-        $message_full .= "📞 Nous restons à votre disposition.";
-
-        // Extract first name for SMS personalization (MAX 160 characters)
         $first_name = explode(' ', $contact_name)[0];
         $short_date = date('d/m H\hi', strtotime($consultation_date));
-        $message_short = "{$first_name}, RDV {$short_date} refuse. Proposer nouvelle date";
+
+        // Load templates from database
+        $subject_template = $this->get_setting('template_appointment_rejected_subject');
+        $body_template = $this->get_setting('template_appointment_rejected_body');
+        $sms_template = $this->get_setting('template_appointment_rejected_sms_body');
+        $whatsapp_template = $this->get_setting('template_appointment_rejected_whatsapp_body');
+
+        // Default templates if not configured
+        if (empty($subject_template)) {
+            $subject_template = 'Demande de rendez-vous non acceptée';
+        }
+        if (empty($body_template)) {
+            $body_template = "Bonjour {patient_name},\n\n❌ Votre demande de rendez-vous n'a pas pu être acceptée.\n\n📆 Date demandée : {consultation_date}\n👨‍⚕️ Diététicien : {dietitian_name}\n\nRaison : {reason}\n\nVeuillez contacter votre diététicien ou proposer une autre date.\n📞 Nous restons à votre disposition.";
+        }
+        if (empty($sms_template)) {
+            $sms_template = '{first_name}, RDV {date} refuse. Proposer nouvelle date';
+        }
+        if (empty($whatsapp_template)) {
+            $whatsapp_template = $sms_template; // Use SMS template as fallback
+        }
+
+        // Prepare variables for replacement
+        $variables = [
+            'patient_name' => $contact_name,
+            'dietitian_name' => $dietitian_name,
+            'consultation_date' => $formatted_date,
+            'reason' => $reason ?: 'Non spécifiée',
+            'first_name' => $first_name,
+            'date' => $short_date
+        ];
+
+        // Replace variables in templates
+        $subject = $this->replace_template_variables($subject_template, $variables);
+        $message_full = $this->replace_template_variables($body_template, $variables);
+        $message_sms = $this->replace_template_variables($sms_template, $variables);
+        $message_whatsapp = $this->replace_template_variables($whatsapp_template, $variables);
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'appointment_rejected',
-            'subject' => "Demande de rendez-vous non acceptée",
+            'subject' => $subject,
             'message' => $message_full,
-            'message_sms' => $message_short,
+            'message_sms' => $message_sms,
+            'message_whatsapp' => $message_whatsapp,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'channels' => [
