@@ -1711,9 +1711,9 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .meals-block .daily-tracking-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
     margin-bottom: 10px;
     width: 100%;
 }
@@ -1736,7 +1736,7 @@ $this->load->view('portal/includes/portal_header');
     justify-content: center;
     flex-direction: column;
     text-align: center;
-    padding: 20px 16px;
+    padding: 16px 8px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
     width: 100%;
@@ -1859,14 +1859,14 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-icon {
-    font-size: 24px;
-    width: 50px;
-    height: 50px;
+    font-size: 20px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border-radius: 14px;
+    border-radius: 12px;
     transition: all 0.3s ease;
     animation: iconBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
 }
@@ -1926,10 +1926,11 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .daily-item-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #2c3e50;
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
 }
 
 .daily-value {
@@ -3505,6 +3506,40 @@ body {
 
     .blog-card-overlay {
         padding: 30px 12px 12px;
+    }
+
+    /* Mobile: Repas en grille horizontale compacte */
+    .meals-block .daily-tracking-grid {
+        gap: 6px;
+    }
+
+    .meals-block .daily-item {
+        padding: 12px 6px;
+    }
+
+    .daily-item-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+    }
+
+    .daily-item-label {
+        font-size: 11px !important;
+        line-height: 1.1;
+    }
+
+    .daily-item-content {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .modern-checkbox .checkbox-custom {
+        width: 28px;
+        height: 28px;
+    }
+
+    .modern-checkbox .checkbox-icon {
+        font-size: 14px;
     }
 }
 </style>
