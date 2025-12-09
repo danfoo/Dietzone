@@ -710,34 +710,38 @@
 <div class="modal fade" id="rejectAppointmentModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white;">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.8;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">
-                    <i class="fa fa-ban"></i> Refuser la demande de rendez-vous
-                </h4>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fa fa-exclamation-triangle"></i>
-                    <strong>Attention :</strong> Le patient recevra une notification de refus par SMS, Email et WhatsApp.
+            <form method="POST" action="" id="reject-appointment-form">
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+
+                <div class="modal-header" style="background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.8;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="fa fa-ban"></i> Refuser la demande de rendez-vous
+                    </h4>
                 </div>
-                <div class="form-group">
-                    <label for="rejection-reason">Motif du refus <span class="text-muted">(optionnel)</span></label>
-                    <textarea class="form-control" id="rejection-reason" rows="4"
-                              placeholder="Expliquez la raison du refus au patient (ex: Horaire non disponible, patient déjà suivi par un autre diététicien, etc.)"></textarea>
-                    <small class="text-muted">Ce motif sera envoyé au patient dans la notification.</small>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <strong>Attention :</strong> Le patient recevra une notification de refus par SMS, Email et WhatsApp.
+                    </div>
+                    <div class="form-group">
+                        <label for="rejection-reason">Motif du refus <span class="text-muted">(optionnel)</span></label>
+                        <textarea class="form-control" name="reason" id="rejection-reason" rows="4"
+                                  placeholder="Expliquez la raison du refus au patient (ex: Horaire non disponible, patient déjà suivi par un autre diététicien, etc.)"></textarea>
+                        <small class="text-muted">Ce motif sera envoyé au patient dans la notification.</small>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Annuler
-                </button>
-                <button type="button" class="btn btn-danger" id="confirm-reject-btn">
-                    <i class="fa fa-ban"></i> Confirmer le refus
-                </button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-ban"></i> Confirmer le refus
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -797,82 +801,14 @@ function acceptAppointment(id) {
     }
 }
 
-// Variable globale pour stocker l'ID de la consultation à refuser
-var consultationToReject = null;
-
 function rejectAppointment(id) {
-    console.log('rejectAppointment called with id:', id);
-    consultationToReject = id;
-    $('#rejection-reason').val(''); // Réinitialiser le champ
+    // Mettre à jour l'action du formulaire avec l'ID de la consultation
+    $('#reject-appointment-form').attr('action', '<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + id);
+    // Réinitialiser le champ de raison
+    $('#rejection-reason').val('');
+    // Afficher le modal
     $('#rejectAppointmentModal').modal('show');
 }
-
-// Gestionnaire de clic pour le bouton de confirmation du refus
-$(document).ready(function() {
-    console.log('Document ready - attaching reject button handler');
-
-    $('#confirm-reject-btn').on('click', function(e) {
-        e.preventDefault(); // Empêcher le comportement par défaut
-        console.log('Confirm reject button clicked, consultation ID:', consultationToReject);
-
-        if (consultationToReject === null) {
-            console.error('No consultation ID to reject');
-            return;
-        }
-
-        var reason = $('#rejection-reason').val().trim();
-        var $btn = $(this);
-
-        console.log('Rejection reason:', reason);
-
-        // Désactiver le bouton pendant l'envoi
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
-
-        var ajaxUrl = '<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + consultationToReject;
-        console.log('Sending AJAX request to:', ajaxUrl);
-
-        // Préparer les données avec le token CSRF
-        var postData = {
-            reason: reason,
-            <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
-        };
-
-        $.ajax({
-            url: ajaxUrl,
-            type: 'POST',
-            data: postData,
-            dataType: 'json',
-            success: function(response) {
-                console.log('AJAX response received:', response);
-                if (response.success) {
-                    $('#rejectAppointmentModal').modal('hide');
-                    alert_float('success', 'Demande de rendez-vous refusée avec succès');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    alert_float('danger', response.message || 'Erreur lors du refus');
-                    $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX error:', status, error);
-                console.error('Response:', xhr.responseText);
-                alert_float('danger', 'Erreur de communication avec le serveur: ' + error);
-                $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
-            }
-        });
-    });
-
-    // Réinitialiser quand le modal est fermé
-    $('#rejectAppointmentModal').on('hidden.bs.modal', function() {
-        console.log('Modal closed, resetting consultation ID');
-        consultationToReject = null;
-        $('#confirm-reject-btn').prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
-    });
-
-    console.log('Reject appointment handlers attached successfully');
-});
 </script>
 
 <?php init_tail(); ?>

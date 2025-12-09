@@ -443,15 +443,15 @@ class Consultations extends AdminController
     public function reject_appointment($id)
     {
         if (!dietetic_has_permission('edit')) {
-            ajax_access_denied();
+            access_denied('dietetic');
         }
 
         $reason = $this->input->post('reason');
         $consultation = $this->dietetic_consultations_model->get($id);
 
         if (!$consultation || $consultation->status != 'pending') {
-            echo json_encode(['success' => false, 'message' => 'Demande introuvable ou déjà traitée']);
-            return;
+            set_alert('danger', 'Demande introuvable ou déjà traitée');
+            redirect(admin_url('dietetic/consultations/view/' . $id));
         }
 
         $update_data = ['status' => 'rejected'];
@@ -488,9 +488,11 @@ class Consultations extends AdminController
                 log_message('error', 'Failed to send appointment rejected notification: ' . $e->getMessage());
             }
 
-            echo json_encode(['success' => true, 'message' => 'Demande de rendez-vous refusée']);
+            set_alert('success', 'Demande de rendez-vous refusée avec succès. Le patient a été notifié par SMS, Email et WhatsApp.');
+            redirect(admin_url('dietetic/consultations/view/' . $id));
         } else {
-            echo json_encode(['success' => false, 'message' => 'Erreur lors du refus']);
+            set_alert('danger', 'Erreur lors du refus de la demande');
+            redirect(admin_url('dietetic/consultations/view/' . $id));
         }
     }
 
