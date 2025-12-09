@@ -485,6 +485,41 @@ Veuillez contacter votre diététicien ou proposer une autre date.
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>
+
+                <!-- Consultation Cancelled Template (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-times-circle"></i> Consultation Annulée (Patient)</h3>
+                    <div class="template-description">
+                        Template envoyé au patient lorsqu'une consultation programmée est annulée
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{patient_name}</code>
+                        <code>{dietitian_name}</code>
+                        <code>{consultation_date}</code>
+                        <code>{reason}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="consultation_cancelled_subject" value="<?php echo htmlspecialchars($templates['consultation_cancelled']['subject'] ?? '❌ Consultation Annulée'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="consultation_cancelled_body"><?php echo htmlspecialchars($templates['consultation_cancelled']['body'] ?? 'Bonjour {patient_name},
+
+❌ Votre consultation du {consultation_date} avec {dietitian_name} a été annulée.
+
+Raison : {reason}
+
+Veuillez contacter votre diététicien pour reprogrammer.
+📞 Nous restons à votre disposition.'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="consultation_cancelled" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
             </div>
 
             <!-- SMS Templates -->
@@ -607,6 +642,28 @@ Veuillez contacter votre diététicien ou proposer une autre date.
                         <small class="char-count" id="char-count-appointment_rejected_sms_body">0/160</small>
                     </div>
                     <button type="submit" name="template_key" value="appointment_rejected" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Consultation Cancelled SMS (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-times-circle"></i> Consultation Annulée (Patient)</h3>
+                    <div class="template-description">
+                        SMS envoyé au patient lorsqu'une consultation est annulée
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code> <code>{reason}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message SMS (max 160 caractères)</label>
+                        <textarea name="consultation_cancelled_sms_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['consultation_cancelled']['sms_body'] ?? '{first_name}, RDV {date} annule. {reason}'); ?></textarea>
+                        <small class="char-count" id="char-count-consultation_cancelled_sms_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="consultation_cancelled" class="save-button">
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>
@@ -742,6 +799,27 @@ Votre suivi régulier est la clé du succès ! 🌟'); ?></textarea>
                         <textarea name="appointment_rejected_whatsapp_body"><?php echo htmlspecialchars($templates['appointment_rejected']['whatsapp_body'] ?? '{first_name}, RDV {date} refuse. Proposer nouvelle date'); ?></textarea>
                     </div>
                     <button type="submit" name="template_key" value="appointment_rejected" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Consultation Cancelled WhatsApp (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-times-circle"></i> Consultation Annulée (Patient)</h3>
+                    <div class="template-description">
+                        WhatsApp envoyé au patient lorsqu'une consultation est annulée
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code> <code>{reason}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="consultation_cancelled_whatsapp_body"><?php echo htmlspecialchars($templates['consultation_cancelled']['whatsapp_body'] ?? '{first_name}, RDV {date} annule. {reason}'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="consultation_cancelled" class="save-button">
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>

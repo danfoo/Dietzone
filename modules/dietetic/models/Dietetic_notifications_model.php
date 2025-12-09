@@ -2243,31 +2243,54 @@ class Dietetic_notifications_model extends App_Model
         $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
         $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
 
-        $formatted_date = date('d/m/Y', strtotime($consultation_date));
+        // Format date WITH TIME
+        $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
+        $first_name = explode(' ', $contact_name)[0];
+        $short_date = date('d/m H\hi', strtotime($consultation_date));
 
-        // Full message for email
-        $message_full = "Bonjour {$contact_name},\n\n";
-        $message_full .= "❌ Votre consultation du {$formatted_date} avec {$dietitian_name} a été annulée.\n\n";
-        if ($reason) {
-            $message_full .= "Raison : {$reason}\n\n";
+        // Load templates from database
+        $subject_template = $this->get_setting('template_consultation_cancelled_subject');
+        $body_template = $this->get_setting('template_consultation_cancelled_body');
+        $sms_template = $this->get_setting('template_consultation_cancelled_sms_body');
+        $whatsapp_template = $this->get_setting('template_consultation_cancelled_whatsapp_body');
+
+        // Default templates if not configured
+        if (empty($subject_template)) {
+            $subject_template = '❌ Consultation Annulée';
         }
-        $message_full .= "Veuillez contacter votre diététicien pour reprogrammer.";
-
-        // Extract first name for SMS personalization
-        $firstname = $contact ? $contact->firstname : explode(' ', $contact_name)[0];
-
-        // Short SMS message
-        $message_sms = "Bonjour {$firstname}, consultation du {$formatted_date} annulee.";
-        if ($reason && strlen($reason) < 80) {
-            $message_sms .= " Raison: {$reason}";
+        if (empty($body_template)) {
+            $body_template = "Bonjour {patient_name},\n\n❌ Votre consultation du {consultation_date} avec {dietitian_name} a été annulée.\n\nRaison : {reason}\n\nVeuillez contacter votre diététicien pour reprogrammer.\n📞 Nous restons à votre disposition.";
         }
+        if (empty($sms_template)) {
+            $sms_template = '{first_name}, RDV {date} annule. {reason}';
+        }
+        if (empty($whatsapp_template)) {
+            $whatsapp_template = $sms_template; // Use SMS template as fallback
+        }
+
+        // Prepare variables for replacement
+        $variables = [
+            'patient_name' => $contact_name,
+            'dietitian_name' => $dietitian_name,
+            'consultation_date' => $formatted_date,
+            'reason' => $reason ?: 'Non spécifiée',
+            'first_name' => $first_name,
+            'date' => $short_date
+        ];
+
+        // Replace variables in templates
+        $subject = $this->replace_template_variables($subject_template, $variables);
+        $message_full = $this->replace_template_variables($body_template, $variables);
+        $message_sms = $this->replace_template_variables($sms_template, $variables);
+        $message_whatsapp = $this->replace_template_variables($whatsapp_template, $variables);
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'consultation_cancelled',
-            'subject' => '❌ Consultation Annulée',
+            'subject' => $subject,
             'message' => $message_full,
             'message_sms' => $message_sms,
+            'message_whatsapp' => $message_whatsapp,
             'email' => $contact_email,
             'phone' => $contact_phone,
             'url' => site_url('dietetic/portal/consultations'),
