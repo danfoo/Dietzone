@@ -1030,62 +1030,71 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
-            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-            return;
-        }
-
-        $dietitian_id = $this->input->post('dietitian_id');
-        $consultation_type_id = $this->input->post('consultation_type_id');
-
-        if (!$dietitian_id) {
-            echo json_encode(['success' => false, 'message' => 'ID diététicien requis']);
-            return;
-        }
-
-        // Get working days for this dietitian
-        $working_days = $this->dietetic_availability_model->get_working_days($dietitian_id);
-
-        if (empty($working_days)) {
-            echo json_encode(['success' => false, 'message' => 'Aucune disponibilité configurée']);
-            return;
-        }
-
-        // Generate available dates for next 60 days
-        $available_dates = [];
-        $today = new DateTime();
-        $end_date = new DateTime('+60 days');
-
-        while ($today <= $end_date) {
-            $day_of_week = (int)$today->format('w');
-
-            // Check if dietitian works on this day
-            if (in_array($day_of_week, $working_days)) {
-                // Get available slots for this date
-                $slots = $this->dietetic_availability_model->get_available_slots(
-                    $dietitian_id,
-                    $today->format('Y-m-d'),
-                    $consultation_type_id
-                );
-
-                // Only include dates that have available slots
-                if (!empty($slots)) {
-                    $available_dates[] = [
-                        'date' => $today->format('Y-m-d'),
-                        'display' => $today->format('d/m/Y'),
-                        'day_name' => $this->get_french_day_name($day_of_week),
-                        'slots_count' => count($slots)
-                    ];
-                }
+        try {
+            if (!is_client_logged_in()) {
+                echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+                return;
             }
 
-            $today->modify('+1 day');
-        }
+            $dietitian_id = $this->input->post('dietitian_id');
+            $consultation_type_id = $this->input->post('consultation_type_id');
 
-        echo json_encode([
-            'success' => true,
-            'dates' => $available_dates
-        ]);
+            if (!$dietitian_id) {
+                echo json_encode(['success' => false, 'message' => 'ID diététicien requis']);
+                return;
+            }
+
+            // Get working days for this dietitian
+            $working_days = $this->dietetic_availability_model->get_working_days($dietitian_id);
+
+            if (empty($working_days)) {
+                echo json_encode(['success' => false, 'message' => 'Aucune disponibilité configurée']);
+                return;
+            }
+
+            // Generate available dates for next 60 days
+            $available_dates = [];
+            $today = new DateTime();
+            $end_date = new DateTime('+60 days');
+
+            while ($today <= $end_date) {
+                $day_of_week = (int)$today->format('w');
+
+                // Check if dietitian works on this day
+                if (in_array($day_of_week, $working_days)) {
+                    // Get available slots for this date
+                    $slots = $this->dietetic_availability_model->get_available_slots(
+                        $dietitian_id,
+                        $today->format('Y-m-d'),
+                        $consultation_type_id
+                    );
+
+                    // Only include dates that have available slots
+                    if (!empty($slots)) {
+                        $available_dates[] = [
+                            'date' => $today->format('Y-m-d'),
+                            'display' => $today->format('d/m/Y'),
+                            'day_name' => $this->get_french_day_name($day_of_week),
+                            'slots_count' => count($slots)
+                        ];
+                    }
+                }
+
+                $today->modify('+1 day');
+            }
+
+            echo json_encode([
+                'success' => true,
+                'dates' => $available_dates
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'get_available_dates error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     /**
@@ -1096,31 +1105,39 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
-            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-            return;
+        try {
+            if (!is_client_logged_in()) {
+                echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+                return;
+            }
+
+            $dietitian_id = $this->input->post('dietitian_id');
+            $date = $this->input->post('date');
+            $consultation_type_id = $this->input->post('consultation_type_id');
+
+            if (!$dietitian_id || !$date) {
+                echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
+                return;
+            }
+
+            // Get available slots
+            $slots = $this->dietetic_availability_model->get_available_slots(
+                $dietitian_id,
+                $date,
+                $consultation_type_id
+            );
+
+            echo json_encode([
+                'success' => true,
+                'slots' => $slots
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'get_available_slots error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
         }
-
-        $dietitian_id = $this->input->post('dietitian_id');
-        $date = $this->input->post('date');
-        $consultation_type_id = $this->input->post('consultation_type_id');
-
-        if (!$dietitian_id || !$date) {
-            echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
-            return;
-        }
-
-        // Get available slots
-        $slots = $this->dietetic_availability_model->get_available_slots(
-            $dietitian_id,
-            $date,
-            $consultation_type_id
-        );
-
-        echo json_encode([
-            'success' => true,
-            'slots' => $slots
-        ]);
     }
 
     /**
