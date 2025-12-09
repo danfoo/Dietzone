@@ -801,6 +801,7 @@ function acceptAppointment(id) {
 var consultationToReject = null;
 
 function rejectAppointment(id) {
+    console.log('rejectAppointment called with id:', id);
     consultationToReject = id;
     $('#rejection-reason').val(''); // Réinitialiser le champ
     $('#rejectAppointmentModal').modal('show');
@@ -808,39 +809,69 @@ function rejectAppointment(id) {
 
 // Gestionnaire de clic pour le bouton de confirmation du refus
 $(document).ready(function() {
-    $('#confirm-reject-btn').on('click', function() {
-        if (consultationToReject === null) return;
+    console.log('Document ready - attaching reject button handler');
+
+    $('#confirm-reject-btn').on('click', function(e) {
+        e.preventDefault(); // Empêcher le comportement par défaut
+        console.log('Confirm reject button clicked, consultation ID:', consultationToReject);
+
+        if (consultationToReject === null) {
+            console.error('No consultation ID to reject');
+            return;
+        }
 
         var reason = $('#rejection-reason').val().trim();
         var $btn = $(this);
 
+        console.log('Rejection reason:', reason);
+
         // Désactiver le bouton pendant l'envoi
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
 
-        $.post('<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + consultationToReject, {
-            reason: reason
-        }, function(response) {
-            if (response.success) {
-                $('#rejectAppointmentModal').modal('hide');
-                alert_float('success', 'Demande de rendez-vous refusée avec succès');
-                setTimeout(function() {
-                    location.reload();
-                }, 1000);
-            } else {
-                alert_float('danger', response.message || 'Erreur lors du refus');
+        var ajaxUrl = '<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + consultationToReject;
+        console.log('Sending AJAX request to:', ajaxUrl);
+
+        // Préparer les données avec le token CSRF
+        var postData = {
+            reason: reason,
+            <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+        };
+
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: postData,
+            dataType: 'json',
+            success: function(response) {
+                console.log('AJAX response received:', response);
+                if (response.success) {
+                    $('#rejectAppointmentModal').modal('hide');
+                    alert_float('success', 'Demande de rendez-vous refusée avec succès');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert_float('danger', response.message || 'Erreur lors du refus');
+                    $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', status, error);
+                console.error('Response:', xhr.responseText);
+                alert_float('danger', 'Erreur de communication avec le serveur: ' + error);
                 $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
             }
-        }, 'json').fail(function() {
-            alert_float('danger', 'Erreur de communication avec le serveur');
-            $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
         });
     });
 
     // Réinitialiser quand le modal est fermé
     $('#rejectAppointmentModal').on('hidden.bs.modal', function() {
+        console.log('Modal closed, resetting consultation ID');
         consultationToReject = null;
         $('#confirm-reject-btn').prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
     });
+
+    console.log('Reject appointment handlers attached successfully');
 });
 </script>
 
