@@ -60,7 +60,8 @@ class Dietetic_consultations_model extends App_Model
     {
         $this->db->select('cons.*, ' .
             'c.company as client_name, ' .
-            'CONCAT(s.firstname, " ", s.lastname) as dietitian_name', false);
+            'CONCAT(s.firstname, " ", s.lastname) as dietitian_name, ' .
+            'TIME(cons.consultation_date) as consultation_time', false);
         $this->db->from(db_prefix() . $this->table . ' cons');
         $this->db->join(db_prefix() . 'dietic_patients p', 'p.id = cons.patient_id', 'left');
         $this->db->join(db_prefix() . 'clients c', 'c.userid = p.client_id', 'left');

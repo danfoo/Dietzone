@@ -3590,11 +3590,15 @@ class Dietetic_notifications_model extends App_Model
             $body_template = "Bonjour {patient_name},\n\n❌ Votre demande de rendez-vous n'a pas pu être acceptée.\n\n📆 Date demandée : {consultation_date}\n👨‍⚕️ Diététicien : {dietitian_name}\n\nRaison : {reason}\n\nVeuillez contacter votre diététicien ou proposer une autre date.\n📞 Nous restons à votre disposition.";
         }
         if (empty($sms_template)) {
-            $sms_template = '{first_name}, RDV {date} refuse. Proposer nouvelle date';
+            $sms_template = '{first_name}, RDV {date} REFUSE. Proposer nouvelle date';
         }
         if (empty($whatsapp_template)) {
-            $whatsapp_template = $sms_template; // Use SMS template as fallback
+            $whatsapp_template = empty($whatsapp_template) ? $sms_template : $whatsapp_template; // Use SMS template as fallback
         }
+
+        // Debug logging
+        log_message('debug', 'notify_appointment_rejected - SMS Template: ' . $sms_template);
+        log_message('debug', 'notify_appointment_rejected - Variables: ' . json_encode(['first_name' => $first_name, 'date' => $short_date]));
 
         // Prepare variables for replacement
         $variables = [
