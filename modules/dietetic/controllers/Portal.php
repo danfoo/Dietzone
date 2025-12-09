@@ -1208,99 +1208,103 @@ class Portal extends App_Controller
     {
         header('Content-Type: application/json');
 
-        if (!is_client_logged_in()) {
-            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-            return;
-        }
-
-        $client_id = get_client_user_id();
-
-        // Get patient
         try {
-            $patient = $this->dietetic_patients_model->get_by_client($client_id);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
-            return;
-        }
-
-        if (!$patient) {
-            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
-            return;
-        }
-
-        // Get form data
-        $dietitian_id = $this->input->post('dietitian_id');
-        $date = $this->input->post('date');
-        $time = $this->input->post('time');
-        $consultation_type_id = $this->input->post('consultation_type_id');
-        $notes = $this->input->post('notes');
-
-        // Validate required fields
-        if (!$dietitian_id || !$date || !$time || !$consultation_type_id) {
-            echo json_encode(['success' => false, 'message' => 'Tous les champs sont requis']);
-            return;
-        }
-
-        // Combine date and time
-        $consultation_datetime = $date . ' ' . $time . ':00';
-
-        // Get consultation type to get duration
-        $consultation_type = $this->dietetic_availability_model->get_consultation_type($consultation_type_id);
-        if (!$consultation_type) {
-            echo json_encode(['success' => false, 'message' => 'Type de consultation invalide']);
-            return;
-        }
-
-        // Check availability one more time before booking
-        $availability_check = $this->dietetic_availability_model->check_availability(
-            $dietitian_id,
-            $consultation_datetime,
-            $consultation_type->duration
-        );
-
-        if (!$availability_check['available']) {
-            echo json_encode([
-                'success' => false,
-                'message' => $availability_check['reason']
-            ]);
-            return;
-        }
-
-        // Create consultation with 'pending' status
-        $consultation_data = [
-            'patient_id' => $patient->id,
-            'dietitian_id' => $dietitian_id,
-            'consultation_date' => $consultation_datetime,
-            'consultation_type' => $consultation_type->slug,
-            'duration' => $consultation_type->duration,
-            'status' => 'pending',
-            'location' => 'office',
-            'notes' => $notes,
-            'booked_by_patient' => 1,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        $consultation_id = $this->dietetic_consultations_model->add($consultation_data);
-
-        if ($consultation_id) {
-            // Send notifications to dietitian (will be implemented in Phase 2)
-            // For now, we'll add a placeholder
-            try {
-                $this->send_appointment_request_notifications($consultation_id, $patient, $dietitian_id);
-            } catch (Exception $e) {
-                // Log error but don't fail the booking
-                log_message('error', 'Failed to send appointment notifications: ' . $e->getMessage());
+            if (!is_client_logged_in()) {
+                echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+                return;
             }
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Votre demande de rendez-vous a été envoyée avec succès. Le diététicien sera notifié.',
-                'consultation_id' => $consultation_id
-            ]);
-        } else {
+            $client_id = get_client_user_id();
+
+            // Get patient
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+
+            if (!$patient) {
+                echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+                return;
+            }
+
+            // Get form data
+            $dietitian_id = $this->input->post('dietitian_id');
+            $date = $this->input->post('date');
+            $time = $this->input->post('time');
+            $consultation_type_id = $this->input->post('consultation_type_id');
+            $notes = $this->input->post('notes');
+
+            // Validate required fields
+            if (!$dietitian_id || !$date || !$time || !$consultation_type_id) {
+                echo json_encode(['success' => false, 'message' => 'Tous les champs sont requis']);
+                return;
+            }
+
+            // Combine date and time
+            $consultation_datetime = $date . ' ' . $time . ':00';
+
+            // Get consultation type to get duration
+            $consultation_type = $this->dietetic_availability_model->get_consultation_type($consultation_type_id);
+            if (!$consultation_type) {
+                echo json_encode(['success' => false, 'message' => 'Type de consultation invalide']);
+                return;
+            }
+
+            // Check availability one more time before booking
+            $availability_check = $this->dietetic_availability_model->check_availability(
+                $dietitian_id,
+                $consultation_datetime,
+                $consultation_type->duration
+            );
+
+            if (!$availability_check['available']) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $availability_check['reason']
+                ]);
+                return;
+            }
+
+            // Create consultation with 'pending' status
+            $consultation_data = [
+                'patient_id' => $patient->id,
+                'dietitian_id' => $dietitian_id,
+                'consultation_date' => $consultation_datetime,
+                'consultation_type' => $consultation_type->slug,
+                'duration' => $consultation_type->duration,
+                'status' => 'pending',
+                'location' => 'office',
+                'notes' => $notes,
+                'booked_by_patient' => 1,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $consultation_id = $this->dietetic_consultations_model->add($consultation_data);
+
+            if ($consultation_id) {
+                // Send notifications to dietitian (will be implemented in Phase 2)
+                // For now, we'll add a placeholder
+                try {
+                    $this->send_appointment_request_notifications($consultation_id, $patient, $dietitian_id);
+                } catch (Exception $e) {
+                    // Log error but don't fail the booking
+                    log_message('error', 'Failed to send appointment notifications: ' . $e->getMessage());
+                }
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Votre demande de rendez-vous a été envoyée avec succès. Le diététicien sera notifié.',
+                    'consultation_id' => $consultation_id
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur lors de la création du rendez-vous'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_message('error', 'submit_appointment_request error: ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
-                'message' => 'Erreur lors de la création du rendez-vous'
+                'message' => 'Erreur: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
@@ -1311,13 +1315,11 @@ class Portal extends App_Controller
     private function send_appointment_request_notifications($consultation_id, $patient, $dietitian_id)
     {
         // This will be fully implemented in Phase 2
-        // For now, just send basic email notification
-        $consultation = $this->dietetic_consultations_model->get($consultation_id, false);
+        // For now, just log that the appointment was requested
+        log_activity('Patient appointment request created [Consultation ID: ' . $consultation_id . ', Patient ID: ' . $patient->id . ', Dietitian ID: ' . $dietitian_id . ']');
 
-        if ($consultation) {
-            // Send notification to dietitian
-            $this->dietetic_notifications_model->notify_consultation_scheduled($consultation_id);
-        }
+        // Notification sending will be implemented in Phase 2 with multi-channel support
+        // (SMS, WhatsApp, Email, Push notifications)
     }
 
     /**
