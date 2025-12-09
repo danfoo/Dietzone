@@ -52,6 +52,7 @@ class Portal extends App_Controller
             'my_dietitians',
             // Appointment booking methods
             'book_appointment',
+            'diagnostic_patient_booking',
             'get_available_dates',
             'get_available_slots',
             'submit_appointment_request',
@@ -1020,6 +1021,43 @@ class Portal extends App_Controller
         $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types(true);
 
         $this->load->view('portal/book_appointment', $data);
+    }
+
+    /**
+     * Diagnostic page for patient booking - Shows why appointments might not be available
+     */
+    public function diagnostic_patient_booking()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Diagnostic - Prise de RDV';
+
+        // Get assigned dietitians for this patient
+        $data['dietitians'] = $this->dietetic_patient_dietitians_model->get_patient_dietitians($patient->id, 'active');
+
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types(true);
+
+        $this->load->view('portal/diagnostic_patient_booking', $data);
     }
 
     /**
