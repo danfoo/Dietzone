@@ -404,8 +404,33 @@ class Consultations extends AdminController
         }
 
         if ($this->dietetic_consultations_model->update($id, ['status' => 'scheduled'])) {
-            // TODO Phase 2: Send notification to patient that appointment is confirmed
             log_activity('Patient appointment request accepted [Consultation ID: ' . $id . ']');
+
+            // Send multi-channel notification to patient
+            try {
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $result = $this->dietetic_notifications_model->notify_appointment_accepted(
+                    $id,
+                    $consultation->patient_id,
+                    $consultation->consultation_date,
+                    $consultation->dietitian_name,
+                    ucfirst(str_replace('_', ' ', $consultation->consultation_type))
+                );
+
+                // Log notification results
+                if ($result) {
+                    $channels_sent = [];
+                    if (!empty($result['email'])) $channels_sent[] = 'Email';
+                    if (!empty($result['sms'])) $channels_sent[] = 'SMS';
+                    if (!empty($result['whatsapp'])) $channels_sent[] = 'WhatsApp';
+                    if (!empty($result['push'])) $channels_sent[] = 'Push';
+
+                    log_activity('Appointment accepted notifications sent [' . implode(', ', $channels_sent) . '] to patient ID ' . $consultation->patient_id);
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Failed to send appointment accepted notification: ' . $e->getMessage());
+            }
+
             echo json_encode(['success' => true, 'message' => 'Demande de rendez-vous acceptée']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'acceptation']);
@@ -436,8 +461,33 @@ class Consultations extends AdminController
         }
 
         if ($this->dietetic_consultations_model->update($id, $update_data)) {
-            // TODO Phase 2: Send notification to patient that appointment is rejected
             log_activity('Patient appointment request rejected [Consultation ID: ' . $id . ']');
+
+            // Send multi-channel notification to patient
+            try {
+                $this->load->model('dietetic/dietetic_notifications_model');
+                $result = $this->dietetic_notifications_model->notify_appointment_rejected(
+                    $id,
+                    $consultation->patient_id,
+                    $consultation->consultation_date,
+                    $consultation->dietitian_name,
+                    $reason ?? ''
+                );
+
+                // Log notification results
+                if ($result) {
+                    $channels_sent = [];
+                    if (!empty($result['email'])) $channels_sent[] = 'Email';
+                    if (!empty($result['sms'])) $channels_sent[] = 'SMS';
+                    if (!empty($result['whatsapp'])) $channels_sent[] = 'WhatsApp';
+                    if (!empty($result['push'])) $channels_sent[] = 'Push';
+
+                    log_activity('Appointment rejected notifications sent [' . implode(', ', $channels_sent) . '] to patient ID ' . $consultation->patient_id);
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Failed to send appointment rejected notification: ' . $e->getMessage());
+            }
+
             echo json_encode(['success' => true, 'message' => 'Demande de rendez-vous refusée']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors du refus']);

@@ -1279,10 +1279,15 @@ class Portal extends App_Controller
             $consultation_id = $this->dietetic_consultations_model->add($consultation_data);
 
             if ($consultation_id) {
-                // Send notifications to dietitian (will be implemented in Phase 2)
-                // For now, we'll add a placeholder
+                // Send notifications to dietitian via all channels
                 try {
-                    $this->send_appointment_request_notifications($consultation_id, $patient, $dietitian_id);
+                    $this->send_appointment_request_notifications(
+                        $consultation_id,
+                        $patient,
+                        $dietitian_id,
+                        $consultation_datetime,
+                        $consultation_type->name
+                    );
                 } catch (Exception $e) {
                     // Log error but don't fail the booking
                     log_message('error', 'Failed to send appointment notifications: ' . $e->getMessage());
@@ -1310,16 +1315,31 @@ class Portal extends App_Controller
     }
 
     /**
-     * Send appointment request notifications (placeholder for Phase 2)
+     * Send appointment request notifications to dietitian
+     * Sends via Email, SMS, WhatsApp (based on availability)
      */
-    private function send_appointment_request_notifications($consultation_id, $patient, $dietitian_id)
+    private function send_appointment_request_notifications($consultation_id, $patient, $dietitian_id, $consultation_date, $consultation_type_name)
     {
-        // This will be fully implemented in Phase 2
-        // For now, just log that the appointment was requested
         log_activity('Patient appointment request created [Consultation ID: ' . $consultation_id . ', Patient ID: ' . $patient->id . ', Dietitian ID: ' . $dietitian_id . ']');
 
-        // Notification sending will be implemented in Phase 2 with multi-channel support
-        // (SMS, WhatsApp, Email, Push notifications)
+        // Send multi-channel notification to dietitian
+        $result = $this->dietetic_notifications_model->notify_appointment_request(
+            $consultation_id,
+            $patient->id,
+            $dietitian_id,
+            $consultation_date,
+            $consultation_type_name
+        );
+
+        // Log notification results
+        if ($result) {
+            $channels_sent = [];
+            if (!empty($result['email'])) $channels_sent[] = 'Email';
+            if (!empty($result['sms'])) $channels_sent[] = 'SMS';
+            if (!empty($result['whatsapp'])) $channels_sent[] = 'WhatsApp';
+
+            log_activity('Appointment request notifications sent [' . implode(', ', $channels_sent) . '] to dietitian ID ' . $dietitian_id);
+        }
     }
 
     /**

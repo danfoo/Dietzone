@@ -3313,6 +3313,208 @@ class Dietetic_notifications_model extends App_Model
         ]);
     }
 
+    // ==================== APPOINTMENT NOTIFICATIONS ====================
+
+    /**
+     * Notify dietitian when patient requests an appointment
+     *
+     * @param int $consultation_id
+     * @param int $patient_id
+     * @param int $dietitian_id
+     * @param string $consultation_date
+     * @param string $consultation_type
+     * @return array Results from notification sending
+     */
+    public function notify_appointment_request($consultation_id, $patient_id, $dietitian_id, $consultation_date, $consultation_type = 'Consultation')
+    {
+        // Get patient info
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get dietitian info
+        $this->db->select('staffid, CONCAT(firstname, " ", lastname) as name, email, phonenumber');
+        $this->db->where('staffid', $dietitian_id);
+        $dietitian = $this->db->get(db_prefix() . 'staff')->row();
+        if (!$dietitian) return false;
+
+        $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
+        $patient_name = $client->company;
+
+        // Full message for email
+        $message_full = "Bonjour Dr {$dietitian->name},\n\n";
+        $message_full .= "📅 Nouvelle demande de rendez-vous !\n\n";
+        $message_full .= "👤 Patient : {$patient_name}\n";
+        $message_full .= "📆 Date demandée : {$formatted_date}\n";
+        $message_full .= "🏥 Type : {$consultation_type}\n\n";
+        $message_full .= "Veuillez accepter ou refuser cette demande depuis votre interface.\n\n";
+        $message_full .= "👉 Voir la demande : " . admin_url('dietetic/consultations/view/' . $consultation_id);
+
+        // Short message for SMS/WhatsApp
+        $first_name = explode(' ', $dietitian->name)[0];
+        $message_short = "Dr {$first_name}, nouvelle demande RDV de {$patient_name} pour le {$formatted_date}. À valider sur votre interface.";
+
+        // Send notification to dietitian (always send to dietitian, no preferences)
+        return $this->send_notification([
+            'patient_id' => $patient_id,
+            'type' => 'appointment_request',
+            'subject' => "Nouvelle demande de rendez-vous - {$patient_name}",
+            'message' => $message_full,
+            'message_sms' => $message_short,
+            'email' => $dietitian->email,
+            'phone' => $dietitian->phonenumber,
+            'channels' => [
+                'email' => 1, // Always send email to dietitian
+                'sms' => !empty($dietitian->phonenumber) ? 1 : 0,
+                'whatsapp' => !empty($dietitian->phonenumber) ? 1 : 0,
+                'push' => 0 // No push for dietitians yet
+            ],
+            'push_data' => []
+        ]);
+    }
+
+    /**
+     * Notify patient when dietitian accepts their appointment request
+     *
+     * @param int $consultation_id
+     * @param int $patient_id
+     * @param string $consultation_date
+     * @param string $dietitian_name
+     * @param string $consultation_type
+     * @return array Results from notification sending
+     */
+    public function notify_appointment_accepted($consultation_id, $patient_id, $consultation_date, $dietitian_name, $consultation_type = 'Consultation')
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
+        $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
+
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "✅ Bonne nouvelle ! Votre demande de rendez-vous a été acceptée.\n\n";
+        $message_full .= "👨‍⚕️ Avec : {$dietitian_name}\n";
+        $message_full .= "📆 Date : {$formatted_date}\n";
+        $message_full .= "🏥 Type : {$consultation_type}\n\n";
+        $message_full .= "Nous vous rappelons 24h avant votre consultation.\n";
+        $message_full .= "À bientôt ! 😊";
+
+        // Extract first name for SMS personalization
+        $first_name = explode(' ', $contact_name)[0];
+        $short_date = date('d/m à H\hi', strtotime($consultation_date));
+        $message_short = "{$first_name}, votre RDV avec {$dietitian_name} le {$short_date} est confirmé ! À bientôt.";
+
+        return $this->send_notification_with_frontend([
+            'patient_id' => $patient_id,
+            'type' => 'appointment_accepted',
+            'subject' => "Rendez-vous confirmé ✅",
+            'message' => $message_full,
+            'message_sms' => $message_short,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/consultations'),
+                'consultation_id' => $consultation_id
+            ]
+        ]);
+    }
+
+    /**
+     * Notify patient when dietitian rejects their appointment request
+     *
+     * @param int $consultation_id
+     * @param int $patient_id
+     * @param string $consultation_date
+     * @param string $dietitian_name
+     * @param string $reason
+     * @return array Results from notification sending
+     */
+    public function notify_appointment_rejected($consultation_id, $patient_id, $consultation_date, $dietitian_name, $reason = '')
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_consultation) {
+            return false;
+        }
+
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->get_where(db_prefix() . 'dietic_patients', ['id' => $patient_id])->row();
+        if (!$patient) return false;
+
+        $this->load->model('clients_model');
+        $client = $this->clients_model->get($patient->client_id);
+        if (!$client) return false;
+
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        $contact_email = $contact ? $contact->email : ($client->email ?? '');
+        $contact_phone = $contact ? $contact->phonenumber : ($client->phonenumber ?? '');
+        $contact_name = $contact ? "{$contact->firstname} {$contact->lastname}" : $client->company;
+
+        $formatted_date = date('d/m/Y à H:i', strtotime($consultation_date));
+
+        // Full message for email
+        $message_full = "Bonjour {$contact_name},\n\n";
+        $message_full .= "❌ Votre demande de rendez-vous n'a pas pu être acceptée.\n\n";
+        $message_full .= "📆 Date demandée : {$formatted_date}\n";
+        $message_full .= "👨‍⚕️ Diététicien : {$dietitian_name}\n\n";
+        if ($reason) {
+            $message_full .= "Raison : {$reason}\n\n";
+        }
+        $message_full .= "Veuillez contacter votre diététicien ou proposer une autre date.\n";
+        $message_full .= "📞 Nous restons à votre disposition.";
+
+        // Extract first name for SMS personalization
+        $first_name = explode(' ', $contact_name)[0];
+        $short_date = date('d/m à H\hi', strtotime($consultation_date));
+        $message_short = "{$first_name}, votre demande de RDV du {$short_date} n'a pas pu être acceptée. Veuillez proposer une autre date.";
+
+        return $this->send_notification_with_frontend([
+            'patient_id' => $patient_id,
+            'type' => 'appointment_rejected',
+            'subject' => "Demande de rendez-vous non acceptée",
+            'message' => $message_full,
+            'message_sms' => $message_short,
+            'email' => $contact_email,
+            'phone' => $contact_phone,
+            'channels' => [
+                'email' => $preferences->channel_email,
+                'sms' => $preferences->channel_sms,
+                'whatsapp' => $preferences->channel_whatsapp,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'url' => site_url('dietetic/portal/book_appointment'),
+                'consultation_id' => $consultation_id
+            ]
+        ]);
+    }
+
     // ==================== GENERIC NOTIFICATIONS ====================
 
     /**
