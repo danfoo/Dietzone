@@ -706,6 +706,42 @@
     </div>
 </div>
 
+<!-- Modal pour le refus de rendez-vous -->
+<div class="modal fade" id="rejectAppointmentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-ban"></i> Refuser la demande de rendez-vous
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <strong>Attention :</strong> Le patient recevra une notification de refus par SMS, Email et WhatsApp.
+                </div>
+                <div class="form-group">
+                    <label for="rejection-reason">Motif du refus <span class="text-muted">(optionnel)</span></label>
+                    <textarea class="form-control" id="rejection-reason" rows="4"
+                              placeholder="Expliquez la raison du refus au patient (ex: Horaire non disponible, patient déjà suivi par un autre diététicien, etc.)"></textarea>
+                    <small class="text-muted">Ce motif sera envoyé au patient dans la notification.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirm-reject-btn">
+                    <i class="fa fa-ban"></i> Confirmer le refus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function markAsCompleted(id) {
     if (confirm('Marquer cette consultation comme complétée ?')) {
@@ -716,7 +752,7 @@ function markAsCompleted(id) {
             } else {
                 alert_float('danger', 'Erreur lors de la mise à jour');
             }
-        });
+        }, 'json');
     }
 }
 
@@ -728,7 +764,7 @@ function sendReminder(id) {
             } else {
                 alert_float('danger', 'Erreur lors de l\'envoi du rappel');
             }
-        });
+        }, 'json');
     }
 }
 
@@ -744,7 +780,7 @@ function cancelConsultation(id) {
             } else {
                 alert_float('danger', 'Erreur lors de l\'annulation');
             }
-        });
+        }, 'json');
     }
 }
 
@@ -757,25 +793,55 @@ function acceptAppointment(id) {
             } else {
                 alert_float('danger', 'Erreur lors de l\'acceptation');
             }
-        });
+        }, 'json');
     }
 }
 
+// Variable globale pour stocker l'ID de la consultation à refuser
+var consultationToReject = null;
+
 function rejectAppointment(id) {
-    var reason = prompt('Raison du refus (optionnel):');
-    if (reason !== null) {
-        $.post('<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + id, {
+    consultationToReject = id;
+    $('#rejection-reason').val(''); // Réinitialiser le champ
+    $('#rejectAppointmentModal').modal('show');
+}
+
+// Gestionnaire de clic pour le bouton de confirmation du refus
+$(document).ready(function() {
+    $('#confirm-reject-btn').on('click', function() {
+        if (consultationToReject === null) return;
+
+        var reason = $('#rejection-reason').val().trim();
+        var $btn = $(this);
+
+        // Désactiver le bouton pendant l'envoi
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Envoi en cours...');
+
+        $.post('<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + consultationToReject, {
             reason: reason
         }, function(response) {
             if (response.success) {
-                alert_float('success', 'Demande de rendez-vous refusée');
-                location.reload();
+                $('#rejectAppointmentModal').modal('hide');
+                alert_float('success', 'Demande de rendez-vous refusée avec succès');
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
             } else {
-                alert_float('danger', 'Erreur lors du refus');
+                alert_float('danger', response.message || 'Erreur lors du refus');
+                $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
             }
+        }, 'json').fail(function() {
+            alert_float('danger', 'Erreur de communication avec le serveur');
+            $btn.prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
         });
-    }
-}
+    });
+
+    // Réinitialiser quand le modal est fermé
+    $('#rejectAppointmentModal').on('hidden.bs.modal', function() {
+        consultationToReject = null;
+        $('#confirm-reject-btn').prop('disabled', false).html('<i class="fa fa-ban"></i> Confirmer le refus');
+    });
+});
 </script>
 
 <?php init_tail(); ?>
