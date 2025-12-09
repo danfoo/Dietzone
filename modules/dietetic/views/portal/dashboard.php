@@ -946,6 +946,16 @@ $this->load->view('portal/includes/portal_header');
     letter-spacing: 0.5px;
 }
 
+.consultation-badge-pending {
+    background: #f59e0b;
+    color: white;
+}
+
+.consultation-badge-scheduled {
+    background: #10b981;
+    color: white;
+}
+
 .empty-consultations {
     text-align: center;
     padding: 32px 20px;
@@ -2140,10 +2150,17 @@ if (!$current_weight || !$target_weight) {
                             <div class="consultation-type">
                                 <?php echo ucfirst(str_replace('_', ' ', $consultation->consultation_type)); ?>
                             </div>
-                            <span class="consultation-badge">
+                            <?php if ($consultation->status == 'pending') { ?>
+                            <span class="consultation-badge consultation-badge-pending">
+                                <i class="fa fa-hourglass-half"></i>
+                                En attente de validation
+                            </span>
+                            <?php } else { ?>
+                            <span class="consultation-badge consultation-badge-scheduled">
                                 <i class="fa fa-check-circle"></i>
                                 Programmé
                             </span>
+                            <?php } ?>
                         </div>
                     </div>
                     <?php } ?>

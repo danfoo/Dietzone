@@ -156,7 +156,7 @@ class Dietetic_consultations_model extends App_Model
 
     /**
      * Get upcoming consultations for a specific patient
-     * Retourne uniquement les consultations futures (scheduled et date future)
+     * Retourne les consultations futures (pending, scheduled) et la date future
      *
      * @param int $patient_id
      * @param int $limit
@@ -171,7 +171,8 @@ class Dietetic_consultations_model extends App_Model
         }
 
         $this->db->where('patient_id', $patient_id);
-        $this->db->where('status', 'scheduled');
+        // Include both pending (awaiting validation) and scheduled appointments
+        $this->db->where_in('status', ['pending', 'scheduled']);
         $this->db->where('consultation_date >=', date('Y-m-d H:i:s'));
         $this->db->order_by('consultation_date', 'ASC');
 
