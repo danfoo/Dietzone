@@ -3354,9 +3354,11 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "Veuillez accepter ou refuser cette demande depuis votre interface.\n\n";
         $message_full .= "👉 Voir la demande : " . admin_url('dietetic/consultations/view/' . $consultation_id);
 
-        // Short message for SMS/WhatsApp
+        // Short message for SMS/WhatsApp (MAX 160 characters)
         $first_name = explode(' ', $dietitian->name)[0];
-        $message_short = "Dr {$first_name}, nouvelle demande RDV de {$patient_name} pour le {$formatted_date}. À valider sur votre interface.";
+        $patient_first_name = explode(' ', $patient_name)[0];
+        $short_date = date('d/m H\hi', strtotime($consultation_date));
+        $message_short = "Dr {$first_name}, demande RDV {$patient_first_name} le {$short_date}. A valider";
 
         // Send notification to dietitian (always send to dietitian, no preferences)
         return $this->send_notification([
@@ -3419,10 +3421,10 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "Nous vous rappelons 24h avant votre consultation.\n";
         $message_full .= "À bientôt ! 😊";
 
-        // Extract first name for SMS personalization
+        // Extract first name for SMS personalization (MAX 160 characters)
         $first_name = explode(' ', $contact_name)[0];
-        $short_date = date('d/m à H\hi', strtotime($consultation_date));
-        $message_short = "{$first_name}, votre RDV avec {$dietitian_name} le {$short_date} est confirmé ! À bientôt.";
+        $short_date = date('d/m H\hi', strtotime($consultation_date));
+        $message_short = "{$first_name}, RDV {$short_date} confirme. A bientot";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
@@ -3489,10 +3491,10 @@ class Dietetic_notifications_model extends App_Model
         $message_full .= "Veuillez contacter votre diététicien ou proposer une autre date.\n";
         $message_full .= "📞 Nous restons à votre disposition.";
 
-        // Extract first name for SMS personalization
+        // Extract first name for SMS personalization (MAX 160 characters)
         $first_name = explode(' ', $contact_name)[0];
-        $short_date = date('d/m à H\hi', strtotime($consultation_date));
-        $message_short = "{$first_name}, votre demande de RDV du {$short_date} n'a pas pu être acceptée. Veuillez proposer une autre date.";
+        $short_date = date('d/m H\hi', strtotime($consultation_date));
+        $message_short = "{$first_name}, RDV {$short_date} refuse. Proposer nouvelle date";
 
         return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,

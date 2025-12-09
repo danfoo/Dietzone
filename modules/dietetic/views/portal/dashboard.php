@@ -956,6 +956,16 @@ $this->load->view('portal/includes/portal_header');
     color: white;
 }
 
+.consultation-badge-rejected {
+    background: #dc2626;
+    color: white;
+}
+
+.consultation-badge-cancelled {
+    background: #ef4444;
+    color: white;
+}
+
 .empty-consultations {
     text-align: center;
     padding: 32px 20px;
@@ -2154,6 +2164,16 @@ if (!$current_weight || !$target_weight) {
                             <span class="consultation-badge consultation-badge-pending">
                                 <i class="fa fa-hourglass-half"></i>
                                 En attente de validation
+                            </span>
+                            <?php } elseif ($consultation->status == 'rejected') { ?>
+                            <span class="consultation-badge consultation-badge-rejected">
+                                <i class="fa fa-ban"></i>
+                                Refusée
+                            </span>
+                            <?php } elseif ($consultation->status == 'cancelled') { ?>
+                            <span class="consultation-badge consultation-badge-cancelled">
+                                <i class="fa fa-times-circle"></i>
+                                Annulée
                             </span>
                             <?php } else { ?>
                             <span class="consultation-badge consultation-badge-scheduled">

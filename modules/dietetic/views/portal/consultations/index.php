@@ -779,6 +779,10 @@
                             $status_text = 'Annulée';
                             $status_icon = 'fa-times';
                             break;
+                        case 'rejected':
+                            $status_text = 'Refusée';
+                            $status_icon = 'fa-ban';
+                            break;
                         case 'no_show':
                             $status_text = 'Manquée';
                             $status_icon = 'fa-exclamation';
