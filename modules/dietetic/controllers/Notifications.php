@@ -784,11 +784,30 @@ class Notifications extends AdminController
         // Handle form submission
         if ($this->input->server('REQUEST_METHOD') === 'POST') {
             $template_key = $this->input->post('template_key');
-            $subject = $this->input->post('subject');
-            $body = $this->input->post('body');
+
+            // Check for different field names (email_*, sms_*, whatsapp_*, appointment_*)
+            $subject = $this->input->post($template_key . '_subject');
+            if ($subject === null) {
+                $subject = $this->input->post('email_' . $template_key . '_subject');
+            }
+
+            $body = $this->input->post($template_key . '_body');
+            if ($body === null) {
+                $body = $this->input->post('email_' . $template_key . '_body');
+            }
+
+            $sms_body = $this->input->post($template_key . '_sms_body');
+            if ($sms_body === null) {
+                $sms_body = $this->input->post('sms_' . $template_key . '_body');
+            }
+
+            $whatsapp_body = $this->input->post($template_key . '_whatsapp_body');
+            if ($whatsapp_body === null) {
+                $whatsapp_body = $this->input->post('whatsapp_' . $template_key . '_body');
+            }
 
             if ($template_key) {
-                // Save subject if provided
+                // Save subject if provided (Email)
                 if ($subject !== null) {
                     $this->dietetic_notifications_model->update_setting(
                         'template_' . $template_key . '_subject',
@@ -796,11 +815,27 @@ class Notifications extends AdminController
                     );
                 }
 
-                // Save body
+                // Save body (Email)
                 if ($body !== null) {
                     $this->dietetic_notifications_model->update_setting(
                         'template_' . $template_key . '_body',
                         $body
+                    );
+                }
+
+                // Save SMS body
+                if ($sms_body !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_sms_body',
+                        $sms_body
+                    );
+                }
+
+                // Save WhatsApp body
+                if ($whatsapp_body !== null) {
+                    $this->dietetic_notifications_model->update_setting(
+                        'template_' . $template_key . '_whatsapp_body',
+                        $whatsapp_body
                     );
                 }
 
@@ -817,6 +852,8 @@ class Notifications extends AdminController
             'program_assigned', 'program_updated',
             // Consultations
             'consultation_scheduled', 'consultation_reminder', 'consultation_cancelled',
+            // Appointments (Patient booking system)
+            'appointment_request', 'appointment_accepted', 'appointment_rejected',
             // Food Surveys
             'food_survey_assigned', 'food_survey_reminder',
             // Measurements & Weight
@@ -837,9 +874,13 @@ class Notifications extends AdminController
         foreach ($template_keys as $key) {
             $subject = $this->dietetic_notifications_model->get_setting('template_' . $key . '_subject');
             $body = $this->dietetic_notifications_model->get_setting('template_' . $key . '_body');
+            $sms_body = $this->dietetic_notifications_model->get_setting('template_' . $key . '_sms_body');
+            $whatsapp_body = $this->dietetic_notifications_model->get_setting('template_' . $key . '_whatsapp_body');
             $data['templates'][$key] = [
                 'subject' => $subject,
-                'body' => $body
+                'body' => $body,
+                'sms_body' => $sms_body,
+                'whatsapp_body' => $whatsapp_body
             ];
         }
 

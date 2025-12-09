@@ -371,6 +371,120 @@ C\'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>
+
+                <!-- Appointment Request Template (Dietitian) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-calendar-plus-o"></i> Demande de Rendez-vous (Diététicien)</h3>
+                    <div class="template-description">
+                        Template envoyé au diététicien lorsqu'un patient fait une demande de rendez-vous
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{dietitian_name}</code>
+                        <code>{patient_name}</code>
+                        <code>{consultation_date}</code>
+                        <code>{consultation_type}</code>
+                        <code>{consultation_url}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="appointment_request_subject" value="<?php echo htmlspecialchars($templates['appointment_request']['subject'] ?? '📅 Nouvelle demande de rendez-vous'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="appointment_request_body"><?php echo htmlspecialchars($templates['appointment_request']['body'] ?? 'Bonjour Dr {dietitian_name},
+
+📅 Nouvelle demande de rendez-vous !
+
+👤 Patient : {patient_name}
+📆 Date demandée : {consultation_date}
+🏥 Type : {consultation_type}
+
+Veuillez accepter ou refuser cette demande depuis votre interface.
+
+👉 Voir la demande : {consultation_url}'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_request" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Accepted Template (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-check-circle"></i> Rendez-vous Accepté (Patient)</h3>
+                    <div class="template-description">
+                        Template envoyé au patient lorsque le diététicien accepte sa demande de rendez-vous
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{patient_name}</code>
+                        <code>{dietitian_name}</code>
+                        <code>{consultation_date}</code>
+                        <code>{consultation_type}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="appointment_accepted_subject" value="<?php echo htmlspecialchars($templates['appointment_accepted']['subject'] ?? '✅ Rendez-vous confirmé'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="appointment_accepted_body"><?php echo htmlspecialchars($templates['appointment_accepted']['body'] ?? 'Bonjour {patient_name},
+
+✅ Bonne nouvelle ! Votre demande de rendez-vous a été acceptée.
+
+👨‍⚕️ Avec : {dietitian_name}
+📆 Date : {consultation_date}
+🏥 Type : {consultation_type}
+
+Nous vous rappelons 24h avant votre consultation.
+À bientôt ! 😊'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_accepted" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Rejected Template (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-ban"></i> Rendez-vous Refusé (Patient)</h3>
+                    <div class="template-description">
+                        Template envoyé au patient lorsque le diététicien refuse sa demande de rendez-vous
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{patient_name}</code>
+                        <code>{dietitian_name}</code>
+                        <code>{consultation_date}</code>
+                        <code>{reason}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sujet</label>
+                        <input type="text" name="appointment_rejected_subject" value="<?php echo htmlspecialchars($templates['appointment_rejected']['subject'] ?? 'Demande de rendez-vous non acceptée'); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="appointment_rejected_body"><?php echo htmlspecialchars($templates['appointment_rejected']['body'] ?? 'Bonjour {patient_name},
+
+❌ Votre demande de rendez-vous n\'a pas pu être acceptée.
+
+📆 Date demandée : {consultation_date}
+👨‍⚕️ Diététicien : {dietitian_name}
+
+Raison : {reason}
+
+Veuillez contacter votre diététicien ou proposer une autre date.
+📞 Nous restons à votre disposition.'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_rejected" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
             </div>
 
             <!-- SMS Templates -->
@@ -427,6 +541,72 @@ C\'est une victoire à célébrer ! Continuez comme ça, vous êtes sur la bonne
                         <small class="char-count" id="char-count-sms_consultation_reminder_body">0/160</small>
                     </div>
                     <button type="submit" name="template_key" value="sms_consultation_reminder" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Request SMS (Dietitian) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-calendar-plus-o"></i> Demande Rendez-vous (Diététicien)</h3>
+                    <div class="template-description">
+                        SMS envoyé au diététicien lors d'une demande de rendez-vous patient
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{patient_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message SMS (max 160 caractères)</label>
+                        <textarea name="appointment_request_sms_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['appointment_request']['sms_body'] ?? 'Dr {first_name}, demande RDV {patient_name} le {date}. A valider'); ?></textarea>
+                        <small class="char-count" id="char-count-appointment_request_sms_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_request" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Accepted SMS (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-check-circle"></i> RDV Accepté (Patient)</h3>
+                    <div class="template-description">
+                        SMS envoyé au patient lorsque le rendez-vous est confirmé
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message SMS (max 160 caractères)</label>
+                        <textarea name="appointment_accepted_sms_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['appointment_accepted']['sms_body'] ?? '{first_name}, RDV {date} confirme. A bientot'); ?></textarea>
+                        <small class="char-count" id="char-count-appointment_accepted_sms_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_accepted" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Rejected SMS (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-ban"></i> RDV Refusé (Patient)</h3>
+                    <div class="template-description">
+                        SMS envoyé au patient lorsque le rendez-vous est refusé
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message SMS (max 160 caractères)</label>
+                        <textarea name="appointment_rejected_sms_body" maxlength="160" onkeyup="updateCharCount(this, 160)"><?php echo htmlspecialchars($templates['appointment_rejected']['sms_body'] ?? '{first_name}, RDV {date} refuse. Proposer nouvelle date'); ?></textarea>
+                        <small class="char-count" id="char-count-appointment_rejected_sms_body">0/160</small>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_rejected" class="save-button">
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>
@@ -499,6 +679,69 @@ Quelques minutes suffisent pour noter vos repas et boissons.
 Votre suivi régulier est la clé du succès ! 🌟'); ?></textarea>
                     </div>
                     <button type="submit" name="template_key" value="whatsapp_food_entry_reminder" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Request WhatsApp (Dietitian) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-calendar-plus-o"></i> Demande Rendez-vous (Diététicien)</h3>
+                    <div class="template-description">
+                        WhatsApp envoyé au diététicien lors d'une demande de rendez-vous patient
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{patient_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="appointment_request_whatsapp_body"><?php echo htmlspecialchars($templates['appointment_request']['whatsapp_body'] ?? 'Dr {first_name}, demande RDV {patient_name} le {date}. A valider'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_request" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Accepted WhatsApp (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-check-circle"></i> RDV Accepté (Patient)</h3>
+                    <div class="template-description">
+                        WhatsApp envoyé au patient lorsque le rendez-vous est confirmé
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="appointment_accepted_whatsapp_body"><?php echo htmlspecialchars($templates['appointment_accepted']['whatsapp_body'] ?? '{first_name}, RDV {date} confirme. A bientot'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_accepted" class="save-button">
+                        <i class="fa fa-save"></i> Enregistrer ce modèle
+                    </button>
+                </div>
+
+                <!-- Appointment Rejected WhatsApp (Patient) -->
+                <div class="template-card">
+                    <h3><i class="fa fa-ban"></i> RDV Refusé (Patient)</h3>
+                    <div class="template-description">
+                        WhatsApp envoyé au patient lorsque le rendez-vous est refusé
+                    </div>
+
+                    <div class="template-variables">
+                        <h4>Variables disponibles:</h4>
+                        <code>{first_name}</code> <code>{date}</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message WhatsApp</label>
+                        <textarea name="appointment_rejected_whatsapp_body"><?php echo htmlspecialchars($templates['appointment_rejected']['whatsapp_body'] ?? '{first_name}, RDV {date} refuse. Proposer nouvelle date'); ?></textarea>
+                    </div>
+                    <button type="submit" name="template_key" value="appointment_rejected" class="save-button">
                         <i class="fa fa-save"></i> Enregistrer ce modèle
                     </button>
                 </div>
