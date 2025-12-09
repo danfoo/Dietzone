@@ -33,6 +33,123 @@ class Settings extends AdminController
     }
 
     /**
+     * Diagnostic page for appointment booking system
+     */
+    public function diagnostic_booking()
+    {
+        $data['title'] = 'Diagnostic - Système de Prise de Rendez-vous';
+
+        // Check availability table
+        $data['availability_table_exists'] = $this->db->table_exists(db_prefix() . 'dietic_dietitian_availability');
+        $data['types_table_exists'] = $this->db->table_exists(db_prefix() . 'dietic_consultation_types');
+
+        // Get consultation types
+        if ($data['types_table_exists']) {
+            $data['consultation_types'] = $this->db->get(db_prefix() . 'dietic_consultation_types')->result();
+        } else {
+            $data['consultation_types'] = [];
+        }
+
+        // Get staff members
+        $this->db->select('staffid, CONCAT(firstname, " ", lastname) as name, email');
+        $this->db->where('active', 1);
+        $data['staff'] = $this->db->get(db_prefix() . 'staff')->result();
+
+        // Get existing availabilities
+        if ($data['availability_table_exists']) {
+            $this->db->select('da.*, CONCAT(s.firstname, " ", s.lastname) as dietitian_name');
+            $this->db->from(db_prefix() . 'dietic_dietitian_availability da');
+            $this->db->join(db_prefix() . 'staff s', 's.staffid = da.dietitian_id');
+            $this->db->order_by('da.dietitian_id, da.day_of_week, da.start_time');
+            $data['availabilities'] = $this->db->get()->result();
+        } else {
+            $data['availabilities'] = [];
+        }
+
+        // Check patient-dietitian assignments
+        $data['assignments_table_exists'] = $this->db->table_exists(db_prefix() . 'dietic_patient_dietitians');
+        if ($data['assignments_table_exists']) {
+            $data['assignments_count'] = $this->db->count_all(db_prefix() . 'dietic_patient_dietitians');
+        } else {
+            $data['assignments_count'] = 0;
+        }
+
+        // Check booked_by_patient field
+        $columns = $this->db->list_fields(db_prefix() . 'dietic_consultations');
+        $data['has_booking_field'] = in_array('booked_by_patient', $columns);
+
+        $this->load->view('admin/settings/diagnostic_booking', $data);
+    }
+
+    /**
+     * Create sample availability data for a dietitian
+     */
+    public function create_sample_availability()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        header('Content-Type: application/json');
+
+        $dietitian_id = $this->input->post('dietitian_id');
+
+        if (!$dietitian_id) {
+            echo json_encode(['success' => false, 'message' => 'ID diététicien requis']);
+            return;
+        }
+
+        // Check if dietitian already has availabilities
+        $existing = $this->db->where('dietitian_id', $dietitian_id)
+            ->count_all_results(db_prefix() . 'dietic_dietitian_availability');
+
+        if ($existing > 0) {
+            echo json_encode(['success' => false, 'message' => 'Ce diététicien a déjà des disponibilités configurées']);
+            return;
+        }
+
+        // Create sample schedule: Monday to Friday, 9-12 and 14-18
+        $sample_availabilities = [
+            ['day_of_week' => 1, 'start_time' => '09:00:00', 'end_time' => '12:00:00'], // Lundi matin
+            ['day_of_week' => 1, 'start_time' => '14:00:00', 'end_time' => '18:00:00'], // Lundi après-midi
+            ['day_of_week' => 2, 'start_time' => '09:00:00', 'end_time' => '12:00:00'], // Mardi matin
+            ['day_of_week' => 2, 'start_time' => '14:00:00', 'end_time' => '18:00:00'], // Mardi après-midi
+            ['day_of_week' => 3, 'start_time' => '09:00:00', 'end_time' => '12:00:00'], // Mercredi matin
+            ['day_of_week' => 4, 'start_time' => '09:00:00', 'end_time' => '12:00:00'], // Jeudi matin
+            ['day_of_week' => 4, 'start_time' => '14:00:00', 'end_time' => '18:00:00'], // Jeudi après-midi
+            ['day_of_week' => 5, 'start_time' => '09:00:00', 'end_time' => '12:00:00'], // Vendredi matin
+        ];
+
+        $inserted = 0;
+        foreach ($sample_availabilities as $avail) {
+            $data = [
+                'dietitian_id' => $dietitian_id,
+                'day_of_week' => $avail['day_of_week'],
+                'start_time' => $avail['start_time'],
+                'end_time' => $avail['end_time'],
+                'slot_duration' => 60,
+                'is_active' => 1,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            if ($this->db->insert(db_prefix() . 'dietic_dietitian_availability', $data)) {
+                $inserted++;
+            }
+        }
+
+        if ($inserted > 0) {
+            log_activity('Sample availability created for dietitian ID: ' . $dietitian_id);
+            echo json_encode([
+                'success' => true,
+                'message' => "{$inserted} créneaux de disponibilité créés avec succès",
+                'inserted' => $inserted
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la création des disponibilités']);
+        }
+    }
+
+    /**
      * Run database migration for services & billing
      */
     public function run_migration()
