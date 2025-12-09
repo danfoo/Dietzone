@@ -20,6 +20,9 @@ class Portal extends App_Controller
         $this->load->model('dietetic/dietetic_consultations_model');
         $this->load->model('dietetic/dietetic_food_surveys_model');
         $this->load->model('dietetic/dietetic_daily_tracking_model');
+        $this->load->model('dietetic/dietetic_availability_model');
+        $this->load->model('dietetic/dietetic_patient_dietitians_model');
+        $this->load->model('dietetic/dietetic_notifications_model');
     }
 
     /**
@@ -47,6 +50,11 @@ class Portal extends App_Controller
             'consultations',
             'consultation',
             'my_dietitians',
+            // Appointment booking methods
+            'book_appointment',
+            'get_available_dates',
+            'get_available_slots',
+            'submit_appointment_request',
             'rate_dietitian',
             'food_surveys',
             'food_survey_submit',
@@ -975,6 +983,282 @@ class Portal extends App_Controller
         $data['dietitian'] = $this->staff_model->get($consultation->dietitian_id);
 
         $this->load->view('portal/consultations/view', $data);
+    }
+
+    /**
+     * Book appointment page - Patient self-service booking
+     */
+    public function book_appointment()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+        $data['title'] = 'Prendre Rendez-vous';
+
+        // Get assigned dietitians for this patient
+        $data['dietitians'] = $this->dietetic_patient_dietitians_model->get_patient_dietitians($patient->id, 'active');
+
+        // Get consultation types
+        $data['consultation_types'] = $this->dietetic_availability_model->get_consultation_types(true);
+
+        $this->load->view('portal/book_appointment', $data);
+    }
+
+    /**
+     * API: Get available dates for a dietitian
+     * Returns JSON array of available dates
+     */
+    public function get_available_dates()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $dietitian_id = $this->input->post('dietitian_id');
+        $consultation_type_id = $this->input->post('consultation_type_id');
+
+        if (!$dietitian_id) {
+            echo json_encode(['success' => false, 'message' => 'ID diététicien requis']);
+            return;
+        }
+
+        // Get working days for this dietitian
+        $working_days = $this->dietetic_availability_model->get_working_days($dietitian_id);
+
+        if (empty($working_days)) {
+            echo json_encode(['success' => false, 'message' => 'Aucune disponibilité configurée']);
+            return;
+        }
+
+        // Generate available dates for next 60 days
+        $available_dates = [];
+        $today = new DateTime();
+        $end_date = new DateTime('+60 days');
+
+        while ($today <= $end_date) {
+            $day_of_week = (int)$today->format('w');
+
+            // Check if dietitian works on this day
+            if (in_array($day_of_week, $working_days)) {
+                // Get available slots for this date
+                $slots = $this->dietetic_availability_model->get_available_slots(
+                    $dietitian_id,
+                    $today->format('Y-m-d'),
+                    $consultation_type_id
+                );
+
+                // Only include dates that have available slots
+                if (!empty($slots)) {
+                    $available_dates[] = [
+                        'date' => $today->format('Y-m-d'),
+                        'display' => $today->format('d/m/Y'),
+                        'day_name' => $this->get_french_day_name($day_of_week),
+                        'slots_count' => count($slots)
+                    ];
+                }
+            }
+
+            $today->modify('+1 day');
+        }
+
+        echo json_encode([
+            'success' => true,
+            'dates' => $available_dates
+        ]);
+    }
+
+    /**
+     * API: Get available time slots for a specific date
+     * Returns JSON array of time slots
+     */
+    public function get_available_slots()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $dietitian_id = $this->input->post('dietitian_id');
+        $date = $this->input->post('date');
+        $consultation_type_id = $this->input->post('consultation_type_id');
+
+        if (!$dietitian_id || !$date) {
+            echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
+            return;
+        }
+
+        // Get available slots
+        $slots = $this->dietetic_availability_model->get_available_slots(
+            $dietitian_id,
+            $date,
+            $consultation_type_id
+        );
+
+        echo json_encode([
+            'success' => true,
+            'slots' => $slots
+        ]);
+    }
+
+    /**
+     * Submit appointment request
+     * Creates consultation with 'pending' status and triggers notifications
+     */
+    public function submit_appointment_request()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        // Get form data
+        $dietitian_id = $this->input->post('dietitian_id');
+        $date = $this->input->post('date');
+        $time = $this->input->post('time');
+        $consultation_type_id = $this->input->post('consultation_type_id');
+        $notes = $this->input->post('notes');
+
+        // Validate required fields
+        if (!$dietitian_id || !$date || !$time || !$consultation_type_id) {
+            echo json_encode(['success' => false, 'message' => 'Tous les champs sont requis']);
+            return;
+        }
+
+        // Combine date and time
+        $consultation_datetime = $date . ' ' . $time . ':00';
+
+        // Get consultation type to get duration
+        $consultation_type = $this->dietetic_availability_model->get_consultation_type($consultation_type_id);
+        if (!$consultation_type) {
+            echo json_encode(['success' => false, 'message' => 'Type de consultation invalide']);
+            return;
+        }
+
+        // Check availability one more time before booking
+        $availability_check = $this->dietetic_availability_model->check_availability(
+            $dietitian_id,
+            $consultation_datetime,
+            $consultation_type->duration
+        );
+
+        if (!$availability_check['available']) {
+            echo json_encode([
+                'success' => false,
+                'message' => $availability_check['reason']
+            ]);
+            return;
+        }
+
+        // Create consultation with 'pending' status
+        $consultation_data = [
+            'patient_id' => $patient->id,
+            'dietitian_id' => $dietitian_id,
+            'consultation_date' => $consultation_datetime,
+            'consultation_type' => $consultation_type->slug,
+            'duration' => $consultation_type->duration,
+            'status' => 'pending',
+            'location' => 'office',
+            'notes' => $notes,
+            'booked_by_patient' => 1,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $consultation_id = $this->dietetic_consultations_model->add($consultation_data);
+
+        if ($consultation_id) {
+            // Send notifications to dietitian (will be implemented in Phase 2)
+            // For now, we'll add a placeholder
+            try {
+                $this->send_appointment_request_notifications($consultation_id, $patient, $dietitian_id);
+            } catch (Exception $e) {
+                // Log error but don't fail the booking
+                log_message('error', 'Failed to send appointment notifications: ' . $e->getMessage());
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Votre demande de rendez-vous a été envoyée avec succès. Le diététicien sera notifié.',
+                'consultation_id' => $consultation_id
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la création du rendez-vous'
+            ]);
+        }
+    }
+
+    /**
+     * Send appointment request notifications (placeholder for Phase 2)
+     */
+    private function send_appointment_request_notifications($consultation_id, $patient, $dietitian_id)
+    {
+        // This will be fully implemented in Phase 2
+        // For now, just send basic email notification
+        $consultation = $this->dietetic_consultations_model->get($consultation_id, false);
+
+        if ($consultation) {
+            // Send notification to dietitian
+            $this->dietetic_notifications_model->notify_consultation_scheduled($consultation_id);
+        }
+    }
+
+    /**
+     * Helper: Get French day name
+     */
+    private function get_french_day_name($day_number)
+    {
+        $days = [
+            0 => 'Dimanche',
+            1 => 'Lundi',
+            2 => 'Mardi',
+            3 => 'Mercredi',
+            4 => 'Jeudi',
+            5 => 'Vendredi',
+            6 => 'Samedi'
+        ];
+
+        return $days[$day_number] ?? '';
     }
 
     /**

@@ -1290,6 +1290,11 @@
                 <span>Mes Consultations</span>
             </a>
 
+            <a href="<?php echo site_url('dietetic/portal/book_appointment'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'book_appointment') ? 'active' : ''; ?>">
+                <i class="fa fa-calendar-plus"></i>
+                <span>Prendre Rendez-vous</span>
+            </a>
+
             <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'my_dietitians') ? 'active' : ''; ?>">
                 <i class="fa fa-user-md"></i>
                 <span>Mon Diététicien</span>
