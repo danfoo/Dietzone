@@ -51,128 +51,132 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
+
 <script>
-$(document).ready(function() {
-    // Check migration status on page load
-    checkMigration();
+(function($) {
+    'use strict';
 
-    // Check migration button
-    $('#btnCheckMigration').on('click', function() {
+    $(document).ready(function() {
+        // Check migration status on page load
         checkMigration();
-    });
 
-    // Run migration button
-    $('#btnRunMigration').on('click', function() {
-        runMigration();
-    });
-
-    function checkMigration() {
-        $('#migrationStatus').html('<i class="fa fa-spinner fa-spin"></i> Vérification en cours...').removeClass('hide');
-
-        $.ajax({
-            url: '<?php echo admin_url('dietetic/settings/check_patient_booking_migration'); ?>',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.migration_run) {
-                    $('#migrationStatus').html(
-                        '<div class="alert alert-success">' +
-                        '<i class="fa fa-check-circle"></i> ' + response.message +
-                        '</div>'
-                    );
-                    $('#btnRunMigration').prop('disabled', true).html('<i class="fa fa-check"></i> Migration déjà exécutée');
-                } else {
-                    $('#migrationStatus').html(
-                        '<div class="alert alert-warning">' +
-                        '<i class="fa fa-exclamation-triangle"></i> ' + response.message +
-                        '</div>'
-                    );
-                    $('#btnRunMigration').prop('disabled', false);
-                }
-            },
-            error: function() {
-                $('#migrationStatus').html(
-                    '<div class="alert alert-danger">' +
-                    '<i class="fa fa-times-circle"></i> Erreur lors de la vérification' +
-                    '</div>'
-                );
-            }
+        // Check migration button
+        $('#btnCheckMigration').on('click', function() {
+            checkMigration();
         });
-    }
 
-    function runMigration() {
-        if (!confirm('Êtes-vous sûr de vouloir exécuter cette migration ?')) {
-            return;
+        // Run migration button
+        $('#btnRunMigration').on('click', function() {
+            runMigration();
+        });
+
+        function checkMigration() {
+            $('#migrationStatus').html('<i class="fa fa-spinner fa-spin"></i> Vérification en cours...').removeClass('hide');
+
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/settings/check_patient_booking_migration'); ?>',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.migration_run) {
+                        $('#migrationStatus').html(
+                            '<div class="alert alert-success">' +
+                            '<i class="fa fa-check-circle"></i> ' + response.message +
+                            '</div>'
+                        );
+                        $('#btnRunMigration').prop('disabled', true).html('<i class="fa fa-check"></i> Migration déjà exécutée');
+                    } else {
+                        $('#migrationStatus').html(
+                            '<div class="alert alert-warning">' +
+                            '<i class="fa fa-exclamation-triangle"></i> ' + response.message +
+                            '</div>'
+                        );
+                        $('#btnRunMigration').prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    $('#migrationStatus').html(
+                        '<div class="alert alert-danger">' +
+                        '<i class="fa fa-times-circle"></i> Erreur lors de la vérification' +
+                        '</div>'
+                    );
+                }
+            });
         }
 
-        $('#btnRunMigration').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Exécution en cours...');
-        $('#migrationResult').removeClass('hide').html('<i class="fa fa-spinner fa-spin"></i> Exécution de la migration...');
+        function runMigration() {
+            if (!confirm('Êtes-vous sûr de vouloir exécuter cette migration ?')) {
+                return;
+            }
 
-        $.ajax({
-            url: '<?php echo admin_url('dietetic/settings/run_patient_booking_migration'); ?>',
-            type: 'POST',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    var html = '<div class="alert alert-success">' +
-                               '<h4><i class="fa fa-check-circle"></i> ' + response.message + '</h4>';
+            $('#btnRunMigration').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Exécution en cours...');
+            $('#migrationResult').removeClass('hide').html('<i class="fa fa-spinner fa-spin"></i> Exécution de la migration...');
 
-                    if (response.details) {
-                        html += '<ul>';
-                        html += '<li>Requêtes exécutées : <strong>' + response.details.success_count + '</strong></li>';
-                        html += '<li>Champ ajouté : <code>' + response.details.field_added + '</code></li>';
+            $.ajax({
+                url: '<?php echo admin_url('dietetic/settings/run_patient_booking_migration'); ?>',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        var html = '<div class="alert alert-success">' +
+                                   '<h4><i class="fa fa-check-circle"></i> ' + response.message + '</h4>';
 
-                        if (response.details.warnings && response.details.warnings.length > 0) {
-                            html += '<li>Avertissements :<ul>';
-                            response.details.warnings.forEach(function(warning) {
-                                html += '<li>' + warning + '</li>';
-                            });
-                            html += '</ul></li>';
+                        if (response.details) {
+                            html += '<ul>';
+                            html += '<li>Requêtes exécutées : <strong>' + response.details.success_count + '</strong></li>';
+                            html += '<li>Champ ajouté : <code>' + response.details.field_added + '</code></li>';
+
+                            if (response.details.warnings && response.details.warnings.length > 0) {
+                                html += '<li>Avertissements :<ul>';
+                                response.details.warnings.forEach(function(warning) {
+                                    html += '<li>' + warning + '</li>';
+                                });
+                                html += '</ul></li>';
+                            }
+
+                            html += '</ul>';
                         }
 
-                        html += '</ul>';
+                        html += '</div>';
+
+                        $('#migrationResult').html(html);
+                        $('#btnRunMigration').html('<i class="fa fa-check"></i> Migration exécutée');
+
+                        // Recheck status
+                        setTimeout(function() {
+                            checkMigration();
+                        }, 1000);
+                    } else {
+                        var html = '<div class="alert alert-danger">' +
+                                   '<h4><i class="fa fa-times-circle"></i> ' + response.message + '</h4>';
+
+                        if (response.errors && response.errors.length > 0) {
+                            html += '<ul>';
+                            response.errors.forEach(function(error) {
+                                html += '<li>' + error + '</li>';
+                            });
+                            html += '</ul>';
+                        }
+
+                        html += '<p>Requêtes réussies : ' + response.success_count + '</p>';
+                        html += '</div>';
+
+                        $('#migrationResult').html(html);
+                        $('#btnRunMigration').prop('disabled', false).html('<i class="fa fa-play"></i> Réessayer');
                     }
-
-                    html += '</div>';
-
-                    $('#migrationResult').html(html);
-                    $('#btnRunMigration').html('<i class="fa fa-check"></i> Migration exécutée');
-
-                    // Recheck status
-                    setTimeout(function() {
-                        checkMigration();
-                    }, 1000);
-                } else {
-                    var html = '<div class="alert alert-danger">' +
-                               '<h4><i class="fa fa-times-circle"></i> ' + response.message + '</h4>';
-
-                    if (response.errors && response.errors.length > 0) {
-                        html += '<ul>';
-                        response.errors.forEach(function(error) {
-                            html += '<li>' + error + '</li>';
-                        });
-                        html += '</ul>';
-                    }
-
-                    html += '<p>Requêtes réussies : ' + response.success_count + '</p>';
-                    html += '</div>';
-
-                    $('#migrationResult').html(html);
+                },
+                error: function(xhr, status, error) {
+                    $('#migrationResult').html(
+                        '<div class="alert alert-danger">' +
+                        '<h4><i class="fa fa-times-circle"></i> Erreur serveur</h4>' +
+                        '<p>' + error + '</p>' +
+                        '</div>'
+                    );
                     $('#btnRunMigration').prop('disabled', false).html('<i class="fa fa-play"></i> Réessayer');
                 }
-            },
-            error: function(xhr, status, error) {
-                $('#migrationResult').html(
-                    '<div class="alert alert-danger">' +
-                    '<h4><i class="fa fa-times-circle"></i> Erreur serveur</h4>' +
-                    '<p>' + error + '</p>' +
-                    '</div>'
-                );
-                $('#btnRunMigration').prop('disabled', false).html('<i class="fa fa-play"></i> Réessayer');
-            }
-        });
-    }
-});
+            });
+        }
+    });
+})(jQuery);
 </script>
-
-<?php init_tail(); ?>
