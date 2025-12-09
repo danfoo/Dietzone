@@ -541,9 +541,11 @@
                         <div class="form-group-modern">
                             <label for="status">Statut</label>
                             <select name="status" id="status" class="form-control">
+                                <option value="pending" <?php echo set_select('status', 'pending', isset($consultation) && $consultation->status == 'pending'); ?>>En attente de validation</option>
                                 <option value="scheduled" <?php echo set_select('status', 'scheduled', (isset($consultation) && $consultation->status == 'scheduled') || !isset($consultation)); ?>>Planifiée</option>
                                 <option value="completed" <?php echo set_select('status', 'completed', isset($consultation) && $consultation->status == 'completed'); ?>>Terminée</option>
                                 <option value="cancelled" <?php echo set_select('status', 'cancelled', isset($consultation) && $consultation->status == 'cancelled'); ?>>Annulée</option>
+                                <option value="rejected" <?php echo set_select('status', 'rejected', isset($consultation) && $consultation->status == 'rejected'); ?>>Refusée</option>
                                 <option value="no_show" <?php echo set_select('status', 'no_show', isset($consultation) && $consultation->status == 'no_show'); ?>>Absence</option>
                             </select>
                         </div>
