@@ -146,86 +146,105 @@ class Settings extends AdminController
     public function run_patient_booking_migration()
     {
         if (!is_admin()) {
-            ajax_access_denied();
-        }
-
-        $migration_file = DIETETIC_MODULE_PATH . 'migrations/add_patient_booking_fields.sql';
-
-        if (!file_exists($migration_file)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Fichier de migration introuvable'
-            ]);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Non autorisé']);
             return;
         }
 
-        // Load the migration SQL
-        $migration_sql = file_get_contents($migration_file);
+        header('Content-Type: application/json');
 
-        // Replace table prefix
-        $migration_sql = str_replace('`tbldietic_', '`' . db_prefix() . 'dietic_', $migration_sql);
+        try {
+            $table_name = db_prefix() . 'dietic_consultations';
 
-        // Remove comments
-        $migration_sql = preg_replace('/^--.*$/m', '', $migration_sql);
-        $migration_sql = preg_replace('/\/\*.*?\*\//s', '', $migration_sql);
+            $success_count = 0;
+            $warnings = [];
+            $errors = [];
 
-        // Split into statements
-        $statements = array_filter(array_map('trim', explode(';', $migration_sql)));
-
-        $success_count = 0;
-        $error_count = 0;
-        $errors = [];
-        $warnings = [];
-
-        foreach ($statements as $statement) {
-            if (empty($statement) || strlen($statement) < 10) {
-                continue;
-            }
-
+            // 1. Add booked_by_patient column
             try {
-                $this->db->query($statement);
+                $sql = "ALTER TABLE `{$table_name}`
+                        ADD COLUMN `booked_by_patient` TINYINT(1) DEFAULT 0
+                        COMMENT 'Whether the consultation was booked by the patient (1) or by staff (0)'";
+                $this->db->query($sql);
                 $success_count++;
-
             } catch (Exception $e) {
-                $error_msg = $e->getMessage();
-
-                // Ignore "already exists" errors
-                if (
-                    strpos($error_msg, 'already exists') !== false ||
-                    strpos($error_msg, 'Duplicate column') !== false ||
-                    strpos($error_msg, 'Duplicate key') !== false
-                ) {
-                    $warnings[] = 'Déjà existant : ' . substr($statement, 0, 100) . '...';
+                if (strpos($e->getMessage(), 'Duplicate column') !== false) {
+                    $warnings[] = 'Colonne booked_by_patient existe déjà';
                 } else {
-                    $error_count++;
-                    $errors[] = substr($error_msg, 0, 200);
+                    $errors[] = 'Erreur colonne: ' . $e->getMessage();
                 }
             }
-        }
 
-        // Check if column was added
-        $table_name = db_prefix() . 'dietic_consultations';
-        $columns = $this->db->list_fields($table_name);
-        $has_field = in_array('booked_by_patient', $columns);
+            // 2. Modify status column comment
+            try {
+                $sql = "ALTER TABLE `{$table_name}`
+                        MODIFY COLUMN `status` VARCHAR(20) DEFAULT 'scheduled'
+                        COMMENT 'scheduled, pending, confirmed, completed, cancelled, no_show, rejected'";
+                $this->db->query($sql);
+                $success_count++;
+            } catch (Exception $e) {
+                $warnings[] = 'Modification status: ' . substr($e->getMessage(), 0, 100);
+            }
 
-        if ($has_field) {
-            log_activity('Dietetic Patient Booking Migration Executed Successfully');
+            // 3. Add index on booked_by_patient
+            try {
+                $sql = "ALTER TABLE `{$table_name}`
+                        ADD INDEX `idx_booked_by_patient` (`booked_by_patient`)";
+                $this->db->query($sql);
+                $success_count++;
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate key') !== false) {
+                    $warnings[] = 'Index idx_booked_by_patient existe déjà';
+                } else {
+                    $warnings[] = 'Index booked_by_patient: ' . substr($e->getMessage(), 0, 100);
+                }
+            }
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Migration exécutée avec succès!',
-                'details' => [
-                    'success_count' => $success_count,
-                    'field_added' => 'booked_by_patient',
-                    'warnings' => $warnings
-                ]
-            ]);
-        } else {
+            // 4. Add composite index
+            try {
+                $sql = "ALTER TABLE `{$table_name}`
+                        ADD INDEX `idx_dietitian_status` (`dietitian_id`, `status`)";
+                $this->db->query($sql);
+                $success_count++;
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), 'Duplicate key') !== false) {
+                    $warnings[] = 'Index idx_dietitian_status existe déjà';
+                } else {
+                    $warnings[] = 'Index dietitian_status: ' . substr($e->getMessage(), 0, 100);
+                }
+            }
+
+            // Verify column was added
+            $columns = $this->db->list_fields($table_name);
+            $has_field = in_array('booked_by_patient', $columns);
+
+            if ($has_field) {
+                log_activity('Dietetic Patient Booking Migration Executed Successfully');
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Migration exécutée avec succès!',
+                    'details' => [
+                        'success_count' => $success_count,
+                        'field_added' => 'booked_by_patient',
+                        'warnings' => $warnings,
+                        'errors' => $errors
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le champ n\'a pas pu être ajouté',
+                    'errors' => $errors,
+                    'warnings' => $warnings,
+                    'success_count' => $success_count
+                ]);
+            }
+
+        } catch (Exception $e) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Migration terminée avec des erreurs',
-                'errors' => $errors,
-                'success_count' => $success_count
+                'message' => 'Erreur générale: ' . $e->getMessage()
             ]);
         }
     }
