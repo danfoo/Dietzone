@@ -302,6 +302,11 @@
             gap: 6px;
         }
 
+        .status-badge-header.pending {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
         .status-badge-header.scheduled {
             background: linear-gradient(135deg, #01807B 0%, #026661 100%);
             color: white;
@@ -758,6 +763,10 @@
                     $status_text = '';
                     $status_icon = '';
                     switch ($consultation->status) {
+                        case 'pending':
+                            $status_text = 'En attente de validation';
+                            $status_icon = 'fa-hourglass-half';
+                            break;
                         case 'scheduled':
                             $status_text = 'À venir';
                             $status_icon = 'fa-clock-o';
