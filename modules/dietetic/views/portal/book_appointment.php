@@ -771,6 +771,11 @@ const bookingState = {
     availableSlots: []
 };
 
+// CSRF token for Perfex CRM
+const csrfData = {
+    '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeBooking();
@@ -867,6 +872,7 @@ function loadAvailableDates() {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
+            ...csrfData,
             dietitian_id: bookingState.dietitianId,
             consultation_type_id: bookingState.consultationTypeId
         })
@@ -952,6 +958,7 @@ function loadAvailableSlots() {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
+            ...csrfData,
             dietitian_id: bookingState.dietitianId,
             date: bookingState.selectedDate,
             consultation_type_id: bookingState.consultationTypeId
@@ -1022,6 +1029,7 @@ function submitBooking() {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
+            ...csrfData,
             dietitian_id: bookingState.dietitianId,
             date: bookingState.selectedDate,
             time: bookingState.selectedTime,
