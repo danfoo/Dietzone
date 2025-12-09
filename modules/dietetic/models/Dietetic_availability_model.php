@@ -395,7 +395,8 @@ class Dietetic_availability_model extends App_Model
      */
     public function get_working_days($dietitian_id)
     {
-        $this->db->select('DISTINCT day_of_week');
+        $this->db->distinct();
+        $this->db->select('day_of_week');
         $this->db->where('dietitian_id', $dietitian_id);
         $this->db->where('is_active', 1);
         $this->db->order_by('day_of_week', 'ASC');
