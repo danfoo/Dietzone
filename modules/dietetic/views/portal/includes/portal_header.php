@@ -1258,11 +1258,6 @@
             </a>
             <?php } ?>
 
-            <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'add_measurement') ? 'active' : ''; ?>">
-                <i class="fa fa-plus-circle"></i>
-                <span>Ajouter une Mesure</span>
-            </a>
-
             <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'measurements') ? 'active' : ''; ?>">
                 <i class="fa fa-line-chart"></i>
                 <span>Mes Mesures</span>
