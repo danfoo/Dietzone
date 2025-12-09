@@ -881,12 +881,23 @@ function loadAvailableDates() {
     .then(data => {
         datesLoading.classList.add('hidden');
 
+        // DEBUG - Log response
+        console.log('Available dates response:', data);
+        if (data.debug) {
+            console.log('DEBUG INFO:', data.debug);
+        }
+
         if (data.success && data.dates.length > 0) {
             bookingState.availableDates = data.dates;
             renderAvailableDates(data.dates);
             datesContainer.classList.remove('hidden');
         } else {
-            showAlert('info', 'Aucune date disponible pour le moment. Veuillez réessayer plus tard.');
+            let message = 'Aucune date disponible pour le moment. Veuillez réessayer plus tard.';
+            if (data.debug) {
+                message += '\n\nDEBUG: ' + data.debug.checked_days + ' jours vérifiés, ' +
+                          data.debug.days_with_slots + ' jours avec créneaux disponibles.';
+            }
+            showAlert('info', message);
         }
     })
     .catch(error => {

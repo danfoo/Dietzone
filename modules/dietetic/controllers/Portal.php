@@ -1085,8 +1085,11 @@ class Portal extends App_Controller
             // Get working days for this dietitian
             $working_days = $this->dietetic_availability_model->get_working_days($dietitian_id);
 
+            // DEBUG
+            log_message('debug', 'get_available_dates - Dietitian: ' . $dietitian_id . ', Working days: ' . json_encode($working_days));
+
             if (empty($working_days)) {
-                echo json_encode(['success' => false, 'message' => 'Aucune disponibilité configurée']);
+                echo json_encode(['success' => false, 'message' => 'Aucune disponibilité configurée', 'debug' => ['dietitian_id' => $dietitian_id]]);
                 return;
             }
 
@@ -1094,12 +1097,16 @@ class Portal extends App_Controller
             $available_dates = [];
             $today = new DateTime();
             $end_date = new DateTime('+60 days');
+            $checked_days = 0;
+            $days_with_slots = 0;
 
             while ($today <= $end_date) {
                 $day_of_week = (int)$today->format('w');
 
                 // Check if dietitian works on this day
                 if (in_array($day_of_week, $working_days)) {
+                    $checked_days++;
+
                     // Get available slots for this date
                     $slots = $this->dietetic_availability_model->get_available_slots(
                         $dietitian_id,
@@ -1107,8 +1114,14 @@ class Portal extends App_Controller
                         $consultation_type_id
                     );
 
+                    // DEBUG - Log first 3 days
+                    if ($checked_days <= 3) {
+                        log_message('debug', 'Date: ' . $today->format('Y-m-d') . ', Day: ' . $day_of_week . ', Slots: ' . count($slots));
+                    }
+
                     // Only include dates that have available slots
                     if (!empty($slots)) {
+                        $days_with_slots++;
                         $available_dates[] = [
                             'date' => $today->format('Y-m-d'),
                             'display' => $today->format('d/m/Y'),
@@ -1121,9 +1134,18 @@ class Portal extends App_Controller
                 $today->modify('+1 day');
             }
 
+            // DEBUG
+            log_message('debug', 'Total checked days: ' . $checked_days . ', Days with slots: ' . $days_with_slots);
+
             echo json_encode([
                 'success' => true,
-                'dates' => $available_dates
+                'dates' => $available_dates,
+                'debug' => [
+                    'dietitian_id' => $dietitian_id,
+                    'working_days' => $working_days,
+                    'checked_days' => $checked_days,
+                    'days_with_slots' => $days_with_slots
+                ]
             ]);
         } catch (Exception $e) {
             log_message('error', 'get_available_dates error: ' . $e->getMessage());
