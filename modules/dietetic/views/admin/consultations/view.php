@@ -33,6 +33,11 @@
         font-size: 14px;
     }
 
+    .status-badge.pending {
+        background: #f39c12;
+        color: white;
+    }
+
     .status-badge.scheduled {
         background: #3498db;
         color: white;
@@ -45,6 +50,11 @@
 
     .status-badge.cancelled {
         background: #e74c3c;
+        color: white;
+    }
+
+    .status-badge.rejected {
+        background: #c0392b;
         color: white;
     }
 
@@ -346,12 +356,16 @@
             <div class="header-meta">
                 <!-- Status Badge -->
                 <div class="status-badge <?php echo $consultation->status; ?>">
-                    <?php if ($consultation->status == 'scheduled'): ?>
+                    <?php if ($consultation->status == 'pending'): ?>
+                        <i class="fa fa-hourglass-half"></i> En attente de validation
+                    <?php elseif ($consultation->status == 'scheduled'): ?>
                         <i class="fa fa-clock-o"></i> Planifiée
                     <?php elseif ($consultation->status == 'completed'): ?>
                         <i class="fa fa-check-circle"></i> Complétée
                     <?php elseif ($consultation->status == 'cancelled'): ?>
                         <i class="fa fa-times-circle"></i> Annulée
+                    <?php elseif ($consultation->status == 'rejected'): ?>
+                        <i class="fa fa-ban"></i> Refusée
                     <?php else: ?>
                         <i class="fa fa-user-times"></i> Absent
                     <?php endif; ?>
@@ -597,6 +611,17 @@
                     <h5><i class="fa fa-bolt"></i> Actions Rapides</h5>
 
                     <div class="quick-actions">
+                        <?php if ($consultation->status == 'pending' && dietetic_has_permission('edit')): ?>
+                            <button onclick="acceptAppointment(<?php echo $consultation->id; ?>)" class="action-btn action-btn-success" style="width: 100%; margin-bottom: 10px;">
+                                <i class="fa fa-check-circle"></i>
+                                Accepter la demande
+                            </button>
+                            <button onclick="rejectAppointment(<?php echo $consultation->id; ?>)" class="action-btn action-btn-danger" style="width: 100%; margin-bottom: 10px;">
+                                <i class="fa fa-times-circle"></i>
+                                Refuser la demande
+                            </button>
+                        <?php endif; ?>
+
                         <?php if ($consultation->consultation_mode === 'online' && !empty($consultation->meeting_link) && $consultation->status == 'scheduled'): ?>
                             <a href="<?php echo $consultation->meeting_link; ?>" target="_blank" class="action-btn action-btn-primary">
                                 <i class="fa fa-video-camera"></i>
@@ -718,6 +743,35 @@ function cancelConsultation(id) {
                 location.reload();
             } else {
                 alert_float('danger', 'Erreur lors de l\'annulation');
+            }
+        });
+    }
+}
+
+function acceptAppointment(id) {
+    if (confirm('Accepter cette demande de rendez-vous ?')) {
+        $.post('<?php echo admin_url('dietetic/consultations/accept_appointment/'); ?>' + id, function(response) {
+            if (response.success) {
+                alert_float('success', 'Demande de rendez-vous acceptée');
+                location.reload();
+            } else {
+                alert_float('danger', 'Erreur lors de l\'acceptation');
+            }
+        });
+    }
+}
+
+function rejectAppointment(id) {
+    var reason = prompt('Raison du refus (optionnel):');
+    if (reason !== null) {
+        $.post('<?php echo admin_url('dietetic/consultations/reject_appointment/'); ?>' + id, {
+            reason: reason
+        }, function(response) {
+            if (response.success) {
+                alert_float('success', 'Demande de rendez-vous refusée');
+                location.reload();
+            } else {
+                alert_float('danger', 'Erreur lors du refus');
             }
         });
     }

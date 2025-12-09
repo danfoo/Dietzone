@@ -152,10 +152,12 @@
     display: inline-block;
 }
 
+.status-pending { background: #fff3e0; color: #f57c00; }
 .status-scheduled { background: #e3f2fd; color: #1976d2; }
 .status-completed { background: #e8f5e9; color: #388e3c; }
 .status-cancelled { background: #ffebee; color: #d32f2f; }
-.status-no-show { background: #fff3e0; color: #f57c00; }
+.status-rejected { background: #fce4ec; color: #d32f2f; }
+.status-no-show { background: #fce4ec; color: #c2185b; }
 
 /* Type Badges */
 .type-badge {
@@ -250,6 +252,11 @@
                             <a href="<?php echo admin_url('dietetic/consultations?status=all'); ?>">
                                 <i class="fa fa-list"></i> Toutes
                                 <span class="badge"><?php echo count($consultations); ?></span>
+                            </a>
+                        </li>
+                        <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'active' : ''; ?>">
+                            <a href="<?php echo admin_url('dietetic/consultations?status=pending'); ?>">
+                                <i class="fa fa-hourglass-half"></i> En attente
                             </a>
                         </li>
                         <li class="<?php echo (isset($_GET['status']) && $_GET['status'] == 'scheduled') ? 'active' : ''; ?>">
@@ -352,6 +359,11 @@
                                             $status_label = 'Programmée';
 
                                             switch ($consultation->status) {
+                                                case 'pending':
+                                                    $status_class = 'status-pending';
+                                                    $status_icon = 'fa-hourglass-half';
+                                                    $status_label = 'En attente';
+                                                    break;
                                                 case 'scheduled':
                                                     $status_class = 'status-scheduled';
                                                     $status_icon = 'fa-clock-o';
@@ -366,6 +378,11 @@
                                                     $status_class = 'status-cancelled';
                                                     $status_icon = 'fa-times-circle';
                                                     $status_label = 'Annulée';
+                                                    break;
+                                                case 'rejected':
+                                                    $status_class = 'status-rejected';
+                                                    $status_icon = 'fa-ban';
+                                                    $status_label = 'Refusée';
                                                     break;
                                                 case 'no_show':
                                                     $status_class = 'status-no-show';

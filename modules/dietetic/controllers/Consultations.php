@@ -388,6 +388,63 @@ class Consultations extends AdminController
     }
 
     /**
+     * Accept a patient appointment request
+     */
+    public function accept_appointment($id)
+    {
+        if (!dietetic_has_permission('edit')) {
+            ajax_access_denied();
+        }
+
+        $consultation = $this->dietetic_consultations_model->get($id);
+
+        if (!$consultation || $consultation->status != 'pending') {
+            echo json_encode(['success' => false, 'message' => 'Demande introuvable ou déjà traitée']);
+            return;
+        }
+
+        if ($this->dietetic_consultations_model->update($id, ['status' => 'scheduled'])) {
+            // TODO Phase 2: Send notification to patient that appointment is confirmed
+            log_activity('Patient appointment request accepted [Consultation ID: ' . $id . ']');
+            echo json_encode(['success' => true, 'message' => 'Demande de rendez-vous acceptée']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'acceptation']);
+        }
+    }
+
+    /**
+     * Reject a patient appointment request
+     */
+    public function reject_appointment($id)
+    {
+        if (!dietetic_has_permission('edit')) {
+            ajax_access_denied();
+        }
+
+        $reason = $this->input->post('reason');
+        $consultation = $this->dietetic_consultations_model->get($id);
+
+        if (!$consultation || $consultation->status != 'pending') {
+            echo json_encode(['success' => false, 'message' => 'Demande introuvable ou déjà traitée']);
+            return;
+        }
+
+        $update_data = ['status' => 'rejected'];
+        if ($reason) {
+            $update_data['notes'] = ($consultation->notes ? $consultation->notes . "\n\n" : '') .
+                                     "Refusé par le diététicien: " . $reason;
+        }
+
+        if ($this->dietetic_consultations_model->update($id, $update_data)) {
+            // TODO Phase 2: Send notification to patient that appointment is rejected
+            log_activity('Patient appointment request rejected [Consultation ID: ' . $id . ']');
+            echo json_encode(['success' => true, 'message' => 'Demande de rendez-vous refusée']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors du refus']);
+        }
+    }
+
+    /**
      * API: Check availability for a consultation
      * Used for real-time validation in the consultation form
      */
