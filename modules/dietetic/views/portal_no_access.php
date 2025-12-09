@@ -32,11 +32,14 @@
             color: white;
             font-size: 24px;
             font-weight: 700;
-            padding: 20px 15px;
+            padding: 15px 15px;
+            display: flex;
+            align-items: center;
         }
 
-        .navbar-custom .navbar-brand i {
-            color: #F3911D;
+        .navbar-custom .navbar-brand img {
+            max-height: 40px;
+            width: auto;
             margin-right: 10px;
         }
 
@@ -348,7 +351,14 @@
                     <span class="icon-bar" style="background: white;"></span>
                 </button>
                 <a class="navbar-brand" href="#">
-                    <i class="fa fa-heartbeat"></i> DietZone
+                    <?php
+                    $company_logo = get_option('company_logo');
+                    if (!empty($company_logo)) { ?>
+                        <img src="<?php echo base_url('uploads/company/' . $company_logo); ?>" alt="DietZone Logo">
+                    <?php } else { ?>
+                        <i class="fa fa-heartbeat"></i>
+                    <?php } ?>
+                    <span>DietZone</span>
                 </a>
             </div>
             <div class="collapse navbar-collapse" id="navbar-collapse">
@@ -511,8 +521,10 @@
 
             <p style="margin-top: 30px; opacity: 0.9;">
                 <i class="fa fa-question-circle"></i> Des questions ? Consultez notre
-                <a href="#" style="color: #F3911D; text-decoration: underline;">FAQ</a> ou contactez-nous au
-                <strong style="color: #F3911D;">+221 XX XXX XX XX</strong>
+                <a href="#" style="color: #F3911D; text-decoration: underline;">FAQ</a> ou contactez-nous à
+                <a href="mailto:support@dietzone.sn" style="color: #F3911D; text-decoration: underline; font-weight: 600;">
+                    <i class="fa fa-envelope"></i> support@dietzone.sn
+                </a>
             </p>
         </div>
     </div>
