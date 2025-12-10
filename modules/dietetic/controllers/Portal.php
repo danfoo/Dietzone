@@ -279,86 +279,112 @@ class Portal extends App_Controller
 
             log_activity('LOGIN MOBILE - Tentative connexion - Identifiant brut: ' . $identifier);
 
-            // SYSTÈME HYBRIDE: Détection automatique téléphone vs email
-            $patient_login = null;
+            // Variable pour stocker l'email à utiliser pour l'authentification Perfex
+            $email_for_auth = null;
+            $patient_info = null;
 
-            // Essai 1: Chercher par EMAIL (natif Perfex)
+            // DÉTECTION: Email ou Téléphone?
             if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
-                log_activity('LOGIN MOBILE - Identifiant détecté comme EMAIL: ' . $identifier);
+                // C'est un EMAIL - utiliser directement
+                log_activity('LOGIN MOBILE - Type: EMAIL détecté');
+                $email_for_auth = $identifier;
+            } else {
+                // C'est un TÉLÉPHONE - trouver l'email associé
+                log_activity('LOGIN MOBILE - Type: TÉLÉPHONE détecté');
 
-                $this->db->select('p.client_id, ct.password, ct.firstname, ct.lastname, ct.email');
-                $this->db->from(db_prefix() . 'dietic_patients p');
-                $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
-                $this->db->where('ct.email', $identifier);
-                $patient_login = $this->db->get()->row();
-
-                if ($patient_login) {
-                    log_activity('LOGIN MOBILE - Patient trouvé par EMAIL: ' . $patient_login->firstname);
-                } else {
-                    log_activity('LOGIN MOBILE - Aucun patient avec cet email');
-                }
-            }
-
-            // Essai 2: Chercher par TÉLÉPHONE (si pas trouvé par email)
-            if (!$patient_login) {
-                // Nettoyer téléphone
+                // Nettoyer le numéro de téléphone
                 $phone = preg_replace('/[\s\-\(\)]/', '', $identifier);
                 if (!str_starts_with($phone, '+')) {
                     $phone = '+' . $phone;
                 }
 
-                log_activity('LOGIN MOBILE - Recherche par TÉLÉPHONE nettoyé: ' . $phone);
+                log_activity('LOGIN MOBILE - Téléphone nettoyé: ' . $phone);
 
-                $this->db->select('p.client_id, ct.password, ct.firstname, ct.lastname, ct.phonenumber, ct.email');
-                $this->db->from(db_prefix() . 'dietic_patients p');
-                $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
+                // Chercher le contact avec ce numéro pour obtenir son EMAIL
+                $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
+                $this->db->from(db_prefix() . 'contacts ct');
+                $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+                $this->db->where('ct.is_primary', 1);
                 $this->db->where('ct.phonenumber', $phone);
-                $patient_login = $this->db->get()->row();
+                $contact = $this->db->get()->row();
 
-                if ($patient_login) {
-                    log_activity('LOGIN MOBILE - Patient trouvé par TÉLÉPHONE: ' . $patient_login->firstname);
-                } else {
-                    log_activity('LOGIN MOBILE - Aucun patient avec ce téléphone: ' . $phone);
-
-                    // Essai 3: Chercher avec variations du numéro
+                if (!$contact) {
                     // Essayer sans le +
                     $phone_no_plus = ltrim($phone, '+');
-                    $this->db->select('p.client_id, ct.password, ct.firstname, ct.lastname, ct.phonenumber, ct.email');
-                    $this->db->from(db_prefix() . 'dietic_patients p');
-                    $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
-                    $this->db->where('ct.phonenumber', $phone_no_plus);
-                    $patient_login = $this->db->get()->row();
+                    log_activity('LOGIN MOBILE - Réessai sans +: ' . $phone_no_plus);
 
-                    if ($patient_login) {
-                        log_activity('LOGIN MOBILE - Patient trouvé par TÉLÉPHONE (sans +): ' . $patient_login->firstname);
+                    $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
+                    $this->db->from(db_prefix() . 'contacts ct');
+                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+                    $this->db->where('ct.is_primary', 1);
+                    $this->db->where('ct.phonenumber', $phone_no_plus);
+                    $contact = $this->db->get()->row();
+                }
+
+                if ($contact) {
+                    // Vérifier l'unicité du numéro de téléphone
+                    $this->db->where('phonenumber', $contact->phonenumber);
+                    $this->db->where('is_primary', 1);
+                    $duplicate_count = $this->db->count_all_results(db_prefix() . 'contacts');
+
+                    if ($duplicate_count > 1) {
+                        log_activity('LOGIN MOBILE - ALERTE: Numéro en doublon (' . $duplicate_count . ' occurrences) - ' . $contact->phonenumber);
+                        set_alert('danger', 'Ce numéro est associé à plusieurs comptes. Veuillez utiliser votre email pour vous connecter.');
+                        redirect(site_url('dietetic/portal'));
+                        return;
                     }
+
+                    // EMAIL trouvé - l'utiliser pour l'authentification
+                    $email_for_auth = $contact->email;
+                    log_activity('LOGIN MOBILE - Email trouvé via téléphone: ' . $email_for_auth . ' (Contact: ' . $contact->firstname . ' ' . $contact->lastname . ')');
+                } else {
+                    log_activity('LOGIN MOBILE - ÉCHEC: Aucun contact trouvé avec ce téléphone');
+                    set_alert('danger', 'Aucun compte trouvé avec ce numéro. Vérifiez le format (ex: +221771234567) ou utilisez votre email.');
+                    redirect(site_url('dietetic/portal'));
+                    return;
                 }
             }
 
-            // Vérification du résultat
-            if (!$patient_login) {
-                log_activity('LOGIN MOBILE - ÉCHEC: Aucun patient trouvé avec cet identifiant (essayé email + téléphone)');
-                set_alert('danger', 'Aucun compte trouvé. Essayez avec votre email ou votre numéro de téléphone (ex: +221771234567)');
-            } elseif (!app_hasher()->CheckPassword($password, $patient_login->password)) {
-                log_activity('LOGIN MOBILE - ÉCHEC: Mot de passe incorrect pour ' . $patient_login->firstname . ' (Client ID: ' . $patient_login->client_id . ')');
-                set_alert('danger', 'Mot de passe incorrect');
-            } else {
-                // Connexion réussie
-                log_activity('LOGIN MOBILE - SUCCÈS: Connexion de ' . $patient_login->firstname . ' ' . $patient_login->lastname . ' (Client ID: ' . $patient_login->client_id . ')');
-                $this->session->set_userdata([
-                    'client_logged_in' => true,
-                    'client_user_id' => $patient_login->client_id
-                ]);
+            // AUTHENTIFICATION avec l'email (natif Perfex)
+            if ($email_for_auth) {
+                log_activity('LOGIN MOBILE - Authentification avec email: ' . $email_for_auth);
 
-                // Mettre à jour last_login
-                $this->db->where('userid', $patient_login->client_id);
-                $this->db->where('is_primary', 1);
-                $this->db->update(db_prefix() . 'contacts', ['last_login' => date('Y-m-d H:i:s')]);
+                // Récupérer le patient avec cet email
+                $this->db->select('p.client_id, ct.password, ct.firstname, ct.lastname, ct.email');
+                $this->db->from(db_prefix() . 'dietic_patients p');
+                $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
+                $this->db->where('ct.email', $email_for_auth);
+                $patient_login = $this->db->get()->row();
 
-                set_alert('success', 'Bienvenue ' . $patient_login->firstname . ' !');
-                redirect(site_url('dietetic/portal'));
-                return;
+                if (!$patient_login) {
+                    log_activity('LOGIN MOBILE - ÉCHEC: Aucun patient diététique trouvé avec cet email');
+                    set_alert('danger', 'Ce compte n\'est pas enregistré comme patient diététique.');
+                } elseif (!app_hasher()->CheckPassword($password, $patient_login->password)) {
+                    log_activity('LOGIN MOBILE - ÉCHEC: Mot de passe incorrect pour ' . $patient_login->firstname . ' (Email: ' . $email_for_auth . ')');
+                    set_alert('danger', 'Mot de passe incorrect');
+                } else {
+                    // ✅ CONNEXION RÉUSSIE
+                    log_activity('LOGIN MOBILE - SUCCÈS: Connexion de ' . $patient_login->firstname . ' ' . $patient_login->lastname . ' (Client ID: ' . $patient_login->client_id . ', Email: ' . $email_for_auth . ')');
+
+                    $this->session->set_userdata([
+                        'client_logged_in' => true,
+                        'client_user_id' => $patient_login->client_id
+                    ]);
+
+                    // Mettre à jour last_login
+                    $this->db->where('userid', $patient_login->client_id);
+                    $this->db->where('is_primary', 1);
+                    $this->db->update(db_prefix() . 'contacts', ['last_login' => date('Y-m-d H:i:s')]);
+
+                    set_alert('success', 'Bienvenue ' . $patient_login->firstname . ' !');
+                    redirect(site_url('dietetic/portal'));
+                    return;
+                }
             }
+
+            // Si on arrive ici, l'authentification a échoué
+            redirect(site_url('dietetic/portal'));
+            return;
         }
 
         // Check if client is logged in
