@@ -5,20 +5,31 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Contrôleur d'authentification DietZone
  * Gère la connexion, l'inscription et la récupération de mot de passe des patients
+ *
+ * IMPORTANT: Ce contrôleur hérite de CI_Controller pour permettre l'accès public
+ * sans authentification requise
  */
-class Auth extends ClientsController
+class Auth extends CI_Controller
 {
     public function __construct()
     {
         parent::__construct();
 
+        // Charger les librairies CodeIgniter
+        $this->load->database();
+        $this->load->library('session');
+        $this->load->library('form_validation');
+        $this->load->helper(['url', 'security', 'string']);
+
+        // Charger les fonctions Perfex CRM
+        if (!function_exists('db_prefix')) {
+            require_once(APPPATH . 'helpers/app_helper.php');
+        }
+
+        // Charger les modèles
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('clients_model');
         $this->load->helper('dietetic/dietetic');
-
-        // Désactiver l'authentification pour ce contrôleur (accès public)
-        $this->disableNavigation();
-        $this->disableSubMenu();
     }
 
     /**
@@ -27,7 +38,7 @@ class Auth extends ClientsController
     public function index()
     {
         // Si déjà connecté, rediriger vers le portail
-        if (is_client_logged_in()) {
+        if ($this->session->userdata('client_logged_in')) {
             redirect(site_url('dietetic/portal'));
         }
 
