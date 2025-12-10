@@ -816,10 +816,20 @@ class Portal extends App_Controller
             }
 
             // 3. Créer PATIENT DIÉTÉTIQUE
+            // Trouver un diététicien par défaut (le premier disponible) ou mettre 0
+            $this->db->select('staffid');
+            $this->db->from(db_prefix() . 'staff');
+            $this->db->where('active', 1);
+            $this->db->limit(1);
+            $default_dietitian = $this->db->get()->row();
+            $dietitian_id = $default_dietitian ? $default_dietitian->staffid : 0;
+
             $patient_data = [
                 'client_id' => $client_id,
-                'date_added' => date('Y-m-d H:i:s'),
-                'status' => 'active'
+                'dietitian_id' => $dietitian_id,
+                'status' => 'active',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ];
             $this->db->insert(db_prefix() . 'dietic_patients', $patient_data);
             $patient_id = $this->db->insert_id();
