@@ -364,41 +364,54 @@ class Portal extends App_Controller
                 } else {
                     log_activity('LOGIN MOBILE - ÉCHEC: Aucun numéro trouvé dans contacts NI clients');
 
-                    // MODE DEBUG: Afficher tous les numéros disponibles
-                    if ($this->input->get('debug') == '1') {
-                        echo "<h3>DEBUG MODE - Numéros disponibles:</h3>";
+                    // AFFICHER DEBUG TOUJOURS QUAND NUMÉRO PAS TROUVÉ
+                    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Debug Login</title>';
+                    echo '<style>body{font-family:monospace;padding:20px;background:#f5f5f5;}h2,h3{color:#01807B;}code{background:#ffffcc;padding:2px 6px;font-weight:bold;}ul{background:white;padding:20px;}</style>';
+                    echo '</head><body>';
 
-                        echo "<h4>Dans tblcontacts:</h4><ul>";
-                        $this->db->select('phonenumber, email, firstname');
-                        $this->db->from(db_prefix() . 'contacts');
-                        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = userid');
-                        $this->db->where('is_primary', 1);
-                        $this->db->where('phonenumber IS NOT NULL');
-                        $debug_contacts = $this->db->get()->result();
-                        foreach ($debug_contacts as $dc) {
-                            echo "<li><code>{$dc->phonenumber}</code> - {$dc->firstname} ({$dc->email})</li>";
-                        }
-                        echo "</ul>";
+                    echo '<h2>🔍 Debug - Aucun compte trouvé</h2>';
+                    echo '<p><strong>Numéro reçu du formulaire:</strong> <code>' . htmlspecialchars($identifier) . '</code></p>';
+                    echo '<p><strong>Après nettoyage avec +:</strong> <code>' . htmlspecialchars($phone) . '</code></p>';
+                    echo '<p><strong>Sans le +:</strong> <code>' . htmlspecialchars($phone_no_plus) . '</code></p>';
+                    echo '<hr>';
 
-                        echo "<h4>Dans tblclients:</h4><ul>";
-                        $this->db->select('c.phonenumber, ct.email, ct.firstname');
-                        $this->db->from(db_prefix() . 'clients c');
-                        $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
-                        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
-                        $this->db->where('c.phonenumber IS NOT NULL');
-                        $debug_clients = $this->db->get()->result();
-                        foreach ($debug_clients as $dc) {
-                            echo "<li><code>{$dc->phonenumber}</code> - {$dc->firstname} ({$dc->email})</li>";
-                        }
-                        echo "</ul>";
-
-                        echo "<p>Vous avez cherché: <code>{$phone}</code> (avec +) et <code>{$phone_no_plus}</code> (sans +)</p>";
-                        die();
+                    echo '<h3>Exemples de numéros dans tblcontacts (patients diététiques):</h3><ul>';
+                    $this->db->select('phonenumber, email, firstname');
+                    $this->db->from(db_prefix() . 'contacts');
+                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = userid');
+                    $this->db->where('is_primary', 1);
+                    $this->db->where('phonenumber IS NOT NULL');
+                    $this->db->where('phonenumber !=', '');
+                    $this->db->limit(20);
+                    $examples = $this->db->get()->result();
+                    if (empty($examples)) {
+                        echo '<li><em>Aucun numéro dans tblcontacts</em></li>';
                     }
+                    foreach ($examples as $ex) {
+                        echo "<li><code>{$ex->phonenumber}</code> - {$ex->firstname} ({$ex->email})</li>";
+                    }
+                    echo '</ul>';
 
-                    set_alert('danger', 'Aucun compte trouvé avec ce numéro. Vérifiez le format (ex: +221771234567) ou utilisez votre email.');
-                    redirect(site_url('dietetic/portal'));
-                    return;
+                    echo '<h3>Exemples de numéros dans tblclients (patients diététiques):</h3><ul>';
+                    $this->db->select('c.phonenumber, ct.email, ct.firstname');
+                    $this->db->from(db_prefix() . 'clients c');
+                    $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
+                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
+                    $this->db->where('c.phonenumber IS NOT NULL');
+                    $this->db->where('c.phonenumber !=', '');
+                    $this->db->limit(20);
+                    $examples2 = $this->db->get()->result();
+                    if (empty($examples2)) {
+                        echo '<li><em>Aucun numéro dans tblclients</em></li>';
+                    }
+                    foreach ($examples2 as $ex) {
+                        echo "<li><code>{$ex->phonenumber}</code> - {$ex->firstname} ({$ex->email})</li>";
+                    }
+                    echo '</ul>';
+
+                    echo '<p><a href="' . site_url('dietetic/portal') . '" style="padding:10px;background:#01807B;color:white;text-decoration:none;display:inline-block;">← Retour à la page de connexion</a></p>';
+                    echo '</body></html>';
+                    die();
                 }
             }
 
