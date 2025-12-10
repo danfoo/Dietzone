@@ -375,7 +375,7 @@
 
                 <!-- Login Tab -->
                 <div class="tab-pane active" id="login-tab">
-                    <form method="POST" action="<?php echo site_url('dietetic/auth/login'); ?>" id="login-form">
+                    <form method="POST" action="<?php echo site_url('dietetic/portal/login_patient'); ?>" id="login-form">
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                         <input type="hidden" name="phone" id="login-phone-hidden">
 

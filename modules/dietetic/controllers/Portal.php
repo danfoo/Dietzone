@@ -40,6 +40,7 @@ class Portal extends App_Controller
         // List of valid methods in this controller
         $valid_methods = [
             'index',
+            'login_patient',  // Authentification mobile
             'measurements',
             'add_measurement',
             'meal_plans',
@@ -152,6 +153,64 @@ class Portal extends App_Controller
 
         // Call the requested method with all parameters
         return call_user_func_array([$this, $method], $params);
+    }
+
+    /**
+     * Authentification mobile - Connexion patient par téléphone
+     */
+    public function login_patient()
+    {
+        if ($this->input->post()) {
+            $phone = $this->input->post('phone');
+            $password = $this->input->post('password');
+            $remember = $this->input->post('remember');
+
+            // Valider les champs
+            if (empty($phone) || empty($password)) {
+                set_alert('danger', 'Veuillez remplir tous les champs');
+                redirect(site_url('dietetic/auth'));
+                return;
+            }
+
+            // Nettoyer le numéro de téléphone
+            $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
+            if (!str_starts_with($phone, '+')) {
+                $phone = '+' . $phone;
+            }
+
+            // Chercher le patient par téléphone
+            $this->db->select('p.*, ct.contactid, ct.password');
+            $this->db->from(db_prefix() . 'dietic_patients p');
+            $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
+            $this->db->where('ct.phonenumber', $phone);
+            $patient = $this->db->get()->row();
+
+            if (!$patient) {
+                set_alert('danger', 'Numéro de téléphone ou mot de passe incorrect');
+                redirect(site_url('dietetic/auth'));
+                return;
+            }
+
+            // Vérifier le mot de passe
+            if (!app_hasher()->CheckPassword($password, $patient->password)) {
+                set_alert('danger', 'Numéro de téléphone ou mot de passe incorrect');
+                redirect(site_url('dietetic/auth'));
+                return;
+            }
+
+            // Connecter le patient
+            $this->session->set_userdata('client_logged_in', true);
+            $this->session->set_userdata('client_user_id', $patient->client_id);
+
+            if ($remember) {
+                set_cookie('remember_client', $patient->client_id, 2592000); // 30 jours
+            }
+
+            log_activity('Patient logged in [Client ID: ' . $patient->client_id . ']');
+
+            set_alert('success', 'Connexion réussie ! Bienvenue.');
+            redirect(site_url('dietetic/portal'));
+        }
     }
 
     /**
