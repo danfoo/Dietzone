@@ -691,9 +691,8 @@
             $btn.addClass('loading').prop('disabled', true);
             $('#diagnostic-result').html('');
 
-            $.post('<?php echo site_url('dietetic/auth/check_phone'); ?>', {
-                phone: phone,
-                <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+            $.post('/mobile_auth.php?action=check_phone', {
+                phone: phone
             }, function(response) {
                 let html = '';
 
