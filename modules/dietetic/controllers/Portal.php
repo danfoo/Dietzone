@@ -580,6 +580,134 @@ class Portal extends App_Controller
     }
 
     /**
+     * Debug phone numbers - Check where phone numbers are stored
+     * URL: /dietetic/portal/debug_phone
+     */
+    public function debug_phone()
+    {
+        // Désactiver navigation
+        $this->disableNavigation();
+        $this->disableSubMenu();
+
+        $search = $this->input->get('phone');
+
+        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Debug Phone</title>';
+        echo '<style>
+            body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; background: white; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+            th { background-color: #01807B; color: white; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .highlight { background: yellow !important; font-weight: bold; }
+            .warning { color: red; }
+            .success { color: green; }
+            code { background: #f4f4f4; padding: 2px 6px; }
+            h1, h2, h3 { color: #01807B; }
+        </style></head><body>';
+
+        echo '<h1>🔍 Debug Numéros de Téléphone</h1>';
+        echo '<form method="GET">';
+        echo '<input type="text" name="phone" value="' . htmlspecialchars($search) . '" placeholder="+221771234567" style="padding:10px;width:300px;">';
+        echo '<button type="submit" style="padding:10px;background:#01807B;color:white;border:none;">Chercher</button>';
+        echo '</form><hr>';
+
+        if ($search) {
+            echo "<h2>Recherche: <code>{$search}</code></h2>";
+
+            // Nettoyer comme dans le code de connexion
+            $phone = preg_replace('/[\s\-\(\)]/', '', $search);
+            if (!str_starts_with($phone, '+')) {
+                $phone = '+' . $phone;
+            }
+            $phone_no_plus = ltrim($phone, '+');
+
+            echo "<p>Avec +: <code>{$phone}</code></p>";
+            echo "<p>Sans +: <code>{$phone_no_plus}</code></p><hr>";
+        }
+
+        // TOUS les numéros dans CONTACTS
+        echo '<h3>Numéros dans tblcontacts (is_primary=1):</h3>';
+        $this->db->select('ct.phonenumber, ct.email, ct.firstname, ct.lastname, ct.userid');
+        $this->db->from(db_prefix() . 'contacts ct');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+        $this->db->where('ct.is_primary', 1);
+        $this->db->where('ct.phonenumber IS NOT NULL');
+        $this->db->where('ct.phonenumber !=', '');
+        $this->db->limit(50);
+        $contacts = $this->db->get()->result();
+
+        echo '<table><tr><th>Phone</th><th>Email</th><th>Nom</th><th>User ID</th></tr>';
+        $found_in_contacts = false;
+        foreach ($contacts as $c) {
+            $is_match = false;
+            if ($search && ($c->phonenumber == $search || $c->phonenumber == $phone || $c->phonenumber == $phone_no_plus)) {
+                $is_match = true;
+                $found_in_contacts = true;
+            }
+            $class = $is_match ? 'highlight' : '';
+            echo "<tr class='{$class}'><td><code>{$c->phonenumber}</code></td><td>{$c->email}</td><td>{$c->firstname} {$c->lastname}</td><td>{$c->userid}</td></tr>";
+        }
+        echo '</table>';
+
+        if ($search && !$found_in_contacts) {
+            echo '<p class="warning">❌ Votre numéro n\'est PAS dans tblcontacts</p>';
+        } else if ($search && $found_in_contacts) {
+            echo '<p class="success">✅ Votre numéro EST dans tblcontacts</p>';
+        }
+
+        echo '<hr>';
+
+        // TOUS les numéros dans CLIENTS
+        echo '<h3>Numéros dans tblclients:</h3>';
+        $this->db->select('c.phonenumber, c.company, ct.email, ct.firstname, ct.lastname, c.userid');
+        $this->db->from(db_prefix() . 'clients c');
+        $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
+        $this->db->where('c.phonenumber IS NOT NULL');
+        $this->db->where('c.phonenumber !=', '');
+        $this->db->limit(50);
+        $clients = $this->db->get()->result();
+
+        echo '<table><tr><th>Phone</th><th>Email</th><th>Nom</th><th>User ID</th></tr>';
+        $found_in_clients = false;
+        foreach ($clients as $c) {
+            $is_match = false;
+            if ($search && ($c->phonenumber == $search || $c->phonenumber == $phone || $c->phonenumber == $phone_no_plus)) {
+                $is_match = true;
+                $found_in_clients = true;
+            }
+            $class = $is_match ? 'highlight' : '';
+            echo "<tr class='{$class}'><td><code>{$c->phonenumber}</code></td><td>{$c->email}</td><td>{$c->firstname} {$c->lastname}</td><td>{$c->userid}</td></tr>";
+        }
+        echo '</table>';
+
+        if ($search && !$found_in_clients) {
+            echo '<p class="warning">❌ Votre numéro n\'est PAS dans tblclients</p>';
+        } else if ($search && $found_in_clients) {
+            echo '<p class="success">✅ Votre numéro EST dans tblclients</p>';
+        }
+
+        echo '<hr>';
+
+        // Logs récents
+        echo '<h3>10 derniers logs LOGIN MOBILE:</h3>';
+        $this->db->select('date, description');
+        $this->db->from(db_prefix() . 'activity_log');
+        $this->db->like('description', 'LOGIN MOBILE');
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(10);
+        $logs = $this->db->get()->result();
+
+        echo '<pre style="background:white;padding:15px;overflow-x:auto;">';
+        foreach ($logs as $log) {
+            echo "[{$log->date}] {$log->description}\n";
+        }
+        echo '</pre>';
+
+        echo '</body></html>';
+    }
+
+    /**
      * View all measurements
      */
     public function measurements()
