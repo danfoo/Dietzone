@@ -791,6 +791,88 @@ class Portal extends App_Controller
     }
 
     /**
+     * Recherche SQL directe d'un numéro
+     * URL: /dietetic/portal/search_phone?phone=+221775003371
+     */
+    public function search_phone()
+    {
+        $this->disableNavigation();
+        $this->disableSubMenu();
+
+        $search = $this->input->get('phone') ?: '+221775003371';
+
+        // Variations
+        $variations = [
+            $search,
+            ltrim($search, '+'),
+            preg_replace('/[^0-9]/', '', $search)
+        ];
+
+        echo '<html><body style="font-family:monospace;padding:20px;">';
+        echo '<h1>Recherche: ' . htmlspecialchars($search) . '</h1>';
+        echo '<p>Variations: ' . implode(', ', array_map('htmlspecialchars', $variations)) . '</p><hr>';
+
+        // 1. CLIENTS
+        echo '<h2>1. tblclients</h2>';
+        $sql = "SELECT userid, company, phonenumber FROM " . db_prefix() . "clients
+                WHERE phonenumber IN ('" . implode("','", array_map([$this->db, 'escape_str'], $variations)) . "')";
+        echo '<code>' . htmlspecialchars($sql) . '</code><br><br>';
+
+        $result = $this->db->query($sql);
+        if ($result && $result->num_rows() > 0) {
+            foreach ($result->result() as $row) {
+                echo '<div style="background:yellow;padding:10px;margin:5px 0;">';
+                echo "✅ TROUVÉ! User: {$row->userid}, Company: {$row->company}, Phone: {$row->phonenumber}";
+                echo '</div>';
+            }
+        } else {
+            echo '<p style="color:red;">❌ Rien dans tblclients</p>';
+        }
+
+        // 2. CONTACTS
+        echo '<h2>2. tblcontacts</h2>';
+        $sql = "SELECT id, userid, firstname, lastname, email, phonenumber FROM " . db_prefix() . "contacts
+                WHERE phonenumber IN ('" . implode("','", array_map([$this->db, 'escape_str'], $variations)) . "')";
+        echo '<code>' . htmlspecialchars($sql) . '</code><br><br>';
+
+        $result = $this->db->query($sql);
+        if ($result && $result->num_rows() > 0) {
+            foreach ($result->result() as $row) {
+                echo '<div style="background:yellow;padding:10px;margin:5px 0;">';
+                echo "✅ TROUVÉ! Contact: {$row->id}, User: {$row->userid}, Nom: {$row->firstname} {$row->lastname}, Email: {$row->email}, Phone: {$row->phonenumber}";
+                echo '</div>';
+            }
+        } else {
+            echo '<p style="color:red;">❌ Rien dans tblcontacts</p>';
+        }
+
+        // 3. TOUS LES NUMÉROS
+        echo '<hr><h2>3. TOUS les numéros (10 premiers)</h2>';
+
+        echo '<h3>tblclients:</h3>';
+        $result = $this->db->query("SELECT phonenumber, company FROM " . db_prefix() . "clients WHERE phonenumber IS NOT NULL AND phonenumber != '' LIMIT 10");
+        if ($result && $result->num_rows() > 0) {
+            foreach ($result->result() as $row) {
+                echo "<code>{$row->phonenumber}</code> - {$row->company}<br>";
+            }
+        } else {
+            echo '<p style="color:red;font-weight:bold;">⚠️ AUCUN numéro dans TOUTE la table tblclients!</p>';
+        }
+
+        echo '<h3>tblcontacts:</h3>';
+        $result = $this->db->query("SELECT phonenumber, firstname, lastname FROM " . db_prefix() . "contacts WHERE phonenumber IS NOT NULL AND phonenumber != '' LIMIT 10");
+        if ($result && $result->num_rows() > 0) {
+            foreach ($result->result() as $row) {
+                echo "<code>{$row->phonenumber}</code> - {$row->firstname} {$row->lastname}<br>";
+            }
+        } else {
+            echo '<p style="color:red;font-weight:bold;">⚠️ AUCUN numéro dans TOUTE la table tblcontacts!</p>';
+        }
+
+        echo '</body></html>';
+    }
+
+    /**
      * View all measurements
      */
     public function measurements()
