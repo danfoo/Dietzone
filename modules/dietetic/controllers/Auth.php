@@ -19,11 +19,30 @@ class Auth extends CI_Controller
         $this->load->database();
         $this->load->library('session');
         $this->load->library('form_validation');
+        $this->load->library('security'); // Pour CSRF
         $this->load->helper(['url', 'security', 'string']);
 
         // Charger les fonctions Perfex CRM
         if (!function_exists('db_prefix')) {
             require_once(APPPATH . 'helpers/app_helper.php');
+        }
+
+        // Charger les helpers nécessaires pour la vue
+        $this->load->helper('url');
+
+        // Fonction get_option pour la vue
+        if (!function_exists('get_option')) {
+            function get_option($option_name, $default = '') {
+                $CI = &get_instance();
+                $CI->db->where('name', $option_name);
+                $result = $CI->db->get(db_prefix() . 'options')->row();
+                return $result ? $result->value : $default;
+            }
+        }
+
+        // Fonction base_url si pas disponible
+        if (!function_exists('base_url')) {
+            $this->load->helper('url');
         }
 
         // Charger les modèles
