@@ -19,6 +19,9 @@ class Auth extends ClientsController
         $this->disableNavigation();
         $this->disableSubMenu();
 
+        // Charger security pour CSRF tokens dans la vue
+        $this->load->library('security');
+
         // Charger uniquement les modèles nécessaires
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->helper('dietetic/dietetic');
