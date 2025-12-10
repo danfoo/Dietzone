@@ -300,7 +300,10 @@ class Portal extends App_Controller
 
                 log_activity('LOGIN MOBILE - Téléphone nettoyé: ' . $phone);
 
-                // Chercher le contact avec ce numéro pour obtenir son EMAIL
+                $contact = null;
+
+                // ESSAI 1: Chercher dans tblcontacts.phonenumber
+                log_activity('LOGIN MOBILE - Essai 1: tblcontacts avec +');
                 $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
                 $this->db->from(db_prefix() . 'contacts ct');
                 $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
@@ -308,10 +311,10 @@ class Portal extends App_Controller
                 $this->db->where('ct.phonenumber', $phone);
                 $contact = $this->db->get()->row();
 
+                // ESSAI 2: tblcontacts sans +
                 if (!$contact) {
-                    // Essayer sans le +
                     $phone_no_plus = ltrim($phone, '+');
-                    log_activity('LOGIN MOBILE - Réessai sans +: ' . $phone_no_plus);
+                    log_activity('LOGIN MOBILE - Essai 2: tblcontacts sans +');
 
                     $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
                     $this->db->from(db_prefix() . 'contacts ct');
@@ -321,24 +324,45 @@ class Portal extends App_Controller
                     $contact = $this->db->get()->row();
                 }
 
-                if ($contact) {
-                    // Vérifier l'unicité du numéro de téléphone
-                    $this->db->where('phonenumber', $contact->phonenumber);
-                    $this->db->where('is_primary', 1);
-                    $duplicate_count = $this->db->count_all_results(db_prefix() . 'contacts');
+                // ESSAI 3: Chercher dans tblclients.phonenumber (avec +)
+                if (!$contact) {
+                    log_activity('LOGIN MOBILE - Essai 3: tblclients avec +');
 
-                    if ($duplicate_count > 1) {
-                        log_activity('LOGIN MOBILE - ALERTE: Numéro en doublon (' . $duplicate_count . ' occurrences) - ' . $contact->phonenumber);
-                        set_alert('danger', 'Ce numéro est associé à plusieurs comptes. Veuillez utiliser votre email pour vous connecter.');
-                        redirect(site_url('dietetic/portal'));
-                        return;
+                    $this->db->select('c.phonenumber, ct.email, ct.firstname, ct.lastname, ct.userid');
+                    $this->db->from(db_prefix() . 'clients c');
+                    $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
+                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
+                    $this->db->where('c.phonenumber', $phone);
+                    $contact = $this->db->get()->row();
+
+                    if ($contact) {
+                        log_activity('LOGIN MOBILE - ✅ TROUVÉ dans tblclients !');
                     }
+                }
 
+                // ESSAI 4: tblclients sans +
+                if (!$contact) {
+                    $phone_no_plus = ltrim($phone, '+');
+                    log_activity('LOGIN MOBILE - Essai 4: tblclients sans +');
+
+                    $this->db->select('c.phonenumber, ct.email, ct.firstname, ct.lastname, ct.userid');
+                    $this->db->from(db_prefix() . 'clients c');
+                    $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
+                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
+                    $this->db->where('c.phonenumber', $phone_no_plus);
+                    $contact = $this->db->get()->row();
+
+                    if ($contact) {
+                        log_activity('LOGIN MOBILE - ✅ TROUVÉ dans tblclients sans + !');
+                    }
+                }
+
+                if ($contact) {
                     // EMAIL trouvé - l'utiliser pour l'authentification
                     $email_for_auth = $contact->email;
                     log_activity('LOGIN MOBILE - Email trouvé via téléphone: ' . $email_for_auth . ' (Contact: ' . $contact->firstname . ' ' . $contact->lastname . ')');
                 } else {
-                    log_activity('LOGIN MOBILE - ÉCHEC: Aucun contact trouvé avec ce téléphone');
+                    log_activity('LOGIN MOBILE - ÉCHEC: Aucun numéro trouvé dans contacts NI clients');
                     set_alert('danger', 'Aucun compte trouvé avec ce numéro. Vérifiez le format (ex: +221771234567) ou utilisez votre email.');
                     redirect(site_url('dietetic/portal'));
                     return;
