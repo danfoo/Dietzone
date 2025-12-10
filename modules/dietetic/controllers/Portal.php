@@ -142,7 +142,9 @@ class Portal extends App_Controller
             // Freemium upgrade page
             'upgrade',
             // Diagnostic methods
-            'diagnostic_onesignal'
+            'diagnostic_onesignal',
+            'debug_phone',
+            'search_phone'
         ];
 
         // If method doesn't exist, treat it as index with the method name as a parameter
