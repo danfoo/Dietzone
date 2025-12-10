@@ -418,17 +418,18 @@
 
                 <!-- Register Tab -->
                 <div class="tab-pane" id="register-tab">
-                    <form id="register-form">
+                    <form method="POST" action="<?php echo site_url('dietetic/portal/register'); ?>" id="register-form">
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                        <input type="hidden" name="phone_full" id="register-phone-hidden">
 
                         <div class="form-group">
                             <label><i class="fa fa-user"></i> Prénom</label>
-                            <input type="text" name="firstname" class="form-control" required>
+                            <input type="text" name="firstname" class="form-control" required minlength="2">
                         </div>
 
                         <div class="form-group">
                             <label><i class="fa fa-user"></i> Nom</label>
-                            <input type="text" name="lastname" class="form-control" required>
+                            <input type="text" name="lastname" class="form-control" required minlength="2">
                         </div>
 
                         <div class="form-group">
@@ -438,23 +439,23 @@
 
                         <div class="form-group">
                             <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                            <input type="tel" id="register-phone" name="phone" class="form-control" required>
+                            <input type="tel" id="register-phone" class="form-control" required>
+                            <small class="form-text text-muted">Format international requis (ex: +221771234567)</small>
                         </div>
 
                         <div class="form-group">
                             <label><i class="fa fa-lock"></i> Mot de passe</label>
-                            <input type="password" name="password" id="register-password" class="form-control" placeholder="Au moins 6 caractères" required>
+                            <input type="password" name="password" id="register-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6">
                             <div class="password-strength" id="password-strength"></div>
                         </div>
 
                         <div class="form-group">
                             <label><i class="fa fa-lock"></i> Confirmer le mot de passe</label>
-                            <input type="password" name="password_confirm" class="form-control" placeholder="••••••••" required>
+                            <input type="password" name="password_confirm" class="form-control" placeholder="••••••••" required minlength="6">
                         </div>
 
                         <button type="submit" class="btn btn-primary">
                             <i class="fa fa-user-plus"></i> Créer mon compte
-                            <i class="fa fa-spinner fa-spin loading-spinner"></i>
                         </button>
                     </form>
 

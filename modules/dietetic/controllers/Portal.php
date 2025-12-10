@@ -41,6 +41,7 @@ class Portal extends App_Controller
         $valid_methods = [
             'index',
             'login_patient',  // Authentification mobile
+            'register',       // Inscription patient
             'measurements',
             'add_measurement',
             'meal_plans',
@@ -669,6 +670,280 @@ class Portal extends App_Controller
         }
 
         $this->load->view('portal_dashboard', $data);
+    }
+
+    /**
+     * Inscription patient - Créer un nouveau compte patient
+     * URL: POST /dietetic/portal/register
+     */
+    public function register()
+    {
+        // Traiter uniquement les requêtes POST
+        if (!$this->input->post()) {
+            set_alert('danger', 'Méthode non autorisée');
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        // Récupérer les données du formulaire
+        $firstname = trim($this->input->post('firstname'));
+        $lastname = trim($this->input->post('lastname'));
+        $email = trim($this->input->post('email'));
+        $phone_full = trim($this->input->post('phone_full'));
+        $password = $this->input->post('password');
+        $password_confirm = $this->input->post('password_confirm');
+
+        // VALIDATION DES CHAMPS
+        $errors = [];
+
+        // Prénom
+        if (empty($firstname) || strlen($firstname) < 2) {
+            $errors[] = 'Le prénom doit contenir au moins 2 caractères';
+        }
+
+        // Nom
+        if (empty($lastname) || strlen($lastname) < 2) {
+            $errors[] = 'Le nom doit contenir au moins 2 caractères';
+        }
+
+        // Email
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Adresse email invalide';
+        }
+
+        // Téléphone
+        if (empty($phone_full)) {
+            $errors[] = 'Numéro de téléphone requis';
+        }
+
+        // Mot de passe
+        if (empty($password) || strlen($password) < 6) {
+            $errors[] = 'Le mot de passe doit contenir au moins 6 caractères';
+        }
+
+        // Confirmation mot de passe
+        if ($password !== $password_confirm) {
+            $errors[] = 'Les mots de passe ne correspondent pas';
+        }
+
+        // Vérifier doublons EMAIL
+        $this->db->where('email', $email);
+        $email_exists = $this->db->count_all_results(db_prefix() . 'contacts') > 0;
+        if ($email_exists) {
+            $errors[] = 'Un compte existe déjà avec cet email';
+        }
+
+        // Vérifier doublons TÉLÉPHONE (dans contacts ET clients)
+        $phone_clean = preg_replace('/[\s\-\(\)]/', '', $phone_full);
+        $phone_variations = [
+            $phone_clean,
+            '+' . ltrim($phone_clean, '+'),
+            ltrim($phone_clean, '+'),
+            '+221' . ltrim($phone_clean, '+221'),
+            ltrim($phone_clean, '+221')
+        ];
+        $phone_variations = array_unique($phone_variations);
+
+        // Chercher dans contacts
+        $this->db->group_start();
+        foreach ($phone_variations as $v) {
+            $this->db->or_where('phonenumber', $v);
+        }
+        $this->db->group_end();
+        $phone_exists_contacts = $this->db->count_all_results(db_prefix() . 'contacts') > 0;
+
+        // Chercher dans clients
+        $this->db->group_start();
+        foreach ($phone_variations as $v) {
+            $this->db->or_where('phonenumber', $v);
+        }
+        $this->db->group_end();
+        $phone_exists_clients = $this->db->count_all_results(db_prefix() . 'clients') > 0;
+
+        if ($phone_exists_contacts || $phone_exists_clients) {
+            $errors[] = 'Un compte existe déjà avec ce numéro de téléphone';
+        }
+
+        // Si erreurs, afficher et rediriger
+        if (!empty($errors)) {
+            foreach ($errors as $error) {
+                set_alert('danger', $error);
+            }
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        // CRÉATION DU COMPTE
+        try {
+            // Démarrer transaction
+            $this->db->trans_start();
+
+            // 1. Créer CLIENT
+            $client_data = [
+                'datecreated' => date('Y-m-d H:i:s'),
+                'company' => $firstname . ' ' . $lastname,
+                'phonenumber' => $phone_full,
+                'country' => 221, // Sénégal
+                'active' => 1,
+                'registration_confirmed' => 1
+            ];
+            $this->db->insert(db_prefix() . 'clients', $client_data);
+            $client_id = $this->db->insert_id();
+
+            if (!$client_id) {
+                throw new Exception('Erreur lors de la création du client');
+            }
+
+            // 2. Créer CONTACT (primary)
+            $password_hash = app_hash_password($password);
+            $contact_data = [
+                'userid' => $client_id,
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                'email' => $email,
+                'phonenumber' => $phone_full,
+                'is_primary' => 1,
+                'password' => $password_hash,
+                'datecreated' => date('Y-m-d H:i:s'),
+                'email_verified_at' => date('Y-m-d H:i:s'),
+                'active' => 1
+            ];
+            $this->db->insert(db_prefix() . 'contacts', $contact_data);
+            $contact_id = $this->db->insert_id();
+
+            if (!$contact_id) {
+                throw new Exception('Erreur lors de la création du contact');
+            }
+
+            // 3. Créer PATIENT DIÉTÉTIQUE
+            $patient_data = [
+                'client_id' => $client_id,
+                'date_added' => date('Y-m-d H:i:s'),
+                'status' => 'active'
+            ];
+            $this->db->insert(db_prefix() . 'dietic_patients', $patient_data);
+            $patient_id = $this->db->insert_id();
+
+            if (!$patient_id) {
+                throw new Exception('Erreur lors de la création du patient diététique');
+            }
+
+            // Terminer transaction
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Erreur lors de la transaction');
+            }
+
+            // Log activity
+            log_activity('INSCRIPTION MOBILE - Nouveau patient créé: ' . $firstname . ' ' . $lastname . ' (Client ID: ' . $client_id . ', Email: ' . $email . ', Téléphone: ' . $phone_full . ')');
+
+            // 4. ENVOYER NOTIFICATIONS MULTI-CANAL
+            $this->send_registration_notifications($client_id, $email, $phone_full, $firstname, $lastname, $password);
+
+            // Connecter automatiquement le patient
+            $this->session->set_userdata([
+                'client_logged_in' => true,
+                'client_user_id' => $client_id
+            ]);
+
+            set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé avec succès.');
+            redirect(site_url('dietetic/portal'));
+
+        } catch (Exception $e) {
+            // Rollback en cas d'erreur
+            $this->db->trans_rollback();
+            log_activity('INSCRIPTION MOBILE - ERREUR: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de la création du compte. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal'));
+        }
+    }
+
+    /**
+     * Envoyer notifications multi-canal pour nouvelle inscription
+     */
+    private function send_registration_notifications($client_id, $email, $phone, $firstname, $lastname, $password)
+    {
+        $full_name = $firstname . ' ' . $lastname;
+        $login_url = site_url('dietetic/portal');
+
+        // Message commun
+        $message = "Bienvenue sur DietZone !\n\n";
+        $message .= "Votre compte a été créé avec succès.\n\n";
+        $message .= "Vos identifiants de connexion :\n";
+        $message .= "Email: {$email}\n";
+        $message .= "Téléphone: {$phone}\n";
+        $message .= "Mot de passe: {$password}\n\n";
+        $message .= "Connectez-vous sur: {$login_url}\n\n";
+        $message .= "Nous vous recommandons de changer votre mot de passe après votre première connexion.";
+
+        // 1. NOTIFICATION EMAIL
+        try {
+            $this->load->library('email');
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($email);
+            $this->email->subject('Bienvenue sur DietZone - Vos identifiants de connexion');
+
+            $email_body = "
+                <h2>Bienvenue sur DietZone !</h2>
+                <p>Bonjour <strong>{$full_name}</strong>,</p>
+                <p>Votre compte patient a été créé avec succès.</p>
+
+                <h3>Vos identifiants de connexion :</h3>
+                <ul>
+                    <li><strong>Email :</strong> {$email}</li>
+                    <li><strong>Téléphone :</strong> {$phone}</li>
+                    <li><strong>Mot de passe :</strong> {$password}</li>
+                </ul>
+
+                <p><a href='{$login_url}' style='display:inline-block;padding:10px 20px;background:#01807B;color:white;text-decoration:none;border-radius:5px;'>Se connecter</a></p>
+
+                <p><em>Nous vous recommandons de changer votre mot de passe après votre première connexion.</em></p>
+
+                <p>Cordialement,<br>L'équipe DietZone</p>
+            ";
+            $this->email->message($email_body);
+            $this->email->send();
+            log_activity('INSCRIPTION - Email envoyé à: ' . $email);
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION - Erreur envoi email: ' . $e->getMessage());
+        }
+
+        // 2. NOTIFICATION SMS
+        try {
+            $sms_message = "Bienvenue sur DietZone ! Vos identifiants: Email: {$email}, Téléphone: {$phone}, Mot de passe: {$password}. Connectez-vous sur {$login_url}";
+
+            // Utiliser le système SMS existant si disponible
+            if (method_exists($this, 'send_sms')) {
+                $this->send_sms($phone, $sms_message);
+            } else {
+                // Fallback: appeler fonction globale si elle existe
+                if (function_exists('send_sms_notification')) {
+                    send_sms_notification($phone, $sms_message);
+                }
+            }
+            log_activity('INSCRIPTION - SMS envoyé à: ' . $phone);
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION - Erreur envoi SMS: ' . $e->getMessage());
+        }
+
+        // 3. NOTIFICATION WHATSAPP
+        try {
+            $whatsapp_message = $message; // Même message que SMS
+
+            // Utiliser le système WhatsApp existant si disponible
+            if (method_exists($this, 'send_whatsapp')) {
+                $this->send_whatsapp($phone, $whatsapp_message);
+            } else {
+                // Fallback: appeler fonction globale si elle existe
+                if (function_exists('send_whatsapp_notification')) {
+                    send_whatsapp_notification($phone, $whatsapp_message);
+                }
+            }
+            log_activity('INSCRIPTION - WhatsApp envoyé à: ' . $phone);
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION - Erreur envoi WhatsApp: ' . $e->getMessage());
+        }
     }
 
     /**
