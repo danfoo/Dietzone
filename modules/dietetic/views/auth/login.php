@@ -360,16 +360,28 @@
 
             <!-- Content -->
             <div class="auth-content">
-                <div id="alert-container"></div>
+                <!-- Alerts Perfex -->
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                <?php if ($this->session->flashdata('message-success')): ?>
+                    <div class="alert alert-success">
+                        <?php echo $this->session->flashdata('message-success'); ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($this->session->flashdata('message-danger')): ?>
+                    <div class="alert alert-danger">
+                        <?php echo $this->session->flashdata('message-danger'); ?>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Login Tab -->
                 <div class="tab-pane active" id="login-tab">
-                    <form id="login-form">
+                    <form method="POST" action="<?php echo site_url('dietetic/auth/login'); ?>" id="login-form">
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                        <input type="hidden" name="phone" id="login-phone-hidden">
 
                         <div class="form-group">
                             <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                            <input type="tel" id="login-phone" name="phone" class="form-control" required>
+                            <input type="tel" id="login-phone" class="form-control" required>
                         </div>
 
                         <div class="form-group">
@@ -385,7 +397,6 @@
 
                         <button type="submit" class="btn btn-primary">
                             <i class="fa fa-sign-in"></i> Se connecter
-                            <i class="fa fa-spinner fa-spin loading-spinner"></i>
                         </button>
                     </form>
 
@@ -679,33 +690,12 @@
             $('#alert-container').html('');
         }
 
-        // Login form
+        // Login form - PHP redirect au lieu d'AJAX
         $('#login-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
-            // Get full phone number from intl-tel-input
+            // Copier le numéro formaté dans le champ hidden
             const fullNumber = getFullNumber('login-phone');
-            const formData = $(this).serialize();
-            const updatedFormData = formData.replace(/phone=[^&]*/, 'phone=' + encodeURIComponent(fullNumber));
-
-            $.post('<?php echo site_url('dietetic/auth/login'); ?>', updatedFormData, function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 1000);
-                } else {
-                    showAlert('danger', response.message);
-                    $btn.removeClass('loading').prop('disabled', false);
-                }
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
+            $('#login-phone-hidden').val(fullNumber);
+            // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
         // Register form

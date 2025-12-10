@@ -50,56 +50,37 @@ class Auth extends ClientsController
             $password = $this->input->post('password');
             $remember = $this->input->post('remember');
 
-            log_message('debug', 'Login attempt - Phone: ' . $phone);
-
             // Valider les champs
             if (empty($phone) || empty($password)) {
-                log_message('debug', 'Login failed - Empty fields');
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Veuillez remplir tous les champs'
-                ]);
+                set_alert('danger', 'Veuillez remplir tous les champs');
+                redirect(site_url('dietetic/auth'));
                 return;
             }
 
             // Nettoyer le numéro de téléphone
             $phone = $this->clean_phone_number($phone);
-            log_message('debug', 'Login - Cleaned phone: ' . $phone);
 
             // Chercher le patient par téléphone
             $patient = $this->find_patient_by_phone($phone);
 
             if (!$patient) {
-                log_message('debug', 'Login failed - Patient not found for phone: ' . $phone);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Numéro de téléphone ou mot de passe incorrect'
-                ]);
+                set_alert('danger', 'Numéro de téléphone ou mot de passe incorrect');
+                redirect(site_url('dietetic/auth'));
                 return;
             }
-
-            log_message('debug', 'Login - Patient found, checking password for client_id: ' . $patient->client_id);
 
             // Vérifier le mot de passe
             if (!$this->verify_password($patient->client_id, $password)) {
-                log_message('debug', 'Login failed - Invalid password for client_id: ' . $patient->client_id);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Numéro de téléphone ou mot de passe incorrect'
-                ]);
+                set_alert('danger', 'Numéro de téléphone ou mot de passe incorrect');
+                redirect(site_url('dietetic/auth'));
                 return;
             }
-
-            log_message('debug', 'Login success - Client ID: ' . $patient->client_id);
 
             // Connecter le patient
             $this->connect_patient($patient->client_id, $remember);
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Connexion réussie',
-                'redirect' => site_url('dietetic/portal')
-            ]);
+            set_alert('success', 'Connexion réussie ! Bienvenue.');
+            redirect(site_url('dietetic/portal'));
         }
     }
 
