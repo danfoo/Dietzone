@@ -712,32 +712,13 @@
             // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
-        // Register form
+        // Register form - PHP POST (pas AJAX)
         $('#register-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
+            // Récupérer le numéro formaté et le mettre dans le champ caché
             const fullNumber = getFullNumber('register-phone');
-            const formData = $(this).serialize();
-            const updatedFormData = formData.replace(/phone=[^&]*/, 'phone=' + encodeURIComponent(fullNumber));
+            $('#register-phone-hidden').val(fullNumber);
 
-            $.post('<?php echo site_url('dietetic/auth/register'); ?>', updatedFormData, function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 1500);
-                } else {
-                    showAlert('danger', response.message);
-                    $btn.removeClass('loading').prop('disabled', false);
-                }
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
+            // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
         // Request OTP
