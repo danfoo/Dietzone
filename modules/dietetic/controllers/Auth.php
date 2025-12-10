@@ -9,45 +9,18 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * IMPORTANT: Ce contrôleur hérite de CI_Controller pour permettre l'accès public
  * sans authentification requise
  */
-class Auth extends CI_Controller
+class Auth extends ClientsController
 {
     public function __construct()
     {
         parent::__construct();
 
-        // Charger les librairies CodeIgniter
-        $this->load->database();
-        $this->load->library('session');
-        $this->load->library('form_validation');
-        $this->load->library('security'); // Pour CSRF
-        $this->load->helper(['url', 'security', 'string']);
+        // Désactiver les contrôles d'authentification
+        $this->disableNavigation();
+        $this->disableSubMenu();
 
-        // Charger les fonctions Perfex CRM
-        if (!function_exists('db_prefix')) {
-            require_once(APPPATH . 'helpers/app_helper.php');
-        }
-
-        // Charger les helpers nécessaires pour la vue
-        $this->load->helper('url');
-
-        // Fonction get_option pour la vue
-        if (!function_exists('get_option')) {
-            function get_option($option_name, $default = '') {
-                $CI = &get_instance();
-                $CI->db->where('name', $option_name);
-                $result = $CI->db->get(db_prefix() . 'options')->row();
-                return $result ? $result->value : $default;
-            }
-        }
-
-        // Fonction base_url si pas disponible
-        if (!function_exists('base_url')) {
-            $this->load->helper('url');
-        }
-
-        // Charger les modèles
+        // Charger uniquement les modèles nécessaires
         $this->load->model('dietetic/dietetic_patients_model');
-        $this->load->model('clients_model');
         $this->load->helper('dietetic/dietetic');
     }
 
@@ -57,7 +30,7 @@ class Auth extends CI_Controller
     public function index()
     {
         // Si déjà connecté, rediriger vers le portail
-        if ($this->session->userdata('client_logged_in')) {
+        if (is_client_logged_in()) {
             redirect(site_url('dietetic/portal'));
         }
 
