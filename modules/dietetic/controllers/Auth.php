@@ -28,16 +28,12 @@ class Auth extends ClientsController
     }
 
     /**
-     * Page de connexion/inscription
+     * Page de connexion/inscription - Redirige vers MobileAuth
      */
     public function index()
     {
-        // Si déjà connecté, rediriger vers le portail
-        if (is_client_logged_in()) {
-            redirect(site_url('dietetic/portal'));
-        }
-
-        $this->load->view('dietetic/auth/login');
+        // Rediriger vers le nouveau contrôleur qui fonctionne
+        redirect(site_url('dietetic/mobileauth'));
     }
 
     /**
