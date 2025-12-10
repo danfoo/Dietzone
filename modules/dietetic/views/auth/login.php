@@ -401,6 +401,28 @@
                         <a href="#" class="link-primary" id="link-forgot-password">
                             <i class="fa fa-question-circle"></i> Mot de passe oublié ?
                         </a>
+                        <br>
+                        <a href="#" class="link-primary" id="link-diagnostic" style="margin-top: 10px; display: inline-block;">
+                            <i class="fa fa-stethoscope"></i> Problème de connexion ?
+                        </a>
+                    </div>
+
+                    <!-- Diagnostic Section (Hidden by default) -->
+                    <div id="diagnostic-section" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 2px solid #01807B;">
+                        <h4 style="color: #01807B; margin: 0 0 15px 0; font-size: 16px;">
+                            🔍 Diagnostic de connexion
+                        </h4>
+                        <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">
+                            Entrez votre numéro pour vérifier si votre compte existe :
+                        </p>
+                        <div class="form-group">
+                            <input type="tel" id="diagnostic-phone" class="form-control" placeholder="+221 77 123 45 67">
+                        </div>
+                        <button type="button" class="btn btn-primary" id="btn-check-phone">
+                            <i class="fa fa-search"></i> Vérifier
+                            <i class="fa fa-spinner fa-spin loading-spinner"></i>
+                        </button>
+                        <div id="diagnostic-result" style="margin-top: 15px;"></div>
                     </div>
                 </div>
 
@@ -638,6 +660,106 @@
         $('#link-forgot-password').on('click', function(e) {
             e.preventDefault();
             switchTab('forgot');
+        });
+
+        // Show/hide diagnostic section
+        $('#link-diagnostic').on('click', function(e) {
+            e.preventDefault();
+            $('#diagnostic-section').slideToggle(300);
+            $('#diagnostic-result').html('');
+        });
+
+        // Initialize intl-tel-input for diagnostic phone
+        const diagnosticInput = document.querySelector('#diagnostic-phone');
+        const diagnosticIti = window.intlTelInput(diagnosticInput, {
+            initialCountry: 'sn',
+            preferredCountries: ['sn', 'fr', 'ci', 'ml', 'gn', 'bf'],
+            separateDialCode: true,
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+        });
+
+        // Check phone diagnostic
+        $('#btn-check-phone').on('click', function() {
+            const $btn = $(this);
+            const phone = diagnosticIti.getNumber();
+
+            if (!phone) {
+                $('#diagnostic-result').html('<div class="alert alert-danger" style="font-size: 13px; padding: 10px;"><i class="fa fa-exclamation-circle"></i> Veuillez entrer un numéro de téléphone</div>');
+                return;
+            }
+
+            $btn.addClass('loading').prop('disabled', true);
+            $('#diagnostic-result').html('');
+
+            $.post('<?php echo site_url('dietetic/auth/check_phone'); ?>', {
+                phone: phone,
+                <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+            }, function(response) {
+                let html = '';
+
+                if (response.success) {
+                    // Afficher le numéro nettoyé
+                    html += '<div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px;">';
+                    html += '<strong>Numéro nettoyé :</strong> <code style="background: #f4f4f4; padding: 2px 6px; border-radius: 3px;">' + response.phone_cleaned + '</code>';
+                    html += '</div>';
+
+                    if (response.patient_found) {
+                        // Patient trouvé
+                        html += '<div class="alert alert-success" style="font-size: 13px; padding: 12px; margin-bottom: 10px;">';
+                        html += '<i class="fa fa-check-circle"></i> <strong>Compte trouvé !</strong><br>';
+                        html += 'Nom : ' + response.patient_info.name + '<br>';
+                        html += 'Email : ' + response.patient_info.email;
+                        html += '</div>';
+
+                        if (!response.has_password) {
+                            html += '<div class="alert alert-danger" style="font-size: 13px; padding: 12px;">';
+                            html += '<i class="fa fa-exclamation-triangle"></i> <strong>Problème : Pas de mot de passe</strong><br>';
+                            html += 'Utilisez "Mot de passe oublié" pour créer un mot de passe.';
+                            html += '</div>';
+                        } else if (response.phone_match) {
+                            html += '<div class="alert alert-info" style="font-size: 13px; padding: 12px;">';
+                            html += '<i class="fa fa-info-circle"></i> <strong>Tout est OK !</strong><br>';
+                            html += 'Votre compte existe et a un mot de passe.<br>';
+                            html += 'Si la connexion échoue, le mot de passe est incorrect.';
+                            html += '</div>';
+                        } else {
+                            html += '<div class="alert alert-warning" style="font-size: 13px; padding: 12px;">';
+                            html += '<i class="fa fa-exclamation-triangle"></i> <strong>Format différent</strong><br>';
+                            html += 'Numéro en base : <code>' + response.patient_info.phone_db + '</code><br>';
+                            html += 'Utilisez exactement ce format.';
+                            html += '</div>';
+                        }
+                    } else {
+                        // Patient non trouvé
+                        html += '<div class="alert alert-danger" style="font-size: 13px; padding: 12px; margin-bottom: 10px;">';
+                        html += '<i class="fa fa-times-circle"></i> <strong>Compte introuvable</strong><br>';
+                        html += 'Aucun patient trouvé avec ce numéro.';
+                        html += '</div>';
+
+                        if (response.similar_numbers && response.similar_numbers.length > 0) {
+                            html += '<div style="background: white; padding: 12px; border-radius: 8px; font-size: 13px;">';
+                            html += '<strong>Numéros similaires trouvés :</strong><br>';
+                            response.similar_numbers.forEach(function(sim) {
+                                html += '• ' + sim.firstname + ' ' + sim.lastname + ' : <code>' + sim.phonenumber + '</code><br>';
+                            });
+                            html += '</div>';
+                        } else {
+                            html += '<div class="alert alert-info" style="font-size: 13px; padding: 12px;">';
+                            html += '<i class="fa fa-user-plus"></i> Ce compte n\'existe pas encore.<br>';
+                            html += 'Cliquez sur l\'onglet "Inscription" pour créer un compte.';
+                            html += '</div>';
+                        }
+                    }
+                } else {
+                    html = '<div class="alert alert-danger" style="font-size: 13px; padding: 10px;"><i class="fa fa-exclamation-circle"></i> ' + response.message + '</div>';
+                }
+
+                $('#diagnostic-result').html(html);
+                $btn.removeClass('loading').prop('disabled', false);
+            }, 'json').fail(function() {
+                $('#diagnostic-result').html('<div class="alert alert-danger" style="font-size: 13px; padding: 10px;"><i class="fa fa-exclamation-circle"></i> Erreur de connexion au serveur</div>');
+                $btn.removeClass('loading').prop('disabled', false);
+            });
         });
 
         // Password strength checker

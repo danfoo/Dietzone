@@ -446,71 +446,70 @@ class Auth extends ClientsController
     }
 
     /**
-     * Page de diagnostic pour tester la connexion
+     * Diagnostic AJAX pour tester la connexion
      */
-    public function debug()
+    public function check_phone()
     {
-        $data = [
-            'title' => 'Diagnostic Authentification',
-            'phone_input' => $this->input->post('phone'),
-            'result' => null
-        ];
-
-        if ($this->input->post('phone')) {
-            $phone_input = $this->input->post('phone');
-            $phone_cleaned = $this->clean_phone_number($phone_input);
-
-            $data['result'] = [
-                'phone_input' => $phone_input,
-                'phone_cleaned' => $phone_cleaned,
-                'patient' => null,
-                'similar_numbers' => []
-            ];
-
-            // Chercher le patient
-            $patient = $this->find_patient_by_phone($phone_cleaned);
-
-            if ($patient) {
-                // Récupérer les infos complètes du contact
-                $this->db->select('ct.*, c.company, LENGTH(ct.password) as password_length');
-                $this->db->from(db_prefix() . 'contacts ct');
-                $this->db->join(db_prefix() . 'clients c', 'c.userid = ct.userid');
-                $this->db->where('ct.userid', $patient->client_id);
-                $this->db->where('ct.is_primary', 1);
-                $contact = $this->db->get()->row();
-
-                if ($contact) {
-                    $data['result']['patient'] = [
-                        'patient_id' => $patient->id,
-                        'client_id' => $patient->client_id,
-                        'contactid' => $contact->contactid,
-                        'firstname' => $contact->firstname,
-                        'lastname' => $contact->lastname,
-                        'email' => $contact->email,
-                        'phonenumber' => $contact->phonenumber,
-                        'is_primary' => $contact->is_primary,
-                        'active' => $contact->active,
-                        'company' => $contact->company,
-                        'password_length' => $contact->password_length,
-                        'has_password' => !empty($contact->password),
-                        'phone_match' => ($contact->phonenumber === $phone_cleaned)
-                    ];
-                }
-            } else {
-                // Chercher des numéros similaires (8 derniers chiffres)
-                $search_pattern = '%' . substr($phone_cleaned, -8) . '%';
-                $this->db->select('ct.phonenumber, ct.firstname, ct.lastname');
-                $this->db->from(db_prefix() . 'contacts ct');
-                $this->db->join(db_prefix() . 'dietic_patients p', 'ct.userid = p.client_id');
-                $this->db->where('ct.phonenumber LIKE', $search_pattern);
-                $this->db->group_by('ct.phonenumber');
-                $this->db->limit(10);
-                $similar = $this->db->get()->result_array();
-                $data['result']['similar_numbers'] = $similar;
-            }
+        if (!$this->input->post('phone')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Numéro de téléphone requis'
+            ]);
+            return;
         }
 
-        $this->load->view('dietetic/auth/debug', $data);
+        $phone_input = $this->input->post('phone');
+        $phone_cleaned = $this->clean_phone_number($phone_input);
+
+        $result = [
+            'success' => true,
+            'phone_input' => $phone_input,
+            'phone_cleaned' => $phone_cleaned,
+            'patient_found' => false,
+            'has_password' => false,
+            'phone_match' => false,
+            'patient_info' => null,
+            'similar_numbers' => []
+        ];
+
+        // Chercher le patient
+        $patient = $this->find_patient_by_phone($phone_cleaned);
+
+        if ($patient) {
+            // Récupérer les infos complètes du contact
+            $this->db->select('ct.*, c.company, LENGTH(ct.password) as password_length');
+            $this->db->from(db_prefix() . 'contacts ct');
+            $this->db->join(db_prefix() . 'clients c', 'c.userid = ct.userid');
+            $this->db->where('ct.userid', $patient->client_id);
+            $this->db->where('ct.is_primary', 1);
+            $contact = $this->db->get()->row();
+
+            if ($contact) {
+                $result['patient_found'] = true;
+                $result['has_password'] = !empty($contact->password);
+                $result['phone_match'] = ($contact->phonenumber === $phone_cleaned);
+                $result['patient_info'] = [
+                    'name' => $contact->firstname . ' ' . $contact->lastname,
+                    'email' => $contact->email,
+                    'phone_db' => $contact->phonenumber,
+                    'password_length' => $contact->password_length,
+                    'active' => $contact->active
+                ];
+            }
+        } else {
+            // Chercher des numéros similaires (8 derniers chiffres)
+            $search_pattern = '%' . substr($phone_cleaned, -8) . '%';
+            $this->db->select('ct.phonenumber, ct.firstname, ct.lastname');
+            $this->db->from(db_prefix() . 'contacts ct');
+            $this->db->join(db_prefix() . 'dietic_patients p', 'ct.userid = p.client_id');
+            $this->db->where('ct.phonenumber LIKE', $search_pattern);
+            $this->db->group_by('ct.phonenumber');
+            $this->db->limit(5);
+            $similar = $this->db->get()->result_array();
+            $result['similar_numbers'] = $similar;
+        }
+
+        echo json_encode($result);
     }
 
     // ==================== MÉTHODES PRIVÉES ====================
