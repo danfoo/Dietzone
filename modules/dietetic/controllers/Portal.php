@@ -296,66 +296,73 @@ class Portal extends App_Controller
 
                 // Nettoyer le numéro de téléphone
                 $phone = preg_replace('/[\s\-\(\)]/', '', $identifier);
-                if (!str_starts_with($phone, '+')) {
-                    $phone = '+' . $phone;
-                }
 
-                log_activity('LOGIN MOBILE - Téléphone nettoyé: ' . $phone);
+                // Créer toutes les variations possibles
+                $variations = [];
+                $variations[] = $phone; // Tel quel
+                $variations[] = '+' . $phone; // Avec +
+                $variations[] = ltrim($phone, '+'); // Sans +
+                $variations[] = '+221' . ltrim($phone, '+221'); // Avec +221
+                $variations[] = ltrim($phone, '+221'); // Sans +221 ni +
+                $variations = array_unique($variations);
+
+                log_activity('LOGIN MOBILE - Variations: ' . implode(', ', $variations));
 
                 $contact = null;
 
-                // ESSAI 1: Chercher dans tblcontacts.phonenumber
-                log_activity('LOGIN MOBILE - Essai 1: tblcontacts avec +');
+                // ESSAI 1: Chercher dans tblcontacts (TOUS, pas seulement patients)
+                log_activity('LOGIN MOBILE - Essai 1: tblcontacts (tous)');
                 $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
                 $this->db->from(db_prefix() . 'contacts ct');
-                $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
                 $this->db->where('ct.is_primary', 1);
-                $this->db->where('ct.phonenumber', $phone);
+                $this->db->group_start();
+                foreach ($variations as $v) {
+                    $this->db->or_where('ct.phonenumber', $v);
+                }
+                $this->db->group_end();
                 $contact = $this->db->get()->row();
 
-                // ESSAI 2: tblcontacts sans +
-                if (!$contact) {
-                    $phone_no_plus = ltrim($phone, '+');
-                    log_activity('LOGIN MOBILE - Essai 2: tblcontacts sans +');
+                if ($contact) {
+                    log_activity('LOGIN MOBILE - Contact trouvé: ' . $contact->firstname . ' (userid: ' . $contact->userid . ')');
 
-                    $this->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid');
-                    $this->db->from(db_prefix() . 'contacts ct');
-                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
-                    $this->db->where('ct.is_primary', 1);
-                    $this->db->where('ct.phonenumber', $phone_no_plus);
-                    $contact = $this->db->get()->row();
-                }
+                    // Vérifier si c'est un patient diététique
+                    $this->db->where('client_id', $contact->userid);
+                    $is_patient = $this->db->count_all_results(db_prefix() . 'dietic_patients') > 0;
 
-                // ESSAI 3: Chercher dans tblclients.phonenumber (avec +)
-                if (!$contact) {
-                    log_activity('LOGIN MOBILE - Essai 3: tblclients avec +');
-
-                    $this->db->select('c.phonenumber, ct.email, ct.firstname, ct.lastname, ct.userid');
-                    $this->db->from(db_prefix() . 'clients c');
-                    $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
-                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
-                    $this->db->where('c.phonenumber', $phone);
-                    $contact = $this->db->get()->row();
-
-                    if ($contact) {
-                        log_activity('LOGIN MOBILE - ✅ TROUVÉ dans tblclients !');
+                    if (!$is_patient) {
+                        log_activity('LOGIN MOBILE - ATTENTION: Contact trouvé mais PAS patient diététique!');
+                        set_alert('danger', 'Votre compte existe mais n\'est pas enregistré comme patient diététique. Contactez l\'administration.');
+                        redirect(site_url('dietetic/portal'));
+                        return;
                     }
                 }
 
-                // ESSAI 4: tblclients sans +
+                // ESSAI 2: Chercher dans tblclients (TOUS)
                 if (!$contact) {
-                    $phone_no_plus = ltrim($phone, '+');
-                    log_activity('LOGIN MOBILE - Essai 4: tblclients sans +');
-
+                    log_activity('LOGIN MOBILE - Essai 2: tblclients (tous)');
                     $this->db->select('c.phonenumber, ct.email, ct.firstname, ct.lastname, ct.userid');
                     $this->db->from(db_prefix() . 'clients c');
                     $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
-                    $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
-                    $this->db->where('c.phonenumber', $phone_no_plus);
+                    $this->db->group_start();
+                    foreach ($variations as $v) {
+                        $this->db->or_where('c.phonenumber', $v);
+                    }
+                    $this->db->group_end();
                     $contact = $this->db->get()->row();
 
                     if ($contact) {
-                        log_activity('LOGIN MOBILE - ✅ TROUVÉ dans tblclients sans + !');
+                        log_activity('LOGIN MOBILE - Client trouvé: ' . $contact->firstname . ' (userid: ' . $contact->userid . ')');
+
+                        // Vérifier si c'est un patient diététique
+                        $this->db->where('client_id', $contact->userid);
+                        $is_patient = $this->db->count_all_results(db_prefix() . 'dietic_patients') > 0;
+
+                        if (!$is_patient) {
+                            log_activity('LOGIN MOBILE - ATTENTION: Client trouvé mais PAS patient diététique!');
+                            set_alert('danger', 'Votre compte existe mais n\'est pas enregistré comme patient diététique. Contactez l\'administration.');
+                            redirect(site_url('dietetic/portal'));
+                            return;
+                        }
                     }
                 }
 
