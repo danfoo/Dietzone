@@ -3679,4 +3679,34 @@ class Dietetic_notifications_model extends App_Model
             ], $data)
         ]);
     }
+
+    /**
+     * Méthode publique pour envoyer un SMS simple (utilisée par Auth)
+     *
+     * @param string $phone Numéro de téléphone au format international (+221...)
+     * @param string $message Message SMS
+     * @return bool Succès ou échec
+     */
+    public function send_sms_simple($phone, $message)
+    {
+        try {
+            // Get LAM SMS settings
+            $account_id = $this->get_setting('sms_lam_account_id');
+            $password = $this->get_setting('sms_lam_password');
+            $sender_id = $this->get_setting('sms_lam_sender_id') ?: 'API_LAMSMS';
+
+            if (empty($account_id) || empty($password)) {
+                log_message('error', 'SMS credentials not configured');
+                return false;
+            }
+
+            // Envoyer le SMS via LAM
+            $result = $this->send_lam_sms($phone, $message, $account_id, $password, $sender_id);
+
+            return $result['success'] ?? false;
+        } catch (Exception $e) {
+            log_message('error', 'Failed to send SMS: ' . $e->getMessage());
+            return false;
+        }
+    }
 }
