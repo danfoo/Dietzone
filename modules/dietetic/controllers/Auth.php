@@ -6,7 +6,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * Contrôleur d'authentification DietZone
  * Gère la connexion, l'inscription et la récupération de mot de passe des patients
  */
-class Auth extends App_Controller
+class Auth extends ClientsController
 {
     public function __construct()
     {
@@ -15,6 +15,10 @@ class Auth extends App_Controller
         $this->load->model('dietetic/dietetic_patients_model');
         $this->load->model('clients_model');
         $this->load->helper('dietetic/dietetic');
+
+        // Désactiver l'authentification pour ce contrôleur (accès public)
+        $this->disableNavigation();
+        $this->disableSubMenu();
     }
 
     /**
