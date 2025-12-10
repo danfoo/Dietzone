@@ -272,9 +272,44 @@ class Portal extends App_Controller
 
     public function index()
     {
+        // Traiter connexion mobile si POST avec phone
+        if ($this->input->post('phone') && $this->input->post('password')) {
+            $phone = $this->input->post('phone');
+            $password = $this->input->post('password');
+
+            // Nettoyer téléphone
+            $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
+            if (!str_starts_with($phone, '+')) {
+                $phone = '+' . $phone;
+            }
+
+            // Chercher patient
+            $this->db->select('p.client_id, ct.password');
+            $this->db->from(db_prefix() . 'dietic_patients p');
+            $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
+            $this->db->where('ct.phonenumber', $phone);
+            $patient_login = $this->db->get()->row();
+
+            if ($patient_login && app_hasher()->CheckPassword($password, $patient_login->password)) {
+                // Connexion réussie
+                $this->session->set_userdata([
+                    'client_logged_in' => true,
+                    'client_user_id' => $patient_login->client_id
+                ]);
+                set_alert('success', 'Connexion réussie !');
+                redirect(site_url('dietetic/portal'));
+                return;
+            } else {
+                set_alert('danger', 'Identifiants incorrects');
+                // Continuer pour afficher la page de connexion avec l'erreur
+            }
+        }
+
         // Check if client is logged in
         if (!is_client_logged_in()) {
-            redirect(site_url('authentication/login'));
+            // Afficher page de connexion mobile
+            $this->load->view('dietetic/auth/login');
+            return;
         }
 
         $client_id = get_client_user_id();
