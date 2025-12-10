@@ -277,31 +277,39 @@ class Portal extends App_Controller
             $phone = $this->input->post('phone');
             $password = $this->input->post('password');
 
+            log_activity('LOGIN MOBILE - Tentative connexion - Phone brut: ' . $phone);
+
             // Nettoyer téléphone
             $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
             if (!str_starts_with($phone, '+')) {
                 $phone = '+' . $phone;
             }
 
+            log_activity('LOGIN MOBILE - Phone nettoyé: ' . $phone);
+
             // Chercher patient
-            $this->db->select('p.client_id, ct.password');
+            $this->db->select('p.client_id, ct.password, ct.firstname, ct.lastname, ct.phonenumber');
             $this->db->from(db_prefix() . 'dietic_patients p');
             $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
             $this->db->where('ct.phonenumber', $phone);
             $patient_login = $this->db->get()->row();
 
-            if ($patient_login && app_hasher()->CheckPassword($password, $patient_login->password)) {
+            if (!$patient_login) {
+                log_activity('LOGIN MOBILE - ÉCHEC: Patient NON trouvé pour le numéro: ' . $phone);
+                set_alert('danger', 'Aucun compte trouvé avec ce numéro. Vérifiez le format (ex: +221771234567)');
+            } elseif (!app_hasher()->CheckPassword($password, $patient_login->password)) {
+                log_activity('LOGIN MOBILE - ÉCHEC: Mot de passe incorrect pour ' . $patient_login->firstname . ' (Client ID: ' . $patient_login->client_id . ')');
+                set_alert('danger', 'Mot de passe incorrect');
+            } else {
                 // Connexion réussie
+                log_activity('LOGIN MOBILE - SUCCÈS: Connexion de ' . $patient_login->firstname . ' ' . $patient_login->lastname . ' (Client ID: ' . $patient_login->client_id . ')');
                 $this->session->set_userdata([
                     'client_logged_in' => true,
                     'client_user_id' => $patient_login->client_id
                 ]);
-                set_alert('success', 'Connexion réussie !');
+                set_alert('success', 'Bienvenue ' . $patient_login->firstname . ' !');
                 redirect(site_url('dietetic/portal'));
                 return;
-            } else {
-                set_alert('danger', 'Identifiants incorrects');
-                // Continuer pour afficher la page de connexion avec l'erreur
             }
         }
 
