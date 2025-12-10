@@ -803,73 +803,106 @@ class Portal extends App_Controller
 
         $search = $this->input->get('phone') ?: '+221775003371';
 
-        // Variations
-        $variations = [
-            $search,
-            ltrim($search, '+'),
-            preg_replace('/[^0-9]/', '', $search)
-        ];
+        echo '<html><head><meta charset="utf-8"></head><body style="font-family:monospace;padding:20px;">';
+        echo '<h1>Recherche: ' . htmlspecialchars($search) . '</h1><hr>';
 
-        echo '<html><body style="font-family:monospace;padding:20px;">';
-        echo '<h1>Recherche: ' . htmlspecialchars($search) . '</h1>';
-        echo '<p>Variations: ' . implode(', ', array_map('htmlspecialchars', $variations)) . '</p><hr>';
+        // Variations
+        $phone_with_plus = (substr($search, 0, 1) == '+') ? $search : '+' . $search;
+        $phone_no_plus = ltrim($phone_with_plus, '+');
+
+        echo '<p><strong>Recherche avec:</strong></p><ul>';
+        echo '<li>Original: <code>' . htmlspecialchars($search) . '</code></li>';
+        echo '<li>Avec +: <code>' . htmlspecialchars($phone_with_plus) . '</code></li>';
+        echo '<li>Sans +: <code>' . htmlspecialchars($phone_no_plus) . '</code></li>';
+        echo '</ul><hr>';
 
         // 1. CLIENTS
         echo '<h2>1. tblclients</h2>';
-        $sql = "SELECT userid, company, phonenumber FROM " . db_prefix() . "clients
-                WHERE phonenumber IN ('" . implode("','", array_map([$this->db, 'escape_str'], $variations)) . "')";
-        echo '<code>' . htmlspecialchars($sql) . '</code><br><br>';
+        $this->db->select('userid, company, phonenumber');
+        $this->db->from(db_prefix() . 'clients');
+        $this->db->group_start();
+        $this->db->where('phonenumber', $search);
+        $this->db->or_where('phonenumber', $phone_with_plus);
+        $this->db->or_where('phonenumber', $phone_no_plus);
+        $this->db->group_end();
+        $result = $this->db->get();
 
-        $result = $this->db->query($sql);
         if ($result && $result->num_rows() > 0) {
             foreach ($result->result() as $row) {
-                echo '<div style="background:yellow;padding:10px;margin:5px 0;">';
-                echo "✅ TROUVÉ! User: {$row->userid}, Company: {$row->company}, Phone: {$row->phonenumber}";
+                echo '<div style="background:yellow;padding:15px;margin:10px 0;border:3px solid green;">';
+                echo "<h3 style='margin:0;color:green;'>✅ TROUVÉ DANS CLIENTS!</h3>";
+                echo "User ID: <strong>{$row->userid}</strong><br>";
+                echo "Company: {$row->company}<br>";
+                echo "Phone: <code style='background:white;padding:5px;'>{$row->phonenumber}</code>";
                 echo '</div>';
             }
         } else {
-            echo '<p style="color:red;">❌ Rien dans tblclients</p>';
+            echo '<p style="color:red;font-weight:bold;">❌ Pas trouvé dans tblclients</p>';
         }
 
         // 2. CONTACTS
         echo '<h2>2. tblcontacts</h2>';
-        $sql = "SELECT id, userid, firstname, lastname, email, phonenumber FROM " . db_prefix() . "contacts
-                WHERE phonenumber IN ('" . implode("','", array_map([$this->db, 'escape_str'], $variations)) . "')";
-        echo '<code>' . htmlspecialchars($sql) . '</code><br><br>';
+        $this->db->select('id, userid, firstname, lastname, email, phonenumber, is_primary');
+        $this->db->from(db_prefix() . 'contacts');
+        $this->db->group_start();
+        $this->db->where('phonenumber', $search);
+        $this->db->or_where('phonenumber', $phone_with_plus);
+        $this->db->or_where('phonenumber', $phone_no_plus);
+        $this->db->group_end();
+        $result = $this->db->get();
 
-        $result = $this->db->query($sql);
         if ($result && $result->num_rows() > 0) {
             foreach ($result->result() as $row) {
-                echo '<div style="background:yellow;padding:10px;margin:5px 0;">';
-                echo "✅ TROUVÉ! Contact: {$row->id}, User: {$row->userid}, Nom: {$row->firstname} {$row->lastname}, Email: {$row->email}, Phone: {$row->phonenumber}";
+                echo '<div style="background:yellow;padding:15px;margin:10px 0;border:3px solid green;">';
+                echo "<h3 style='margin:0;color:green;'>✅ TROUVÉ DANS CONTACTS!</h3>";
+                echo "Contact ID: {$row->id}<br>";
+                echo "User ID: <strong>{$row->userid}</strong><br>";
+                echo "Nom: {$row->firstname} {$row->lastname}<br>";
+                echo "Email: {$row->email}<br>";
+                echo "Phone: <code style='background:white;padding:5px;'>{$row->phonenumber}</code><br>";
+                echo "Primary: " . ($row->is_primary ? 'Oui' : 'Non');
                 echo '</div>';
             }
         } else {
-            echo '<p style="color:red;">❌ Rien dans tblcontacts</p>';
+            echo '<p style="color:red;font-weight:bold;">❌ Pas trouvé dans tblcontacts</p>';
         }
 
-        // 3. TOUS LES NUMÉROS
-        echo '<hr><h2>3. TOUS les numéros (10 premiers)</h2>';
+        // 3. EXEMPLES
+        echo '<hr><h2>3. Exemples de numéros dans la base</h2>';
 
-        echo '<h3>tblclients:</h3>';
-        $result = $this->db->query("SELECT phonenumber, company FROM " . db_prefix() . "clients WHERE phonenumber IS NOT NULL AND phonenumber != '' LIMIT 10");
+        echo '<h3>tblclients (10 premiers):</h3><ul>';
+        $this->db->select('phonenumber, company');
+        $this->db->from(db_prefix() . 'clients');
+        $this->db->where('phonenumber IS NOT NULL');
+        $this->db->where('phonenumber !=', '');
+        $this->db->limit(10);
+        $result = $this->db->get();
+
         if ($result && $result->num_rows() > 0) {
             foreach ($result->result() as $row) {
-                echo "<code>{$row->phonenumber}</code> - {$row->company}<br>";
+                echo "<li><code>{$row->phonenumber}</code> - {$row->company}</li>";
             }
         } else {
-            echo '<p style="color:red;font-weight:bold;">⚠️ AUCUN numéro dans TOUTE la table tblclients!</p>';
+            echo '<li style="color:red;font-weight:bold;">⚠️ AUCUN numéro!</li>';
         }
+        echo '</ul>';
 
-        echo '<h3>tblcontacts:</h3>';
-        $result = $this->db->query("SELECT phonenumber, firstname, lastname FROM " . db_prefix() . "contacts WHERE phonenumber IS NOT NULL AND phonenumber != '' LIMIT 10");
+        echo '<h3>tblcontacts (10 premiers):</h3><ul>';
+        $this->db->select('phonenumber, firstname, lastname');
+        $this->db->from(db_prefix() . 'contacts');
+        $this->db->where('phonenumber IS NOT NULL');
+        $this->db->where('phonenumber !=', '');
+        $this->db->limit(10);
+        $result = $this->db->get();
+
         if ($result && $result->num_rows() > 0) {
             foreach ($result->result() as $row) {
-                echo "<code>{$row->phonenumber}</code> - {$row->firstname} {$row->lastname}<br>";
+                echo "<li><code>{$row->phonenumber}</code> - {$row->firstname} {$row->lastname}</li>";
             }
         } else {
-            echo '<p style="color:red;font-weight:bold;">⚠️ AUCUN numéro dans TOUTE la table tblcontacts!</p>';
+            echo '<li style="color:red;font-weight:bold;">⚠️ AUCUN numéro!</li>';
         }
+        echo '</ul>';
 
         echo '</body></html>';
     }
