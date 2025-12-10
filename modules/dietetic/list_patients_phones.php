@@ -1,9 +1,4 @@
 <?php
-/**
- * Script de diagnostic - Liste tous les patients avec leurs numéros
- * Accessible via : /modules/dietetic/list_patients_phones.php
- */
-
 defined('BASEPATH') or define('BASEPATH', true);
 chdir(__DIR__ . '/../..');
 require_once('application/libraries/App_controller.php');
@@ -11,135 +6,209 @@ require_once('application/libraries/App_controller.php');
 $CI = &get_instance();
 $CI->load->database();
 
-// Récupérer tous les patients avec leurs numéros
+echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Diagnostic Téléphones</title>";
+echo "<style>
+body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+table { border-collapse: collapse; width: 100%; margin: 20px 0; background: white; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #01807B; color: white; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.warning { color: red; font-weight: bold; }
+.success { color: green; font-weight: bold; }
+.info { background: #d1ecf1; padding: 15px; margin: 20px 0; border-left: 4px solid #0c5460; }
+code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+h1, h2, h3 { color: #01807B; }
+</style></head><body>";
+
+echo "<h1>🔍 Diagnostic Complet - Numéros de Téléphone</h1>";
+
+// 1. Vérifier où sont les numéros : clients ou contacts ?
+echo "<h2>1️⃣ Localisation des numéros de téléphone</h2>";
+
+echo "<h3>Dans tblclients:</h3>";
+$CI->db->select('COUNT(*) as count');
+$CI->db->where('phonenumber IS NOT NULL');
+$CI->db->where('phonenumber !=', '');
+$client_phones = $CI->db->get(db_prefix() . 'clients')->row();
+echo "<p>Clients avec numéro: <strong>{$client_phones->count}</strong></p>";
+
+echo "<h3>Dans tblcontacts:</h3>";
+$CI->db->select('COUNT(*) as count');
+$CI->db->where('phonenumber IS NOT NULL');
+$CI->db->where('phonenumber !=', '');
+$CI->db->where('is_primary', 1);
+$contact_phones = $CI->db->get(db_prefix() . 'contacts')->row();
+echo "<p>Contacts (primary) avec numéro: <strong>{$contact_phones->count}</strong></p>";
+
+// 2. Lister les 20 derniers patients
+echo "<h2>2️⃣ Les 20 derniers patients diététiques</h2>";
+
 $query = $CI->db->query("
     SELECT
         p.id as patient_id,
         p.client_id,
-        c.company,
-        ct.contactid,
+        c.phonenumber as client_phone,
         ct.firstname,
         ct.lastname,
         ct.email,
-        ct.phonenumber,
-        ct.active,
-        LENGTH(ct.password) as password_length,
-        ct.password IS NOT NULL as has_password,
-        ct.last_login
+        ct.phonenumber as contact_phone,
+        LENGTH(ct.password) as password_length
     FROM " . db_prefix() . "dietic_patients p
-    JOIN " . db_prefix() . "contacts ct ON ct.userid = p.client_id AND ct.is_primary = 1
-    JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
+    LEFT JOIN " . db_prefix() . "clients c ON c.userid = p.client_id
+    LEFT JOIN " . db_prefix() . "contacts ct ON ct.userid = p.client_id AND ct.is_primary = 1
     ORDER BY p.id DESC
     LIMIT 20
 ");
 
-$patients = $query->result_array();
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Liste Patients - Diagnostic</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        h1 { color: #01807B; }
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #01807B; color: white; font-weight: 600; }
-        tr:hover { background: #f9f9f9; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .badge-success { background: #28a745; color: white; }
-        .badge-danger { background: #dc3545; color: white; }
-        .badge-warning { background: #ffc107; color: #333; }
-        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
-        .info { background: #d1ecf1; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #0c5460; }
-    </style>
-</head>
-<body>
-    <h1>🔍 Diagnostic - Liste des Patients</h1>
+echo "<table>";
+echo "<tr>
+    <th>ID</th>
+    <th>Nom</th>
+    <th>Email</th>
+    <th>📱 CLIENT.phonenumber</th>
+    <th>📱 CONTACT.phonenumber</th>
+    <th>Password?</th>
+</tr>";
 
-    <div class="info">
-        <strong>Ce diagnostic montre :</strong><br>
-        ✅ Les 20 derniers patients DietZone<br>
-        ✅ Leur numéro de téléphone EXACT dans la BDD<br>
-        ✅ S'ils ont un mot de passe défini<br>
-        ✅ Leur email (utilisé par Perfex pour l'authentification)
-    </div>
+foreach ($query->result() as $row) {
+    $name = trim($row->firstname . ' ' . $row->lastname);
+    $client_phone = $row->client_phone ?: '<span class="warning">VIDE</span>';
+    $contact_phone = $row->contact_phone ?: '<span class="warning">VIDE</span>';
+    $password = $row->password_length > 0 ? "<span class='success'>✓</span>" : "<span class='warning'>✗</span>";
 
-    <p><strong>Total patients trouvés :</strong> <?php echo count($patients); ?></p>
+    echo "<tr>";
+    echo "<td>{$row->patient_id}</td>";
+    echo "<td><strong>{$name}</strong></td>";
+    echo "<td><code>{$row->email}</code></td>";
+    echo "<td>{$client_phone}</td>";
+    echo "<td>{$contact_phone}</td>";
+    echo "<td>{$password}</td>";
+    echo "</tr>";
+}
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Téléphone (BDD)</th>
-                <th>Mot de passe</th>
-                <th>Actif</th>
-                <th>Dernière connexion</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($patients)): ?>
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
-                        Aucun patient trouvé
-                    </td>
-                </tr>
-            <?php else: ?>
-                <?php foreach ($patients as $p): ?>
-                <tr>
-                    <td><?php echo $p['patient_id']; ?></td>
-                    <td>
-                        <strong><?php echo htmlspecialchars($p['firstname'] . ' ' . $p['lastname']); ?></strong><br>
-                        <small style="color: #666;">Client ID: <?php echo $p['client_id']; ?></small>
-                    </td>
-                    <td>
-                        <code><?php echo htmlspecialchars($p['email']); ?></code>
-                    </td>
-                    <td>
-                        <?php if ($p['phonenumber']): ?>
-                            <code style="background: #e7f3f1; color: #01807B; font-weight: 600;">
-                                <?php echo htmlspecialchars($p['phonenumber']); ?>
-                            </code>
-                        <?php else: ?>
-                            <span style="color: #999;">Non renseigné</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($p['has_password']): ?>
-                            <span class="badge badge-success">✓ OUI (<?php echo $p['password_length']; ?> car.)</span>
-                        <?php else: ?>
-                            <span class="badge badge-danger">✗ NON</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($p['active']): ?>
-                            <span class="badge badge-success">Actif</span>
-                        <?php else: ?>
-                            <span class="badge badge-warning">Inactif</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($p['last_login']): ?>
-                            <?php echo date('d/m/Y H:i', strtotime($p['last_login'])); ?>
-                        <?php else: ?>
-                            <span style="color: #999;">Jamais</span>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
+echo "</table>";
 
-    <div class="info" style="margin-top: 30px;">
-        <strong>📝 Comment utiliser cette information :</strong><br>
-        1. Trouvez votre compte dans la liste<br>
-        2. Copiez EXACTEMENT le format du téléphone affiché<br>
-        3. Vérifiez que vous avez un mot de passe (badge vert "✓ OUI")<br>
-        4. Si pas de mot de passe, utilisez "Mot de passe oublié" ou demandez à l'admin de vous en créer un
-    </div>
-</body>
-</html>
+// 3. Test de recherche
+echo "<h2>3️⃣ Tester la recherche par téléphone</h2>";
+echo "<form method='GET' style='margin: 20px 0;'>";
+echo "<input type='text' name='test_phone' placeholder='Entrez un numéro (ex: +221771234567)' style='padding: 10px; width: 400px; font-family: monospace;'>";
+echo "<button type='submit' style='padding: 10px 20px; background: #01807B; color: white; border: none; cursor: pointer;'>🔍 Tester</button>";
+echo "</form>";
+
+if (!empty($_GET['test_phone'])) {
+    $test_phone = $_GET['test_phone'];
+    echo "<div class='info'><strong>Test avec:</strong> <code>{$test_phone}</code></div>";
+
+    // Test dans CONTACTS (ce qu'utilise Portal.php)
+    echo "<h3>Recherche dans tblcontacts (utilisé par Portal.php):</h3>";
+
+    $CI->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid, p.client_id');
+    $CI->db->from(db_prefix() . 'contacts ct');
+    $CI->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+    $CI->db->where('ct.is_primary', 1);
+    $CI->db->where('ct.phonenumber', $test_phone);
+
+    // Afficher la requête SQL
+    echo "<p><strong>Requête SQL:</strong></p>";
+    echo "<code style='display: block; padding: 10px; background: #2d2d2d; color: #fff; overflow-x: auto;'>";
+    echo $CI->db->get_compiled_select();
+    echo "</code>";
+
+    // Exécuter la requête
+    $CI->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname, ct.userid, p.client_id');
+    $CI->db->from(db_prefix() . 'contacts ct');
+    $CI->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+    $CI->db->where('ct.is_primary', 1);
+    $CI->db->where('ct.phonenumber', $test_phone);
+    $result = $CI->db->get()->row();
+
+    if ($result) {
+        echo "<p class='success'>✅ TROUVÉ !</p>";
+        echo "<table>";
+        echo "<tr><th>Champ</th><th>Valeur</th></tr>";
+        echo "<tr><td>Nom</td><td><strong>{$result->firstname} {$result->lastname}</strong></td></tr>";
+        echo "<tr><td>Email</td><td><code>{$result->email}</code></td></tr>";
+        echo "<tr><td>Téléphone</td><td><code>{$result->phonenumber}</code></td></tr>";
+        echo "<tr><td>User ID</td><td>{$result->userid}</td></tr>";
+        echo "<tr><td>Client ID</td><td>{$result->client_id}</td></tr>";
+        echo "</table>";
+    } else {
+        echo "<p class='warning'>❌ NON TROUVÉ avec ce format exact</p>";
+
+        // Essayer sans le +
+        $phone_no_plus = ltrim($test_phone, '+');
+        echo "<p>Essai sans le + : <code>{$phone_no_plus}</code></p>";
+
+        $CI->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname');
+        $CI->db->from(db_prefix() . 'contacts ct');
+        $CI->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+        $CI->db->where('ct.is_primary', 1);
+        $CI->db->where('ct.phonenumber', $phone_no_plus);
+        $result2 = $CI->db->get()->row();
+
+        if ($result2) {
+            echo "<p class='success'>✅ TROUVÉ sans le + !</p>";
+            echo "<p>Nom: <strong>{$result2->firstname} {$result2->lastname}</strong> - Email: <code>{$result2->email}</code></p>";
+        } else {
+            echo "<p class='warning'>❌ Toujours pas trouvé</p>";
+
+            // Recherche LIKE
+            echo "<p>Recherche approximative (LIKE %{$phone_no_plus}%)...</p>";
+            $CI->db->select('ct.email, ct.phonenumber, ct.firstname, ct.lastname');
+            $CI->db->from(db_prefix() . 'contacts ct');
+            $CI->db->where('ct.is_primary', 1);
+            $CI->db->like('ct.phonenumber', $phone_no_plus);
+            $CI->db->limit(5);
+            $similar = $CI->db->get()->result();
+
+            if (!empty($similar)) {
+                echo "<p class='success'>Numéros similaires trouvés:</p>";
+                echo "<ul>";
+                foreach ($similar as $s) {
+                    echo "<li><code>{$s->phonenumber}</code> - {$s->firstname} {$s->lastname}</li>";
+                }
+                echo "</ul>";
+            } else {
+                echo "<p class='warning'>Aucun numéro similaire</p>";
+            }
+        }
+    }
+
+    // Test dans CLIENTS
+    echo "<h3>Recherche dans tblclients:</h3>";
+    $CI->db->select('c.userid, c.company, c.phonenumber');
+    $CI->db->from(db_prefix() . 'clients c');
+    $CI->db->where('c.phonenumber', $test_phone);
+    $client_result = $CI->db->get()->row();
+
+    if ($client_result) {
+        echo "<p class='success'>✅ TROUVÉ dans clients: {$client_result->company} (ID: {$client_result->userid})</p>";
+    } else {
+        echo "<p class='warning'>❌ Non trouvé dans clients</p>";
+    }
+}
+
+// 4. Vérifier les doublons
+echo "<h2>4️⃣ Vérification des doublons</h2>";
+$duplicates = $CI->db->query("
+    SELECT phonenumber, COUNT(*) as count
+    FROM " . db_prefix() . "contacts
+    WHERE phonenumber IS NOT NULL
+    AND phonenumber != ''
+    AND is_primary = 1
+    GROUP BY phonenumber
+    HAVING count > 1
+")->result();
+
+if (empty($duplicates)) {
+    echo "<p class='success'>✅ Aucun doublon trouvé</p>";
+} else {
+    echo "<p class='warning'>⚠️ Doublons trouvés:</p>";
+    echo "<table><tr><th>Numéro</th><th>Occurrences</th></tr>";
+    foreach ($duplicates as $dup) {
+        echo "<tr><td class='warning'><code>{$dup->phonenumber}</code></td><td>{$dup->count}</td></tr>";
+    }
+    echo "</table>";
+}
+
+echo "</body></html>";
