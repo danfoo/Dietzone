@@ -380,8 +380,9 @@
                         <input type="hidden" name="phone" id="login-phone-hidden">
 
                         <div class="form-group">
-                            <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                            <input type="tel" id="login-phone" class="form-control" required>
+                            <label><i class="fa fa-user"></i> Email ou Téléphone</label>
+                            <input type="text" id="login-phone" class="form-control" placeholder="email@exemple.com ou +221771234567" required>
+                            <small class="form-text text-muted">Vous pouvez utiliser votre email ou votre numéro de téléphone</small>
                         </div>
 
                         <div class="form-group">
@@ -692,9 +693,21 @@
 
         // Login form - PHP redirect au lieu d'AJAX
         $('#login-form').on('submit', function(e) {
-            // Copier le numéro formaté dans le champ hidden
-            const fullNumber = getFullNumber('login-phone');
-            $('#login-phone-hidden').val(fullNumber);
+            // Récupérer la valeur saisie
+            const inputValue = $('#login-phone').val().trim();
+
+            // Vérifier si c'est un email (contient @)
+            const isEmail = inputValue.includes('@');
+
+            if (isEmail) {
+                // Si c'est un email, passer tel quel
+                $('#login-phone-hidden').val(inputValue);
+            } else {
+                // Si c'est un téléphone, utiliser intl-tel-input pour le formater
+                const fullNumber = getFullNumber('login-phone');
+                $('#login-phone-hidden').val(fullNumber || inputValue);
+            }
+
             // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
