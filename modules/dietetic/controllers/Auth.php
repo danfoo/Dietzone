@@ -28,12 +28,38 @@ class Auth extends ClientsController
     }
 
     /**
-     * Page de connexion/inscription - Redirige vers MobileAuth
+     * Page de connexion/inscription + traitement login
      */
     public function index()
     {
-        // Rediriger vers le nouveau contrôleur qui fonctionne
-        redirect(site_url('dietetic/mobileauth'));
+        // Traiter la connexion si POST
+        if ($this->input->post('phone') && $this->input->post('password')) {
+            $phone = $this->input->post('phone');
+            $password = $this->input->post('password');
+            $remember = $this->input->post('remember');
+
+            // Nettoyer le téléphone
+            $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
+            if (!str_starts_with($phone, '+')) {
+                $phone = '+' . $phone;
+            }
+
+            // Chercher le patient
+            $patient = $this->find_patient_by_phone($phone);
+
+            if ($patient && $this->verify_password($patient->client_id, $password)) {
+                // Connexion réussie
+                $this->connect_patient($patient->client_id, $remember);
+                set_alert('success', 'Connexion réussie !');
+                redirect(site_url('dietetic/portal'));
+                return;
+            } else {
+                set_alert('danger', 'Numéro de téléphone ou mot de passe incorrect');
+            }
+        }
+
+        // Afficher la page
+        $this->load->view('dietetic/auth/login');
     }
 
     /**
