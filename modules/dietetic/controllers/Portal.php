@@ -363,6 +363,39 @@ class Portal extends App_Controller
                     log_activity('LOGIN MOBILE - Email trouvé via téléphone: ' . $email_for_auth . ' (Contact: ' . $contact->firstname . ' ' . $contact->lastname . ')');
                 } else {
                     log_activity('LOGIN MOBILE - ÉCHEC: Aucun numéro trouvé dans contacts NI clients');
+
+                    // MODE DEBUG: Afficher tous les numéros disponibles
+                    if ($this->input->get('debug') == '1') {
+                        echo "<h3>DEBUG MODE - Numéros disponibles:</h3>";
+
+                        echo "<h4>Dans tblcontacts:</h4><ul>";
+                        $this->db->select('phonenumber, email, firstname');
+                        $this->db->from(db_prefix() . 'contacts');
+                        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = userid');
+                        $this->db->where('is_primary', 1);
+                        $this->db->where('phonenumber IS NOT NULL');
+                        $debug_contacts = $this->db->get()->result();
+                        foreach ($debug_contacts as $dc) {
+                            echo "<li><code>{$dc->phonenumber}</code> - {$dc->firstname} ({$dc->email})</li>";
+                        }
+                        echo "</ul>";
+
+                        echo "<h4>Dans tblclients:</h4><ul>";
+                        $this->db->select('c.phonenumber, ct.email, ct.firstname');
+                        $this->db->from(db_prefix() . 'clients c');
+                        $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = c.userid AND ct.is_primary = 1');
+                        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid');
+                        $this->db->where('c.phonenumber IS NOT NULL');
+                        $debug_clients = $this->db->get()->result();
+                        foreach ($debug_clients as $dc) {
+                            echo "<li><code>{$dc->phonenumber}</code> - {$dc->firstname} ({$dc->email})</li>";
+                        }
+                        echo "</ul>";
+
+                        echo "<p>Vous avez cherché: <code>{$phone}</code> (avec +) et <code>{$phone_no_plus}</code> (sans +)</p>";
+                        die();
+                    }
+
                     set_alert('danger', 'Aucun compte trouvé avec ce numéro. Vérifiez le format (ex: +221771234567) ou utilisez votre email.');
                     redirect(site_url('dietetic/portal'));
                     return;
