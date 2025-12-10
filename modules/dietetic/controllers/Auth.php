@@ -40,8 +40,11 @@ class Auth extends App_Controller
             $password = $this->input->post('password');
             $remember = $this->input->post('remember');
 
+            log_message('debug', 'Login attempt - Phone: ' . $phone);
+
             // Valider les champs
             if (empty($phone) || empty($password)) {
+                log_message('debug', 'Login failed - Empty fields');
                 echo json_encode([
                     'success' => false,
                     'message' => 'Veuillez remplir tous les champs'
@@ -51,11 +54,13 @@ class Auth extends App_Controller
 
             // Nettoyer le numéro de téléphone
             $phone = $this->clean_phone_number($phone);
+            log_message('debug', 'Login - Cleaned phone: ' . $phone);
 
             // Chercher le patient par téléphone
             $patient = $this->find_patient_by_phone($phone);
 
             if (!$patient) {
+                log_message('debug', 'Login failed - Patient not found for phone: ' . $phone);
                 echo json_encode([
                     'success' => false,
                     'message' => 'Numéro de téléphone ou mot de passe incorrect'
@@ -63,14 +68,19 @@ class Auth extends App_Controller
                 return;
             }
 
+            log_message('debug', 'Login - Patient found, checking password for client_id: ' . $patient->client_id);
+
             // Vérifier le mot de passe
             if (!$this->verify_password($patient->client_id, $password)) {
+                log_message('debug', 'Login failed - Invalid password for client_id: ' . $patient->client_id);
                 echo json_encode([
                     'success' => false,
                     'message' => 'Numéro de téléphone ou mot de passe incorrect'
                 ]);
                 return;
             }
+
+            log_message('debug', 'Login success - Client ID: ' . $patient->client_id);
 
             // Connecter le patient
             $this->connect_patient($patient->client_id, $remember);
@@ -455,13 +465,21 @@ class Auth extends App_Controller
     private function find_patient_by_phone($phone)
     {
         // Chercher dans les contacts
-        $this->db->select('p.*, c.userid as client_id');
+        $this->db->select('p.*, ct.contactid');
         $this->db->from(db_prefix() . 'dietic_patients p');
-        $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id');
+        $this->db->join(db_prefix() . 'contacts ct', 'ct.userid = p.client_id AND ct.is_primary = 1');
         $this->db->where('ct.phonenumber', $phone);
-        $this->db->where('ct.is_primary', 1);
 
-        return $this->db->get()->row();
+        $result = $this->db->get()->row();
+
+        // Log pour debug
+        if ($result) {
+            log_message('debug', 'Patient found for phone ' . $phone . ' - Client ID: ' . $result->client_id);
+        } else {
+            log_message('debug', 'No patient found for phone ' . $phone);
+        }
+
+        return $result;
     }
 
     /**

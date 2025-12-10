@@ -2,93 +2,99 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Connexion - DietZone</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.css">
     <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         :root {
             --primary-color: #01807B;
             --secondary-color: #F3911D;
         }
 
         body {
-            background: linear-gradient(135deg, #01807B 0%, #016663 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #01807B;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
 
         .auth-container {
-            max-width: 500px;
             width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .logo-section {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 30px 20px 20px;
+            background: #01807B;
         }
 
         .logo-section img {
-            max-height: 80px;
+            max-height: 50px;
             width: auto;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .logo-section h1 {
             color: white;
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
         }
 
-        .logo-section p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
+        .logo-section h1 i {
+            font-size: 26px;
+            margin-right: 8px;
         }
 
         .auth-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            background: #f5f5f5;
+            flex: 1;
+            border-radius: 30px 30px 0 0;
             overflow: hidden;
+            margin-top: 10px;
         }
 
         .auth-tabs {
             display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            background: white;
+            padding: 5px;
+            margin: 15px 15px 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .auth-tab {
             flex: 1;
-            padding: 20px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
             color: #6c757d;
             transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .auth-tab:hover {
-            background: rgba(1, 128, 123, 0.05);
-            color: #01807B;
+            border-radius: 8px;
+            background: transparent;
         }
 
         .auth-tab.active {
-            background: white;
-            color: #01807B;
-            border-bottom-color: #01807B;
+            background: #01807B;
+            color: white;
         }
 
         .auth-content {
-            padding: 40px 30px;
+            padding: 20px 20px 30px;
+            background: #f5f5f5;
         }
 
         .tab-pane {
@@ -97,37 +103,47 @@
 
         .tab-pane.active {
             display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 20px 0;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: #2c3e50;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .form-control {
-            height: 45px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 10px 15px;
-            font-size: 15px;
+            height: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
             transition: all 0.3s;
+            background: white;
         }
 
         .form-control:focus {
             border-color: #01807B;
-            box-shadow: 0 0 0 0.2rem rgba(1, 128, 123, 0.1);
-        }
-
-        textarea.form-control {
-            height: auto;
-            min-height: 100px;
+            box-shadow: 0 0 0 3px rgba(1, 128, 123, 0.1);
+            outline: none;
         }
 
         .iti {
@@ -135,60 +151,65 @@
         }
 
         .iti__flag-container {
-            border-right: 2px solid #e9ecef;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .iti__selected-flag {
+            padding: 0 16px;
         }
 
         .btn-primary {
             background: #01807B;
             border: none;
-            height: 50px;
-            border-radius: 8px;
+            height: 54px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             width: 100%;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            color: white;
+            margin-top: 10px;
         }
 
-        .btn-primary:hover {
-            background: #016663;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(1, 128, 123, 0.3);
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled,
+        .btn-primary.loading {
+            opacity: 0.7;
+            transform: none;
         }
 
         .btn-secondary {
-            background: #F3911D;
-            border: none;
-            height: 50px;
-            border-radius: 8px;
+            background: white;
+            border: 2px solid #01807B;
+            color: #01807B;
+            height: 54px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             width: 100%;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .btn-secondary:hover {
-            background: #d47b0f;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(243, 145, 29, 0.3);
+        .btn-secondary:active {
+            transform: scale(0.98);
         }
 
         .link-primary {
             color: #01807B;
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .link-primary:hover {
-            color: #016663;
-            text-decoration: underline;
+            font-size: 14px;
         }
 
         .alert {
-            border-radius: 8px;
+            border-radius: 12px;
             border: none;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
 
         .alert-success {
@@ -209,12 +230,16 @@
         .checkbox label {
             font-weight: normal;
             color: #6c757d;
+            font-size: 14px;
         }
 
         .divider {
             text-align: center;
             margin: 20px 0;
             position: relative;
+            color: #999;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .divider::before {
@@ -224,21 +249,19 @@
             top: 50%;
             width: 100%;
             height: 1px;
-            background: #e9ecef;
+            background: #ddd;
         }
 
         .divider span {
-            background: white;
+            background: #f5f5f5;
             padding: 0 15px;
             position: relative;
-            color: #6c757d;
-            font-size: 14px;
         }
 
         .otp-input {
             text-align: center;
-            font-size: 24px;
-            letter-spacing: 10px;
+            font-size: 22px;
+            letter-spacing: 8px;
             font-weight: 700;
         }
 
@@ -246,15 +269,13 @@
             color: #01807B;
             cursor: pointer;
             font-weight: 600;
-        }
-
-        .resend-link:hover {
-            text-decoration: underline;
+            font-size: 14px;
         }
 
         .password-strength {
             margin-top: 5px;
             font-size: 12px;
+            font-weight: 600;
         }
 
         .password-strength.weak {
@@ -269,25 +290,47 @@
             color: #28a745;
         }
 
-        @media (max-width: 576px) {
-            .auth-content {
-                padding: 30px 20px;
-            }
-
-            .auth-tab {
-                padding: 15px 10px;
-                font-size: 14px;
-            }
-        }
-
         .loading-spinner {
             display: none;
-            margin-left: 10px;
+            margin-left: 8px;
         }
 
         .btn-primary.loading .loading-spinner,
         .btn-secondary.loading .loading-spinner {
             display: inline-block;
+        }
+
+        .footer-link {
+            text-align: center;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .footer-link p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .footer-link a {
+            color: #F3911D;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .text-muted-sm {
+            color: #6c757d;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #01807B;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -301,7 +344,6 @@
                 <img src="<?php echo base_url('uploads/company/' . $company_logo); ?>" alt="DietZone Logo">
             <?php } ?>
             <h1><i class="fa fa-heartbeat"></i> DietZone</h1>
-            <p>Votre accompagnement diététique personnalisé</p>
         </div>
 
         <!-- Auth Card -->
@@ -322,10 +364,6 @@
 
                 <!-- Login Tab -->
                 <div class="tab-pane active" id="login-tab">
-                    <h3 style="margin-top: 0; margin-bottom: 25px; color: #2c3e50;">
-                        Connectez-vous
-                    </h3>
-
                     <form id="login-form">
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
 
@@ -345,7 +383,7 @@
                             </label>
                         </div>
 
-                        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fa fa-sign-in"></i> Se connecter
                             <i class="fa fa-spinner fa-spin loading-spinner"></i>
                         </button>
@@ -368,26 +406,17 @@
 
                 <!-- Register Tab -->
                 <div class="tab-pane" id="register-tab">
-                    <h3 style="margin-top: 0; margin-bottom: 25px; color: #2c3e50;">
-                        Créer un compte
-                    </h3>
-
                     <form id="register-form">
                         <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
 
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label><i class="fa fa-user"></i> Prénom</label>
-                                    <input type="text" name="firstname" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label><i class="fa fa-user"></i> Nom</label>
-                                    <input type="text" name="lastname" class="form-control" required>
-                                </div>
-                            </div>
+                        <div class="form-group">
+                            <label><i class="fa fa-user"></i> Prénom</label>
+                            <input type="text" name="firstname" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa fa-user"></i> Nom</label>
+                            <input type="text" name="lastname" class="form-control" required>
                         </div>
 
                         <div class="form-group">
@@ -418,7 +447,7 @@
                     </form>
 
                     <div style="text-align: center; margin-top: 20px;">
-                        <p style="color: #6c757d; font-size: 14px;">
+                        <p class="text-muted-sm">
                             Déjà un compte ?
                             <a href="#" class="link-primary auth-tab-link" data-tab="login">Se connecter</a>
                         </p>
@@ -427,12 +456,8 @@
 
                 <!-- OTP Tab -->
                 <div class="tab-pane" id="otp-tab">
-                    <h3 style="margin-top: 0; margin-bottom: 25px; color: #2c3e50;">
-                        Connexion par SMS
-                    </h3>
-
                     <div id="otp-request-form">
-                        <p style="color: #6c757d; margin-bottom: 20px;">
+                        <p class="text-muted-sm" style="margin-bottom: 20px;">
                             Entrez votre numéro de téléphone pour recevoir un code de vérification par SMS.
                         </p>
 
@@ -454,7 +479,7 @@
                     <div id="otp-verify-form" style="display: none;">
                         <div class="alert alert-info">
                             <i class="fa fa-info-circle"></i>
-                            Un code de vérification a été envoyé par SMS à votre numéro de téléphone.
+                            Un code de vérification a été envoyé par SMS.
                         </div>
 
                         <form id="verify-otp-form">
@@ -479,8 +504,8 @@
                         </form>
                     </div>
 
-                    <div style="text-align: center; margin-top: 20px;">
-                        <a href="#" class="link-primary auth-tab-link" data-tab="login">
+                    <div style="text-align: center;">
+                        <a href="#" class="back-link auth-tab-link" data-tab="login">
                             <i class="fa fa-arrow-left"></i> Retour
                         </a>
                     </div>
@@ -488,12 +513,8 @@
 
                 <!-- Forgot Password Tab -->
                 <div class="tab-pane" id="forgot-tab">
-                    <h3 style="margin-top: 0; margin-bottom: 25px; color: #2c3e50;">
-                        Mot de passe oublié
-                    </h3>
-
                     <div id="forgot-request-form">
-                        <p style="color: #6c757d; margin-bottom: 20px;">
+                        <p class="text-muted-sm" style="margin-bottom: 20px;">
                             Entrez votre numéro de téléphone pour recevoir un code de réinitialisation par SMS.
                         </p>
 
@@ -544,23 +565,21 @@
                         </form>
                     </div>
 
-                    <div style="text-align: center; margin-top: 20px;">
-                        <a href="#" class="link-primary auth-tab-link" data-tab="login">
+                    <div style="text-align: center;">
+                        <a href="#" class="back-link auth-tab-link" data-tab="login">
                             <i class="fa fa-arrow-left"></i> Retour à la connexion
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <div style="text-align: center; margin-top: 30px; color: white;">
-            <p style="margin: 0; opacity: 0.9;">
-                <i class="fa fa-question-circle"></i> Besoin d'aide ?
-                <a href="mailto:support@dietzone.sn" style="color: #F3911D; text-decoration: none; font-weight: 600;">
-                    support@dietzone.sn
-                </a>
-            </p>
+            <!-- Footer -->
+            <div class="footer-link">
+                <p>
+                    <i class="fa fa-question-circle"></i> Besoin d'aide ?
+                    <a href="mailto:support@dietzone.sn">support@dietzone.sn</a>
+                </p>
+            </div>
         </div>
     </div>
 
@@ -653,7 +672,7 @@
                 </div>
             `;
             $('#alert-container').html(alertHtml);
-            $('html, body').animate({ scrollTop: 0 }, 300);
+            $('.auth-content').animate({ scrollTop: 0 }, 300);
         }
 
         function clearAlert() {
