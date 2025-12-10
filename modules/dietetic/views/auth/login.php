@@ -423,35 +423,35 @@
                         <input type="hidden" name="phone_full" id="register-phone-hidden">
 
                         <div class="form-group">
-                            <label><i class="fa fa-user"></i> Prénom</label>
-                            <input type="text" name="firstname" class="form-control" required minlength="2">
+                            <label><i class="fa fa-user"></i> Prénom <span style="color:red;">*</span></label>
+                            <input type="text" name="firstname" class="form-control" placeholder="Votre prénom" required minlength="2">
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fa fa-user"></i> Nom</label>
-                            <input type="text" name="lastname" class="form-control" required minlength="2">
+                            <label><i class="fa fa-user"></i> Nom <span style="color:red;">*</span></label>
+                            <input type="text" name="lastname" class="form-control" placeholder="Votre nom" required minlength="2">
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fa fa-envelope"></i> Email</label>
-                            <input type="email" name="email" class="form-control" required>
+                            <label><i class="fa fa-envelope"></i> Email <span style="color:red;">*</span></label>
+                            <input type="email" name="email" class="form-control" placeholder="exemple@email.com" required>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                            <input type="tel" id="register-phone" class="form-control" required>
+                            <label><i class="fa fa-phone"></i> Numéro de téléphone <span style="color:red;">*</span></label>
+                            <input type="tel" id="register-phone" class="form-control" placeholder="+221 77 123 45 67" required>
                             <small class="form-text text-muted">Format international requis (ex: +221771234567)</small>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fa fa-lock"></i> Mot de passe</label>
+                            <label><i class="fa fa-lock"></i> Mot de passe <span style="color:red;">*</span></label>
                             <input type="password" name="password" id="register-password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6">
                             <div class="password-strength" id="password-strength"></div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fa fa-lock"></i> Confirmer le mot de passe</label>
-                            <input type="password" name="password_confirm" class="form-control" placeholder="••••••••" required minlength="6">
+                            <label><i class="fa fa-lock"></i> Confirmer le mot de passe <span style="color:red;">*</span></label>
+                            <input type="password" name="password_confirm" class="form-control" placeholder="Retapez votre mot de passe" required minlength="6">
                         </div>
 
                         <button type="submit" class="btn btn-primary">

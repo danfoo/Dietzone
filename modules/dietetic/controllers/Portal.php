@@ -954,6 +954,39 @@ class Portal extends App_Controller
         } catch (Exception $e) {
             log_activity('INSCRIPTION - Erreur envoi WhatsApp: ' . $e->getMessage());
         }
+
+        // 4. NOTIFICATION ADMIN - Nouveau patient inscrit
+        try {
+            $this->load->library('email');
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to('newuser@dietzone.sn');
+            $this->email->subject('🆕 Nouveau patient inscrit - ' . $full_name);
+
+            $admin_email_body = "
+                <h2>Nouveau patient inscrit sur DietZone</h2>
+                <p>Un nouveau patient vient de créer un compte sur la plateforme.</p>
+
+                <h3>Informations du patient :</h3>
+                <ul>
+                    <li><strong>Nom complet :</strong> {$full_name}</li>
+                    <li><strong>Email :</strong> {$email}</li>
+                    <li><strong>Téléphone :</strong> {$phone}</li>
+                    <li><strong>Client ID :</strong> {$client_id}</li>
+                    <li><strong>Date inscription :</strong> " . date('d/m/Y H:i:s') . "</li>
+                </ul>
+
+                <p><a href='" . admin_url('clients/client/' . $client_id) . "' style='display:inline-block;padding:10px 20px;background:#01807B;color:white;text-decoration:none;border-radius:5px;'>Voir le profil patient</a></p>
+
+                <p><em>Les identifiants de connexion ont été envoyés au patient par Email, SMS et WhatsApp.</em></p>
+
+                <p>Cordialement,<br>Système DietZone</p>
+            ";
+            $this->email->message($admin_email_body);
+            $this->email->send();
+            log_activity('INSCRIPTION - Notification admin envoyée à: newuser@dietzone.sn pour ' . $full_name);
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION - Erreur envoi notification admin: ' . $e->getMessage());
+        }
     }
 
     /**
