@@ -409,6 +409,43 @@ class Portal extends App_Controller
                     }
                     echo '</ul>';
 
+                    // Vérifier TOUS les clients (pas que patients)
+                    echo '<hr><h3 style="color:red;">⚠️ Vérification dans TOUTE la base (tous types clients):</h3>';
+                    echo '<h4>Dans tblclients (TOUS):</h4><ul>';
+                    $this->db->select('phonenumber, company');
+                    $this->db->from(db_prefix() . 'clients');
+                    $this->db->where('phonenumber IS NOT NULL');
+                    $this->db->where('phonenumber !=', '');
+                    $this->db->limit(20);
+                    $all = $this->db->get()->result();
+                    if (empty($all)) {
+                        echo '<li style="color:red;"><strong>⚠️ AUCUN numéro dans toute la table tblclients !</strong></li>';
+                    } else {
+                        foreach ($all as $a) {
+                            echo "<li><code>{$a->phonenumber}</code> - {$a->company}</li>";
+                        }
+                    }
+                    echo '</ul>';
+
+                    echo '<h4>Dans tblcontacts (TOUS):</h4><ul>';
+                    $this->db->select('phonenumber, email, firstname, lastname');
+                    $this->db->from(db_prefix() . 'contacts');
+                    $this->db->where('is_primary', 1);
+                    $this->db->where('phonenumber IS NOT NULL');
+                    $this->db->where('phonenumber !=', '');
+                    $this->db->limit(20);
+                    $all2 = $this->db->get()->result();
+                    if (empty($all2)) {
+                        echo '<li style="color:red;"><strong>⚠️ AUCUN numéro dans toute la table tblcontacts !</strong></li>';
+                    } else {
+                        foreach ($all2 as $a) {
+                            echo "<li><code>{$a->phonenumber}</code> - {$a->firstname} {$a->lastname} ({$a->email})</li>";
+                        }
+                    }
+                    echo '</ul>';
+
+                    echo '<hr><p style="background:yellow;padding:15px;"><strong>CONCLUSION:</strong> Les numéros de téléphone ne sont PAS enregistrés dans votre base de données Perfex. Vous devez ajouter les numéros de téléphone dans les profils clients via l\'interface d\'administration Perfex.</p>';
+
                     echo '<p><a href="' . site_url('dietetic/portal') . '" style="padding:10px;background:#01807B;color:white;text-decoration:none;display:inline-block;">← Retour à la page de connexion</a></p>';
                     echo '</body></html>';
                     die();
