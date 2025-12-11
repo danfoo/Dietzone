@@ -211,6 +211,9 @@ class Portal extends App_Controller
             $this->session->set_userdata('client_logged_in', true);
             $this->session->set_userdata('client_user_id', $patient->client_id);
 
+            // Définir aussi les cookies d'authentification (fallback pour régénération session)
+            set_client_auth_cookies($patient->client_id);
+
             if ($remember) {
                 set_cookie('remember_client', $patient->client_id, 2592000); // 30 jours
             }
@@ -496,6 +499,9 @@ class Portal extends App_Controller
                         'client_logged_in' => true,
                         'client_user_id' => $patient_login->client_id
                     ]);
+
+                    // Définir aussi les cookies d'authentification (fallback pour régénération session)
+                    set_client_auth_cookies($patient_login->client_id);
 
                     // Mettre à jour last_login
                     $this->db->where('userid', $patient_login->client_id);
@@ -1042,6 +1048,9 @@ class Portal extends App_Controller
                 'client_logged_in' => true,
                 'client_user_id' => $client_id
             ]);
+
+            // Définir aussi les cookies d'authentification (fallback pour régénération session)
+            set_client_auth_cookies($client_id);
 
             // Log session state before redirect
             log_activity('INSCRIPTION OTP - Session avant redirect: client_logged_in=' . var_export($this->session->userdata('client_logged_in'), true) . ', client_user_id=' . var_export($this->session->userdata('client_user_id'), true));

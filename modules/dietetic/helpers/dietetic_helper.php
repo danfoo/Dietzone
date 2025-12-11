@@ -1566,7 +1566,8 @@ function get_premium_features_comparison()
 
 /**
  * Check if client is logged in
- * Compatible avec notre système custom de session
+ * Compatible avec notre système custom de session avec fallback sur cookies
+ * Si la session a été régénérée par Perfex, restaure depuis les cookies
  *
  * @return bool
  */
@@ -1574,13 +1575,40 @@ if (!function_exists('is_client_logged_in')) {
     function is_client_logged_in()
     {
         $CI = &get_instance();
-        return (bool)$CI->session->userdata('client_logged_in');
+
+        // Vérifier d'abord la session
+        $session_logged_in = $CI->session->userdata('client_logged_in');
+
+        if ($session_logged_in) {
+            return true;
+        }
+
+        // Si session vide, vérifier le cookie (fallback pour régénération session)
+        $cookie_client_id = $CI->input->cookie('dietetic_client_id', true);
+        $cookie_auth_token = $CI->input->cookie('dietetic_auth_token', true);
+
+        if ($cookie_client_id && $cookie_auth_token) {
+            // Vérifier que le token est valide
+            $expected_token = hash('sha256', $cookie_client_id . $CI->config->item('encryption_key'));
+
+            if ($cookie_auth_token === $expected_token) {
+                // Token valide - restaurer la session
+                $CI->session->set_userdata('client_logged_in', true);
+                $CI->session->set_userdata('client_user_id', $cookie_client_id);
+
+                log_activity('SESSION RESTORED - Restauration depuis cookies pour client_id: ' . $cookie_client_id);
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
 /**
  * Get logged in client user ID
- * Compatible avec notre système custom de session
+ * Compatible avec notre système custom de session avec fallback sur cookies
+ * Si la session a été régénérée par Perfex, restaure depuis les cookies
  *
  * @return int|null
  */
@@ -1588,6 +1616,87 @@ if (!function_exists('get_client_user_id')) {
     function get_client_user_id()
     {
         $CI = &get_instance();
-        return $CI->session->userdata('client_user_id');
+
+        // Vérifier d'abord la session
+        $session_user_id = $CI->session->userdata('client_user_id');
+
+        if ($session_user_id) {
+            return $session_user_id;
+        }
+
+        // Si session vide, vérifier le cookie (fallback pour régénération session)
+        $cookie_client_id = $CI->input->cookie('dietetic_client_id', true);
+        $cookie_auth_token = $CI->input->cookie('dietetic_auth_token', true);
+
+        if ($cookie_client_id && $cookie_auth_token) {
+            // Vérifier que le token est valide
+            $expected_token = hash('sha256', $cookie_client_id . $CI->config->item('encryption_key'));
+
+            if ($cookie_auth_token === $expected_token) {
+                // Token valide - restaurer la session
+                $CI->session->set_userdata('client_logged_in', true);
+                $CI->session->set_userdata('client_user_id', $cookie_client_id);
+
+                log_activity('SESSION RESTORED - Restauration depuis cookies pour client_id: ' . $cookie_client_id);
+                return $cookie_client_id;
+            }
+        }
+
+        return null;
+    }
+}
+
+/**
+ * Set authentication cookies for client login
+ * Appelé lors de la connexion pour créer des cookies sécurisés qui survivent à la régénération de session
+ *
+ * @param int $client_id Client user ID
+ * @return void
+ */
+if (!function_exists('set_client_auth_cookies')) {
+    function set_client_auth_cookies($client_id)
+    {
+        $CI = &get_instance();
+
+        // Créer un token sécurisé
+        $auth_token = hash('sha256', $client_id . $CI->config->item('encryption_key'));
+
+        // Définir les cookies (7 jours d'expiration)
+        $expire = 7 * 24 * 60 * 60; // 7 jours en secondes
+
+        set_cookie([
+            'name'   => 'dietetic_client_id',
+            'value'  => $client_id,
+            'expire' => $expire,
+            'secure' => is_https(),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+
+        set_cookie([
+            'name'   => 'dietetic_auth_token',
+            'value'  => $auth_token,
+            'expire' => $expire,
+            'secure' => is_https(),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+
+        log_activity('AUTH COOKIES SET - Cookies d\'authentification créés pour client_id: ' . $client_id);
+    }
+}
+
+/**
+ * Clear authentication cookies for client logout
+ * Appelé lors de la déconnexion pour supprimer les cookies
+ *
+ * @return void
+ */
+if (!function_exists('clear_client_auth_cookies')) {
+    function clear_client_auth_cookies()
+    {
+        delete_cookie('dietetic_client_id');
+        delete_cookie('dietetic_auth_token');
+        log_activity('AUTH COOKIES CLEARED - Cookies d\'authentification supprimés');
     }
 }
