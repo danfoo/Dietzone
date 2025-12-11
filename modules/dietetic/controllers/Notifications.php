@@ -846,6 +846,8 @@ class Notifications extends AdminController
 
         // Load existing templates from database
         $template_keys = [
+            // Authentification & Sécurité
+            'patient_registration', 'password_reset',
             // Welcome
             'welcome',
             // Programs
