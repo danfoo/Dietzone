@@ -400,14 +400,6 @@
                         </button>
                     </form>
 
-                    <div class="divider">
-                        <span>OU</span>
-                    </div>
-
-                    <button type="button" class="btn btn-secondary" id="btn-otp">
-                        <i class="fa fa-mobile"></i> Connexion par SMS
-                    </button>
-
                     <div style="text-align: center; margin-top: 20px;">
                         <a href="#" class="link-primary" id="link-forgot-password">
                             <i class="fa fa-question-circle"></i> Mot de passe oublié ?
@@ -463,63 +455,6 @@
                             Déjà un compte ?
                             <a href="#" class="link-primary auth-tab-link" data-tab="login">Se connecter</a>
                         </p>
-                    </div>
-                </div>
-
-                <!-- OTP Tab -->
-                <div class="tab-pane" id="otp-tab">
-                    <div id="otp-request-form">
-                        <p class="text-muted-sm" style="margin-bottom: 20px;">
-                            Entrez votre numéro de téléphone pour recevoir un code de vérification par SMS.
-                        </p>
-
-                        <form id="request-otp-form">
-                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
-
-                            <div class="form-group">
-                                <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                                <input type="tel" id="otp-phone" name="phone" class="form-control" required>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-paper-plane"></i> Envoyer le code
-                                <i class="fa fa-spinner fa-spin loading-spinner"></i>
-                            </button>
-                        </form>
-                    </div>
-
-                    <div id="otp-verify-form" style="display: none;">
-                        <div class="alert alert-info">
-                            <i class="fa fa-info-circle"></i>
-                            Un code de vérification a été envoyé par SMS.
-                        </div>
-
-                        <form id="verify-otp-form">
-                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
-                            <input type="hidden" id="verify-phone" name="phone">
-
-                            <div class="form-group">
-                                <label><i class="fa fa-key"></i> Code de vérification</label>
-                                <input type="text" name="code" class="form-control otp-input" maxlength="6" placeholder="••••••" required>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-check"></i> Vérifier
-                                <i class="fa fa-spinner fa-spin loading-spinner"></i>
-                            </button>
-
-                            <div style="text-align: center; margin-top: 15px;">
-                                <a href="#" class="resend-link" id="resend-otp">
-                                    <i class="fa fa-refresh"></i> Renvoyer le code
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div style="text-align: center;">
-                        <a href="#" class="back-link auth-tab-link" data-tab="login">
-                            <i class="fa fa-arrow-left"></i> Retour
-                        </a>
                     </div>
                 </div>
 
@@ -603,7 +538,7 @@
     <script>
     $(document).ready(function() {
         // Initialiser intl-tel-input pour tous les champs téléphone
-        const phoneInputs = ['login-phone', 'register-phone', 'otp-phone', 'forgot-phone'];
+        const phoneInputs = ['login-phone', 'register-phone', 'forgot-phone'];
         const itiInstances = {};
 
         phoneInputs.forEach(function(inputId) {
@@ -640,11 +575,6 @@
             $('#' + tab + '-tab').addClass('active');
             clearAlert();
         }
-
-        // Show OTP tab
-        $('#btn-otp').on('click', function() {
-            switchTab('otp');
-        });
 
         // Show forgot password tab
         $('#link-forgot-password').on('click', function(e) {
@@ -720,76 +650,6 @@
             // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
-        // Request OTP
-        $('#request-otp-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
-            const fullNumber = getFullNumber('otp-phone');
-            const formData = $(this).serialize();
-            const updatedFormData = formData.replace(/phone=[^&]*/, 'phone=' + encodeURIComponent(fullNumber));
-
-            $.post('<?php echo site_url('dietetic/auth/request_otp'); ?>', updatedFormData, function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    $('#otp-request-form').hide();
-                    $('#otp-verify-form').show();
-                    $('#verify-phone').val(fullNumber);
-                } else {
-                    showAlert('danger', response.message);
-                }
-                $btn.removeClass('loading').prop('disabled', false);
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
-        });
-
-        // Verify OTP
-        $('#verify-otp-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
-            $.post('<?php echo site_url('dietetic/auth/verify_otp'); ?>', $(this).serialize(), function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 1000);
-                } else {
-                    showAlert('danger', response.message);
-                    $btn.removeClass('loading').prop('disabled', false);
-                }
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
-        });
-
-        // Resend OTP
-        $('#resend-otp').on('click', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const phone = $('#verify-phone').val();
-            $.post('<?php echo site_url('dietetic/auth/request_otp'); ?>', {
-                phone: phone,
-                <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
-            }, function(response) {
-                if (response.success) {
-                    showAlert('success', 'Code renvoyé avec succès');
-                } else {
-                    showAlert('danger', response.message);
-                }
-            }, 'json');
-        });
-
         // Request password reset
         $('#request-reset-form').on('submit', function(e) {
             e.preventDefault();
@@ -802,7 +662,7 @@
             const formData = $(this).serialize();
             const updatedFormData = formData.replace(/phone=[^&]*/, 'phone=' + encodeURIComponent(fullNumber));
 
-            $.post('<?php echo site_url('dietetic/auth/forgot_password'); ?>', updatedFormData, function(response) {
+            $.post('<?php echo site_url('dietetic/portal/forgot_password'); ?>', updatedFormData, function(response) {
                 if (response.success) {
                     showAlert('success', response.message);
                     if (response.show_reset_form) {
@@ -828,7 +688,7 @@
             const $btn = $(this).find('button[type="submit"]');
             $btn.addClass('loading').prop('disabled', true);
 
-            $.post('<?php echo site_url('dietetic/auth/reset_password'); ?>', $(this).serialize(), function(response) {
+            $.post('<?php echo site_url('dietetic/portal/reset_password'); ?>', $(this).serialize(), function(response) {
                 if (response.success) {
                     showAlert('success', response.message);
                     setTimeout(function() {

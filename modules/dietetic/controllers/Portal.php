@@ -42,6 +42,8 @@ class Portal extends App_Controller
             'index',
             'login_patient',  // Authentification mobile
             'register',       // Inscription patient
+            'forgot_password', // Demander code reset password
+            'reset_password',  // Réinitialiser mot de passe
             'measurements',
             'add_measurement',
             'meal_plans',
@@ -987,6 +989,218 @@ class Portal extends App_Controller
         } catch (Exception $e) {
             log_activity('INSCRIPTION - Erreur envoi notification admin: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mot de passe oublié - Demander code reset
+     * URL: POST /dietetic/portal/forgot_password
+     */
+    public function forgot_password()
+    {
+        // Vérifier que c'est une requête AJAX POST
+        if (!$this->input->is_ajax_request() || !$this->input->post()) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Requête invalide']);
+            return;
+        }
+
+        $phone = trim($this->input->post('phone'));
+
+        // Validation
+        if (empty($phone)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Numéro de téléphone requis']);
+            return;
+        }
+
+        // Nettoyer le numéro
+        $phone_clean = preg_replace('/[\s\-\(\)]/', '', $phone);
+
+        // Créer variations
+        $variations = [
+            $phone_clean,
+            '+' . ltrim($phone_clean, '+'),
+            ltrim($phone_clean, '+'),
+            '+221' . ltrim($phone_clean, '+221'),
+            ltrim($phone_clean, '+221')
+        ];
+        $variations = array_unique($variations);
+
+        // Chercher patient avec ce téléphone
+        $this->db->select('ct.userid, ct.email, ct.firstname, ct.lastname, ct.phonenumber');
+        $this->db->from(db_prefix() . 'contacts ct');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+        $this->db->where('ct.is_primary', 1);
+        $this->db->group_start();
+        foreach ($variations as $v) {
+            $this->db->or_where('ct.phonenumber', $v);
+        }
+        $this->db->group_end();
+        $patient = $this->db->get()->row();
+
+        if (!$patient) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Aucun compte patient trouvé avec ce numéro']);
+            return;
+        }
+
+        // Vérifier rate limiting (max 3 demandes par 15 minutes)
+        $this->db->where('phone', $patient->phonenumber);
+        $this->db->where('type', 'password_reset');
+        $this->db->where('created_at >', date('Y-m-d H:i:s', strtotime('-15 minutes')));
+        $recent_requests = $this->db->count_all_results(db_prefix() . 'dietic_otp_codes');
+
+        if ($recent_requests >= 3) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Trop de demandes. Veuillez patienter 15 minutes']);
+            return;
+        }
+
+        // Générer code OTP à 6 chiffres
+        $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // Stocker dans la base
+        $otp_data = [
+            'phone' => $patient->phonenumber,
+            'code' => $code,
+            'type' => 'password_reset',
+            'used' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+5 minutes')),
+            'ip_address' => $this->input->ip_address()
+        ];
+        $this->db->insert(db_prefix() . 'dietic_otp_codes', $otp_data);
+
+        // Envoyer SMS
+        try {
+            $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
+
+            // Utiliser le système SMS existant
+            if (method_exists($this, 'send_sms')) {
+                $this->send_sms($patient->phonenumber, $sms_message);
+            } elseif (function_exists('send_sms_notification')) {
+                send_sms_notification($patient->phonenumber, $sms_message);
+            }
+
+            log_activity('MOT DE PASSE OUBLIÉ - Code envoyé à: ' . $patient->phonenumber . ' (Patient: ' . $patient->firstname . ')');
+
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Code de réinitialisation envoyé par SMS',
+                'show_reset_form' => true
+            ]);
+        } catch (Exception $e) {
+            log_activity('MOT DE PASSE OUBLIÉ - Erreur envoi SMS: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'envoi du SMS']);
+        }
+    }
+
+    /**
+     * Réinitialiser mot de passe avec code OTP
+     * URL: POST /dietetic/portal/reset_password
+     */
+    public function reset_password()
+    {
+        // Vérifier que c'est une requête AJAX POST
+        if (!$this->input->is_ajax_request() || !$this->input->post()) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Requête invalide']);
+            return;
+        }
+
+        $phone = trim($this->input->post('phone'));
+        $code = trim($this->input->post('code'));
+        $password = $this->input->post('password');
+        $password_confirm = $this->input->post('password_confirm');
+
+        // Validations
+        $errors = [];
+
+        if (empty($phone)) {
+            $errors[] = 'Numéro de téléphone requis';
+        }
+
+        if (empty($code) || strlen($code) !== 6) {
+            $errors[] = 'Code de réinitialisation invalide';
+        }
+
+        if (empty($password) || strlen($password) < 6) {
+            $errors[] = 'Le mot de passe doit contenir au moins 6 caractères';
+        }
+
+        if ($password !== $password_confirm) {
+            $errors[] = 'Les mots de passe ne correspondent pas';
+        }
+
+        if (!empty($errors)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => implode('. ', $errors)]);
+            return;
+        }
+
+        // Vérifier le code OTP
+        $this->db->where('phone', $phone);
+        $this->db->where('code', $code);
+        $this->db->where('type', 'password_reset');
+        $this->db->where('used', 0);
+        $this->db->where('expires_at >', date('Y-m-d H:i:s'));
+        $otp = $this->db->get(db_prefix() . 'dietic_otp_codes')->row();
+
+        if (!$otp) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Code invalide ou expiré']);
+            return;
+        }
+
+        // Trouver le patient
+        $phone_clean = preg_replace('/[\s\-\(\)]/', '', $phone);
+        $variations = [
+            $phone_clean,
+            '+' . ltrim($phone_clean, '+'),
+            ltrim($phone_clean, '+'),
+            '+221' . ltrim($phone_clean, '+221'),
+            ltrim($phone_clean, '+221')
+        ];
+        $variations = array_unique($variations);
+
+        $this->db->select('ct.id as contact_id, ct.userid, ct.firstname, ct.lastname, ct.email');
+        $this->db->from(db_prefix() . 'contacts ct');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = ct.userid');
+        $this->db->where('ct.is_primary', 1);
+        $this->db->group_start();
+        foreach ($variations as $v) {
+            $this->db->or_where('ct.phonenumber', $v);
+        }
+        $this->db->group_end();
+        $patient = $this->db->get()->row();
+
+        if (!$patient) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            return;
+        }
+
+        // Hasher le nouveau mot de passe
+        $password_hash = app_hash_password($password);
+
+        // Mettre à jour le mot de passe
+        $this->db->where('id', $patient->contact_id);
+        $this->db->update(db_prefix() . 'contacts', ['password' => $password_hash]);
+
+        // Marquer le code OTP comme utilisé
+        $this->db->where('id', $otp->id);
+        $this->db->update(db_prefix() . 'dietic_otp_codes', ['used' => 1]);
+
+        log_activity('MOT DE PASSE RESET - Patient: ' . $patient->firstname . ' ' . $patient->lastname . ' (Email: ' . $patient->email . ')');
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Mot de passe réinitialisé avec succès',
+            'redirect' => site_url('dietetic/portal')
+        ]);
     }
 
     /**
