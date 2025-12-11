@@ -138,10 +138,6 @@ if (isset($_GET['phone'])) {
     if (!preg_match('/^221/', $phone_clean) && strlen($phone_clean) == 9) {
         $phone_clean = '221' . $phone_clean;
     }
-    // Ajouter le +
-    if (!preg_match('/^\+/', $phone_clean)) {
-        $phone_clean = '+' . $phone_clean;
-    }
 
     echo "<p><strong>Numéro formaté:</strong> $phone_clean</p>";
 
@@ -160,7 +156,11 @@ if (isset($_GET['phone'])) {
         'ret_url' => 'https://app.dietsenegal.net/dietetic/sms_callback',
         'priority' => '2',
         'text' => $message,
-        'to' => [$phone_clean]  // Format simple array (corrigé)
+        'to' => [
+            [
+                'ret_id_1' => $phone_clean
+            ]
+        ]
     ];
 
     echo "<hr>";

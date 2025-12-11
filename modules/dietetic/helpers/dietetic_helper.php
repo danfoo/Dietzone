@@ -644,11 +644,6 @@ function dietetic_send_sms($phone, $message)
         $phone = '221' . $phone;
     }
 
-    // Add + prefix for SMS format (required by LAM SMS API)
-    if (!preg_match('/^\+/', $phone)) {
-        $phone = '+' . $phone;
-    }
-
     // Prepare LAM API request
     $data = [
         'accountid' => $account_id,
@@ -658,7 +653,11 @@ function dietetic_send_sms($phone, $message)
         'ret_url' => $ret_url,
         'priority' => $priority,
         'text' => $message,
-        'to' => [$phone]  // Format simple array pour SMS LAM (différent de WhatsApp)
+        'to' => [
+            [
+                'ret_id_1' => $phone
+            ]
+        ]
     ];
 
     $ch = curl_init($url);
