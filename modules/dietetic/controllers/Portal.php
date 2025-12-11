@@ -936,7 +936,6 @@ class Portal extends App_Controller
                 'password' => $password_hash,
                 'datecreated' => date('Y-m-d H:i:s'),
                 'email_verified_at' => date('Y-m-d H:i:s'),
-                'phonenumber_verified_at' => date('Y-m-d H:i:s'), // Numéro validé par OTP
                 'active' => 1
             ];
             $this->db->insert(db_prefix() . 'contacts', $contact_data);
