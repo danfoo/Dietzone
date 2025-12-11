@@ -1561,3 +1561,33 @@ function get_premium_features_comparison()
         ],
     ];
 }
+
+// ==================== AUTHENTIFICATION CLIENT (COMPATIBILITY) ====================
+
+/**
+ * Check if client is logged in
+ * Compatible avec notre système custom de session
+ *
+ * @return bool
+ */
+if (!function_exists('is_client_logged_in')) {
+    function is_client_logged_in()
+    {
+        $CI = &get_instance();
+        return (bool)$CI->session->userdata('client_logged_in');
+    }
+}
+
+/**
+ * Get logged in client user ID
+ * Compatible avec notre système custom de session
+ *
+ * @return int|null
+ */
+if (!function_exists('get_client_user_id')) {
+    function get_client_user_id()
+    {
+        $CI = &get_instance();
+        return $CI->session->userdata('client_user_id');
+    }
+}
