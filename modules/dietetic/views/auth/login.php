@@ -460,59 +460,75 @@
 
                 <!-- Forgot Password Tab -->
                 <div class="tab-pane" id="forgot-tab">
+                    <?php
+                    // Vérifier si on doit afficher le formulaire de reset ou de demande
+                    $show_reset_form = $this->session->userdata('forgot_password_phone');
+                    ?>
+
+                    <?php if (!$show_reset_form): ?>
+                    <!-- Étape 1: Demander le code -->
                     <div id="forgot-request-form">
                         <p class="text-muted-sm" style="margin-bottom: 20px;">
-                            Entrez votre numéro de téléphone pour recevoir un code de réinitialisation par SMS.
+                            Entrez votre numéro de téléphone pour recevoir un code de réinitialisation par SMS, Email et WhatsApp.
                         </p>
 
-                        <form id="request-reset-form">
+                        <form method="POST" action="<?php echo site_url('dietetic/portal/forgot_password'); ?>" id="request-reset-form">
                             <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+                            <input type="hidden" name="phone" id="forgot-phone-hidden">
 
                             <div class="form-group">
-                                <label><i class="fa fa-phone"></i> Numéro de téléphone</label>
-                                <input type="tel" id="forgot-phone" name="phone" class="form-control" required>
+                                <label><i class="fa fa-phone"></i> Numéro de téléphone <span style="color:red;">*</span></label>
+                                <input type="tel" id="forgot-phone" class="form-control" placeholder="+221 77 123 45 67" required>
                             </div>
 
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa fa-paper-plane"></i> Envoyer le code
-                                <i class="fa fa-spinner fa-spin loading-spinner"></i>
                             </button>
                         </form>
                     </div>
-
-                    <div id="forgot-reset-form" style="display: none;">
+                    <?php else: ?>
+                    <!-- Étape 2: Réinitialiser le mot de passe -->
+                    <div id="forgot-reset-form">
                         <div class="alert alert-info">
                             <i class="fa fa-info-circle"></i>
-                            Un code de réinitialisation a été envoyé par SMS.
+                            Un code de réinitialisation a été envoyé par SMS, Email et WhatsApp au numéro <?php echo $show_reset_form; ?>.
                         </div>
 
-                        <form id="reset-password-form">
+                        <form method="POST" action="<?php echo site_url('dietetic/portal/reset_password'); ?>" id="reset-password-form">
                             <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
-                            <input type="hidden" id="reset-phone" name="phone">
+                            <input type="hidden" name="phone" value="<?php echo htmlspecialchars($show_reset_form); ?>">
 
                             <div class="form-group">
-                                <label><i class="fa fa-key"></i> Code de réinitialisation</label>
-                                <input type="text" name="code" class="form-control" maxlength="6" required>
+                                <label><i class="fa fa-key"></i> Code de réinitialisation <span style="color:red;">*</span></label>
+                                <input type="text" name="code" class="form-control" maxlength="6" placeholder="123456" required>
                             </div>
 
                             <div class="form-group">
-                                <label><i class="fa fa-lock"></i> Nouveau mot de passe</label>
-                                <input type="password" name="password" class="form-control" placeholder="Au moins 6 caractères" required>
+                                <label><i class="fa fa-lock"></i> Nouveau mot de passe <span style="color:red;">*</span></label>
+                                <input type="password" name="password" class="form-control" placeholder="Au moins 6 caractères" required minlength="6">
                             </div>
 
                             <div class="form-group">
-                                <label><i class="fa fa-lock"></i> Confirmer le mot de passe</label>
-                                <input type="password" name="password_confirm" class="form-control" placeholder="••••••••" required>
+                                <label><i class="fa fa-lock"></i> Confirmer le mot de passe <span style="color:red;">*</span></label>
+                                <input type="password" name="password_confirm" class="form-control" placeholder="Retapez votre mot de passe" required minlength="6">
                             </div>
 
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa fa-check"></i> Réinitialiser
-                                <i class="fa fa-spinner fa-spin loading-spinner"></i>
                             </button>
+
+                            <?php if ($show_reset_form): ?>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="<?php echo site_url('dietetic/portal/cancel_reset'); ?>" class="link-secondary">
+                                    <i class="fa fa-times"></i> Annuler
+                                </a>
+                            </div>
+                            <?php endif; ?>
                         </form>
                     </div>
+                    <?php endif; ?>
 
-                    <div style="text-align: center;">
+                    <div style="text-align: center; margin-top: 20px;">
                         <a href="#" class="back-link auth-tab-link" data-tab="login">
                             <i class="fa fa-arrow-left"></i> Retour à la connexion
                         </a>
@@ -582,6 +598,11 @@
             switchTab('forgot');
         });
 
+        // Activer automatiquement l'onglet "forgot" si URL contient #forgot
+        if (window.location.hash === '#forgot') {
+            switchTab('forgot');
+        }
+
         // Password strength checker
         $('#register-password').on('keyup', function() {
             const password = $(this).val();
@@ -650,58 +671,18 @@
             // Le formulaire se soumet normalement (pas de e.preventDefault)
         });
 
-        // Request password reset
+        // Request password reset - PHP POST (pas AJAX)
         $('#request-reset-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
+            // Formater le numéro avec intl-tel-input
             const fullNumber = getFullNumber('forgot-phone');
-            const formData = $(this).serialize();
-            const updatedFormData = formData.replace(/phone=[^&]*/, 'phone=' + encodeURIComponent(fullNumber));
+            $('#forgot-phone-hidden').val(fullNumber);
 
-            $.post('<?php echo site_url('dietetic/portal/forgot_password'); ?>', updatedFormData, function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    if (response.show_reset_form) {
-                        $('#forgot-request-form').hide();
-                        $('#forgot-reset-form').show();
-                        $('#reset-phone').val(fullNumber);
-                    }
-                } else {
-                    showAlert('danger', response.message);
-                }
-                $btn.removeClass('loading').prop('disabled', false);
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
+            // Le formulaire se soumet normalement
         });
 
-        // Reset password
+        // Reset password - PHP POST (pas AJAX)
         $('#reset-password-form').on('submit', function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const $btn = $(this).find('button[type="submit"]');
-            $btn.addClass('loading').prop('disabled', true);
-
-            $.post('<?php echo site_url('dietetic/portal/reset_password'); ?>', $(this).serialize(), function(response) {
-                if (response.success) {
-                    showAlert('success', response.message);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 1500);
-                } else {
-                    showAlert('danger', response.message);
-                    $btn.removeClass('loading').prop('disabled', false);
-                }
-            }, 'json').fail(function() {
-                showAlert('danger', 'Erreur de connexion au serveur');
-                $btn.removeClass('loading').prop('disabled', false);
-            });
+            // Le formulaire se soumet normalement
         });
     });
     </script>

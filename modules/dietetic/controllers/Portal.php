@@ -44,6 +44,7 @@ class Portal extends App_Controller
             'register',       // Inscription patient
             'forgot_password', // Demander code reset password
             'reset_password',  // Réinitialiser mot de passe
+            'cancel_reset',    // Annuler reset password
             'measurements',
             'add_measurement',
             'meal_plans',
@@ -990,10 +991,10 @@ class Portal extends App_Controller
      */
     public function forgot_password()
     {
-        // Vérifier que c'est une requête AJAX POST
-        if (!$this->input->is_ajax_request() || !$this->input->post()) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Requête invalide']);
+        // Vérifier que c'est une requête POST
+        if (!$this->input->post()) {
+            set_alert('danger', 'Requête invalide');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
@@ -1001,8 +1002,8 @@ class Portal extends App_Controller
 
         // Validation
         if (empty($phone)) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Numéro de téléphone requis']);
+            set_alert('danger', 'Numéro de téléphone requis');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
@@ -1032,8 +1033,8 @@ class Portal extends App_Controller
         $patient = $this->db->get()->row();
 
         if (!$patient) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Aucun compte patient trouvé avec ce numéro']);
+            set_alert('danger', 'Aucun compte patient trouvé avec ce numéro');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
@@ -1044,8 +1045,8 @@ class Portal extends App_Controller
         $recent_requests = $this->db->count_all_results(db_prefix() . 'dietic_otp_codes');
 
         if ($recent_requests >= 3) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Trop de demandes. Veuillez patienter 15 minutes']);
+            set_alert('danger', 'Trop de demandes. Veuillez patienter 15 minutes');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
@@ -1141,19 +1142,16 @@ class Portal extends App_Controller
         if (!empty($success_channels)) {
             // Au moins un canal a fonctionné
             $channels_text = implode(', ', $success_channels);
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => true,
-                'message' => "Code de réinitialisation envoyé par {$channels_text}",
-                'show_reset_form' => true
-            ]);
+
+            // Stocker le numéro en session pour afficher le formulaire de reset
+            $this->session->set_userdata('forgot_password_phone', $patient->phonenumber);
+
+            set_alert('success', "Code de réinitialisation envoyé par {$channels_text}");
+            redirect(site_url('dietetic/portal#forgot'));
         } else {
             // Tous les canaux ont échoué
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => false,
-                'message' => 'Impossible d\'envoyer le code. Veuillez réessayer ou contacter le support.'
-            ]);
+            set_alert('danger', 'Impossible d\'envoyer le code. Veuillez réessayer ou contacter le support.');
+            redirect(site_url('dietetic/portal'));
         }
     }
 
@@ -1163,10 +1161,10 @@ class Portal extends App_Controller
      */
     public function reset_password()
     {
-        // Vérifier que c'est une requête AJAX POST
-        if (!$this->input->is_ajax_request() || !$this->input->post()) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Requête invalide']);
+        // Vérifier que c'est une requête POST
+        if (!$this->input->post()) {
+            set_alert('danger', 'Requête invalide');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
@@ -1195,8 +1193,10 @@ class Portal extends App_Controller
         }
 
         if (!empty($errors)) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => implode('. ', $errors)]);
+            foreach ($errors as $error) {
+                set_alert('danger', $error);
+            }
+            redirect(site_url('dietetic/portal#forgot'));
             return;
         }
 
@@ -1209,8 +1209,8 @@ class Portal extends App_Controller
         $otp = $this->db->get(db_prefix() . 'dietic_otp_codes')->row();
 
         if (!$otp) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Code invalide ou expiré']);
+            set_alert('danger', 'Code invalide ou expiré');
+            redirect(site_url('dietetic/portal#forgot'));
             return;
         }
 
@@ -1237,8 +1237,8 @@ class Portal extends App_Controller
         $patient = $this->db->get()->row();
 
         if (!$patient) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Patient non trouvé']);
+            set_alert('danger', 'Patient non trouvé');
+            redirect(site_url('dietetic/portal#forgot'));
             return;
         }
 
@@ -1253,14 +1253,26 @@ class Portal extends App_Controller
         $this->db->where('id', $otp->id);
         $this->db->update(db_prefix() . 'dietic_otp_codes', ['used' => 1]);
 
+        // Effacer la session du numéro de téléphone
+        $this->session->unset_userdata('forgot_password_phone');
+
         log_activity('MOT DE PASSE RESET - Patient: ' . $patient->firstname . ' ' . $patient->lastname . ' (Email: ' . $patient->email . ')');
 
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => true,
-            'message' => 'Mot de passe réinitialisé avec succès',
-            'redirect' => site_url('dietetic/portal')
-        ]);
+        set_alert('success', 'Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.');
+        redirect(site_url('dietetic/portal'));
+    }
+
+    /**
+     * Annuler la réinitialisation de mot de passe
+     * URL: GET /dietetic/portal/cancel_reset
+     */
+    public function cancel_reset()
+    {
+        // Effacer la session
+        $this->session->unset_userdata('forgot_password_phone');
+
+        // Rediriger vers page de connexion
+        redirect(site_url('dietetic/portal'));
     }
 
     /**
