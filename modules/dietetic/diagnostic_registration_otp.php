@@ -4,12 +4,20 @@
  * URL: https://app.dietsenegal.net/modules/dietetic/diagnostic_registration_otp.php
  */
 
-// Configuration de la base de données (à adapter selon votre config)
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'dietzone');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_PREFIX', 'tbl');
+// Charger Perfex CRM
+require_once(__DIR__ . '/../../autoload.php');
+require_once(__DIR__ . '/../../config/app.php');
+
+// Charger CodeIgniter
+$system_path = APPPATH . '../system';
+require_once($system_path . '/core/Common.php');
+
+// Obtenir l'instance CI
+$CI =& get_instance();
+$CI->load->database();
+
+// Définir le préfixe
+define('DB_PREFIX', $CI->db->dbprefix);
 
 ?>
 <!DOCTYPE html>

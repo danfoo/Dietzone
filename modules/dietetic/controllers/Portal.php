@@ -12458,4 +12458,190 @@ php index.php cron/index</pre>';
 </body>
 </html>';
     }
+
+    /**
+     * Diagnostic pour l'inscription avec OTP
+     * URL: /dietetic/portal/diagnostic_registration_otp
+     */
+    public function diagnostic_registration_otp()
+    {
+        // Header HTML
+        echo '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Diagnostic Inscription OTP</title>';
+        echo '<style>body{font-family:Arial,sans-serif;margin:20px;background:#f5f5f5}
+        .container{max-width:1000px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+        h1{color:#01807B;margin-bottom:20px}h2{color:#333;margin-top:30px;padding-bottom:10px;border-bottom:2px solid #01807B}
+        table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+        th{background:#f8f9fa;font-weight:600}.success{color:#28a745;background:#d4edda;padding:10px;margin:10px 0;border-left:4px solid #28a745}
+        .error{color:#dc3545;background:#f8d7da;padding:10px;margin:10px 0;border-left:4px solid #dc3545}
+        .warning{color:#856404;background:#fff3cd;padding:10px;margin:10px 0;border-left:4px solid #ffc107}
+        .info{color:#004085;background:#d1ecf1;padding:10px;margin:10px 0;border-left:4px solid #17a2b8}
+        code{background:#f8f9fa;padding:2px 6px;border-radius:3px;font-family:monospace}
+        .status-ok{color:#28a745;font-weight:bold}.status-error{color:#dc3545;font-weight:bold}</style></head><body>';
+
+        echo '<div class="container">';
+        echo '<h1>🔍 Diagnostic Inscription OTP</h1>';
+        echo '<p style="color:#6c757d;margin-bottom:30px">Vérification du système d\'inscription avec validation OTP</p>';
+
+        // 1. Vérifier la table OTP
+        echo '<h2>1. Table dietic_otp_codes</h2>';
+        $table_name = db_prefix() . 'dietic_otp_codes';
+
+        if ($this->db->table_exists('dietic_otp_codes')) {
+            echo '<div class="success">✓ Table existe</div>';
+
+            // Derniers codes OTP
+            $this->db->select('id, phone, code, type, used, created_at, expires_at');
+            $this->db->where('type', 'registration');
+            $this->db->order_by('created_at', 'DESC');
+            $this->db->limit(10);
+            $otps = $this->db->get(db_prefix() . 'dietic_otp_codes')->result();
+
+            if (!empty($otps)) {
+                echo '<h3>Derniers codes OTP d\'inscription:</h3>';
+                echo '<table><thead><tr><th>ID</th><th>Téléphone</th><th>Code</th><th>Utilisé</th><th>Créé</th><th>Expire</th></tr></thead><tbody>';
+                foreach ($otps as $otp) {
+                    $used_class = $otp->used ? 'status-error' : 'status-ok';
+                    $expired = strtotime($otp->expires_at) < time();
+                    $status = $expired ? '<span class="status-error">Expiré</span>' : '<span class="status-ok">Valide</span>';
+                    echo '<tr>';
+                    echo '<td>' . $otp->id . '</td>';
+                    echo '<td>' . htmlspecialchars($otp->phone) . '</td>';
+                    echo '<td><strong>' . $otp->code . '</strong></td>';
+                    echo '<td class="' . $used_class . '">' . ($otp->used ? 'Oui' : 'Non') . '</td>';
+                    echo '<td>' . $otp->created_at . '</td>';
+                    echo '<td>' . $status . '</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table>';
+            } else {
+                echo '<div class="info">Aucun code OTP d\'inscription trouvé</div>';
+            }
+        } else {
+            echo '<div class="error">✗ Table n\'existe pas!</div>';
+        }
+
+        // 2. Vérifier les logs d'activité
+        echo '<h2>2. Logs d\'activité récents</h2>';
+        $this->db->select('id, description, date');
+        $this->db->like('description', 'INSCRIPTION', 'both');
+        $this->db->or_like('description', 'OTP', 'both');
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(15);
+        $logs = $this->db->get(db_prefix() . 'activitylog')->result();
+
+        if (!empty($logs)) {
+            echo '<table><thead><tr><th>ID</th><th>Description</th><th>Date</th></tr></thead><tbody>';
+            foreach ($logs as $log) {
+                $class = '';
+                if (strpos($log->description, 'ERREUR') !== false) {
+                    $class = 'status-error';
+                } elseif (strpos($log->description, 'envoyé') !== false || strpos($log->description, 'créé') !== false) {
+                    $class = 'status-ok';
+                }
+                echo '<tr>';
+                echo '<td>' . $log->id . '</td>';
+                echo '<td class="' . $class . '">' . htmlspecialchars($log->description) . '</td>';
+                echo '<td>' . $log->date . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+        } else {
+            echo '<div class="info">Aucun log d\'inscription trouvé</div>';
+        }
+
+        // 3. Vérifier les comptes récents
+        echo '<h2>3. Comptes récemment créés (dernières 24h)</h2>';
+        $this->db->select('c.userid, c.company, c.phonenumber, c.datecreated, cont.email, cont.phonenumber_verified_at, p.id as patient_id');
+        $this->db->from(db_prefix() . 'clients c');
+        $this->db->join(db_prefix() . 'contacts cont', 'cont.userid = c.userid AND cont.is_primary = 1', 'left');
+        $this->db->join(db_prefix() . 'dietic_patients p', 'p.client_id = c.userid', 'left');
+        $this->db->where('c.datecreated >', date('Y-m-d H:i:s', strtotime('-24 hours')));
+        $this->db->order_by('c.datecreated', 'DESC');
+        $this->db->limit(10);
+        $clients = $this->db->get()->result();
+
+        if (!empty($clients)) {
+            echo '<table><thead><tr><th>Client ID</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Patient ID</th><th>Tel vérifié</th><th>Créé</th></tr></thead><tbody>';
+            foreach ($clients as $client) {
+                $has_patient = $client->patient_id ? '<span class="status-ok">Oui (' . $client->patient_id . ')</span>' : '<span class="status-error">Non</span>';
+                $phone_verified = $client->phonenumber_verified_at ? '<span class="status-ok">Oui</span>' : '<span class="status-error">Non</span>';
+                echo '<tr>';
+                echo '<td>' . $client->userid . '</td>';
+                echo '<td>' . htmlspecialchars($client->company) . '</td>';
+                echo '<td>' . htmlspecialchars($client->email) . '</td>';
+                echo '<td>' . htmlspecialchars($client->phonenumber) . '</td>';
+                echo '<td>' . $has_patient . '</td>';
+                echo '<td>' . $phone_verified . '</td>';
+                echo '<td>' . $client->datecreated . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+        } else {
+            echo '<div class="info">Aucun compte créé dans les dernières 24h</div>';
+        }
+
+        // 4. Vérifier les fichiers
+        echo '<h2>4. Vérification des fichiers</h2>';
+        $view_path = FCPATH . 'modules/dietetic/views/portal/verify_registration_otp.php';
+        $view_exists = file_exists($view_path);
+        echo '<p>Vue OTP: <code>modules/dietetic/views/portal/verify_registration_otp.php</code> - ';
+        echo $view_exists ? '<span class="status-ok">✓ Existe</span>' : '<span class="status-error">✗ Manquant</span>';
+        echo '</p>';
+
+        // 5. Tester la session
+        echo '<h2>5. Test de session PHP</h2>';
+        $pending = $this->session->userdata('pending_registration');
+        if ($pending) {
+            echo '<div class="warning">⚠️ Une inscription est en attente dans la session</div>';
+            echo '<table><tr><th>Clé</th><th>Valeur</th></tr>';
+            foreach ($pending as $key => $value) {
+                if ($key === 'password') {
+                    $value = '***********';
+                }
+                echo '<tr><td><code>' . htmlspecialchars($key) . '</code></td><td>' . htmlspecialchars($value) . '</td></tr>';
+            }
+            echo '</table>';
+            echo '<p><a href="' . site_url('dietetic/portal/verify_registration_otp') . '" style="display:inline-block;padding:10px 20px;background:#01807B;color:white;text-decoration:none;border-radius:4px;margin-top:10px">→ Aller au formulaire OTP</a></p>';
+        } else {
+            echo '<div class="info">Aucune inscription en attente</div>';
+        }
+
+        // 6. Instructions
+        echo '<h2>6. Comment tester</h2>';
+        echo '<div class="info">';
+        echo '<ol style="margin-left:20px;line-height:1.8">';
+        echo '<li>Allez sur <a href="' . site_url('dietetic/portal') . '" target="_blank">' . site_url('dietetic/portal') . '</a></li>';
+        echo '<li>Cliquez sur "S\'inscrire"</li>';
+        echo '<li>Utilisez un <strong>NOUVEAU</strong> email et téléphone (jamais utilisés)</li>';
+        echo '<li>Après soumission, vous devez être redirigé vers le formulaire OTP</li>';
+        echo '<li>Vérifiez les sections 1 et 2 ci-dessus pour voir les codes générés et les logs</li>';
+        echo '</ol>';
+        echo '</div>';
+
+        // 7. Résumé
+        echo '<h2>7. Résumé</h2>';
+        $issues = [];
+
+        if (!$this->db->table_exists('dietic_otp_codes')) {
+            $issues[] = 'La table dietic_otp_codes n\'existe pas';
+        }
+
+        if (!$view_exists) {
+            $issues[] = 'Le fichier de vue verify_registration_otp.php est manquant';
+        }
+
+        if (empty($issues)) {
+            echo '<div class="success"><strong>✓ Tout semble en ordre!</strong><br>Si l\'inscription ne fonctionne toujours pas, essayez avec un email/téléphone complètement nouveau et vérifiez les logs ci-dessus.</div>';
+        } else {
+            echo '<div class="error"><strong>⚠️ Problèmes détectés:</strong><ul style="margin:10px 0 0 20px">';
+            foreach ($issues as $issue) {
+                echo '<li>' . $issue . '</li>';
+            }
+            echo '</ul></div>';
+        }
+
+        echo '<hr style="margin:30px 0">';
+        echo '<p style="text-align:center;color:#6c757d">Dernière vérification: ' . date('d/m/Y H:i:s') . '</p>';
+        echo '</div></body></html>';
+    }
 }
