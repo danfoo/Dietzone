@@ -8,7 +8,24 @@ class Portal extends App_Controller
 
     public function __construct()
     {
+        // CRITICAL FIX: Save custom session variables before parent::__construct()
+        // parent::__construct() may regenerate the session, destroying our custom variables
+        $saved_client_logged_in = isset($_SESSION['client_logged_in']) ? $_SESSION['client_logged_in'] : null;
+        $saved_client_user_id = isset($_SESSION['client_user_id']) ? $_SESSION['client_user_id'] : null;
+
+        log_activity('PORTAL CONSTRUCT - Avant parent::__construct() - client_logged_in: ' . var_export($saved_client_logged_in, true) . ', client_user_id: ' . var_export($saved_client_user_id, true));
+
         parent::__construct();
+
+        // CRITICAL FIX: Restore custom session variables after parent::__construct()
+        // This ensures our authentication survives session regeneration
+        if ($saved_client_logged_in !== null && $saved_client_user_id !== null) {
+            $this->session->set_userdata('client_logged_in', $saved_client_logged_in);
+            $this->session->set_userdata('client_user_id', $saved_client_user_id);
+            log_activity('PORTAL CONSTRUCT - Variables restaurées - client_logged_in: ' . var_export($saved_client_logged_in, true) . ', client_user_id: ' . var_export($saved_client_user_id, true));
+        }
+
+        log_activity('PORTAL CONSTRUCT - Après restauration - Session: ' . json_encode($this->session->all_userdata()));
 
         // Load helper functions
         $this->load->helper('dietetic/dietetic');
