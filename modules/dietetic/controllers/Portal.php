@@ -217,6 +217,9 @@ class Portal extends App_Controller
 
             log_activity('Patient logged in [Client ID: ' . $patient->client_id . ']');
 
+            // Log session state before redirect
+            log_activity('LOGIN_PATIENT - Session avant redirect: client_logged_in=' . var_export($this->session->userdata('client_logged_in'), true) . ', client_user_id=' . var_export($this->session->userdata('client_user_id'), true));
+
             set_alert('success', 'Connexion réussie ! Bienvenue.');
             redirect(site_url('dietetic/portal'));
         }
@@ -500,6 +503,10 @@ class Portal extends App_Controller
                     $this->db->update(db_prefix() . 'contacts', ['last_login' => date('Y-m-d H:i:s')]);
 
                     set_alert('success', 'Bienvenue ' . $patient_login->firstname . ' !');
+
+                    // Log session state before redirect
+                    log_activity('LOGIN - Session avant redirect: client_logged_in=' . var_export($this->session->userdata('client_logged_in'), true) . ', client_user_id=' . var_export($this->session->userdata('client_user_id'), true));
+
                     redirect(site_url('dietetic/portal'));
                     return;
                 }
@@ -1036,9 +1043,12 @@ class Portal extends App_Controller
                 'client_user_id' => $client_id
             ]);
 
-                log_activity('INSCRIPTION OTP - Inscription terminée avec succès');
-                set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé et validé avec succès.');
-                redirect(site_url('dietetic/portal'));
+            // Log session state before redirect
+            log_activity('INSCRIPTION OTP - Session avant redirect: client_logged_in=' . var_export($this->session->userdata('client_logged_in'), true) . ', client_user_id=' . var_export($this->session->userdata('client_user_id'), true));
+
+            log_activity('INSCRIPTION OTP - Inscription terminée avec succès');
+            set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé et validé avec succès.');
+            redirect(site_url('dietetic/portal'));
 
             } catch (Exception $e) {
                 // Rollback en cas d'erreur lors de la création du compte
