@@ -868,9 +868,11 @@ class Portal extends App_Controller
         }
 
         // POST: Vérifier le code OTP
-        $otp_code = trim($this->input->post('otp_code'));
+        // Envelopper TOUT dans un try-catch global pour capturer les erreurs fatales
+        try {
+            $otp_code = trim($this->input->post('otp_code'));
 
-        log_activity('INSCRIPTION OTP - Début validation code: ' . $otp_code . ' pour ' . $pending['phone_full']);
+            log_activity('INSCRIPTION OTP - Début validation code: ' . $otp_code . ' pour ' . $pending['phone_full']);
 
         if (empty($otp_code)) {
             log_activity('INSCRIPTION OTP - Code vide');
@@ -898,13 +900,20 @@ class Portal extends App_Controller
         log_activity('INSCRIPTION OTP - Code valide trouvé, ID: ' . $otp->id);
 
         // Code OTP valide - Marquer comme utilisé
-        $this->db->where('id', $otp->id);
-        $this->db->update(db_prefix() . 'dietic_otp_codes', [
-            'used' => 1,
-            'used_at' => date('Y-m-d H:i:s')
-        ]);
-
-        log_activity('INSCRIPTION OTP - Code marqué comme utilisé');
+        try {
+            log_activity('INSCRIPTION OTP - Tentative de marquage du code comme utilisé');
+            $this->db->where('id', $otp->id);
+            $this->db->update(db_prefix() . 'dietic_otp_codes', [
+                'used' => 1,
+                'used_at' => date('Y-m-d H:i:s')
+            ]);
+            log_activity('INSCRIPTION OTP - Code marqué comme utilisé');
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION OTP - ERREUR marquage code: ' . $e->getMessage());
+            set_alert('danger', 'Erreur technique: ' . $e->getMessage());
+            redirect(site_url('dietetic/portal/verify_registration_otp'));
+            return;
+        }
 
         // CRÉER LE COMPTE (copié de l'ancien code register())
         try {
@@ -1021,15 +1030,21 @@ class Portal extends App_Controller
                 'client_user_id' => $client_id
             ]);
 
-            log_activity('INSCRIPTION OTP - Inscription terminée avec succès');
-            set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé et validé avec succès.');
-            redirect(site_url('dietetic/portal'));
+                log_activity('INSCRIPTION OTP - Inscription terminée avec succès');
+                set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé et validé avec succès.');
+                redirect(site_url('dietetic/portal'));
+
+            } catch (Exception $e) {
+                // Rollback en cas d'erreur lors de la création du compte
+                $this->db->trans_rollback();
+                log_activity('INSCRIPTION MOBILE - ERREUR création compte après OTP: ' . $e->getMessage());
+                throw $e; // Relancer l'exception pour qu'elle soit attrapée par le catch global
+            }
 
         } catch (Exception $e) {
-            // Rollback en cas d'erreur
-            $this->db->trans_rollback();
-            log_activity('INSCRIPTION MOBILE - ERREUR création compte après OTP: ' . $e->getMessage());
-            set_alert('danger', 'Erreur lors de la création du compte: ' . $e->getMessage());
+            // Catch global pour toutes les erreurs
+            log_activity('INSCRIPTION OTP - ERREUR GLOBALE: ' . $e->getMessage() . ' | Ligne: ' . $e->getLine() . ' | Fichier: ' . $e->getFile());
+            set_alert('danger', 'Erreur technique: ' . $e->getMessage());
             redirect(site_url('dietetic/portal/verify_registration_otp'));
         }
     }
