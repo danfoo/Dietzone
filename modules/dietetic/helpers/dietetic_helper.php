@@ -640,11 +640,7 @@ function dietetic_send_sms($phone, $message)
         'ret_url' => $ret_url,
         'priority' => $priority,
         'text' => $message,
-        'to' => [
-            [
-                'ret_id_1' => $phone
-            ]
-        ]
+        'to' => [$phone]  // Format simple array pour SMS LAM (différent de WhatsApp)
     ];
 
     $ch = curl_init($url);
