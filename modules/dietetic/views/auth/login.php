@@ -34,7 +34,7 @@
 
         .logo-section {
             text-align: center;
-            padding: 30px 20px 20px;
+            padding: 60px 20px 40px;
             background: #01807B;
         }
 
@@ -343,7 +343,6 @@
             if (!empty($company_logo)) { ?>
                 <img src="<?php echo base_url('uploads/company/' . $company_logo); ?>" alt="DietZone Logo">
             <?php } ?>
-            <h1><i class="fa fa-heartbeat"></i> DietZone</h1>
         </div>
 
         <!-- Auth Card -->
