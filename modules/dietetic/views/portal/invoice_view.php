@@ -3,40 +3,74 @@
 <?php $this->load->view('portal/includes/portal_header'); ?>
 
 <?php
+// Helper function for formatting money
+if (!function_exists('format_money_safe')) {
+    function format_money_safe($amount, $currency = 'XOF') {
+        if (function_exists('app_format_money')) {
+            return app_format_money($amount, $currency);
+        }
+        return number_format($amount, 0, ',', ' ') . ' ' . $currency;
+    }
+}
+
+// Helper function for formatting dates
+if (!function_exists('format_date_safe')) {
+    function format_date_safe($date) {
+        if (function_exists('_d')) {
+            return _d($date);
+        }
+        return date('d/m/Y', strtotime($date));
+    }
+}
+
+// Helper function for invoice number
+if (!function_exists('format_invoice_num_safe')) {
+    function format_invoice_num_safe($id) {
+        if (function_exists('format_invoice_number')) {
+            return format_invoice_number($id);
+        }
+        return str_pad($id, 6, '0', STR_PAD_LEFT);
+    }
+}
+
 // Status mapping
 $status_class = '';
 $status_text = '';
 $status_icon = '';
 
-if ($invoice->status == 1) {
-    $status_class = 'status-unpaid';
-    $status_text = 'Impayée';
-    $status_icon = 'fa-exclamation-circle';
-} elseif ($invoice->status == 2) {
-    $status_class = 'status-paid';
-    $status_text = 'Payée';
-    $status_icon = 'fa-check-circle';
-} elseif ($invoice->status == 3) {
-    $status_class = 'status-partial';
-    $status_text = 'Partiellement payée';
-    $status_icon = 'fa-adjust';
-} elseif ($invoice->status == 4) {
-    $status_class = 'status-overdue';
-    $status_text = 'En retard';
-    $status_icon = 'fa-clock-o';
-} elseif ($invoice->status == 5) {
-    $status_class = 'status-cancelled';
-    $status_text = 'Annulée';
-    $status_icon = 'fa-ban';
+switch ((int)$invoice->status) {
+    case 1:
+        $status_class = 'status-unpaid';
+        $status_text = 'Impayée';
+        $status_icon = 'fa-exclamation-circle';
+        break;
+    case 2:
+        $status_class = 'status-paid';
+        $status_text = 'Payée';
+        $status_icon = 'fa-check-circle';
+        break;
+    case 3:
+        $status_class = 'status-partial';
+        $status_text = 'Partiellement payée';
+        $status_icon = 'fa-adjust';
+        break;
+    case 4:
+        $status_class = 'status-overdue';
+        $status_text = 'En retard';
+        $status_icon = 'fa-clock-o';
+        break;
+    case 5:
+        $status_class = 'status-cancelled';
+        $status_text = 'Annulée';
+        $status_icon = 'fa-ban';
+        break;
+    default:
+        $status_class = 'status-unpaid';
+        $status_text = 'Non défini';
+        $status_icon = 'fa-question-circle';
 }
 
-// Calculate totals
-$subtotal = 0;
-if (isset($invoice->items)) {
-    foreach ($invoice->items as $item) {
-        $subtotal += $item->rate * $item->qty;
-    }
-}
+$currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
 ?>
 
 <div class="portal-content">
@@ -54,7 +88,7 @@ if (isset($invoice->items)) {
                 <div class="invoice-number-section">
                     <h1 class="invoice-number">
                         <i class="fa fa-file-text"></i>
-                        Facture #<?php echo format_invoice_number($invoice->id); ?>
+                        Facture #<?php echo format_invoice_num_safe($invoice->id); ?>
                     </h1>
                     <span class="invoice-status <?php echo $status_class; ?>">
                         <i class="fa <?php echo $status_icon; ?>"></i>
@@ -65,11 +99,11 @@ if (isset($invoice->items)) {
                 <div class="invoice-dates">
                     <div class="date-item">
                         <span class="date-label">Date:</span>
-                        <span class="date-value"><?php echo _d($invoice->date); ?></span>
+                        <span class="date-value"><?php echo format_date_safe($invoice->date); ?></span>
                     </div>
                     <div class="date-item">
                         <span class="date-label">Échéance:</span>
-                        <span class="date-value"><?php echo _d($invoice->duedate); ?></span>
+                        <span class="date-value"><?php echo format_date_safe($invoice->duedate); ?></span>
                     </div>
                 </div>
             </div>
@@ -79,17 +113,25 @@ if (isset($invoice->items)) {
                 <div class="party-section">
                     <h3>Facturer à:</h3>
                     <div class="party-info">
-                        <?php if ($client): ?>
-                            <p><strong><?php echo $client->company ?: ($patient->firstname . ' ' . $patient->lastname); ?></strong></p>
+                        <?php if (isset($client) && $client): ?>
+                            <p><strong><?php
+                                if (!empty($client->company)) {
+                                    echo htmlspecialchars($client->company);
+                                } else {
+                                    echo htmlspecialchars($patient->firstname . ' ' . $patient->lastname);
+                                }
+                            ?></strong></p>
                             <?php if (!empty($client->address)): ?>
-                                <p><?php echo nl2br($client->address); ?></p>
+                                <p><?php echo nl2br(htmlspecialchars($client->address)); ?></p>
                             <?php endif; ?>
                             <?php if (!empty($client->city)): ?>
-                                <p><?php echo $client->city; ?></p>
+                                <p><?php echo htmlspecialchars($client->city); ?></p>
                             <?php endif; ?>
                             <?php if (!empty($client->phonenumber)): ?>
-                                <p><i class="fa fa-phone"></i> <?php echo $client->phonenumber; ?></p>
+                                <p><i class="fa fa-phone"></i> <?php echo htmlspecialchars($client->phonenumber); ?></p>
                             <?php endif; ?>
+                        <?php else: ?>
+                            <p><strong><?php echo htmlspecialchars($patient->firstname . ' ' . $patient->lastname); ?></strong></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -97,20 +139,8 @@ if (isset($invoice->items)) {
                 <div class="party-section">
                     <h3>Fournisseur:</h3>
                     <div class="party-info">
-                        <?php
-                        // Get company name from settings
-                        $this->db->where('name', 'companyname');
-                        $company = $this->db->get(db_prefix() . 'options')->row();
-                        ?>
-                        <p><strong><?php echo $company ? $company->value : 'DietZone'; ?></strong></p>
-                        <?php
-                        // Get company address
-                        $this->db->where('name', 'company_address');
-                        $address = $this->db->get(db_prefix() . 'options')->row();
-                        if ($address && !empty($address->value)):
-                        ?>
-                            <p><?php echo nl2br($address->value); ?></p>
-                        <?php endif; ?>
+                        <p><strong>DietZone</strong></p>
+                        <p>Dakar, Sénégal</p>
                     </div>
                 </div>
             </div>
@@ -134,14 +164,14 @@ if (isset($invoice->items)) {
                             <?php foreach ($invoice->items as $item): ?>
                                 <tr>
                                     <td>
-                                        <strong><?php echo $item->description; ?></strong>
-                                        <?php if (!empty($item->long_description)): ?>
-                                            <br><small class="text-muted"><?php echo nl2br($item->long_description); ?></small>
+                                        <strong><?php echo htmlspecialchars($item->description); ?></strong>
+                                        <?php if (isset($item->long_description) && !empty($item->long_description)): ?>
+                                            <br><small class="text-muted"><?php echo nl2br(htmlspecialchars($item->long_description)); ?></small>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-center"><?php echo $item->qty; ?></td>
-                                    <td class="text-right"><?php echo app_format_money($item->rate, $invoice->currency_name); ?></td>
-                                    <td class="text-right"><strong><?php echo app_format_money($item->rate * $item->qty, $invoice->currency_name); ?></strong></td>
+                                    <td class="text-center"><?php echo (float)$item->qty; ?></td>
+                                    <td class="text-right"><?php echo format_money_safe($item->rate, $currency); ?></td>
+                                    <td class="text-right"><strong><?php echo format_money_safe($item->rate * $item->qty, $currency); ?></strong></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -159,46 +189,46 @@ if (isset($invoice->items)) {
             <div class="totals-table">
                 <div class="total-row">
                     <span class="total-label">Sous-total:</span>
-                    <span class="total-value"><?php echo app_format_money($invoice->subtotal, $invoice->currency_name); ?></span>
+                    <span class="total-value"><?php echo format_money_safe($invoice->subtotal, $currency); ?></span>
                 </div>
 
-                <?php if ($invoice->discount_total > 0): ?>
+                <?php if (isset($invoice->discount_total) && $invoice->discount_total > 0): ?>
                     <div class="total-row">
                         <span class="total-label">Réduction:</span>
-                        <span class="total-value text-success">-<?php echo app_format_money($invoice->discount_total, $invoice->currency_name); ?></span>
+                        <span class="total-value text-success">-<?php echo format_money_safe($invoice->discount_total, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
-                <?php if ($invoice->adjustment != 0): ?>
+                <?php if (isset($invoice->adjustment) && $invoice->adjustment != 0): ?>
                     <div class="total-row">
                         <span class="total-label">Ajustement:</span>
-                        <span class="total-value"><?php echo app_format_money($invoice->adjustment, $invoice->currency_name); ?></span>
+                        <span class="total-value"><?php echo format_money_safe($invoice->adjustment, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
                 <div class="total-row total-row-main">
                     <span class="total-label"><strong>TOTAL:</strong></span>
-                    <span class="total-value total-amount"><?php echo app_format_money($invoice->total, $invoice->currency_name); ?></span>
+                    <span class="total-value total-amount"><?php echo format_money_safe($invoice->total, $currency); ?></span>
                 </div>
 
                 <?php if ($invoice->total_paid > 0): ?>
                     <div class="total-row">
                         <span class="total-label">Montant payé:</span>
-                        <span class="total-value text-success"><?php echo app_format_money($invoice->total_paid, $invoice->currency_name); ?></span>
+                        <span class="total-value text-success"><?php echo format_money_safe($invoice->total_paid, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($invoice->balance > 0): ?>
                     <div class="total-row total-row-balance">
                         <span class="total-label"><strong>SOLDE DÛ:</strong></span>
-                        <span class="total-value balance-amount"><?php echo app_format_money($invoice->balance, $invoice->currency_name); ?></span>
+                        <span class="total-value balance-amount"><?php echo format_money_safe($invoice->balance, $currency); ?></span>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
 
         <!-- Payments History -->
-        <?php if (!empty($invoice->payments)): ?>
+        <?php if (isset($invoice->payments) && !empty($invoice->payments)): ?>
             <div class="payments-section">
                 <h2>Historique des paiements</h2>
                 <div class="table-responsive">
@@ -214,17 +244,20 @@ if (isset($invoice->items)) {
                         <tbody>
                             <?php foreach ($invoice->payments as $payment): ?>
                                 <tr>
-                                    <td><?php echo _d($payment->date); ?></td>
+                                    <td><?php echo format_date_safe($payment->date); ?></td>
                                     <td>
                                         <?php
-                                        // Get payment mode name
-                                        $this->db->where('id', $payment->paymentmode);
-                                        $mode = $this->db->get(db_prefix() . 'payment_modes')->row();
-                                        echo $mode ? $mode->name : '-';
+                                        if (isset($payment->paymentmode)) {
+                                            $this->db->where('id', $payment->paymentmode);
+                                            $mode = $this->db->get(db_prefix() . 'payment_modes')->row();
+                                            echo $mode ? htmlspecialchars($mode->name) : 'N/A';
+                                        } else {
+                                            echo 'N/A';
+                                        }
                                         ?>
                                     </td>
-                                    <td><?php echo !empty($payment->note) ? $payment->note : '-'; ?></td>
-                                    <td class="text-right text-success"><strong><?php echo app_format_money($payment->amount, $invoice->currency_name); ?></strong></td>
+                                    <td><?php echo isset($payment->note) && !empty($payment->note) ? htmlspecialchars($payment->note) : '-'; ?></td>
+                                    <td class="text-right text-success"><strong><?php echo format_money_safe($payment->amount, $currency); ?></strong></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -234,19 +267,19 @@ if (isset($invoice->items)) {
         <?php endif; ?>
 
         <!-- Invoice Notes -->
-        <?php if (!empty($invoice->adminnote) || !empty($invoice->clientnote) || !empty($invoice->terms)): ?>
+        <?php if ((isset($invoice->clientnote) && !empty($invoice->clientnote)) || (isset($invoice->terms) && !empty($invoice->terms))): ?>
             <div class="invoice-notes-section">
-                <?php if (!empty($invoice->clientnote)): ?>
+                <?php if (isset($invoice->clientnote) && !empty($invoice->clientnote)): ?>
                     <div class="note-box">
                         <h3><i class="fa fa-info-circle"></i> Note au client</h3>
-                        <div class="note-content"><?php echo nl2br($invoice->clientnote); ?></div>
+                        <div class="note-content"><?php echo nl2br(htmlspecialchars($invoice->clientnote)); ?></div>
                     </div>
                 <?php endif; ?>
 
-                <?php if (!empty($invoice->terms)): ?>
+                <?php if (isset($invoice->terms) && !empty($invoice->terms)): ?>
                     <div class="note-box">
                         <h3><i class="fa fa-gavel"></i> Conditions générales</h3>
-                        <div class="note-content"><?php echo nl2br($invoice->terms); ?></div>
+                        <div class="note-content"><?php echo nl2br(htmlspecialchars($invoice->terms)); ?></div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -308,6 +341,7 @@ if (isset($invoice->items)) {
     border-radius: 20px;
     font-weight: 600;
     font-size: 14px;
+    width: fit-content;
 }
 
 .status-paid {
@@ -514,6 +548,7 @@ if (isset($invoice->items)) {
 .btn-default:hover {
     background: #5a6268;
     color: white;
+    text-decoration: none;
 }
 
 .btn-success {

@@ -10478,15 +10478,21 @@ app.dietsenegal.net/dietetic/portal";
 
         log_activity('INVOICE VIEW - Facture trouvée, chargement de la vue custom');
 
-        // Get invoice items
-        $this->db->where('invoiceid', $invoice->id);
+        // Get invoice items (Perfex uses 'items' table with rel_id and rel_type)
+        $this->db->select('*');
+        $this->db->where('rel_id', $invoice->id);
+        $this->db->where('rel_type', 'invoice');
         $this->db->order_by('item_order', 'ASC');
-        $invoice->items = $this->db->get(db_prefix() . 'itemable')->result();
+        $invoice->items = $this->db->get(db_prefix() . 'items')->result();
+
+        log_activity('INVOICE VIEW - Items chargés: ' . count($invoice->items));
 
         // Get payments
         $this->db->where('invoiceid', $invoice->id);
         $this->db->order_by('date', 'DESC');
         $invoice->payments = $this->db->get(db_prefix() . 'invoicepaymentrecords')->result();
+
+        log_activity('INVOICE VIEW - Paiements chargés: ' . count($invoice->payments));
 
         // Calculate totals
         $invoice->total_paid = 0;
@@ -10501,6 +10507,8 @@ app.dietsenegal.net/dietetic/portal";
         $this->db->where('userid', $patient->client_id);
         $client = $this->db->get(db_prefix() . 'clients')->row();
 
+        log_activity('INVOICE VIEW - Toutes les données chargées, préparation de la vue');
+
         // Prepare data for view
         $data = [];
         $data['invoice'] = $invoice;
@@ -10510,8 +10518,15 @@ app.dietsenegal.net/dietetic/portal";
         $data['active_page'] = 'invoices';
 
         // Load invoice view (dans notre portail, pas redirect vers Perfex)
-        log_activity('INVOICE VIEW - Affichage de la facture dans le portail diététique');
-        $this->load->view('portal/invoice_view', $data);
+        log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_view');
+
+        try {
+            $this->load->view('portal/invoice_view', $data);
+            log_activity('INVOICE VIEW - Vue chargée avec succès');
+        } catch (Exception $e) {
+            log_activity('INVOICE VIEW - ERREUR lors du chargement de la vue: ' . $e->getMessage());
+            echo '<h1>Erreur</h1><pre>' . $e->getMessage() . '</pre>';
+        }
     }
 
     // ==================== BLOG / CONSEILS ====================
