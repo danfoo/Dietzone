@@ -46,21 +46,34 @@ while ($table_row = mysqli_fetch_array($tables_result)) {
 }
 echo "</ul>";
 
-// Essayer différents préfixes de table
-$possible_tables = ['tbldietic_settings', 'dietic_settings', 'perfex_dietic_settings'];
+// Essayer différents préfixes de table (NOTIFICATIONS settings en priorité!)
+$possible_tables = ['tbldietic_notification_settings', 'dietic_notification_settings', 'tbldietic_settings', 'dietic_settings'];
 $settings_table = null;
 
+echo "<h3>Recherche de la bonne table de settings...</h3>";
 foreach ($possible_tables as $table) {
     $check = mysqli_query($conn, "SHOW TABLES LIKE '$table'");
     if ($check && mysqli_num_rows($check) > 0) {
-        $settings_table = $table;
-        echo "<p class='success'>✓ Table trouvée: <strong>$table</strong></p>";
-        break;
+        echo "<p class='success'>✓ Table existante: <strong>$table</strong></p>";
+
+        // Vérifier si cette table contient les credentials SMS
+        $test_query = "SELECT COUNT(*) as count FROM $table WHERE setting_key LIKE '%sms%' OR setting_key LIKE '%lam%'";
+        $test_result = mysqli_query($conn, $test_query);
+        if ($test_result) {
+            $count_row = mysqli_fetch_assoc($test_result);
+            echo "<p style='margin-left:20px;'>→ Contient <strong>{$count_row['count']}</strong> clé(s) SMS/LAM</p>";
+
+            // Utiliser la première table qui contient des clés SMS
+            if ($count_row['count'] > 0 && !$settings_table) {
+                $settings_table = $table;
+                echo "<p class='success' style='margin-left:20px;'><strong>→ ✅ UTILISATION DE CETTE TABLE</strong></p>";
+            }
+        }
     }
 }
 
 if (!$settings_table) {
-    echo "<p class='error'>❌ Aucune table de settings trouvée !</p>";
+    echo "<p class='error'>❌ Aucune table de settings avec credentials SMS trouvée !</p>";
     echo "<p>Essayez de vérifier manuellement dans votre base de données.</p>";
     echo "</body></html>";
     mysqli_close($conn);
