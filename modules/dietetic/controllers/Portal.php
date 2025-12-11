@@ -42,6 +42,8 @@ class Portal extends App_Controller
             'index',
             'login_patient',  // Authentification mobile
             'register',       // Inscription patient
+            'verify_registration_otp', // Validation OTP inscription
+            'resend_registration_otp', // Renvoyer code OTP inscription
             'forgot_password', // Demander code reset password
             'reset_password',  // Réinitialiser mot de passe
             'cancel_reset',    // Annuler reset password
@@ -147,6 +149,7 @@ class Portal extends App_Controller
             'upgrade',
             // Diagnostic methods
             'diagnostic_onesignal',
+            'diagnostic_registration_otp',
             'debug_phone',
             'search_phone'
         ];
