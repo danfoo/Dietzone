@@ -922,21 +922,14 @@ class Portal extends App_Controller
         }
 
         // 2. NOTIFICATION SMS
-        try {
-            $sms_message = "Bienvenue sur DietZone ! Vos identifiants: Email: {$email}, Téléphone: {$phone}, Mot de passe: {$password}. Connectez-vous sur {$login_url}";
+        $sms_message = "Bienvenue sur DietZone ! Vos identifiants: Email: {$email}, Téléphone: {$phone}, Mot de passe: {$password}. Connectez-vous sur {$login_url}";
 
-            // Utiliser le système SMS existant si disponible
-            if (method_exists($this, 'send_sms')) {
-                $this->send_sms($phone, $sms_message);
-            } else {
-                // Fallback: appeler fonction globale si elle existe
-                if (function_exists('send_sms_notification')) {
-                    send_sms_notification($phone, $sms_message);
-                }
-            }
+        $sms_result = dietetic_send_sms($phone, $sms_message);
+
+        if ($sms_result['success']) {
             log_activity('INSCRIPTION - SMS envoyé à: ' . $phone);
-        } catch (Exception $e) {
-            log_activity('INSCRIPTION - Erreur envoi SMS: ' . $e->getMessage());
+        } else {
+            log_activity('INSCRIPTION - Erreur envoi SMS: ' . $sms_result['message']);
         }
 
         // 3. NOTIFICATION WHATSAPP
@@ -1072,17 +1065,12 @@ class Portal extends App_Controller
         $this->db->insert(db_prefix() . 'dietic_otp_codes', $otp_data);
 
         // Envoyer SMS
-        try {
-            $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
+        $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
 
-            // Utiliser le système SMS existant
-            if (method_exists($this, 'send_sms')) {
-                $this->send_sms($patient->phonenumber, $sms_message);
-            } elseif (function_exists('send_sms_notification')) {
-                send_sms_notification($patient->phonenumber, $sms_message);
-            }
+        $sms_result = dietetic_send_sms($patient->phonenumber, $sms_message);
 
-            log_activity('MOT DE PASSE OUBLIÉ - Code envoyé à: ' . $patient->phonenumber . ' (Patient: ' . $patient->firstname . ')');
+        if ($sms_result['success']) {
+            log_activity('MOT DE PASSE OUBLIÉ - Code envoyé à: ' . $patient->phonenumber . ' (Patient: ' . $patient->firstname . ', Code: ' . $code . ')');
 
             header('Content-Type: application/json');
             echo json_encode([
@@ -1090,10 +1078,10 @@ class Portal extends App_Controller
                 'message' => 'Code de réinitialisation envoyé par SMS',
                 'show_reset_form' => true
             ]);
-        } catch (Exception $e) {
-            log_activity('MOT DE PASSE OUBLIÉ - Erreur envoi SMS: ' . $e->getMessage());
+        } else {
+            log_activity('MOT DE PASSE OUBLIÉ - Erreur envoi SMS: ' . $sms_result['message']);
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'envoi du SMS']);
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'envoi du SMS: ' . $sms_result['message']]);
         }
     }
 
