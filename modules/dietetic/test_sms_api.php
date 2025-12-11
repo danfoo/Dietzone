@@ -5,7 +5,22 @@
  */
 
 define('BASEPATH', true);
-require_once(__DIR__ . '/../../application/config/app-config.php');
+
+// Tenter de charger le fichier de config
+if (file_exists(__DIR__ . '/../../application/config/app-config.php')) {
+    require_once(__DIR__ . '/../../application/config/app-config.php');
+} elseif (file_exists(__DIR__ . '/../../application/config/database.php')) {
+    require_once(__DIR__ . '/../../application/config/database.php');
+}
+
+// Si pas de constantes définies, utiliser valeurs par défaut (à adapter)
+if (!defined('APP_DB_HOSTNAME')) {
+    define('APP_DB_HOSTNAME', 'localhost');
+    define('APP_DB_USERNAME', 'root');
+    define('APP_DB_PASSWORD', '');
+    define('APP_DB_NAME', 'perfex');
+}
+
 require_once(__DIR__ . '/helpers/dietetic_helper.php');
 
 // Connexion à la base de données
@@ -16,15 +31,64 @@ if (!$conn) {
 }
 
 echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Test API LAM SMS</title>";
-echo "<style>body{font-family:Arial;padding:20px;} pre{background:#f5f5f5;padding:15px;border-radius:5px;} .success{color:green;} .error{color:red;}</style>";
+echo "<style>body{font-family:Arial;padding:20px;} pre{background:#f5f5f5;padding:15px;border-radius:5px;overflow:auto;} .success{color:green;} .error{color:red;} .warning{color:orange;}</style>";
 echo "</head><body>";
 
 echo "<h1>🧪 Test API LAM SMS</h1>";
 echo "<hr>";
 
+// Debug: Afficher toutes les tables qui contiennent "settings"
+echo "<h2>0. Debug - Tables disponibles</h2>";
+$tables_result = mysqli_query($conn, "SHOW TABLES LIKE '%settings%'");
+echo "<ul>";
+while ($table_row = mysqli_fetch_array($tables_result)) {
+    echo "<li>{$table_row[0]}</li>";
+}
+echo "</ul>";
+
+// Essayer différents préfixes de table
+$possible_tables = ['tbldietic_settings', 'dietic_settings', 'perfex_dietic_settings'];
+$settings_table = null;
+
+foreach ($possible_tables as $table) {
+    $check = mysqli_query($conn, "SHOW TABLES LIKE '$table'");
+    if ($check && mysqli_num_rows($check) > 0) {
+        $settings_table = $table;
+        echo "<p class='success'>✓ Table trouvée: <strong>$table</strong></p>";
+        break;
+    }
+}
+
+if (!$settings_table) {
+    echo "<p class='error'>❌ Aucune table de settings trouvée !</p>";
+    echo "<p>Essayez de vérifier manuellement dans votre base de données.</p>";
+    echo "</body></html>";
+    mysqli_close($conn);
+    exit;
+}
+
 // Récupérer les credentials
-$sql = "SELECT setting_key, setting_value FROM tbldietic_settings WHERE setting_key IN ('sms_lam_account_id', 'sms_lam_password', 'sms_lam_sender_id')";
+$sql = "SELECT setting_key, setting_value FROM $settings_table WHERE setting_key IN ('sms_lam_account_id', 'sms_lam_password', 'sms_lam_sender_id')";
 $result = mysqli_query($conn, $sql);
+
+// Debug: Si aucun résultat, afficher TOUTES les clés SMS disponibles
+if (!$result || mysqli_num_rows($result) == 0) {
+    echo "<p class='warning'>⚠️ Aucune clé SMS trouvée avec les noms standards.</p>";
+    echo "<p>Recherche de toutes les clés contenant 'sms' ou 'lam'...</p>";
+
+    $debug_sql = "SELECT setting_key, setting_value FROM $settings_table WHERE setting_key LIKE '%sms%' OR setting_key LIKE '%lam%'";
+    $debug_result = mysqli_query($conn, $debug_sql);
+
+    if ($debug_result && mysqli_num_rows($debug_result) > 0) {
+        echo "<h3>Clés SMS trouvées dans la base:</h3>";
+        echo "<ul>";
+        while ($row = mysqli_fetch_assoc($debug_result)) {
+            $masked_value = !empty($row['setting_value']) ? str_repeat('*', 10) : '(vide)';
+            echo "<li><strong>{$row['setting_key']}</strong> = $masked_value</li>";
+        }
+        echo "</ul>";
+    }
+}
 
 $credentials = [];
 while ($row = mysqli_fetch_assoc($result)) {
