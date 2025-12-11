@@ -626,6 +626,11 @@ function dietetic_send_sms($phone, $message)
         $phone = '221' . $phone;
     }
 
+    // Add + prefix for SMS format (required by LAM SMS API)
+    if (!preg_match('/^\+/', $phone)) {
+        $phone = '+' . $phone;
+    }
+
     // Prepare LAM API request
     $data = [
         'accountid' => $account_id,
