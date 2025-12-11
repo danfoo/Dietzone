@@ -604,20 +604,38 @@ function dietetic_notify_measurement_added($patient_id, $dietitian_id, $patient_
  */
 function dietetic_send_sms($phone, $message)
 {
-    $account_id = dietetic_get_option('sms_lam_account_id');
-    $password = dietetic_get_option('sms_lam_password');
-    $sender = dietetic_get_option('sms_lam_sender_id', 'API_LAMSMS');
+    // Get credentials from NOTIFICATION settings table (not dietic_settings)
+    // This aligns with Dietetic_notifications_model which uses dietic_notification_settings
+    $CI = &get_instance();
+
+    $CI->db->where('setting_key', 'sms_lam_account_id');
+    $account_row = $CI->db->get(db_prefix() . 'dietic_notification_settings')->row();
+    $account_id = $account_row ? $account_row->setting_value : null;
+
+    $CI->db->where('setting_key', 'sms_lam_password');
+    $password_row = $CI->db->get(db_prefix() . 'dietic_notification_settings')->row();
+    $password = $password_row ? $password_row->setting_value : null;
+
+    $CI->db->where('setting_key', 'sms_lam_sender_id');
+    $sender_row = $CI->db->get(db_prefix() . 'dietic_notification_settings')->row();
+    $sender = $sender_row ? $sender_row->setting_value : 'API_LAMSMS';
 
     if (empty($account_id) || empty($password)) {
+        log_activity('LAM SMS ERROR: Credentials not found in dietic_notification_settings table');
         return ['success' => false, 'message' => 'LAM SMS credentials not configured (account_id and password required)'];
     }
 
     // LAM SMS API endpoint
     $url = 'https://lamsms.lafricamobile.com/api';
 
-    // Get additional settings
-    $ret_url = dietetic_get_option('sms_lam_ret_url', site_url('dietetic/sms_callback'));
-    $priority = dietetic_get_option('sms_lam_priority', '2');
+    // Get additional settings from notification settings table
+    $CI->db->where('setting_key', 'sms_lam_ret_url');
+    $ret_url_row = $CI->db->get(db_prefix() . 'dietic_notification_settings')->row();
+    $ret_url = $ret_url_row ? $ret_url_row->setting_value : site_url('dietetic/sms_callback');
+
+    $CI->db->where('setting_key', 'sms_lam_priority');
+    $priority_row = $CI->db->get(db_prefix() . 'dietic_notification_settings')->row();
+    $priority = $priority_row ? $priority_row->setting_value : '2';
 
     // Format phone number for LAM API
     // Ensure phone starts with country code (e.g., 221 for Senegal)
