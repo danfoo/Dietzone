@@ -922,8 +922,9 @@ class Portal extends App_Controller
             log_activity('INSCRIPTION - Erreur envoi email: ' . $e->getMessage());
         }
 
-        // 2. NOTIFICATION SMS
-        $sms_message = "Bienvenue sur DietZone ! Vos identifiants: Email: {$email}, Téléphone: {$phone}, Mot de passe: {$password}. Connectez-vous sur {$login_url}";
+        // 2. NOTIFICATION SMS (max 160 caractères)
+        $sms_message = "DietZone: Email: {$email} / Pass: {$password}
+app.dietsenegal.net/dietetic/portal";
 
         $sms_result = dietetic_send_sms($phone, $sms_message);
 
@@ -1069,8 +1070,8 @@ class Portal extends App_Controller
         $success_channels = [];
         $error_channels = [];
 
-        // 1. ENVOYER PAR SMS
-        $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
+        // 1. ENVOYER PAR SMS (max 160 caractères)
+        $sms_message = "DietZone - Code: {$code}. Valide 5 min. Ne pas partager.";
         $sms_result = dietetic_send_sms($patient->phonenumber, $sms_message);
 
         if ($sms_result['success']) {
