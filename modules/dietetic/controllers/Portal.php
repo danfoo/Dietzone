@@ -511,13 +511,20 @@ class Portal extends App_Controller
         }
 
         // Check if client is logged in
+        log_activity('INDEX PAGE - Checking authentication...');
+        log_activity('INDEX PAGE - Session data: ' . json_encode($this->session->all_userdata()));
+        log_activity('INDEX PAGE - is_client_logged_in(): ' . var_export(is_client_logged_in(), true));
+
         if (!is_client_logged_in()) {
+            log_activity('INDEX PAGE - ÉCHEC: Utilisateur non connecté - affichage du login');
             // Afficher page de connexion mobile
             $this->load->view('dietetic/auth/login');
             return;
         }
 
+        log_activity('INDEX PAGE - SUCCÈS: Utilisateur connecté');
         $client_id = get_client_user_id();
+        log_activity('INDEX PAGE - client_id: ' . $client_id);
 
         // Get patient
         try {
@@ -10364,12 +10371,19 @@ app.dietsenegal.net/dietetic/portal";
      */
     public function invoices()
     {
+        // DEBUG: Log toutes les informations de session
+        log_activity('INVOICES PAGE - Session data: ' . json_encode($this->session->all_userdata()));
+        log_activity('INVOICES PAGE - client_logged_in: ' . var_export($this->session->userdata('client_logged_in'), true));
+        log_activity('INVOICES PAGE - client_user_id: ' . var_export($this->session->userdata('client_user_id'), true));
+
         // Vérifier la connexion avec notre système custom
         if (!$this->session->userdata('client_logged_in')) {
+            log_activity('INVOICES PAGE - ÉCHEC: client_logged_in est FALSE - redirection vers login');
             redirect(site_url('dietetic/portal'));
             return;
         }
 
+        log_activity('INVOICES PAGE - SUCCÈS: Utilisateur connecté');
         $client_id = $this->session->userdata('client_user_id');
 
         // Get patient
@@ -10414,12 +10428,20 @@ app.dietsenegal.net/dietetic/portal";
      */
     public function invoice($id)
     {
+        // DEBUG: Log toutes les informations de session
+        log_activity('INVOICE VIEW - Invoice ID: ' . $id);
+        log_activity('INVOICE VIEW - Session data: ' . json_encode($this->session->all_userdata()));
+        log_activity('INVOICE VIEW - client_logged_in: ' . var_export($this->session->userdata('client_logged_in'), true));
+        log_activity('INVOICE VIEW - client_user_id: ' . var_export($this->session->userdata('client_user_id'), true));
+
         // Vérifier la connexion avec notre système custom
         if (!$this->session->userdata('client_logged_in')) {
+            log_activity('INVOICE VIEW - ÉCHEC: client_logged_in est FALSE - redirection vers login');
             redirect(site_url('dietetic/portal'));
             return;
         }
 
+        log_activity('INVOICE VIEW - SUCCÈS: Utilisateur connecté');
         $client_id = $this->session->userdata('client_user_id');
 
         // Get patient
