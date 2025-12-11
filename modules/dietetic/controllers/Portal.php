@@ -933,21 +933,21 @@ class Portal extends App_Controller
         }
 
         // 3. NOTIFICATION WHATSAPP
-        try {
-            $whatsapp_message = $message; // Même message que SMS
+        $whatsapp_message = "🎉 *Bienvenue sur DietZone !*\n\n";
+        $whatsapp_message .= "Votre compte a été créé avec succès.\n\n";
+        $whatsapp_message .= "*Vos identifiants de connexion :*\n";
+        $whatsapp_message .= "📧 Email: {$email}\n";
+        $whatsapp_message .= "📱 Téléphone: {$phone}\n";
+        $whatsapp_message .= "🔐 Mot de passe: {$password}\n\n";
+        $whatsapp_message .= "🔗 Connectez-vous sur:\n{$login_url}\n\n";
+        $whatsapp_message .= "💡 _Nous vous recommandons de changer votre mot de passe après votre première connexion._";
 
-            // Utiliser le système WhatsApp existant si disponible
-            if (method_exists($this, 'send_whatsapp')) {
-                $this->send_whatsapp($phone, $whatsapp_message);
-            } else {
-                // Fallback: appeler fonction globale si elle existe
-                if (function_exists('send_whatsapp_notification')) {
-                    send_whatsapp_notification($phone, $whatsapp_message);
-                }
-            }
+        $whatsapp_result = dietetic_send_whatsapp($phone, $whatsapp_message);
+
+        if ($whatsapp_result['success']) {
             log_activity('INSCRIPTION - WhatsApp envoyé à: ' . $phone);
-        } catch (Exception $e) {
-            log_activity('INSCRIPTION - Erreur envoi WhatsApp: ' . $e->getMessage());
+        } else {
+            log_activity('INSCRIPTION - Erreur envoi WhatsApp: ' . $whatsapp_result['message']);
         }
 
         // 4. NOTIFICATION ADMIN - Nouveau patient inscrit
@@ -1064,24 +1064,96 @@ class Portal extends App_Controller
         ];
         $this->db->insert(db_prefix() . 'dietic_otp_codes', $otp_data);
 
-        // Envoyer SMS
-        $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
+        // Envoyer code OTP par MULTI-CANAL: SMS + Email + WhatsApp
+        $success_channels = [];
+        $error_channels = [];
 
+        // 1. ENVOYER PAR SMS
+        $sms_message = "DietZone - Code de réinitialisation: {$code}. Valide 5 minutes. Ne partagez ce code avec personne.";
         $sms_result = dietetic_send_sms($patient->phonenumber, $sms_message);
 
         if ($sms_result['success']) {
-            log_activity('MOT DE PASSE OUBLIÉ - Code envoyé à: ' . $patient->phonenumber . ' (Patient: ' . $patient->firstname . ', Code: ' . $code . ')');
+            $success_channels[] = 'SMS';
+            log_activity('MOT DE PASSE OUBLIÉ - SMS envoyé à: ' . $patient->phonenumber);
+        } else {
+            $error_channels[] = 'SMS';
+            log_activity('MOT DE PASSE OUBLIÉ - Erreur SMS: ' . $sms_result['message']);
+        }
 
+        // 2. ENVOYER PAR EMAIL
+        try {
+            $this->load->library('email');
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($patient->email);
+            $this->email->subject('DietZone - Code de réinitialisation mot de passe');
+
+            $email_body = "
+                <h2>Réinitialisation de mot de passe</h2>
+                <p>Bonjour <strong>{$patient->firstname} {$patient->lastname}</strong>,</p>
+                <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+
+                <div style='background:#f5f5f5;padding:20px;margin:20px 0;text-align:center;'>
+                    <p style='font-size:14px;color:#666;margin:0 0 10px;'>Votre code de réinitialisation :</p>
+                    <h1 style='font-size:32px;color:#01807B;letter-spacing:8px;margin:10px 0;'>{$code}</h1>
+                    <p style='font-size:12px;color:#999;margin:10px 0 0;'>Valide pendant 5 minutes</p>
+                </div>
+
+                <p><strong style='color:#dc3545;'>⚠️ Important :</strong></p>
+                <ul>
+                    <li>Ne partagez jamais ce code avec qui que ce soit</li>
+                    <li>L'équipe DietZone ne vous demandera jamais ce code</li>
+                    <li>Si vous n'avez pas demandé cette réinitialisation, ignorez ce message</li>
+                </ul>
+
+                <p>Cordialement,<br>L'équipe DietZone</p>
+            ";
+            $this->email->message($email_body);
+            $this->email->send();
+
+            $success_channels[] = 'Email';
+            log_activity('MOT DE PASSE OUBLIÉ - Email envoyé à: ' . $patient->email);
+        } catch (Exception $e) {
+            $error_channels[] = 'Email';
+            log_activity('MOT DE PASSE OUBLIÉ - Erreur Email: ' . $e->getMessage());
+        }
+
+        // 3. ENVOYER PAR WHATSAPP
+        $whatsapp_message = "🔐 *DietZone - Réinitialisation mot de passe*\n\n";
+        $whatsapp_message .= "Bonjour {$patient->firstname},\n\n";
+        $whatsapp_message .= "Votre code de réinitialisation :\n";
+        $whatsapp_message .= "*{$code}*\n\n";
+        $whatsapp_message .= "⏱ Valide 5 minutes\n\n";
+        $whatsapp_message .= "⚠️ Ne partagez ce code avec personne.";
+
+        $whatsapp_result = dietetic_send_whatsapp($patient->phonenumber, $whatsapp_message);
+
+        if ($whatsapp_result['success']) {
+            $success_channels[] = 'WhatsApp';
+            log_activity('MOT DE PASSE OUBLIÉ - WhatsApp envoyé à: ' . $patient->phonenumber);
+        } else {
+            $error_channels[] = 'WhatsApp';
+            log_activity('MOT DE PASSE OUBLIÉ - Erreur WhatsApp: ' . $whatsapp_result['message']);
+        }
+
+        // RÉSULTAT FINAL
+        log_activity('MOT DE PASSE OUBLIÉ - Code ' . $code . ' généré pour: ' . $patient->firstname . ' ' . $patient->lastname . ' (Canaux: ' . implode(', ', $success_channels) . ')');
+
+        if (!empty($success_channels)) {
+            // Au moins un canal a fonctionné
+            $channels_text = implode(', ', $success_channels);
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => true,
-                'message' => 'Code de réinitialisation envoyé par SMS',
+                'message' => "Code de réinitialisation envoyé par {$channels_text}",
                 'show_reset_form' => true
             ]);
         } else {
-            log_activity('MOT DE PASSE OUBLIÉ - Erreur envoi SMS: ' . $sms_result['message']);
+            // Tous les canaux ont échoué
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'envoi du SMS: ' . $sms_result['message']]);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Impossible d\'envoyer le code. Veuillez réessayer ou contacter le support.'
+            ]);
         }
     }
 

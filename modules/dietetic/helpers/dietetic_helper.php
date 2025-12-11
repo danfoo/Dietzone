@@ -675,6 +675,86 @@ function dietetic_send_sms($phone, $message)
 }
 
 /**
+ * Send WhatsApp message via LAM API
+ *
+ * @param string $phone Phone number (with or without country code)
+ * @param string $message Message text
+ * @return array Result with 'success' and 'message' keys
+ */
+function dietetic_send_whatsapp($phone, $message)
+{
+    $account_id = dietetic_get_option('whatsapp_lam_account_id');
+    $password = dietetic_get_option('whatsapp_lam_password');
+
+    if (empty($account_id) || empty($password)) {
+        return ['success' => false, 'message' => 'LAM WhatsApp credentials not configured (account_id and password required)'];
+    }
+
+    // LAM WhatsApp API endpoint
+    $url = 'https://lamwhatsapp.lafricamobile.com/api';
+
+    // Get additional settings
+    $ret_url = dietetic_get_option('whatsapp_lam_ret_url', site_url('dietetic/whatsapp_callback'));
+
+    // Format phone number for LAM API
+    // Ensure phone starts with country code (e.g., 221 for Senegal)
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+    if (!preg_match('/^221/', $phone) && strlen($phone) == 9) {
+        $phone = '221' . $phone;
+    }
+
+    // Add + prefix for WhatsApp format
+    if (!preg_match('/^\+/', $phone)) {
+        $phone = '+' . $phone;
+    }
+
+    // Prepare LAM API request
+    $data = [
+        'accountid' => $account_id,
+        'password' => $password,
+        'ret_id' => 'dietetic_wa_' . time(),
+        'ret_url' => $ret_url,
+        'text' => $message,
+        'to' => [
+            [
+                'ret_id_1' => $phone
+            ]
+        ]
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json'
+        ]
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+
+    // Log the request for debugging
+    log_activity('LAM WhatsApp sent to ' . $phone . ' - HTTP Code: ' . $http_code . ' - Response: ' . $response);
+
+    if ($http_code == 200 || $http_code == 201) {
+        return ['success' => true, 'message' => 'WhatsApp sent successfully', 'response' => json_decode($response, true)];
+    }
+
+    $error_msg = $curl_error ?: $response;
+    return ['success' => false, 'message' => 'Failed to send WhatsApp: ' . $error_msg];
+}
+
+/**
  * Check if current user is admin
  * Note: Only real admins should bypass patient filtering and access restrictions
  *
