@@ -776,8 +776,132 @@ class Portal extends App_Controller
             return;
         }
 
-        // CRÉATION DU COMPTE
+        // GÉNÉRATION ET ENVOI DU CODE OTP (au lieu de créer le compte directement)
         try {
+            // Générer un code OTP à 6 chiffres
+            $otp_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Stocker les données d'inscription dans la session (temporaire jusqu'à validation OTP)
+            $this->session->set_userdata([
+                'pending_registration' => [
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'email' => $email,
+                    'phone_full' => $phone_full,
+                    'password' => $password,
+                    'timestamp' => time()
+                ]
+            ]);
+
+            // Enregistrer le code OTP dans la base de données
+            $expires_at = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+            $this->db->insert(db_prefix() . 'dietic_otp_codes', [
+                'phone' => $phone_full,
+                'code' => $otp_code,
+                'type' => 'registration',
+                'used' => 0,
+                'created_at' => date('Y-m-d H:i:s'),
+                'expires_at' => $expires_at
+            ]);
+
+            // Envoyer le code OTP par SMS
+            $sms_message = "DietZone - Code de validation: {$otp_code}. Valide 5 min. Ne pas partager.";
+            $sms_result = dietetic_send_sms($phone_full, $sms_message);
+
+            // Log l'envoi
+            if ($sms_result['success']) {
+                log_activity('INSCRIPTION MOBILE - Code OTP envoyé par SMS au ' . $phone_full . ' pour ' . $firstname . ' ' . $lastname);
+            } else {
+                log_activity('INSCRIPTION MOBILE - ERREUR envoi SMS OTP au ' . $phone_full . ': ' . $sms_result['message']);
+            }
+
+            // Optionnel: envoyer aussi par email pour backup
+            $email_sent = $this->send_registration_otp_email($email, $firstname, $otp_code);
+
+            // Rediriger vers la page de validation OTP
+            set_alert('info', 'Un code de validation a été envoyé par SMS au ' . $this->mask_phone($phone_full) . '. Entrez le code pour finaliser votre inscription.');
+            redirect(site_url('dietetic/portal/verify_registration_otp'));
+
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION MOBILE - ERREUR génération OTP: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'envoi du code de validation. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal'));
+        }
+    }
+
+    /**
+     * Afficher et traiter le formulaire de validation OTP pour l'inscription
+     * GET: Affiche le formulaire
+     * POST: Vérifie le code OTP et crée le compte
+     */
+    public function verify_registration_otp()
+    {
+        // Vérifier qu'il y a une inscription en attente
+        $pending = $this->session->userdata('pending_registration');
+        if (!$pending) {
+            set_alert('danger', 'Aucune inscription en attente. Veuillez recommencer.');
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        // Vérifier que l'inscription n'est pas expirée (15 minutes max)
+        if (time() - $pending['timestamp'] > 900) {
+            $this->session->unset_userdata('pending_registration');
+            set_alert('danger', 'Délai de validation expiré. Veuillez recommencer votre inscription.');
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        // GET: Afficher le formulaire
+        if (!$this->input->post()) {
+            $data = [
+                'title' => 'Validation de votre inscription',
+                'phone_masked' => $this->mask_phone($pending['phone_full']),
+                'phone_full' => $pending['phone_full'],
+                'firstname' => $pending['firstname']
+            ];
+            $this->load->view('portal/verify_registration_otp', $data);
+            return;
+        }
+
+        // POST: Vérifier le code OTP
+        $otp_code = trim($this->input->post('otp_code'));
+
+        if (empty($otp_code)) {
+            set_alert('danger', 'Veuillez entrer le code de validation');
+            redirect(site_url('dietetic/portal/verify_registration_otp'));
+            return;
+        }
+
+        // Vérifier le code dans la base de données
+        $this->db->where('phone', $pending['phone_full']);
+        $this->db->where('code', $otp_code);
+        $this->db->where('type', 'registration');
+        $this->db->where('used', 0);
+        $this->db->where('expires_at >', date('Y-m-d H:i:s'));
+        $otp = $this->db->get(db_prefix() . 'dietic_otp_codes')->row();
+
+        if (!$otp) {
+            set_alert('danger', 'Code invalide ou expiré. Vérifiez le code ou demandez un nouveau code.');
+            redirect(site_url('dietetic/portal/verify_registration_otp'));
+            return;
+        }
+
+        // Code OTP valide - Marquer comme utilisé
+        $this->db->where('id', $otp->id);
+        $this->db->update(db_prefix() . 'dietic_otp_codes', [
+            'used' => 1,
+            'used_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // CRÉER LE COMPTE (copié de l'ancien code register())
+        try {
+            $firstname = $pending['firstname'];
+            $lastname = $pending['lastname'];
+            $email = $pending['email'];
+            $phone_full = $pending['phone_full'];
+            $password = $pending['password'];
+
             // Démarrer transaction
             $this->db->trans_start();
 
@@ -809,6 +933,7 @@ class Portal extends App_Controller
                 'password' => $password_hash,
                 'datecreated' => date('Y-m-d H:i:s'),
                 'email_verified_at' => date('Y-m-d H:i:s'),
+                'phonenumber_verified_at' => date('Y-m-d H:i:s'), // Numéro validé par OTP
                 'active' => 1
             ];
             $this->db->insert(db_prefix() . 'contacts', $contact_data);
@@ -849,9 +974,12 @@ class Portal extends App_Controller
             }
 
             // Log activity
-            log_activity('INSCRIPTION MOBILE - Nouveau patient créé: ' . $firstname . ' ' . $lastname . ' (Client ID: ' . $client_id . ', Email: ' . $email . ', Téléphone: ' . $phone_full . ')');
+            log_activity('INSCRIPTION MOBILE (OTP validé) - Nouveau patient créé: ' . $firstname . ' ' . $lastname . ' (Client ID: ' . $client_id . ', Email: ' . $email . ', Téléphone: ' . $phone_full . ')');
 
-            // 4. ENVOYER NOTIFICATIONS MULTI-CANAL
+            // Supprimer les données temporaires de la session
+            $this->session->unset_userdata('pending_registration');
+
+            // Envoyer notifications multi-canal
             $this->send_registration_notifications($client_id, $email, $phone_full, $firstname, $lastname, $password);
 
             // Connecter automatiquement le patient
@@ -860,15 +988,123 @@ class Portal extends App_Controller
                 'client_user_id' => $client_id
             ]);
 
-            set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé avec succès.');
+            set_alert('success', 'Bienvenue ' . $firstname . ' ! Votre compte a été créé et validé avec succès.');
             redirect(site_url('dietetic/portal'));
 
         } catch (Exception $e) {
             // Rollback en cas d'erreur
             $this->db->trans_rollback();
-            log_activity('INSCRIPTION MOBILE - ERREUR: ' . $e->getMessage());
+            log_activity('INSCRIPTION MOBILE - ERREUR création compte après OTP: ' . $e->getMessage());
             set_alert('danger', 'Erreur lors de la création du compte. Veuillez réessayer.');
             redirect(site_url('dietetic/portal'));
+        }
+    }
+
+    /**
+     * Renvoyer le code OTP d'inscription
+     */
+    public function resend_registration_otp()
+    {
+        // Vérifier qu'il y a une inscription en attente
+        $pending = $this->session->userdata('pending_registration');
+        if (!$pending) {
+            set_alert('danger', 'Aucune inscription en attente.');
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        try {
+            // Générer un nouveau code OTP
+            $otp_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Enregistrer le nouveau code dans la base de données
+            $expires_at = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+            $this->db->insert(db_prefix() . 'dietic_otp_codes', [
+                'phone' => $pending['phone_full'],
+                'code' => $otp_code,
+                'type' => 'registration',
+                'used' => 0,
+                'created_at' => date('Y-m-d H:i:s'),
+                'expires_at' => $expires_at
+            ]);
+
+            // Envoyer le code OTP par SMS
+            $sms_message = "DietZone - Code de validation: {$otp_code}. Valide 5 min. Ne pas partager.";
+            $sms_result = dietetic_send_sms($pending['phone_full'], $sms_message);
+
+            if ($sms_result['success']) {
+                log_activity('INSCRIPTION MOBILE - Nouveau code OTP envoyé par SMS au ' . $pending['phone_full']);
+                set_alert('success', 'Un nouveau code a été envoyé par SMS.');
+            } else {
+                log_activity('INSCRIPTION MOBILE - ERREUR renvoi SMS OTP: ' . $sms_result['message']);
+                set_alert('warning', 'Le code a été généré mais l\'envoi SMS a échoué. Veuillez réessayer.');
+            }
+
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION MOBILE - ERREUR renvoi OTP: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors du renvoi du code. Veuillez réessayer.');
+        }
+
+        redirect(site_url('dietetic/portal/verify_registration_otp'));
+    }
+
+    /**
+     * Masquer partiellement un numéro de téléphone
+     * Ex: +221771234567 => +221****4567
+     */
+    private function mask_phone($phone)
+    {
+        $length = strlen($phone);
+        if ($length <= 7) {
+            return $phone; // Trop court pour masquer
+        }
+
+        // Garder les 4 premiers et 4 derniers caractères
+        $start = substr($phone, 0, 4);
+        $end = substr($phone, -4);
+        $middle = str_repeat('*', $length - 8);
+
+        return $start . $middle . $end;
+    }
+
+    /**
+     * Envoyer le code OTP par email (backup en cas d'échec SMS)
+     */
+    private function send_registration_otp_email($email, $firstname, $otp_code)
+    {
+        try {
+            $this->load->library('email');
+            $this->email->from(get_option('smtp_email'), get_option('companyname'));
+            $this->email->to($email);
+            $this->email->subject('DietZone - Code de validation de votre inscription');
+
+            $email_body = "
+                <h2>Validation de votre inscription</h2>
+                <p>Bonjour <strong>{$firstname}</strong>,</p>
+                <p>Voici votre code de validation pour finaliser votre inscription sur DietZone :</p>
+
+                <div style='text-align:center;margin:30px 0;'>
+                    <span style='font-size:32px;font-weight:bold;letter-spacing:5px;color:#01807B;'>{$otp_code}</span>
+                </div>
+
+                <p><strong>Important :</strong></p>
+                <ul>
+                    <li>Ce code est valable pendant 5 minutes</li>
+                    <li>Ne partagez jamais ce code avec personne</li>
+                    <li>Si vous n'avez pas demandé ce code, ignorez cet email</li>
+                </ul>
+
+                <p>Cordialement,<br>L'équipe DietZone</p>
+            ";
+            $this->email->message($email_body);
+            $this->email->send();
+
+            log_activity('INSCRIPTION - Code OTP envoyé par email à: ' . $email);
+            return true;
+
+        } catch (Exception $e) {
+            log_activity('INSCRIPTION - Erreur envoi email OTP: ' . $e->getMessage());
+            return false;
         }
     }
 
