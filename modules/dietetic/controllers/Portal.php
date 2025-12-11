@@ -10487,54 +10487,65 @@ app.dietsenegal.net/dietetic/portal";
 
         log_activity('INVOICE VIEW - Facture trouvée, chargement de la vue custom');
 
-        // Get invoice items (Perfex uses 'items' table with rel_id and rel_type)
-        $this->db->select('*');
-        $this->db->where('rel_id', $invoice->id);
-        $this->db->where('rel_type', 'invoice');
-        $this->db->order_by('item_order', 'ASC');
-        $invoice->items = $this->db->get(db_prefix() . 'items')->result();
-
-        log_activity('INVOICE VIEW - Items chargés: ' . count($invoice->items));
-
-        // Get payments
-        $this->db->where('invoiceid', $invoice->id);
-        $this->db->order_by('date', 'DESC');
-        $invoice->payments = $this->db->get(db_prefix() . 'invoicepaymentrecords')->result();
-
-        log_activity('INVOICE VIEW - Paiements chargés: ' . count($invoice->payments));
-
-        // Calculate totals
-        $invoice->total_paid = 0;
-        if ($invoice->payments) {
-            foreach ($invoice->payments as $payment) {
-                $invoice->total_paid += $payment->amount;
-            }
-        }
-        $invoice->balance = $invoice->total - $invoice->total_paid;
-
-        // Get client info
-        $this->db->where('userid', $patient->client_id);
-        $client = $this->db->get(db_prefix() . 'clients')->row();
-
-        log_activity('INVOICE VIEW - Toutes les données chargées, préparation de la vue');
-
-        // Prepare data for view
-        $data = [];
-        $data['invoice'] = $invoice;
-        $data['patient'] = $patient;
-        $data['client'] = $client;
-        $data['title'] = 'Facture #' . format_invoice_number($invoice->id);
-        $data['active_page'] = 'invoices';
-
-        // Load invoice view (dans notre portail, pas redirect vers Perfex)
-        log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_view');
-
         try {
+            // Get invoice items (Perfex uses 'items' table with rel_id and rel_type)
+            log_activity('INVOICE VIEW - Début chargement items');
+            $this->db->select('*');
+            $this->db->where('rel_id', $invoice->id);
+            $this->db->where('rel_type', 'invoice');
+            $this->db->order_by('item_order', 'ASC');
+            $invoice->items = $this->db->get(db_prefix() . 'items')->result();
+
+            log_activity('INVOICE VIEW - Items chargés: ' . count($invoice->items));
+
+            // Get payments
+            log_activity('INVOICE VIEW - Début chargement paiements');
+            $this->db->where('invoiceid', $invoice->id);
+            $this->db->order_by('date', 'DESC');
+            $invoice->payments = $this->db->get(db_prefix() . 'invoicepaymentrecords')->result();
+
+            log_activity('INVOICE VIEW - Paiements chargés: ' . count($invoice->payments));
+
+            // Calculate totals
+            $invoice->total_paid = 0;
+            if ($invoice->payments) {
+                foreach ($invoice->payments as $payment) {
+                    $invoice->total_paid += $payment->amount;
+                }
+            }
+            $invoice->balance = $invoice->total - $invoice->total_paid;
+
+            // Get client info
+            log_activity('INVOICE VIEW - Chargement infos client');
+            $this->db->where('userid', $patient->client_id);
+            $client = $this->db->get(db_prefix() . 'clients')->row();
+
+            log_activity('INVOICE VIEW - Toutes les données chargées, préparation de la vue');
+
+            // Prepare data for view
+            $data = [];
+            $data['invoice'] = $invoice;
+            $data['patient'] = $patient;
+            $data['client'] = $client;
+            $data['title'] = 'Facture #' . format_invoice_number($invoice->id);
+            $data['active_page'] = 'invoices';
+
+            // Load invoice view (dans notre portail, pas redirect vers Perfex)
+            log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_view');
             $this->load->view('portal/invoice_view', $data);
             log_activity('INVOICE VIEW - Vue chargée avec succès');
+
         } catch (Exception $e) {
-            log_activity('INVOICE VIEW - ERREUR lors du chargement de la vue: ' . $e->getMessage());
-            echo '<h1>Erreur</h1><pre>' . $e->getMessage() . '</pre>';
+            log_activity('INVOICE VIEW - ERREUR GLOBALE: ' . $e->getMessage());
+            log_activity('INVOICE VIEW - Trace: ' . $e->getTraceAsString());
+
+            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Erreur Facture</title></head><body>';
+            echo '<h1>Erreur lors du chargement de la facture</h1>';
+            echo '<pre>Message: ' . htmlspecialchars($e->getMessage()) . '</pre>';
+            echo '<pre>Fichier: ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</pre>';
+            echo '<h2>Trace:</h2><pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+            echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Retour aux factures</a></p>';
+            echo '</body></html>';
         }
     }
 
