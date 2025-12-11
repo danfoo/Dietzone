@@ -904,8 +904,7 @@ class Portal extends App_Controller
             log_activity('INSCRIPTION OTP - Tentative de marquage du code comme utilisé');
             $this->db->where('id', $otp->id);
             $this->db->update(db_prefix() . 'dietic_otp_codes', [
-                'used' => 1,
-                'used_at' => date('Y-m-d H:i:s')
+                'used' => 1
             ]);
             log_activity('INSCRIPTION OTP - Code marqué comme utilisé');
         } catch (Exception $e) {
