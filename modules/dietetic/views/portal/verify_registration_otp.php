@@ -269,6 +269,8 @@
 
         <!-- OTP Form -->
         <form method="POST" action="<?php echo site_url('dietetic/portal/verify_registration_otp'); ?>" id="otpForm">
+            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+
             <div class="otp-inputs" id="otpInputs">
                 <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" data-index="0">
                 <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" data-index="1">
@@ -297,6 +299,8 @@
         <div class="resend-container">
             <p class="resend-text">Vous n'avez pas reçu le code ?</p>
             <form method="POST" action="<?php echo site_url('dietetic/portal/resend_registration_otp'); ?>" id="resendForm">
+                <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
+
                 <button type="submit" class="btn-resend" id="resendBtn">
                     <i class="fas fa-redo-alt"></i> Renvoyer le code
                 </button>
