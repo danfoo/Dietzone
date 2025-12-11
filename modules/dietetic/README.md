@@ -337,8 +337,8 @@ dietetic/
 
 ## 📝 Support & Development
 
-**Version:** 1.0.0
-**Author:** Perfex CRM
+**Version:** 1.1.0
+**Author:** Eric Gille SAGNA
 **Requires:** Perfex CRM 2.3.0+
 
 ### Feature Requests
