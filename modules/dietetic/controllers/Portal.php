@@ -10364,11 +10364,13 @@ app.dietsenegal.net/dietetic/portal";
      */
     public function invoices()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('authentication/login'));
+        // Vérifier la connexion avec notre système custom
+        if (!$this->session->userdata('client_logged_in')) {
+            redirect(site_url('dietetic/portal'));
+            return;
         }
 
-        $client_id = get_client_user_id();
+        $client_id = $this->session->userdata('client_user_id');
 
         // Get patient
         try {
@@ -10412,11 +10414,13 @@ app.dietsenegal.net/dietetic/portal";
      */
     public function invoice($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('authentication/login'));
+        // Vérifier la connexion avec notre système custom
+        if (!$this->session->userdata('client_logged_in')) {
+            redirect(site_url('dietetic/portal'));
+            return;
         }
 
-        $client_id = get_client_user_id();
+        $client_id = $this->session->userdata('client_user_id');
 
         // Get patient
         try {
@@ -10426,7 +10430,7 @@ app.dietsenegal.net/dietetic/portal";
         }
 
         if (!$patient) {
-            redirect(site_url('authentication/login'));
+            $this->load->view('portal_no_access');
             return;
         }
 
