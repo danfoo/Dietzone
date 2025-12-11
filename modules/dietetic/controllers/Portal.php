@@ -10476,8 +10476,42 @@ app.dietsenegal.net/dietetic/portal";
             return;
         }
 
-        // Redirect to Perfex invoice view page
-        redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
+        log_activity('INVOICE VIEW - Facture trouvée, chargement de la vue custom');
+
+        // Get invoice items
+        $this->db->where('invoiceid', $invoice->id);
+        $this->db->order_by('item_order', 'ASC');
+        $invoice->items = $this->db->get(db_prefix() . 'itemable')->result();
+
+        // Get payments
+        $this->db->where('invoiceid', $invoice->id);
+        $this->db->order_by('date', 'DESC');
+        $invoice->payments = $this->db->get(db_prefix() . 'invoicepaymentrecords')->result();
+
+        // Calculate totals
+        $invoice->total_paid = 0;
+        if ($invoice->payments) {
+            foreach ($invoice->payments as $payment) {
+                $invoice->total_paid += $payment->amount;
+            }
+        }
+        $invoice->balance = $invoice->total - $invoice->total_paid;
+
+        // Get client info
+        $this->db->where('userid', $patient->client_id);
+        $client = $this->db->get(db_prefix() . 'clients')->row();
+
+        // Prepare data for view
+        $data = [];
+        $data['invoice'] = $invoice;
+        $data['patient'] = $patient;
+        $data['client'] = $client;
+        $data['title'] = 'Facture #' . format_invoice_number($invoice->id);
+        $data['active_page'] = 'invoices';
+
+        // Load invoice view (dans notre portail, pas redirect vers Perfex)
+        log_activity('INVOICE VIEW - Affichage de la facture dans le portail diététique');
+        $this->load->view('portal/invoice_view', $data);
     }
 
     // ==================== BLOG / CONSEILS ====================
