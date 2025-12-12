@@ -2590,20 +2590,37 @@ body {
     text-align: center;
 }
 
-.progress-circle-percent {
-    font-size: 36px;
-    font-weight: 800;
-    color: #004D40;
+.progress-circle-percent-wrapper {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
     line-height: 1;
     margin-bottom: 4px;
+}
+
+.progress-circle-percent {
+    font-size: 48px;
+    font-weight: 800;
+    color: #01807B;
+    font-family: 'Montserrat', 'Avenir Next', 'Avenir', sans-serif;
+    line-height: 1;
+}
+
+.progress-percent-symbol {
+    font-size: 28px;
+    font-weight: 700;
+    color: #01807B;
+    font-family: 'Montserrat', 'Avenir Next', 'Avenir', sans-serif;
+    margin-left: 2px;
 }
 
 .progress-circle-label {
     font-size: 11px;
     color: #00695C;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
+    font-family: 'Montserrat', 'Avenir Next', 'Avenir', sans-serif;
 }
 
 /* Progress ring pulse animation */
@@ -2810,11 +2827,16 @@ body {
     }
 
     .progress-circle-percent {
-        font-size: 26px;
+        font-size: 36px;
+    }
+
+    .progress-percent-symbol {
+        font-size: 20px;
     }
 
     .progress-circle-label {
         font-size: 9px;
+        letter-spacing: 1px;
     }
 
     .progress-circle-weight {
@@ -3783,8 +3805,10 @@ if (!$current_weight || !$target_weight) {
                             data-progress="<?php echo round($progress_percent); ?>"></circle>
                 </svg>
                 <div class="progress-circle-center">
-                    <div class="progress-circle-percent" data-target="<?php echo round($progress_percent); ?>">0</div>
-                    <div class="progress-circle-label">Progression</div>
+                    <div class="progress-circle-percent-wrapper">
+                        <span class="progress-circle-percent" data-target="<?php echo round($progress_percent); ?>">0</span><span class="progress-percent-symbol">%</span>
+                    </div>
+                    <div class="progress-circle-label">PROGRESSION</div>
                 </div>
             </div>
         </div>
