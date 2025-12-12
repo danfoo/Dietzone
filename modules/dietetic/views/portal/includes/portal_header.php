@@ -62,37 +62,49 @@
         }
 
 
-        /* Hamburger Menu Button - Mobile App Style */
+        /* Hamburger Menu Button - Ultra Modern Style */
         .hamburger-btn {
             width: 44px;
             height: 44px;
-            background: transparent;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(1, 155, 149, 0.05) 100%);
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: all 0.3s;
-            padding: 8px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            padding: 0;
         }
 
         .hamburger-btn:hover {
-            background: #e9ecef;
+            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
         }
 
         .hamburger-btn:active {
-            transform: scale(0.9);
+            transform: scale(0.95);
         }
 
-        .hamburger-btn i {
+        .hamburger-btn .material-symbols-rounded {
             font-size: 24px;
-            color: #2c3e50;
+            color: #01807B;
             transition: all 0.3s;
         }
 
-        .hamburger-btn.active i {
+        .hamburger-btn:hover .material-symbols-rounded {
+            color: white;
             transform: rotate(90deg);
+        }
+
+        .hamburger-btn.active .material-symbols-rounded {
+            transform: rotate(90deg);
+            color: white;
+        }
+
+        .hamburger-btn.active {
+            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
         }
 
         /* Notification Button */
@@ -1021,6 +1033,13 @@
             overflow: hidden;
         }
 
+        .menu-item:hover,
+        .menu-item:focus,
+        .menu-item:active {
+            text-decoration: none;
+            color: white;
+        }
+
         .menu-item::before {
             content: '';
             position: absolute;
@@ -1038,15 +1057,16 @@
         }
 
         .menu-item:hover {
-            background: rgba(1, 128, 123, 0.08);
+            background: linear-gradient(90deg, #01807B 0%, #019d96 100%);
             transform: translateX(-5px);
             box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
         }
 
         .menu-item.active {
-            background: linear-gradient(135deg, rgba(1, 128, 123, 0.15) 0%, rgba(1, 128, 123, 0.05) 100%);
+            background: linear-gradient(90deg, #01807B 0%, #019d96 100%);
+            color: white;
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.12);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.25);
         }
 
         .menu-item.active::after {
@@ -1057,9 +1077,9 @@
             transform: translateY(-50%);
             width: 8px;
             height: 8px;
-            background: #01807B;
+            background: white;
             border-radius: 50%;
-            box-shadow: 0 0 12px rgba(1, 128, 123, 0.6);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
         }
 
         /* Icon container with modern design */
@@ -1078,20 +1098,23 @@
         }
 
         .menu-item:hover .menu-item-icon {
-            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+            background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
 
         .menu-item.active .menu-item-icon {
-            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
-            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .menu-item-icon .material-symbols-rounded {
             font-size: 24px;
             color: #01807B;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .menu-item:hover .menu-item-icon .material-symbols-rounded,
@@ -1111,6 +1134,11 @@
 
         .menu-item.active span {
             font-weight: 700;
+            color: white;
+        }
+
+        .menu-item:hover span {
+            color: white;
         }
 
         .menu-divider {
@@ -1168,6 +1196,12 @@
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             position: relative;
             max-width: 80px;
+        }
+
+        .footer-item:hover,
+        .footer-item:focus,
+        .footer-item:active {
+            text-decoration: none;
         }
 
         .footer-item::before {
@@ -1377,7 +1411,7 @@
         </button>
 
         <button class="hamburger-btn" id="menuToggle">
-            <i class="fa fa-bars"></i>
+            <span class="material-symbols-rounded">menu</span>
         </button>
     </header>
 
