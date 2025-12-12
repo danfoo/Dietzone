@@ -2230,46 +2230,59 @@ body {
                 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Floating particles effect */
+/* Fond dynamique médical animé */
 .weight-goal-card::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(1, 128, 123, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: particlesFloat 20s linear infinite;
-    opacity: 0.4;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(1, 128, 123, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(72, 187, 120, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(66, 153, 225, 0.03) 0%, transparent 50%);
+    animation: medicalPulseCard 15s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
 }
 
-@keyframes particlesFloat {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(40px, 40px); }
+@keyframes medicalPulseCard {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
 }
 
-/* Animated glow effect */
+/* Particules médicales flottantes */
 .weight-goal-card::after {
     content: '';
     position: absolute;
-    top: -100%;
-    left: -100%;
-    width: 300%;
-    height: 300%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-    animation: glowPulse 4s ease-in-out infinite;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.04"><path d="M50 20 L50 80 M20 50 L80 50" stroke="%2301807B" stroke-width="3"/></svg>');
+    background-size: 80px 80px;
+    animation: floatCard 40s linear infinite;
     pointer-events: none;
+    z-index: 0;
 }
 
-@keyframes glowPulse {
-    0%, 100% {
-        transform: translate(0, 0) scale(1);
-        opacity: 0.3;
+@keyframes floatCard {
+    0% {
+        transform: translateY(0) translateX(0);
     }
     50% {
-        transform: translate(20px, 20px) scale(1.1);
-        opacity: 0.6;
+        transform: translateY(-15px) translateX(8px);
+    }
+    100% {
+        transform: translateY(0) translateX(0);
     }
 }
 
@@ -2827,15 +2840,15 @@ body {
     }
 
     .progress-circle-percent {
-        font-size: 36px;
+        font-size: 25px;
     }
 
     .progress-percent-symbol {
-        font-size: 20px;
+        font-size: 16px;
     }
 
     .progress-circle-label {
-        font-size: 9px;
+        font-size: 8px;
         letter-spacing: 1px;
     }
 

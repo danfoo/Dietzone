@@ -47,62 +47,6 @@
             overflow-x: hidden;
         }
 
-        /* Fond dynamique médical animé */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(1, 128, 123, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(72, 187, 120, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 40% 20%, rgba(66, 153, 225, 0.02) 0%, transparent 50%);
-            animation: medicalPulse 15s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes medicalPulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.8;
-                transform: scale(1.1);
-            }
-        }
-
-        /* Particules médicales flottantes */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.03"><path d="M50 20 L50 80 M20 50 L80 50" stroke="%2301807B" stroke-width="3"/></svg>');
-            background-size: 100px 100px;
-            animation: float 60s linear infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0) translateX(0);
-            }
-            50% {
-                transform: translateY(-20px) translateX(10px);
-            }
-            100% {
-                transform: translateY(0) translateX(0);
-            }
-        }
-
         /* S'assurer que le contenu est au-dessus */
         .content-container,
         .portal-content,
