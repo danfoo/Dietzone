@@ -407,9 +407,6 @@ foreach ($badge_wall as $badge) {
         <div class="achievements-title">
             <i class="fa fa-trophy"></i>
             Mes Succès
-            <?php if ($unseen_count > 0): ?>
-                <span class="badge-new"><?php echo $unseen_count; ?></span>
-            <?php endif; ?>
         </div>
         <a href="<?php echo site_url('dietetic/portal/achievements'); ?>" class="view-all-btn">
             Voir tout <i class="fa fa-chevron-right"></i>
@@ -469,16 +466,6 @@ foreach ($badge_wall as $badge) {
             <?php foreach ($recent_badges as $badge): ?>
                 <div class="badge-item <?php echo $badge['unlocked'] ? 'unlocked' : 'locked'; ?>"
                      onclick="showBadgeDetail(<?php echo htmlspecialchars(json_encode($badge)); ?>)">
-                    <?php if ($badge['unlocked'] && isset($badge['unlocked_at'])): ?>
-                        <?php
-                        $unlock_date = new DateTime($badge['unlocked_at']);
-                        $now = new DateTime();
-                        $diff = $now->diff($unlock_date);
-                        if ($diff->days < 7): // New badge if unlocked less than 7 days ago
-                        ?>
-                            <div class="badge-new">NEW</div>
-                        <?php endif; ?>
-                    <?php endif; ?>
                     <div class="badge-icon" style="color: <?php echo $badge['color']; ?>;">
                         <i class="fa <?php echo $badge['icon']; ?>"></i>
                     </div>
