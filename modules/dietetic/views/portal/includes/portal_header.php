@@ -59,6 +59,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
+            gap: 12px;
         }
 
 
