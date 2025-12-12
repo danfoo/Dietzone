@@ -10540,10 +10540,9 @@ app.dietsenegal.net/dietetic/portal";
             log_activity('INVOICE VIEW - Données préparées, title: ' . $data['title']);
 
             // Load invoice view (dans notre portail, pas redirect vers Perfex)
-            log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_test (TEMPORARY DEBUG)');
-            // TEMPORARY: Use minimal test view to debug
-            $this->load->view('portal/invoice_test', $data);
-            log_activity('INVOICE VIEW - Vue test chargée avec succès');
+            log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_view');
+            $this->load->view('portal/invoice_view', $data);
+            log_activity('INVOICE VIEW - Vue chargée avec succès');
 
         } catch (Exception $e) {
             log_activity('INVOICE VIEW - ERREUR GLOBALE: ' . $e->getMessage());
