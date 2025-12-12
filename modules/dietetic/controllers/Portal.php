@@ -10527,8 +10527,17 @@ app.dietsenegal.net/dietetic/portal";
             $data['invoice'] = $invoice;
             $data['patient'] = $patient;
             $data['client'] = $client;
-            $data['title'] = 'Facture #' . format_invoice_number($invoice->id);
+
+            // Format invoice number safely
+            if (function_exists('format_invoice_number')) {
+                $data['title'] = 'Facture #' . format_invoice_number($invoice->id);
+            } else {
+                $data['title'] = 'Facture #' . str_pad($invoice->id, 6, '0', STR_PAD_LEFT);
+            }
+
             $data['active_page'] = 'invoices';
+
+            log_activity('INVOICE VIEW - Données préparées, title: ' . $data['title']);
 
             // Load invoice view (dans notre portail, pas redirect vers Perfex)
             log_activity('INVOICE VIEW - Chargement de la vue portal/invoice_view');
