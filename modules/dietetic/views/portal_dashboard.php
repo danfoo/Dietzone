@@ -666,7 +666,7 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .hydration-goal-display {
-        font-size: 12px;
+        font-size: 10px;
     }
 
     .hydration-title-compact {
@@ -2230,7 +2230,7 @@ body {
                 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Animation de fond fun - Étoiles scintillantes et confettis */
+/* Animation de fond - Design de flammes 🔥 */
 .weight-goal-card::before {
     content: '';
     position: absolute;
@@ -2239,77 +2239,72 @@ body {
     right: 0;
     bottom: 0;
     background-image:
-        radial-gradient(circle at 15% 25%, rgba(255, 215, 0, 0.15) 0%, transparent 8%),
-        radial-gradient(circle at 85% 15%, rgba(255, 107, 129, 0.12) 0%, transparent 10%),
-        radial-gradient(circle at 60% 70%, rgba(72, 187, 250, 0.12) 0%, transparent 9%),
-        radial-gradient(circle at 25% 80%, rgba(159, 122, 234, 0.12) 0%, transparent 8%),
-        radial-gradient(circle at 75% 50%, rgba(255, 193, 7, 0.1) 0%, transparent 7%),
-        radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.1) 0%, transparent 8%);
-    animation: sparkleFloat 8s ease-in-out infinite;
+        radial-gradient(ellipse at 20% 100%, rgba(255, 140, 0, 0.15) 0%, rgba(255, 69, 0, 0.1) 30%, transparent 60%),
+        radial-gradient(ellipse at 50% 100%, rgba(255, 69, 0, 0.12) 0%, rgba(255, 140, 0, 0.08) 40%, transparent 70%),
+        radial-gradient(ellipse at 80% 100%, rgba(255, 165, 0, 0.15) 0%, rgba(255, 99, 71, 0.1) 35%, transparent 65%),
+        radial-gradient(ellipse at 35% 90%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 65% 90%, rgba(255, 69, 0, 0.08) 0%, transparent 45%);
+    animation: flameRise 6s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
 }
 
-@keyframes sparkleFloat {
+@keyframes flameRise {
     0%, 100% {
-        opacity: 0.6;
-        transform: scale(1) rotate(0deg);
+        transform: translateY(0) scaleY(1);
+        opacity: 0.7;
     }
     25% {
-        opacity: 1;
-        transform: scale(1.1) rotate(5deg);
+        transform: translateY(-8px) scaleY(1.05);
+        opacity: 0.9;
     }
     50% {
-        opacity: 0.7;
-        transform: scale(0.95) rotate(-5deg);
+        transform: translateY(-15px) scaleY(1.1);
+        opacity: 1;
     }
     75% {
-        opacity: 0.9;
-        transform: scale(1.05) rotate(3deg);
+        transform: translateY(-10px) scaleY(1.03);
+        opacity: 0.85;
     }
 }
 
-/* Confettis et étoiles animées */
+/* Étincelles et flammes dansantes */
 .weight-goal-card::after {
-    content: '✨ ⭐ 🎉 ✨ 💪 🌟 ⚡ 🎊 ✨ ⭐ 🔥 💫';
+    content: '🔥 💪 🔥 ⚡ 🔥 💪 🔥 ⚡ 🔥 💪 🔥 ⚡';
     position: absolute;
     top: -20px;
     left: 0;
     right: 0;
     bottom: -20px;
-    font-size: 24px;
+    font-size: 28px;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-around;
-    opacity: 0.08;
-    animation: confettiDance 25s linear infinite;
+    opacity: 0.1;
+    animation: flameDance 4s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
-    letter-spacing: 40px;
-    line-height: 80px;
+    letter-spacing: 35px;
+    line-height: 70px;
 }
 
-@keyframes confettiDance {
-    0% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 0.08;
-    }
-    25% {
-        transform: translateY(-10px) rotate(5deg);
-        opacity: 0.12;
-    }
-    50% {
-        transform: translateY(-5px) rotate(-5deg);
-        opacity: 0.06;
-    }
-    75% {
-        transform: translateY(-15px) rotate(3deg);
+@keyframes flameDance {
+    0%, 100% {
+        transform: translateY(0) scale(1);
         opacity: 0.1;
     }
-    100% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 0.08;
+    25% {
+        transform: translateY(-12px) scale(1.05);
+        opacity: 0.15;
+    }
+    50% {
+        transform: translateY(-20px) scale(1.08);
+        opacity: 0.12;
+    }
+    75% {
+        transform: translateY(-8px) scale(1.03);
+        opacity: 0.14;
     }
 }
 

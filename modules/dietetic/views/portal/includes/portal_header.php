@@ -1327,7 +1327,7 @@
             }
 
             .menu-item {
-                padding: 18px 20px; /* Items plus grands pour meilleure accessibilité tactile */
+                padding: 10px 10px;
             }
         }
     </style>
