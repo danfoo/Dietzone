@@ -75,13 +75,6 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
 
 <div class="portal-content">
     <div class="container-fluid">
-        <!-- Back button -->
-        <div class="mb-3">
-            <a href="<?php echo site_url('dietetic/portal/invoices'); ?>" class="btn btn-default">
-                <i class="fa fa-arrow-left"></i> Retour aux factures
-            </a>
-        </div>
-
         <!-- Invoice Header -->
         <div class="invoice-header-card">
             <div class="invoice-header-top">
@@ -197,41 +190,54 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
 
         <!-- Invoice Totals -->
         <div class="invoice-totals-section">
-            <div class="totals-table">
-                <div class="total-row">
-                    <span class="total-label">Sous-total:</span>
+            <h2 class="totals-title">Récapitulatif</h2>
+            <div class="totals-card">
+                <div class="total-row total-row-subtle">
+                    <span class="total-label">
+                        <i class="fa fa-calculator"></i> Sous-total
+                    </span>
                     <span class="total-value"><?php echo format_money_safe($invoice->subtotal, $currency); ?></span>
                 </div>
 
                 <?php if (isset($invoice->discount_total) && $invoice->discount_total > 0): ?>
-                    <div class="total-row">
-                        <span class="total-label">Réduction:</span>
-                        <span class="total-value text-success">-<?php echo format_money_safe($invoice->discount_total, $currency); ?></span>
+                    <div class="total-row total-row-subtle total-row-success">
+                        <span class="total-label">
+                            <i class="fa fa-tag"></i> Réduction
+                        </span>
+                        <span class="total-value">-<?php echo format_money_safe($invoice->discount_total, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
                 <?php if (isset($invoice->adjustment) && $invoice->adjustment != 0): ?>
-                    <div class="total-row">
-                        <span class="total-label">Ajustement:</span>
+                    <div class="total-row total-row-subtle">
+                        <span class="total-label">
+                            <i class="fa fa-adjust"></i> Ajustement
+                        </span>
                         <span class="total-value"><?php echo format_money_safe($invoice->adjustment, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
                 <div class="total-row total-row-main">
-                    <span class="total-label"><strong>TOTAL:</strong></span>
+                    <span class="total-label">
+                        <i class="fa fa-money"></i> Total
+                    </span>
                     <span class="total-value total-amount"><?php echo format_money_safe($invoice->total, $currency); ?></span>
                 </div>
 
                 <?php if ($invoice->total_paid > 0): ?>
-                    <div class="total-row">
-                        <span class="total-label">Montant payé:</span>
-                        <span class="total-value text-success"><?php echo format_money_safe($invoice->total_paid, $currency); ?></span>
+                    <div class="total-row total-row-subtle total-row-success">
+                        <span class="total-label">
+                            <i class="fa fa-check-circle"></i> Montant payé
+                        </span>
+                        <span class="total-value"><?php echo format_money_safe($invoice->total_paid, $currency); ?></span>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($invoice->balance > 0): ?>
                     <div class="total-row total-row-balance">
-                        <span class="total-label"><strong>SOLDE DÛ:</strong></span>
+                        <span class="total-label">
+                            <i class="fa fa-exclamation-circle"></i> Solde dû
+                        </span>
                         <span class="total-value balance-amount"><?php echo format_money_safe($invoice->balance, $currency); ?></span>
                     </div>
                 <?php endif; ?>
@@ -568,42 +574,119 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
     color: #333;
 }
 
-.totals-table {
-    max-width: 400px;
+/* Totals section */
+.totals-title {
+    color: #01807B;
+    font-size: 20px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.totals-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 450px;
     margin-left: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.2s;
+}
+
+.total-row:hover {
+    background: rgba(1, 128, 123, 0.03);
+    margin: 0 -10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 6px;
+}
+
+.total-row:last-child {
+    border-bottom: none;
+}
+
+.total-row-subtle .total-label {
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.total-row-subtle .total-value {
+    color: #495057;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.total-row-success .total-value {
+    color: #28a745;
 }
 
 .total-row-main {
-    border-top: 2px solid #01807B;
-    border-bottom: 2px solid #01807B;
-    padding: 15px 0;
-    font-size: 18px;
+    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    margin: 15px -20px;
+    padding: 15px 20px !important;
+    border-radius: 8px;
+    border: none !important;
+}
+
+.total-row-main .total-label {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-row-main .total-value {
+    color: white;
 }
 
 .total-row-balance {
-    background: #fff3cd;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
     padding: 15px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-    font-size: 18px;
+    margin: 15px -20px -20px -20px;
+    border-radius: 0 0 12px 12px;
+    border: none !important;
+    border-top: 2px dashed #ffc107 !important;
+}
+
+.total-row-balance .total-label {
+    color: #856404;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.total-row-balance .total-value {
+    color: #856404;
+}
+
+.total-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.total-label i {
+    font-size: 14px;
+    opacity: 0.7;
 }
 
 .total-amount {
-    color: #01807B;
-    font-size: 24px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .balance-amount {
     color: #856404;
-    font-size: 20px;
+    font-size: 17px;
+    font-weight: 700;
 }
 
 .note-box {
@@ -691,8 +774,20 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
         font-size: 22px;
     }
 
-    .totals-table {
+    .totals-card {
         max-width: 100%;
+    }
+
+    .total-row {
+        padding: 10px 0;
+    }
+
+    .total-row-subtle .total-label {
+        font-size: 13px;
+    }
+
+    .total-row-subtle .total-value {
+        font-size: 14px;
     }
 
     .invoice-actions {
