@@ -2230,7 +2230,7 @@ body {
                 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Fond dynamique médical animé */
+/* Animation de fond fun - Étoiles scintillantes et confettis */
 .weight-goal-card::before {
     content: '';
     position: absolute;
@@ -2239,50 +2239,77 @@ body {
     right: 0;
     bottom: 0;
     background-image:
-        radial-gradient(circle at 20% 50%, rgba(1, 128, 123, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(72, 187, 120, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(66, 153, 225, 0.03) 0%, transparent 50%);
-    animation: medicalPulseCard 15s ease-in-out infinite;
+        radial-gradient(circle at 15% 25%, rgba(255, 215, 0, 0.15) 0%, transparent 8%),
+        radial-gradient(circle at 85% 15%, rgba(255, 107, 129, 0.12) 0%, transparent 10%),
+        radial-gradient(circle at 60% 70%, rgba(72, 187, 250, 0.12) 0%, transparent 9%),
+        radial-gradient(circle at 25% 80%, rgba(159, 122, 234, 0.12) 0%, transparent 8%),
+        radial-gradient(circle at 75% 50%, rgba(255, 193, 7, 0.1) 0%, transparent 7%),
+        radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.1) 0%, transparent 8%);
+    animation: sparkleFloat 8s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
 }
 
-@keyframes medicalPulseCard {
+@keyframes sparkleFloat {
     0%, 100% {
+        opacity: 0.6;
+        transform: scale(1) rotate(0deg);
+    }
+    25% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1.1) rotate(5deg);
     }
     50% {
-        opacity: 0.8;
-        transform: scale(1.05);
+        opacity: 0.7;
+        transform: scale(0.95) rotate(-5deg);
+    }
+    75% {
+        opacity: 0.9;
+        transform: scale(1.05) rotate(3deg);
     }
 }
 
-/* Particules médicales flottantes */
+/* Confettis et étoiles animées */
 .weight-goal-card::after {
-    content: '';
+    content: '✨ ⭐ 🎉 ✨ 💪 🌟 ⚡ 🎊 ✨ ⭐ 🔥 💫';
     position: absolute;
-    top: 0;
+    top: -20px;
     left: 0;
     right: 0;
-    bottom: 0;
-    background-image:
-        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.04"><path d="M50 20 L50 80 M20 50 L80 50" stroke="%2301807B" stroke-width="3"/></svg>');
-    background-size: 80px 80px;
-    animation: floatCard 40s linear infinite;
+    bottom: -20px;
+    font-size: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    opacity: 0.08;
+    animation: confettiDance 25s linear infinite;
     pointer-events: none;
     z-index: 0;
+    letter-spacing: 40px;
+    line-height: 80px;
 }
 
-@keyframes floatCard {
+@keyframes confettiDance {
     0% {
-        transform: translateY(0) translateX(0);
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.08;
+    }
+    25% {
+        transform: translateY(-10px) rotate(5deg);
+        opacity: 0.12;
     }
     50% {
-        transform: translateY(-15px) translateX(8px);
+        transform: translateY(-5px) rotate(-5deg);
+        opacity: 0.06;
+    }
+    75% {
+        transform: translateY(-15px) rotate(3deg);
+        opacity: 0.1;
     }
     100% {
-        transform: translateY(0) translateX(0);
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.08;
     }
 }
 
