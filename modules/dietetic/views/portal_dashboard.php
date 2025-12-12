@@ -2747,7 +2747,7 @@ body {
 }
 
 .weight-motivation-simple {
-    font-size: 14px;
+    font-size: 11px;
     line-height: 1.6;
     font-weight: 600;
     text-align: center;
@@ -2835,7 +2835,7 @@ body {
     }
 
     .progress-circle-weight {
-        font-size: 30px;
+        font-size: 25px;
     }
 
     .progress-circle-label-orange {
