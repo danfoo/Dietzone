@@ -40,7 +40,7 @@
             <div class="footer-icon-container">
                 <span class="material-symbols-rounded footer-icon">stethoscope</span>
             </div>
-            <span class="footer-label">Coach</span>
+            <span class="footer-label">Diététicien</span>
         </a>
 
         <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">

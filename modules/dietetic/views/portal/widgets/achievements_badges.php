@@ -46,7 +46,7 @@ foreach ($badge_wall as $badge) {
 }
 
 .achievements-title {
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 700;
     color: #2c3e50;
     display: flex;

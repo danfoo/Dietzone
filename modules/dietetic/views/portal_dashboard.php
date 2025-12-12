@@ -284,7 +284,7 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .hydration-title-compact {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #01579b;
     display: flex;
@@ -2268,46 +2268,6 @@ body {
     }
 }
 
-/* Étincelles et flammes dansantes */
-.weight-goal-card::after {
-    content: '🔥 💪 🔥 ⚡ 🔥 💪 🔥 ⚡ 🔥 💪 🔥 ⚡';
-    position: absolute;
-    top: -20px;
-    left: 0;
-    right: 0;
-    bottom: -20px;
-    font-size: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-around;
-    opacity: 0.1;
-    animation: flameDance 4s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-    letter-spacing: 35px;
-    line-height: 70px;
-}
-
-@keyframes flameDance {
-    0%, 100% {
-        transform: translateY(0) scale(1);
-        opacity: 0.1;
-    }
-    25% {
-        transform: translateY(-12px) scale(1.05);
-        opacity: 0.15;
-    }
-    50% {
-        transform: translateY(-20px) scale(1.08);
-        opacity: 0.12;
-    }
-    75% {
-        transform: translateY(-8px) scale(1.03);
-        opacity: 0.14;
-    }
-}
-
 .weight-goal-header {
     display: flex;
     align-items: center;
@@ -2318,7 +2278,7 @@ body {
 }
 
 .weight-goal-title {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 800;
     color: #00695C;
     margin: 0;
