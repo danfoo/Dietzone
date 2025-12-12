@@ -1,14 +1,18 @@
     </div> <!-- Close content-container -->
 
-    <!-- FOOTER MAGNIFIQUE -->
+    <!-- FOOTER MAGNIFIQUE - ULTRA MODERN -->
     <footer class="app-footer">
         <a href="<?php echo site_url('dietetic/portal'); ?>" class="footer-item <?php echo (!isset($active_page) || $active_page == 'dashboard') ? 'active' : ''; ?>">
-            <i class="fa fa-home footer-icon"></i>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">home</span>
+            </div>
             <span class="footer-label">Accueil</span>
         </a>
 
         <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'recipes') ? 'active' : ''; ?>">
-            <i class="fa fa-cutlery footer-icon"></i>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">menu_book</span>
+            </div>
             <span class="footer-label">Recettes</span>
         </a>
 
@@ -18,24 +22,32 @@
         if ($CI_footer->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
         ?>
         <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'food_surveys') ? 'active' : ''; ?>">
-            <i class="fa fa-list-alt footer-icon"></i>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">assignment</span>
+            </div>
             <span class="footer-label">Enquêtes</span>
         </a>
         <?php } else { ?>
         <a href="<?php echo site_url('dietetic/portal/add_measurement'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'add_measurement') ? 'active' : ''; ?>">
-            <i class="fa fa-plus-circle footer-icon"></i>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">add_circle</span>
+            </div>
             <span class="footer-label">Mesure</span>
         </a>
         <?php } ?>
 
         <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'my_dietitians') ? 'active' : ''; ?>">
-            <i class="fa fa-user-md footer-icon"></i>
-            <span class="footer-label">Mon coach</span>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">stethoscope</span>
+            </div>
+            <span class="footer-label">Coach</span>
         </a>
 
         <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="footer-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">
-            <i class="fa fa-calendar footer-icon"></i>
-            <span class="footer-label">Programmes</span>
+            <div class="footer-icon-container">
+                <span class="material-symbols-rounded footer-icon">calendar_today</span>
+            </div>
+            <span class="footer-label">Plans</span>
         </a>
     </footer>
 

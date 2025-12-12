@@ -13,9 +13,11 @@
     <?php } ?>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Material Icons de Google -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -24,9 +26,19 @@
             -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
+        /* Material Icons Styling */
+        .material-symbols-rounded {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
+
+        .material-icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
         body {
-            background: #f8f9fa;
-            font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf3 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
             padding-top: 60px; /* Space for fixed header */
             padding-bottom: 60px; /* Space for fixed footer */
@@ -909,109 +921,237 @@
             visibility: visible;
         }
 
-        /* Slide Menu */
+        /* Slide Menu - Ultra Modern Design */
         .slide-menu {
             position: fixed;
             top: 0;
-            right: -350px;
-            width: 320px;
+            right: -380px;
+            width: 360px;
             height: 100vh;
             max-height: 100vh;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 1003;
-            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+            transition: right 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
             overflow-y: auto;
             overflow-x: hidden;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling sur iOS */
+            -webkit-overflow-scrolling: touch;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .slide-menu.active {
             right: 0;
         }
 
+        /* Custom Scrollbar pour le menu */
+        .slide-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .slide-menu::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .slide-menu::-webkit-scrollbar-thumb {
+            background: rgba(1, 128, 123, 0.3);
+            border-radius: 10px;
+        }
+
+        .slide-menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(1, 128, 123, 0.5);
+        }
+
         .menu-header {
-            background: linear-gradient(135deg, #01807B 0%, #019B95 100%);
-            padding: 30px 20px;
+            background: linear-gradient(135deg, #01807B 0%, #019d96 50%, #01807B 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+            padding: 40px 25px 30px 25px;
             color: white;
-            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotateBg 15s linear infinite;
         }
 
         .menu-header h3 {
             margin: 0;
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
         }
 
         .menu-header p {
-            margin: 5px 0 0 0;
+            margin: 8px 0 0 0;
             opacity: 0.9;
             font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
         }
 
         .menu-items {
-            padding: 15px 0 80px 0; /* Padding en bas pour accès facile au dernier élément sur mobile */
+            padding: 20px 0 100px 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(248, 249, 250, 0.8) 100%);
         }
 
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 16px 20px;
+            gap: 16px;
+            padding: 16px 25px;
             color: #2c3e50;
             text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             position: relative;
+            margin: 4px 15px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: linear-gradient(90deg, #01807B 0%, rgba(1, 128, 123, 0.1) 100%);
+            transition: width 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border-radius: 14px 0 0 14px;
+        }
+
+        .menu-item:hover::before {
+            width: 100%;
         }
 
         .menu-item:hover {
-            background: linear-gradient(90deg, rgba(1, 128, 123, 0.1) 0%, transparent 100%);
-            border-left-color: #01807B;
-            padding-left: 25px;
+            background: rgba(1, 128, 123, 0.08);
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
         }
 
         .menu-item.active {
-            background: linear-gradient(90deg, rgba(1, 128, 123, 0.15) 0%, transparent 100%);
-            border-left-color: #01807B;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.15) 0%, rgba(1, 128, 123, 0.05) 100%);
             font-weight: 600;
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.12);
         }
 
-        .menu-item i {
-            font-size: 22px;
-            width: 30px;
-            text-align: center;
+        .menu-item.active::after {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #01807B;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(1, 128, 123, 0.6);
+        }
+
+        /* Icon container with modern design */
+        .menu-item-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(1, 155, 149, 0.05) 100%);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+
+        .menu-item:hover .menu-item-icon {
+            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 16px rgba(1, 128, 123, 0.3);
+        }
+
+        .menu-item.active .menu-item-icon {
+            background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+            box-shadow: 0 4px 12px rgba(1, 128, 123, 0.3);
+        }
+
+        .menu-item-icon .material-symbols-rounded {
+            font-size: 24px;
             color: #01807B;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover .menu-item-icon .material-symbols-rounded,
+        .menu-item.active .menu-item-icon .material-symbols-rounded {
+            color: white;
+            font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
         }
 
         .menu-item span {
             flex: 1;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.2px;
+        }
+
+        .menu-item.active span {
+            font-weight: 700;
         }
 
         .menu-divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
-            margin: 10px 20px;
+            background: linear-gradient(90deg, transparent 0%, rgba(1, 128, 123, 0.15) 50%, transparent 100%);
+            margin: 15px 30px;
+            position: relative;
+        }
+
+        .menu-divider::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: #01807B;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(1, 128, 123, 0.4);
         }
 
         /* ============================================
-           FOOTER MAGNIFIQUE
+           FOOTER MAGNIFIQUE - ULTRA MODERN
            ============================================ */
         .app-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 50px;
-            background: white;
-            border-top: 1px solid #e9ecef;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            height: 68px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(1, 128, 123, 0.1);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
             z-index: 1000;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 5px;
+            padding: 8px 10px;
         }
 
         .footer-item {
@@ -1020,58 +1160,93 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 3px;
-            padding: 8px 3px;
+            gap: 4px;
+            padding: 8px 4px;
             color: #6c757d;
             text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.2s;
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             position: relative;
+            max-width: 80px;
         }
 
-        .footer-item:hover {
-            background: rgba(1, 128, 123, 0.05);
+        .footer-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(1, 155, 149, 0.05) 100%);
+            border-radius: 16px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .footer-item:hover::before {
+            opacity: 1;
+            transform: scale(1);
         }
 
         .footer-item:active {
-            transform: scale(0.92);
-        }
-
-        .footer-item.active {
-            color: #01807B;
+            transform: scale(0.9);
         }
 
         .footer-item.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 32px;
-            height: 3px;
-            background: #01807B;
-            border-radius: 0 0 3px 3px;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .footer-icon-container {
+            width: 48px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
         }
 
         .footer-icon {
-            font-size: 20px;
-            transition: all 0.2s;
+            font-size: 26px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
         .footer-item.active .footer-icon {
-            transform: scale(1.08);
+            transform: translateY(-3px) scale(1.15);
             color: #01807B;
+            font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .footer-item:hover .footer-icon {
+            transform: translateY(-2px) scale(1.1);
         }
 
         .footer-label {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s;
         }
 
         .footer-item.active .footer-label {
-            font-weight: 700;
+            font-weight: 800;
+            color: #01807B;
+        }
+
+        /* Active indicator dot */
+        .footer-item.active .footer-icon-container::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #01807B;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(1, 128, 123, 0.6);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         /* Content Container */
@@ -1218,12 +1393,16 @@
 
         <div class="menu-items">
             <a href="<?php echo site_url('dietetic/portal'); ?>" class="menu-item <?php echo (!isset($active_page) || $active_page == 'dashboard') ? 'active' : ''; ?>">
-                <i class="fa fa-home"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">home</span>
+                </div>
                 <span>Accueil</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/meal_plans'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'meal_plans') ? 'active' : ''; ?>">
-                <i class="fa fa-cutlery"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">restaurant_menu</span>
+                </div>
                 <span>Plans de Repas</span>
             </a>
 
@@ -1233,7 +1412,9 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_food_surveys')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/food_surveys'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'food_surveys') ? 'active' : ''; ?>">
-                <i class="fa fa-list-alt"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">assignment</span>
+                </div>
                 <span>Enquêtes Alimentaires</span>
             </a>
             <?php } ?>
@@ -1243,7 +1424,9 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_recipes')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/recipes'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'recipes') ? 'active' : ''; ?>">
-                <i class="fa fa-book"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">menu_book</span>
+                </div>
                 <span>Recettes</span>
             </a>
             <?php } ?>
@@ -1253,13 +1436,17 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_blog_articles')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/blog'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'blog') ? 'active' : ''; ?>">
-                <i class="fa fa-newspaper-o"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">article</span>
+                </div>
                 <span>Conseils & Blog</span>
             </a>
             <?php } ?>
 
             <a href="<?php echo site_url('dietetic/portal/measurements'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'measurements') ? 'active' : ''; ?>">
-                <i class="fa fa-line-chart"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">monitoring</span>
+                </div>
                 <span>Mes Mesures</span>
             </a>
 
@@ -1268,35 +1455,47 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_activities')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/activities'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'activities') ? 'active' : ''; ?>">
-                <i class="fa fa-heartbeat"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">exercise</span>
+                </div>
                 <span>Mes Activités</span>
             </a>
             <?php } ?>
 
             <a href="<?php echo site_url('dietetic/portal/invoices'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'invoices') ? 'active' : ''; ?>">
-                <i class="fa fa-file-text-o"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">receipt_long</span>
+                </div>
                 <span>Mes Factures</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/statistics'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'statistics') ? 'active' : ''; ?>">
-                <i class="fa fa-area-chart"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">bar_chart</span>
+                </div>
                 <span>Mes Statistiques</span>
             </a>
 
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('dietetic/portal/consultations'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'consultations') ? 'active' : ''; ?>">
-                <i class="fa fa-calendar"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">calendar_today</span>
+                </div>
                 <span>Mes Consultations</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/book_appointment'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'book_appointment') ? 'active' : ''; ?>">
-                <i class="fa fa-calendar-plus"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">event_available</span>
+                </div>
                 <span>Prendre Rendez-vous</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/my_dietitians'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'my_dietitians') ? 'active' : ''; ?>">
-                <i class="fa fa-user-md"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">stethoscope</span>
+                </div>
                 <span>Mon Diététicien</span>
             </a>
 
@@ -1307,7 +1506,9 @@
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
             ?>
             <a href="<?php echo site_url('dietetic/portal/notification_preferences'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'notification_preferences') ? 'active' : ''; ?>">
-                <i class="fa fa-bell"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">notifications</span>
+                </div>
                 <span>Préférences de Notifications</span>
             </a>
             <?php } ?>
@@ -1316,24 +1517,32 @@
 
             <!-- Legal Pages -->
             <a href="<?php echo site_url('dietetic/portal/privacy'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'privacy') ? 'active' : ''; ?>">
-                <i class="fa fa-shield"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">shield</span>
+                </div>
                 <span>Politique de Confidentialité</span>
             </a>
 
             <a href="<?php echo site_url('dietetic/portal/terms'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'terms') ? 'active' : ''; ?>">
-                <i class="fa fa-file-text"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">description</span>
+                </div>
                 <span>Conditions d'Utilisation</span>
             </a>
 
             <div class="menu-divider"></div>
 
             <a href="<?php echo site_url('dietetic/portal/profile'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">
-                <i class="fa fa-user"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">person</span>
+                </div>
                 <span>Mon Profil</span>
             </a>
 
             <a href="<?php echo site_url('authentication/logout'); ?>" class="menu-item">
-                <i class="fa fa-sign-out"></i>
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">logout</span>
+                </div>
                 <span>Déconnexion</span>
             </a>
         </div>
