@@ -13,7 +13,7 @@ $this->load->view('portal/includes/portal_header');
 <style>
 /* Welcome Message */
 .welcome-message {
-    font-size: 18px;
+    font-size: 14px;
     color: #495057;
     margin-bottom: 24px;
 }
