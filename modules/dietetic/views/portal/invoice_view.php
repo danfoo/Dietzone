@@ -149,39 +149,50 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
         <!-- Invoice Items -->
         <div class="invoice-items-section">
             <h2>Articles</h2>
-            <div class="table-responsive">
-                <table class="invoice-items-table">
-                    <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th class="text-center">Quantité</th>
-                            <th class="text-right">Prix unitaire</th>
-                            <th class="text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (isset($invoice->items) && !empty($invoice->items)): ?>
-                            <?php foreach ($invoice->items as $item): ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($item->description); ?></strong>
-                                        <?php if (isset($item->long_description) && !empty($item->long_description)): ?>
-                                            <br><small class="text-muted"><?php echo nl2br(htmlspecialchars($item->long_description)); ?></small>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center"><?php echo (float)$item->qty; ?></td>
-                                    <td class="text-right"><?php echo format_money_safe($item->rate, $currency); ?></td>
-                                    <td class="text-right"><strong><?php echo format_money_safe($item->rate * $item->qty, $currency); ?></strong></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">Aucun article</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+
+            <?php if (isset($invoice->items) && !empty($invoice->items)): ?>
+                <!-- Mobile-friendly card layout for items -->
+                <div class="items-cards-container">
+                    <?php foreach ($invoice->items as $index => $item): ?>
+                        <div class="item-card">
+                            <div class="item-card-header">
+                                <span class="item-number">#<?php echo $index + 1; ?></span>
+                                <span class="item-total-badge">
+                                    <?php echo format_money_safe($item->rate * $item->qty, $currency); ?>
+                                </span>
+                            </div>
+
+                            <div class="item-card-body">
+                                <div class="item-description">
+                                    <strong><?php echo htmlspecialchars($item->description); ?></strong>
+                                    <?php if (isset($item->long_description) && !empty($item->long_description)): ?>
+                                        <p class="item-long-desc"><?php echo nl2br(htmlspecialchars($item->long_description)); ?></p>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="item-details-grid">
+                                    <div class="item-detail">
+                                        <span class="detail-label">Quantité</span>
+                                        <span class="detail-value"><?php echo (float)$item->qty; ?></span>
+                                    </div>
+                                    <div class="item-detail">
+                                        <span class="detail-label">Prix unitaire</span>
+                                        <span class="detail-value"><?php echo format_money_safe($item->rate, $currency); ?></span>
+                                    </div>
+                                    <div class="item-detail item-detail-total">
+                                        <span class="detail-label">Total</span>
+                                        <span class="detail-value total-value"><?php echo format_money_safe($item->rate * $item->qty, $currency); ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state-small">
+                    <p class="text-muted">Aucun article</p>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Invoice Totals -->
@@ -434,26 +445,124 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
     font-weight: 600;
 }
 
-.invoice-items-table,
+/* Mobile-friendly items cards */
+.items-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+}
+
+.item-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #01807B;
+}
+
+.item-card-header {
+    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-number {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.item-total-badge {
+    background: white;
+    color: #01807B;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.item-card-body {
+    padding: 15px;
+}
+
+.item-description {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.item-description strong {
+    color: #333;
+    font-size: 16px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.item-long-desc {
+    color: #666;
+    font-size: 14px;
+    margin: 8px 0 0 0;
+    line-height: 1.5;
+}
+
+.item-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.item-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.detail-label {
+    color: #666;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.item-detail-total .detail-value {
+    color: #01807B;
+    font-size: 18px;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
+
 .payments-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.invoice-items-table thead,
 .payments-table thead {
     background: #f8f9fa;
 }
 
-.invoice-items-table th,
-.invoice-items-table td,
 .payments-table th,
 .payments-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
 }
 
-.invoice-items-table th,
 .payments-table th {
     font-weight: 600;
     color: #333;
@@ -593,6 +702,43 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
     .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Mobile adjustments for item cards */
+    .item-details-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .item-detail {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .item-detail:last-child {
+        border-bottom: none;
+    }
+
+    .item-detail-total {
+        background: #f8f9fa;
+        margin: 10px -15px -15px -15px;
+        padding: 12px 15px !important;
+        border-bottom: none !important;
+    }
+
+    .detail-label {
+        font-size: 13px;
+    }
+
+    .detail-value {
+        font-size: 14px;
+    }
+
+    .item-total-badge {
+        font-size: 14px;
+        padding: 4px 10px;
     }
 }
 </style>
