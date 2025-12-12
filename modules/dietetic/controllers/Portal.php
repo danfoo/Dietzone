@@ -10488,13 +10488,13 @@ app.dietsenegal.net/dietetic/portal";
         log_activity('INVOICE VIEW - Facture trouvée, chargement de la vue custom');
 
         try {
-            // Get invoice items (Perfex uses 'items' table with rel_id and rel_type)
+            // Get invoice items (Perfex uses 'itemable' table)
             log_activity('INVOICE VIEW - Début chargement items');
             $this->db->select('*');
             $this->db->where('rel_id', $invoice->id);
             $this->db->where('rel_type', 'invoice');
             $this->db->order_by('item_order', 'ASC');
-            $invoice->items = $this->db->get(db_prefix() . 'items')->result();
+            $invoice->items = $this->db->get(db_prefix() . 'itemable')->result();
 
             log_activity('INVOICE VIEW - Items chargés: ' . count($invoice->items));
 
