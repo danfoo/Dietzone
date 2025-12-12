@@ -17,7 +17,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Police Avenir Next (Google Fonts alternative) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -38,10 +39,78 @@
 
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf3 100%);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-family: 'Montserrat', 'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             min-height: 100vh;
             padding-top: 60px; /* Space for fixed header */
             padding-bottom: 60px; /* Space for fixed footer */
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fond dynamique médical animé */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(1, 128, 123, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(72, 187, 120, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(66, 153, 225, 0.02) 0%, transparent 50%);
+            animation: medicalPulse 15s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes medicalPulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Particules médicales flottantes */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.03"><path d="M50 20 L50 80 M20 50 L80 50" stroke="%2301807B" stroke-width="3"/></svg>');
+            background-size: 100px 100px;
+            animation: float 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+            50% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+        }
+
+        /* S'assurer que le contenu est au-dessus */
+        .content-container,
+        .portal-content,
+        .app-header,
+        .app-footer,
+        .slide-menu {
+            position: relative;
+            z-index: 1;
         }
 
         /* ============================================

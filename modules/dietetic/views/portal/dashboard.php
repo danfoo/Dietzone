@@ -164,6 +164,68 @@ $this->load->view('portal/includes/portal_header');
     color: #01807B;
 }
 
+/* Cercle de progression visuel */
+.progress-visual-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+}
+
+.progress-circle-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-circle-bg {
+    fill: none;
+    stroke: #e9ecef;
+    stroke-width: 12;
+}
+
+.progress-circle-fill {
+    fill: none;
+    stroke: url(#progressGradient);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 534.07;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    filter: drop-shadow(0 0 8px rgba(1, 128, 123, 0.3));
+}
+
+.progress-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-circle-number {
+    font-size: 48px;
+    font-weight: 800;
+    color: #01807B;
+    line-height: 1;
+    font-family: 'Montserrat', 'Avenir Next', sans-serif;
+    letter-spacing: -2px;
+}
+
+.progress-percent-symbol {
+    font-size: 28px;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.progress-circle-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 8px;
+}
+
 .progress-gauge-bar {
     position: relative;
     height: 20px;
@@ -1866,6 +1928,26 @@ if (!$current_weight || !$target_weight) {
             <div class="progress-gauge-label">Progression</div>
             <div class="progress-gauge-percent"><?php echo round($progress_percent); ?>%</div>
         </div>
+
+        <!-- Graphique circulaire moderne -->
+        <div class="progress-visual-container">
+            <svg class="progress-circle-svg" viewBox="0 0 200 200">
+                <defs>
+                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#01807B;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#019d96;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <circle class="progress-circle-bg" cx="100" cy="100" r="85" />
+                <circle class="progress-circle-fill" cx="100" cy="100" r="85"
+                        style="stroke-dashoffset: calc(534.07 - (534.07 * <?php echo round($progress_percent); ?>) / 100);" />
+            </svg>
+            <div class="progress-circle-text">
+                <div class="progress-circle-number"><?php echo round($progress_percent); ?><span class="progress-percent-symbol">%</span></div>
+                <div class="progress-circle-label">PROGRESSION</div>
+            </div>
+        </div>
+
         <div class="progress-gauge-bar">
             <div class="progress-gauge-fill" style="width: <?php echo round($progress_percent); ?>%;"></div>
         </div>
