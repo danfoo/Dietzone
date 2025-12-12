@@ -135,7 +135,6 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             position: relative;
-            overflow: hidden;
         }
 
         .notification-btn::before {
@@ -145,15 +144,15 @@
             left: 50%;
             width: 0;
             height: 0;
-            border-radius: 50%;
+            border-radius: 12px;
             background: rgba(1, 128, 123, 0.1);
             transform: translate(-50%, -50%);
             transition: width 0.4s, height 0.4s;
         }
 
         .notification-btn:hover::before {
-            width: 100px;
-            height: 100px;
+            width: 100%;
+            height: 100%;
         }
 
         .notification-btn:hover {
