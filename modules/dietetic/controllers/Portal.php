@@ -144,6 +144,7 @@ class Portal extends App_Controller
             'invoice',
             // Services subscription methods
             'services',
+            'services_debug',
             'subscribe_service',
             'check_service_eligibility',
             // Subscription management methods
@@ -12828,10 +12829,22 @@ php index.php cron/index</pre>';
 
         $client_id = $this->session->userdata('client_user_id');
 
+        // Initialize data with defaults
+        $data = [
+            'patient' => null,
+            'services' => [],
+            'unpaid_invoices' => [],
+            'has_unpaid_invoices' => false,
+            'has_initial_consultation' => false,
+            'active_page' => 'services'
+        ];
+
         // Get patient
         try {
             $patient = $this->dietetic_patients_model->get_by_client($client_id);
+            $data['patient'] = $patient;
         } catch (Exception $e) {
+            log_message('error', 'Services - Error getting patient: ' . $e->getMessage());
             $patient = null;
         }
 
@@ -12841,39 +12854,67 @@ php index.php cron/index</pre>';
         }
 
         // Get available services from Perfex items with group "Services"
-        $this->db->select('i.*, ig.name as group_name');
-        $this->db->from(db_prefix() . 'items i');
-        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
-        $this->db->where('ig.name', 'Services');
-        $this->db->where('i.active', 1);
-        $this->db->order_by('i.rate', 'DESC');
-        $services = $this->db->get()->result();
+        try {
+            $this->db->select('i.*, ig.name as group_name');
+            $this->db->from(db_prefix() . 'items i');
+            $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+            $this->db->where('ig.name', 'Services');
+            $this->db->where('i.active', 1);
+            $this->db->order_by('i.rate', 'DESC');
+            $services = $this->db->get()->result();
+            $data['services'] = $services ? $services : [];
+        } catch (Exception $e) {
+            log_message('error', 'Services - Error getting services: ' . $e->getMessage());
+            $data['services'] = [];
+        }
 
         // Get patient's unpaid invoices
-        $this->db->select('id, invoicenumber, total, status');
-        $this->db->from(db_prefix() . 'invoices');
-        $this->db->where('clientid', $client_id);
-        $this->db->where_in('status', [1, 2, 4, 5]);
-        $unpaid_invoices = $this->db->get()->result();
+        try {
+            $this->db->select('id, invoicenumber, total, status');
+            $this->db->from(db_prefix() . 'invoices');
+            $this->db->where('clientid', $client_id);
+            $this->db->where_in('status', [1, 2, 4, 5]);
+            $unpaid_invoices = $this->db->get()->result();
+            $data['unpaid_invoices'] = $unpaid_invoices ? $unpaid_invoices : [];
+            $data['has_unpaid_invoices'] = count($data['unpaid_invoices']) > 0;
+        } catch (Exception $e) {
+            log_message('error', 'Services - Error getting invoices: ' . $e->getMessage());
+        }
 
         // Check if patient has had initial consultation
-        $has_initial_consultation = $this->db
-            ->where('patient_id', $patient->id)
-            ->where('status !=', 'cancelled')
-            ->count_all_results(db_prefix() . 'dietic_consultations') > 0;
-
-        $data = [
-            'patient' => $patient,
-            'services' => $services,
-            'unpaid_invoices' => $unpaid_invoices,
-            'has_unpaid_invoices' => count($unpaid_invoices) > 0,
-            'has_initial_consultation' => $has_initial_consultation,
-            'active_page' => 'services'
-        ];
+        try {
+            $consultation_count = $this->db
+                ->where('patient_id', $patient->id)
+                ->where('status !=', 'cancelled')
+                ->count_all_results(db_prefix() . 'dietic_consultations');
+            $data['has_initial_consultation'] = $consultation_count > 0;
+        } catch (Exception $e) {
+            // Try alternative table name
+            try {
+                $consultation_count = $this->db
+                    ->where('patient_id', $patient->id)
+                    ->where('status !=', 'cancelled')
+                    ->count_all_results(db_prefix() . 'dietetic_consultations');
+                $data['has_initial_consultation'] = $consultation_count > 0;
+            } catch (Exception $e2) {
+                log_message('error', 'Services - Error checking consultations: ' . $e2->getMessage());
+                $data['has_initial_consultation'] = true; // Default to true to avoid blocking
+            }
+        }
 
         $this->load->view('dietetic/portal/includes/portal_header', $data);
         $this->load->view('portal/services', $data);
         $this->load->view('dietetic/portal/includes/portal_footer');
+    }
+
+    /**
+     * Debug page for services
+     */
+    public function services_debug()
+    {
+        // No authentication check - for debugging only
+        // Load the debug view
+        $this->load->view('portal/services_debug');
     }
 
     /**
