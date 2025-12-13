@@ -13177,4 +13177,117 @@ php index.php cron/index</pre>';
             ]);
         }
     }
+
+    /**
+     * Initiate payment for an invoice with a specific gateway
+     * URL: dietetic/portal/initiate_payment/{gateway}/{invoice_id}
+     */
+    public function initiate_payment($gateway = null, $invoice_id = null)
+    {
+        // Check authentication
+        if (!$this->session->userdata('client_logged_in')) {
+            show_error('Non authentifié', 403);
+            return;
+        }
+
+        $client_id = $this->session->userdata('client_user_id');
+
+        // Validate parameters
+        if (!$gateway || !$invoice_id) {
+            show_error('Paramètres manquants', 400);
+            return;
+        }
+
+        // Verify invoice belongs to client
+        $invoice = $this->db->select('id, clientid, total, status')
+            ->from(db_prefix() . 'invoices')
+            ->where('id', $invoice_id)
+            ->where('clientid', $client_id)
+            ->get()
+            ->row();
+
+        if (!$invoice) {
+            show_error('Facture introuvable', 404);
+            return;
+        }
+
+        // Check if invoice is unpaid
+        if ($invoice->status == 2) {
+            redirect('dietetic/portal/invoices');
+            return;
+        }
+
+        // Check if gateway is enabled
+        if (!dietetic_is_payment_gateway_enabled($gateway)) {
+            show_error('Moyen de paiement non disponible', 400);
+            return;
+        }
+
+        // Get gateway settings
+        $gateway_settings = dietetic_get_payment_gateway_settings($gateway);
+
+        // Route to appropriate payment gateway handler
+        switch ($gateway) {
+            case 'wave':
+                $this->initiate_wave_payment($invoice, $gateway_settings);
+                break;
+
+            case 'paypal':
+                $this->initiate_paypal_payment($invoice, $gateway_settings);
+                break;
+
+            case 'orange_money':
+                $this->initiate_orange_money_payment($invoice, $gateway_settings);
+                break;
+
+            default:
+                show_error('Passerelle de paiement non supportée', 400);
+                break;
+        }
+    }
+
+    /**
+     * Initiate Wave payment
+     */
+    private function initiate_wave_payment($invoice, $settings)
+    {
+        // For now, show a placeholder message
+        // TODO: Implement Wave Payment API integration
+        $data['title'] = 'Paiement Wave';
+        $data['invoice'] = $invoice;
+        $data['settings'] = $settings;
+        $data['message'] = 'Intégration Wave en cours de développement...';
+
+        $this->load->view('portal/payment/wave_redirect', $data);
+    }
+
+    /**
+     * Initiate PayPal payment
+     */
+    private function initiate_paypal_payment($invoice, $settings)
+    {
+        // For now, show a placeholder message
+        // TODO: Implement PayPal API integration
+        $data['title'] = 'Paiement PayPal';
+        $data['invoice'] = $invoice;
+        $data['settings'] = $settings;
+        $data['message'] = 'Intégration PayPal en cours de développement...';
+
+        $this->load->view('portal/payment/paypal_redirect', $data);
+    }
+
+    /**
+     * Initiate Orange Money payment
+     */
+    private function initiate_orange_money_payment($invoice, $settings)
+    {
+        // For now, show a placeholder message
+        // TODO: Implement Orange Money API integration
+        $data['title'] = 'Paiement Orange Money';
+        $data['invoice'] = $invoice;
+        $data['settings'] = $settings;
+        $data['message'] = 'Intégration Orange Money en cours de développement...';
+
+        $this->load->view('portal/payment/orange_money_redirect', $data);
+    }
 }
