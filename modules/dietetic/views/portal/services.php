@@ -510,7 +510,7 @@ function checkEligibilityAndSubscribe(serviceId, serviceName, servicePrice) {
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: 'item_id=' + serviceId
+        body: '<?php echo $this->security->get_csrf_token_name(); ?>=<?php echo $this->security->get_csrf_hash(); ?>&item_id=' + serviceId
     })
     .then(response => response.json())
     .then(data => {
@@ -570,7 +570,7 @@ function confirmSubscription() {
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: 'item_id=' + currentServiceId
+        body: '<?php echo $this->security->get_csrf_token_name(); ?>=<?php echo $this->security->get_csrf_hash(); ?>&item_id=' + currentServiceId
     })
     .then(response => response.json())
     .then(data => {
