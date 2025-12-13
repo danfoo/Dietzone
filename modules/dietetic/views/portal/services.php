@@ -361,6 +361,50 @@
     transform: none;
 }
 
+/* Payment Gateway Buttons */
+.payment-gateway-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    width: 100%;
+}
+
+.payment-gateway-btn:hover {
+    border-color: #01807B;
+    background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, rgba(1, 157, 150, 0.05) 100%);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(1, 128, 123, 0.15);
+}
+
+.payment-gateway-btn .gateway-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.payment-gateway-btn .gateway-name {
+    flex: 1;
+    text-align: left;
+}
+
+.payment-gateway-btn .gateway-arrow {
+    font-size: 20px;
+    color: #01807B;
+    transition: transform 0.3s ease;
+}
+
+.payment-gateway-btn:hover .gateway-arrow {
+    transform: translateX(4px);
+}
+
 /* Toast Notifications - Mobile First Ultra Modern */
 .toast-container {
     position: fixed;
@@ -632,6 +676,26 @@
     </div>
 </div>
 
+<!-- Payment Gateway Selection Modal -->
+<div class="modal" id="paymentModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Choisir un moyen de paiement</h3>
+        <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p style="margin-bottom: 20px;">Montant à payer : <strong id="paymentAmount"></strong> FCFA</p>
+        <p style="color: #6c757d; font-size: 14px; margin-bottom: 20px;">
+            Sélectionnez votre moyen de paiement préféré :
+        </p>
+        <div id="paymentGatewaysList" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Payment gateways will be inserted here -->
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn-cancel" onclick="closePaymentModal()">Annuler</button>
+    </div>
+</div>
+
 <script>
 let currentServiceId = null;
 
@@ -747,14 +811,20 @@ function confirmSubscription() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Success! Close modal and show toast
+            // Close subscription modal
             closeModal();
-            showToast('success', 'Souscription réussie !', 'Votre facture a été créée. Redirection en cours...', 3000);
 
-            // Redirect to invoices page
-            setTimeout(() => {
-                window.location.href = data.invoice_url;
-            }, 2000);
+            // Check if payment gateways are available
+            if (data.payment_gateways && data.payment_gateways.length > 0) {
+                // Show payment selection modal
+                showPaymentModal(data.invoice_id, data.invoice_total, data.payment_gateways);
+            } else {
+                // No payment gateways, just redirect to invoices
+                showToast('success', 'Souscription réussie !', 'Votre facture a été créée. Redirection en cours...', 3000);
+                setTimeout(() => {
+                    window.location.href = data.invoice_url;
+                }, 2000);
+            }
         } else {
             // Error
             showToast('error', 'Erreur', data.message);
@@ -770,10 +840,71 @@ function confirmSubscription() {
     });
 }
 
+// Payment Modal Functions
+let currentInvoiceId = null;
+
+function showPaymentModal(invoiceId, amount, gateways) {
+    currentInvoiceId = invoiceId;
+
+    // Update amount
+    document.getElementById('paymentAmount').textContent = parseInt(amount).toLocaleString();
+
+    // Build gateway buttons
+    const gatewaysList = document.getElementById('paymentGatewaysList');
+    gatewaysList.innerHTML = '';
+
+    const gatewayIcons = {
+        'wave': '💳',
+        'paypal': '🅿️',
+        'orange_money': '🟠'
+    };
+
+    gateways.forEach(gateway => {
+        const button = document.createElement('button');
+        button.className = 'payment-gateway-btn';
+        button.innerHTML = `
+            <span class="gateway-icon">${gatewayIcons[gateway.id] || '💰'}</span>
+            <span class="gateway-name">${gateway.name}</span>
+            <span class="gateway-arrow">→</span>
+        `;
+        button.onclick = () => selectPaymentGateway(gateway.id);
+        gatewaysList.appendChild(button);
+    });
+
+    // Show modal
+    document.getElementById('modalBackdrop').classList.add('active');
+    document.getElementById('paymentModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePaymentModal() {
+    document.getElementById('modalBackdrop').classList.remove('active');
+    document.getElementById('paymentModal').classList.remove('active');
+    document.body.style.overflow = '';
+    currentInvoiceId = null;
+}
+
+function selectPaymentGateway(gateway) {
+    if (!currentInvoiceId) return;
+
+    showToast('info', 'Redirection...', 'Initialisation du paiement ' + gateway, 2000);
+
+    // Redirect to payment initiation endpoint
+    const url = '<?php echo site_url("dietetic/portal/initiate_payment"); ?>/' + gateway + '/' + currentInvoiceId;
+    setTimeout(() => {
+        window.location.href = url;
+    }, 1000);
+}
+
 // Close modal on Escape key
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.getElementById('subscriptionModal').classList.contains('active')) {
-        closeModal();
+    if (e.key === 'Escape') {
+        if (document.getElementById('subscriptionModal').classList.contains('active')) {
+            closeModal();
+        }
+        if (document.getElementById('paymentModal').classList.contains('active')) {
+            closePaymentModal();
+        }
     }
 });
 </script>
