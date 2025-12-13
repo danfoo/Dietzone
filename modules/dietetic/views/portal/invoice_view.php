@@ -319,8 +319,15 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
                     <!-- Wave Payment -->
                     <?php if (dietetic_is_payment_gateway_enabled('wave')): ?>
                     <a href="<?php echo site_url('dietetic/portal/pay/' . $invoice->id . '/wave'); ?>" class="payment-gateway-card wave-card">
-                        <div class="gateway-icon">
-                            <i class="fa fa-credit-card"></i>
+                        <div class="gateway-icon wave-icon">
+                            <?php
+                            $wave_logo_path = module_dir_path('dietetic', 'assets/images/gateways/wave-logo.png');
+                            if (file_exists($wave_logo_path)):
+                            ?>
+                                <img src="<?php echo module_dir_url('dietetic', 'assets/images/gateways/wave-logo.png'); ?>" alt="Wave" style="width: 100%; height: 100%; object-fit: contain;">
+                            <?php else: ?>
+                                <span class="wave-logo-text">wave</span>
+                            <?php endif; ?>
                         </div>
                         <div class="gateway-info">
                             <h3>Wave</h3>
@@ -970,26 +977,40 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
 
 /* Wave Card */
 .wave-card {
-    border-color: #01807B;
+    border-color: #00D9D9;
 }
 
 .wave-card::before {
-    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    background: linear-gradient(135deg, #00D9D9 0%, #00B8D4 100%);
     opacity: 0.05;
 }
 
 .wave-card:hover {
-    border-color: #01807B;
+    border-color: #00D9D9;
+}
+
+.wave-icon {
+    background: #00D9D9 !important;
+}
+
+.wave-logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    text-transform: lowercase;
+    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+    letter-spacing: 1px;
 }
 
 .wave-card:hover .gateway-icon {
-    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    background: linear-gradient(135deg, #00D9D9 0%, #00B8D4 100%);
     color: white;
+    transform: scale(1.05);
 }
 
 .wave-card:hover .gateway-info h3,
 .wave-card:hover .gateway-arrow {
-    color: #01807B;
+    color: #00D9D9;
 }
 
 /* PayPal Card */

@@ -13662,4 +13662,14 @@ php index.php cron/index</pre>';
             redirect('dietetic/portal/invoices');
         }
     }
+
+    /**
+     * Pay method - wrapper for initiate_payment with intuitive URL structure
+     * URL: dietetic/portal/pay/{invoice_id}/{gateway}
+     */
+    public function pay($invoice_id = null, $gateway = null)
+    {
+        // Simply call initiate_payment with parameters in the correct order
+        $this->initiate_payment($gateway, $invoice_id);
+    }
 }
