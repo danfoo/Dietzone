@@ -13147,12 +13147,26 @@ php index.php cron/index</pre>';
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
 
-            // Send response with invoice details
+            // Get enabled payment gateways
+            $enabled_gateways = dietetic_get_enabled_payment_gateways();
+            $payment_gateways = [];
+
+            foreach ($enabled_gateways as $gateway) {
+                $payment_gateways[] = [
+                    'id' => $gateway,
+                    'name' => dietetic_get_payment_gateway_name($gateway)
+                ];
+            }
+
+            // Send response with invoice and payment details
             echo json_encode([
                 'success' => true,
                 'message' => 'Souscription réussie !',
                 'invoice_id' => $invoice_id,
-                'invoice_url' => site_url('dietetic/portal/invoices')
+                'invoice_total' => $service->rate,
+                'invoice_url' => site_url('dietetic/portal/invoices'),
+                'payment_required' => true,
+                'payment_gateways' => $payment_gateways
             ]);
 
         } catch (Exception $e) {
