@@ -13735,7 +13735,74 @@ php index.php cron/index</pre>';
      */
     public function pay($invoice_id = null, $gateway = null)
     {
+        // Log the request
+        log_activity('PAY METHOD - Invoice: ' . $invoice_id . ', Gateway: ' . $gateway);
+        log_activity('PAY METHOD - Session client_logged_in: ' . var_export($this->session->userdata('client_logged_in'), true));
+        log_activity('PAY METHOD - Session client_user_id: ' . var_export($this->session->userdata('client_user_id'), true));
+        log_activity('PAY METHOD - All session data: ' . json_encode($this->session->all_userdata()));
+
         // Simply call initiate_payment with parameters in the correct order
         $this->initiate_payment($gateway, $invoice_id);
+    }
+
+    /**
+     * Debug payment - Show payment debug information
+     */
+    public function debug_payment()
+    {
+        echo "<h1>Debug Payment Information</h1>";
+        echo "<h2>Session Data:</h2>";
+        echo "<pre>";
+        print_r($this->session->all_userdata());
+        echo "</pre>";
+
+        echo "<h2>Authentication:</h2>";
+        echo "<pre>";
+        echo "client_logged_in: " . var_export($this->session->userdata('client_logged_in'), true) . "\n";
+        echo "client_user_id: " . var_export($this->session->userdata('client_user_id'), true) . "\n";
+        echo "</pre>";
+
+        if ($this->session->userdata('client_logged_in')) {
+            $client_id = $this->session->userdata('client_user_id');
+
+            echo "<h2>Invoices for Client ID: $client_id</h2>";
+            $this->db->where('clientid', $client_id);
+            $invoices = $this->db->get(db_prefix() . 'invoices')->result();
+
+            echo "<pre>";
+            if ($invoices) {
+                foreach ($invoices as $inv) {
+                    echo "Invoice ID: " . $inv->id . "\n";
+                    echo "  Number: " . $inv->number . "\n";
+                    echo "  Date: " . $inv->date . "\n";
+                    echo "  Total: " . $inv->total . "\n";
+                    echo "  Status: " . $inv->status . "\n";
+                    echo "  Client ID: " . $inv->clientid . "\n";
+                    echo "  URL: " . site_url('dietetic/portal/invoice/' . $inv->id) . "\n";
+                    echo "  Pay URL Wave: " . site_url('dietetic/portal/pay/' . $inv->id . '/wave') . "\n";
+                    echo "  Pay URL PayPal: " . site_url('dietetic/portal/pay/' . $inv->id . '/paypal') . "\n";
+                    echo "\n";
+                }
+            } else {
+                echo "No invoices found for this client.\n";
+            }
+            echo "</pre>";
+
+            echo "<h2>Payment Gateway Settings:</h2>";
+            echo "<pre>";
+            echo "Wave enabled: " . var_export(dietetic_is_payment_gateway_enabled('wave'), true) . "\n";
+            echo "PayPal enabled: " . var_export(dietetic_is_payment_gateway_enabled('paypal'), true) . "\n";
+            echo "Orange Money enabled: " . var_export(dietetic_is_payment_gateway_enabled('orange_money'), true) . "\n";
+            echo "\n";
+
+            if (dietetic_is_payment_gateway_enabled('wave')) {
+                $wave_settings = dietetic_get_payment_gateway_settings('wave');
+                echo "Wave settings:\n";
+                print_r($wave_settings);
+            }
+            echo "</pre>";
+        } else {
+            echo "<h2 style='color: red;'>NOT AUTHENTICATED</h2>";
+        }
     }
 }
