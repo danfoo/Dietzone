@@ -21,6 +21,34 @@
 
                         <?php echo form_open($this->uri->uri_string()); ?>
 
+                        <!-- DEBUG INFO -->
+                        <?php
+                        $payment_keys = [];
+                        foreach ($settings as $s) {
+                            if (strpos($s->setting_key, 'wave_') === 0 ||
+                                strpos($s->setting_key, 'paypal_') === 0 ||
+                                strpos($s->setting_key, 'orange_money_') === 0) {
+                                $payment_keys[] = $s->setting_key;
+                            }
+                        }
+                        if (empty($payment_keys)) {
+                            echo '<div class="alert alert-danger">';
+                            echo '<strong>⚠️ Critical:</strong> No payment settings found! ';
+                            echo 'Total settings loaded: <strong>' . count($settings) . '</strong>. ';
+                            echo '<br><small>Wave, PayPal and Orange Money settings are missing from the database or not loaded.</small><br>';
+                            echo '<a href="' . admin_url('dietetic/settings_debug') . '" class="btn btn-sm btn-warning mtop10" target="_blank">';
+                            echo '<i class="fa fa-bug"></i> Open Debug Page</a>';
+                            echo '</div>';
+                        } else {
+                            echo '<div class="alert alert-info alert-dismissible" style="display:none;" id="debug-info">';
+                            echo '<button type="button" class="close" data-dismiss="alert">&times;</button>';
+                            echo '<strong><i class="fa fa-info-circle"></i> Debug:</strong> Found ' . count($payment_keys) . ' payment settings: ';
+                            echo '<code>' . implode(', ', $payment_keys) . '</code>';
+                            echo '</div>';
+                            echo '<script>setTimeout(function(){ $("#debug-info").slideDown(); }, 500);</script>';
+                        }
+                        ?>
+
                         <!-- SMS Integration Section -->
                         <h5><i class="fa fa-mobile"></i> <?php echo _l('SMS Integration (LAM API)'); ?></h5>
                         <hr />
@@ -89,6 +117,23 @@
                         <!-- Wave Payment Settings -->
                         <h5><i class="fa fa-credit-card"></i> Wave Payment Gateway</h5>
                         <hr />
+
+                        <?php
+                        // DEBUG: Count wave settings
+                        $wave_count = 0;
+                        foreach ($settings as $s) {
+                            if (strpos($s->setting_key, 'wave_') === 0) {
+                                $wave_count++;
+                            }
+                        }
+                        if ($wave_count == 0) {
+                            echo '<div class="alert alert-warning">';
+                            echo '<strong>⚠️ Debug:</strong> No Wave settings found in the settings array. ';
+                            echo 'Total settings: ' . count($settings) . '. ';
+                            echo '<a href="' . admin_url('dietetic/settings_debug') . '">Check Debug Page</a>';
+                            echo '</div>';
+                        }
+                        ?>
 
                         <?php foreach ($settings as $setting) { ?>
                             <?php if (strpos($setting->setting_key, 'wave_') === 0) { ?>
