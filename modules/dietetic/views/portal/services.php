@@ -364,37 +364,42 @@
 /* Toast Notifications - Mobile First Ultra Modern */
 .toast-container {
     position: fixed;
-    top: 20px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 10000;
     width: 90%;
     max-width: 500px;
     pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .toast {
     background: white;
     border-radius: 16px;
     padding: 16px 20px;
-    margin-bottom: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     gap: 12px;
     pointer-events: all;
-    transform: translateY(-100px);
+    transform: scale(0.8);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    width: 100%;
+    max-width: 450px;
 }
 
 .toast.show {
-    transform: translateY(0);
+    transform: scale(1);
     opacity: 1;
 }
 
 .toast.hide {
-    transform: translateY(-100px);
+    transform: scale(0.8);
     opacity: 0;
 }
 
@@ -489,11 +494,11 @@
 
     .toast-container {
         width: 95%;
-        top: 10px;
     }
 
     .toast {
         padding: 14px 16px;
+        max-width: 100%;
     }
 
     .toast-icon {
