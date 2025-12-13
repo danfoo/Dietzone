@@ -13056,8 +13056,11 @@ php index.php cron/index</pre>';
                 return;
             }
 
-            // Get next invoice number
+            // Get next invoice number with Perfex format
             $next_number = 1;
+            $invoice_prefix = 'INV-';
+
+            // Get the last invoice to calculate next number
             $last_invoice = $this->db->select('number')
                 ->from(db_prefix() . 'invoices')
                 ->order_by('id', 'DESC')
@@ -13065,17 +13068,32 @@ php index.php cron/index</pre>';
                 ->get()
                 ->row();
 
-            if ($last_invoice && is_numeric($last_invoice->number)) {
-                $next_number = $last_invoice->number + 1;
+            if ($last_invoice) {
+                // Extract number from format like "INV-000003"
+                if (preg_match('/(\d+)/', $last_invoice->number, $matches)) {
+                    $next_number = intval($matches[1]) + 1;
+                }
             }
+
+            // Format with leading zeros (6 digits)
+            $formatted_number = $invoice_prefix . str_pad($next_number, 6, '0', STR_PAD_LEFT);
+
+            // Get base currency (usually XOF for FCFA)
+            $base_currency = $this->db->select('id')
+                ->from(db_prefix() . 'currencies')
+                ->where('isdefault', 1)
+                ->get()
+                ->row();
+
+            $currency_id = $base_currency ? $base_currency->id : 1;
 
             // Create invoice directly with SQL
             $invoice_data = [
                 'clientid' => $client_id,
-                'number' => $next_number,
+                'number' => $formatted_number,
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
-                'currency' => 1, // Default currency
+                'currency' => $currency_id,
                 'subtotal' => $service->rate,
                 'total' => $service->rate,
                 'status' => 1, // Unpaid
@@ -13105,6 +13123,33 @@ php index.php cron/index</pre>';
             ];
 
             $this->db->insert(db_prefix() . 'itemable', $item_data);
+
+            // Add tags to invoice
+            $tag_id = null;
+
+            // Check if tag "service_subscription" exists
+            $existing_tag = $this->db->select('id')
+                ->from(db_prefix() . 'tags')
+                ->where('name', 'service_subscription')
+                ->get()
+                ->row();
+
+            if ($existing_tag) {
+                $tag_id = $existing_tag->id;
+            } else {
+                // Create the tag
+                $this->db->insert(db_prefix() . 'tags', ['name' => 'service_subscription']);
+                $tag_id = $this->db->insert_id();
+            }
+
+            // Link tag to invoice
+            if ($tag_id) {
+                $this->db->insert(db_prefix() . 'taggables', [
+                    'rel_id' => $invoice_id,
+                    'rel_type' => 'invoice',
+                    'tag_id' => $tag_id
+                ]);
+            }
 
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
