@@ -12872,7 +12872,7 @@ php index.php cron/index</pre>';
         ];
 
         $this->load->view('dietetic/portal/includes/portal_header', $data);
-        $this->load->view('dietetic/portal/services', $data);
+        $this->load->view('portal/services', $data);
         $this->load->view('dietetic/portal/includes/portal_footer');
     }
 
