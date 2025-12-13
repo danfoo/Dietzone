@@ -974,4 +974,22 @@ class Dietetic extends AdminController
 
         redirect(admin_url('dietetic/apply_paypal_fix'));
     }
+
+    /**
+     * Test PayPal Callback - Page de diagnostic
+     * URL: /admin/dietetic/test_paypal_callback/{invoice_id}
+     */
+    public function test_paypal_callback($invoice_id = null)
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Diagnostic PayPal Callback';
+        $data['invoice_id'] = $invoice_id;
+
+        // Load the diagnostic view
+        $this->load->view('admin/diagnostic/paypal_callback', $data);
+    }
 }
