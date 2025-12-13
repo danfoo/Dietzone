@@ -307,13 +307,72 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
             <a href="<?php echo site_url('dietetic/portal/invoices'); ?>" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Retour aux factures
             </a>
-
-            <?php if ($invoice->status != 2 && $invoice->balance > 0): ?>
-                <button class="btn btn-success" onclick="alert('La fonctionnalité de paiement en ligne sera bientôt disponible!')">
-                    <i class="fa fa-credit-card"></i> Payer maintenant
-                </button>
-            <?php endif; ?>
         </div>
+
+        <!-- Payment Gateways Section -->
+        <?php if ($invoice->status != 2 && $invoice->balance > 0): ?>
+            <div class="payment-gateways-section">
+                <h2>Choisissez votre mode de paiement</h2>
+                <p class="payment-subtitle">Sélectionnez une passerelle de paiement pour régler votre facture de manière sécurisée</p>
+
+                <div class="payment-gateways-grid">
+                    <!-- Wave Payment -->
+                    <?php if (dietetic_is_payment_gateway_enabled('wave')): ?>
+                    <a href="<?php echo site_url('dietetic/portal/pay/' . $invoice->id . '/wave'); ?>" class="payment-gateway-card wave-card">
+                        <div class="gateway-icon">
+                            <i class="fa fa-credit-card"></i>
+                        </div>
+                        <div class="gateway-info">
+                            <h3>Wave</h3>
+                            <p>Paiement mobile rapide et sécurisé</p>
+                        </div>
+                        <div class="gateway-arrow">
+                            <i class="fa fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+
+                    <!-- PayPal Payment -->
+                    <?php if (dietetic_is_payment_gateway_enabled('paypal')): ?>
+                    <a href="<?php echo site_url('dietetic/portal/pay/' . $invoice->id . '/paypal'); ?>" class="payment-gateway-card paypal-card">
+                        <div class="gateway-icon">
+                            <i class="fa fa-paypal"></i>
+                        </div>
+                        <div class="gateway-info">
+                            <h3>PayPal</h3>
+                            <p>Paiement international sécurisé</p>
+                        </div>
+                        <div class="gateway-arrow">
+                            <i class="fa fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+
+                    <!-- Orange Money Payment -->
+                    <?php if (dietetic_is_payment_gateway_enabled('orange_money')): ?>
+                    <a href="<?php echo site_url('dietetic/portal/pay/' . $invoice->id . '/orange_money'); ?>" class="payment-gateway-card orange-card">
+                        <div class="gateway-icon">
+                            <i class="fa fa-mobile"></i>
+                        </div>
+                        <div class="gateway-info">
+                            <h3>Orange Money</h3>
+                            <p>Paiement mobile Orange</p>
+                        </div>
+                        <div class="gateway-arrow">
+                            <i class="fa fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!dietetic_is_payment_gateway_enabled('wave') && !dietetic_is_payment_gateway_enabled('paypal') && !dietetic_is_payment_gateway_enabled('orange_money')): ?>
+                    <div class="no-payment-gateways">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <p>Aucune passerelle de paiement n'est actuellement activée. Veuillez contacter l'administrateur.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -834,6 +893,242 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
     .item-total-badge {
         font-size: 14px;
         padding: 4px 10px;
+    }
+}
+
+/* Payment Gateways Section */
+.payment-gateways-section {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.payment-gateways-section h2 {
+    color: #01807B;
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.payment-subtitle {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 30px;
+    font-size: 15px;
+}
+
+.payment-gateways-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.payment-gateway-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-gateway-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.payment-gateway-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+
+.payment-gateway-card:hover::before {
+    width: 100%;
+}
+
+.payment-gateway-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Wave Card */
+.wave-card {
+    border-color: #01807B;
+}
+
+.wave-card::before {
+    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    opacity: 0.05;
+}
+
+.wave-card:hover {
+    border-color: #01807B;
+}
+
+.wave-card:hover .gateway-icon {
+    background: linear-gradient(135deg, #01807B 0%, #019d96 100%);
+    color: white;
+}
+
+.wave-card:hover .gateway-info h3,
+.wave-card:hover .gateway-arrow {
+    color: #01807B;
+}
+
+/* PayPal Card */
+.paypal-card {
+    border-color: #0070ba;
+}
+
+.paypal-card::before {
+    background: linear-gradient(135deg, #0070ba 0%, #003087 100%);
+    opacity: 0.05;
+}
+
+.paypal-card:hover {
+    border-color: #0070ba;
+}
+
+.paypal-card:hover .gateway-icon {
+    background: linear-gradient(135deg, #0070ba 0%, #003087 100%);
+    color: white;
+}
+
+.paypal-card:hover .gateway-info h3,
+.paypal-card:hover .gateway-arrow {
+    color: #0070ba;
+}
+
+/* Orange Money Card */
+.orange-card {
+    border-color: #ff7900;
+}
+
+.orange-card::before {
+    background: linear-gradient(135deg, #ff7900 0%, #ff5000 100%);
+    opacity: 0.05;
+}
+
+.orange-card:hover {
+    border-color: #ff7900;
+}
+
+.orange-card:hover .gateway-icon {
+    background: linear-gradient(135deg, #ff7900 0%, #ff5000 100%);
+    color: white;
+}
+
+.orange-card:hover .gateway-info h3,
+.orange-card:hover .gateway-arrow {
+    color: #ff7900;
+}
+
+.gateway-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.gateway-info {
+    flex: 1;
+}
+
+.gateway-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.gateway-info p {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+}
+
+.gateway-arrow {
+    font-size: 24px;
+    color: #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.payment-gateway-card:hover .gateway-arrow {
+    transform: translateX(5px);
+}
+
+.no-payment-gateways {
+    text-align: center;
+    padding: 40px;
+    background: #fff3cd;
+    border: 2px dashed #ffc107;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.no-payment-gateways i {
+    font-size: 48px;
+    color: #856404;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.no-payment-gateways p {
+    color: #856404;
+    font-size: 16px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .payment-gateways-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-gateways-section {
+        padding: 20px;
+    }
+
+    .payment-gateways-section h2 {
+        font-size: 20px;
+    }
+
+    .gateway-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+
+    .gateway-info h3 {
+        font-size: 16px;
+    }
+
+    .gateway-info p {
+        font-size: 13px;
     }
 }
 </style>
