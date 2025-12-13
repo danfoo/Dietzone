@@ -147,6 +147,7 @@ class Portal extends App_Controller
             'wave_callback',
             'paypal_callback',
             'debug_payment',
+            'test_payment',
             // Services subscription methods
             'services',
             'services_debug',
@@ -13809,5 +13810,138 @@ php index.php cron/index</pre>';
         } else {
             echo "<h2 style='color: red;'>NOT AUTHENTICATED</h2>";
         }
+    }
+
+    /**
+     * Test payment flow - Shows all steps without redirecting
+     * URL: /dietetic/portal/test_payment/{invoice_id}/{gateway}
+     */
+    public function test_payment($invoice_id = null, $gateway = null)
+    {
+        echo "<h1>Test Payment Flow</h1>";
+        echo "<style>body { font-family: monospace; padding: 20px; } h2 { color: #01807B; margin-top: 20px; } .success { color: green; } .error { color: red; } .info { color: blue; }</style>";
+
+        echo "<h2>Step 1: Parameters</h2>";
+        echo "<pre>";
+        echo "Invoice ID: " . ($invoice_id ? $invoice_id : 'NULL') . "\n";
+        echo "Gateway: " . ($gateway ? $gateway : 'NULL') . "\n";
+        echo "</pre>";
+
+        // Check authentication
+        echo "<h2>Step 2: Authentication Check</h2>";
+        echo "<pre>";
+        $authenticated = $this->session->userdata('client_logged_in');
+        echo "client_logged_in: " . var_export($authenticated, true) . "\n";
+        if ($authenticated) {
+            $client_id = $this->session->userdata('client_user_id');
+            echo "client_user_id: " . $client_id . "\n";
+            echo "<span class='success'>✓ AUTHENTICATED</span>\n";
+        } else {
+            echo "<span class='error'>✗ NOT AUTHENTICATED - Would redirect to login</span>\n";
+            return;
+        }
+        echo "</pre>";
+
+        // Validate parameters
+        echo "<h2>Step 3: Parameter Validation</h2>";
+        echo "<pre>";
+        if (!$gateway || !$invoice_id) {
+            echo "<span class='error'>✗ Missing parameters</span>\n";
+            echo "Would redirect to: " . site_url('dietetic/portal/invoices') . "\n";
+            return;
+        }
+        echo "<span class='success'>✓ Parameters valid</span>\n";
+        echo "</pre>";
+
+        // Get invoice
+        echo "<h2>Step 4: Invoice Verification</h2>";
+        echo "<pre>";
+        $invoice = $this->db->select('id, clientid, total, status')
+            ->from(db_prefix() . 'invoices')
+            ->where('id', $invoice_id)
+            ->where('clientid', $client_id)
+            ->get()
+            ->row();
+
+        if (!$invoice) {
+            echo "<span class='error'>✗ Invoice not found or doesn't belong to you</span>\n";
+            echo "Would redirect to: " . site_url('dietetic/portal/invoices') . "\n";
+            return;
+        }
+        echo "<span class='success'>✓ Invoice found</span>\n";
+        echo "Invoice ID: " . $invoice->id . "\n";
+        echo "Total: " . $invoice->total . " FCFA\n";
+        echo "Status: " . $invoice->status . " (1=Unpaid, 2=Paid)\n";
+        echo "</pre>";
+
+        // Check if paid
+        echo "<h2>Step 5: Payment Status Check</h2>";
+        echo "<pre>";
+        if ($invoice->status == 2) {
+            echo "<span class='info'>Invoice already paid</span>\n";
+            echo "Would redirect to: " . site_url('dietetic/portal/invoices') . "\n";
+            return;
+        }
+        echo "<span class='success'>✓ Invoice unpaid - can proceed</span>\n";
+        echo "</pre>";
+
+        // Check gateway enabled
+        echo "<h2>Step 6: Gateway Availability</h2>";
+        echo "<pre>";
+        $is_enabled = dietetic_is_payment_gateway_enabled($gateway);
+        echo "Gateway '$gateway' enabled: " . var_export($is_enabled, true) . "\n";
+        if (!$is_enabled) {
+            echo "<span class='error'>✗ Gateway not available</span>\n";
+            echo "Would redirect to: " . site_url('dietetic/portal/invoices') . "\n";
+            return;
+        }
+        echo "<span class='success'>✓ Gateway available</span>\n";
+        echo "</pre>";
+
+        // Get gateway settings
+        echo "<h2>Step 7: Gateway Settings</h2>";
+        echo "<pre>";
+        $gateway_settings = dietetic_get_payment_gateway_settings($gateway);
+        echo "Settings:\n";
+        print_r($gateway_settings);
+        echo "</pre>";
+
+        // Test PayPal specifically
+        if ($gateway === 'paypal') {
+            echo "<h2>Step 8: PayPal Configuration Test</h2>";
+            echo "<pre>";
+            $client_id = isset($gateway_settings['client_id']) ? $gateway_settings['client_id'] : '';
+            $secret = isset($gateway_settings['secret']) ? $gateway_settings['secret'] : '';
+            $mode = isset($gateway_settings['mode']) ? $gateway_settings['mode'] : 'sandbox';
+
+            echo "Client ID: " . ($client_id ? substr($client_id, 0, 20) . '...' : 'EMPTY') . "\n";
+            echo "Secret: " . ($secret ? substr($secret, 0, 20) . '...' : 'EMPTY') . "\n";
+            echo "Mode: " . $mode . "\n";
+
+            if (empty($client_id) || empty($secret)) {
+                echo "<span class='error'>✗ PayPal credentials not configured</span>\n";
+                echo "Would redirect to: " . site_url('dietetic/portal/invoice/' . $invoice->id) . "\n";
+                return;
+            }
+            echo "<span class='success'>✓ PayPal credentials configured</span>\n";
+
+            $base_url = ($mode === 'live')
+                ? 'https://api-m.paypal.com'
+                : 'https://api-m.sandbox.paypal.com';
+            echo "API Base URL: " . $base_url . "\n";
+
+            echo "\n<span class='info'>Would now:</span>\n";
+            echo "1. Get PayPal access token from: " . $base_url . "/v1/oauth2/token\n";
+            echo "2. Create order at: " . $base_url . "/v2/checkout/orders\n";
+            echo "3. Redirect to PayPal approval URL\n";
+            echo "</pre>";
+        }
+
+        echo "<h2>Conclusion</h2>";
+        echo "<pre>";
+        echo "<span class='success'>All checks passed! Payment would be initiated.</span>\n";
+        echo "\nTo actually test the payment, use:\n";
+        echo site_url('dietetic/portal/pay/' . $invoice_id . '/' . $gateway) . "\n";
+        echo "</pre>";
     }
 }
