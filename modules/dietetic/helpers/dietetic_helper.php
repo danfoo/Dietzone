@@ -1700,3 +1700,88 @@ if (!function_exists('clear_client_auth_cookies')) {
         log_activity('AUTH COOKIES CLEARED - Cookies d\'authentification supprimés');
     }
 }
+
+/**
+ * Check if a payment gateway is enabled
+ *
+ * @param string $gateway Gateway name (wave, paypal, orange_money)
+ * @return bool
+ */
+if (!function_exists('dietetic_is_payment_gateway_enabled')) {
+    function dietetic_is_payment_gateway_enabled($gateway)
+    {
+        $setting_key = $gateway . '_enabled';
+        return dietetic_get_option($setting_key, false) == '1';
+    }
+}
+
+/**
+ * Get payment gateway settings
+ *
+ * @param string $gateway Gateway name (wave, paypal, orange_money)
+ * @return array|null
+ */
+if (!function_exists('dietetic_get_payment_gateway_settings')) {
+    function dietetic_get_payment_gateway_settings($gateway)
+    {
+        $CI = &get_instance();
+
+        $settings = $CI->db->select('setting_key, setting_value')
+            ->from(db_prefix() . 'dietic_settings')
+            ->like('setting_key', $gateway . '_', 'after')
+            ->get()
+            ->result();
+
+        if (!$settings) {
+            return null;
+        }
+
+        $config = [];
+        foreach ($settings as $setting) {
+            $key = str_replace($gateway . '_', '', $setting->setting_key);
+            $config[$key] = $setting->setting_value;
+        }
+
+        return $config;
+    }
+}
+
+/**
+ * Get all enabled payment gateways
+ *
+ * @return array Array of enabled gateway names
+ */
+if (!function_exists('dietetic_get_enabled_payment_gateways')) {
+    function dietetic_get_enabled_payment_gateways()
+    {
+        $gateways = ['wave', 'paypal', 'orange_money'];
+        $enabled = [];
+
+        foreach ($gateways as $gateway) {
+            if (dietetic_is_payment_gateway_enabled($gateway)) {
+                $enabled[] = $gateway;
+            }
+        }
+
+        return $enabled;
+    }
+}
+
+/**
+ * Get payment gateway display name
+ *
+ * @param string $gateway Gateway name
+ * @return string
+ */
+if (!function_exists('dietetic_get_payment_gateway_name')) {
+    function dietetic_get_payment_gateway_name($gateway)
+    {
+        $names = [
+            'wave' => 'Wave',
+            'paypal' => 'PayPal',
+            'orange_money' => 'Orange Money'
+        ];
+
+        return isset($names[$gateway]) ? $names[$gateway] : ucfirst($gateway);
+    }
+}
