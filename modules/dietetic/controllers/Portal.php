@@ -142,6 +142,10 @@ class Portal extends App_Controller
             // Invoice and payment methods
             'invoices',
             'invoice',
+            // Services subscription methods
+            'services',
+            'subscribe_service',
+            'check_service_eligibility',
             // Subscription management methods
             'subscriptions',
             'subscription',
@@ -12805,5 +12809,307 @@ php index.php cron/index</pre>';
         echo '<hr style="margin:30px 0">';
         echo '<p style="text-align:center;color:#6c757d">Dernière vérification: ' . date('d/m/Y H:i:s') . '</p>';
         echo '</div></body></html>';
+    }
+
+    // ============================================
+    // SERVICES SUBSCRIPTION METHODS
+    // ============================================
+
+    /**
+     * Display available services for subscription
+     */
+    public function services()
+    {
+        // Check authentication
+        if (!$this->session->userdata('client_logged_in')) {
+            redirect(site_url('dietetic/portal'));
+            return;
+        }
+
+        $client_id = $this->session->userdata('client_user_id');
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            $this->load->view('portal_no_access');
+            return;
+        }
+
+        // Get available services from Perfex items with group "Services"
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->where('i.active', 1);
+        $this->db->order_by('i.rate', 'DESC');
+        $services = $this->db->get()->result();
+
+        // Get patient's unpaid invoices
+        $this->db->select('id, invoicenumber, total, status');
+        $this->db->from(db_prefix() . 'invoices');
+        $this->db->where('clientid', $client_id);
+        $this->db->where_in('status', [1, 2, 4, 5]);
+        $unpaid_invoices = $this->db->get()->result();
+
+        // Check if patient has had initial consultation
+        $has_initial_consultation = $this->db
+            ->where('patient_id', $patient->id)
+            ->where('status !=', 'cancelled')
+            ->count_all_results(db_prefix() . 'dietic_consultations') > 0;
+
+        $data = [
+            'patient' => $patient,
+            'services' => $services,
+            'unpaid_invoices' => $unpaid_invoices,
+            'has_unpaid_invoices' => count($unpaid_invoices) > 0,
+            'has_initial_consultation' => $has_initial_consultation,
+            'active_page' => 'services'
+        ];
+
+        $this->load->view('dietetic/portal/includes/portal_header', $data);
+        $this->load->view('dietetic/portal/services', $data);
+        $this->load->view('dietetic/portal/includes/portal_footer');
+    }
+
+    /**
+     * Check if patient is eligible to subscribe to a service
+     */
+    public function check_service_eligibility()
+    {
+        header('Content-Type: application/json');
+
+        if (!$this->session->userdata('client_logged_in')) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = $this->session->userdata('client_user_id');
+        $item_id = $this->input->post('item_id');
+
+        if (!$item_id) {
+            echo json_encode(['success' => false, 'message' => 'Service non spécifié']);
+            return;
+        }
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        // Get the service/item
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('i.id', $item_id);
+        $this->db->where('ig.name', 'Services');
+        $this->db->where('i.active', 1);
+        $service = $this->db->get()->row();
+
+        if (!$service) {
+            echo json_encode(['success' => false, 'message' => 'Service introuvable ou inactif']);
+            return;
+        }
+
+        // Check if patient has unpaid invoices
+        $unpaid_count = $this->db
+            ->where('clientid', $client_id)
+            ->where_in('status', [1, 2, 4, 5])
+            ->count_all_results(db_prefix() . 'invoices');
+
+        if ($unpaid_count > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Vous avez des factures impayées. Veuillez les régler avant de souscrire à un nouveau service.',
+                'requires_payment' => true
+            ]);
+            return;
+        }
+
+        // Check if service requires initial consultation
+        $requires_consultation = stripos($service->long_description, 'consultation initiale') !== false ||
+                                stripos($service->description, 'consultation initiale') !== false;
+
+        if ($requires_consultation) {
+            $has_consultation = $this->db
+                ->where('patient_id', $patient->id)
+                ->where('status !=', 'cancelled')
+                ->count_all_results(db_prefix() . 'dietic_consultations') > 0;
+
+            if (!$has_consultation) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Ce service nécessite une consultation initiale. Veuillez d\'abord réserver une consultation.',
+                    'requires_consultation' => true
+                ]);
+                return;
+            }
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Éligible']);
+    }
+
+    /**
+     * Subscribe to a service - creates an invoice
+     */
+    public function subscribe_service()
+    {
+        header('Content-Type: application/json');
+
+        if (!$this->session->userdata('client_logged_in')) {
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            return;
+        }
+
+        $client_id = $this->session->userdata('client_user_id');
+        $item_id = $this->input->post('item_id');
+
+        if (!$item_id) {
+            echo json_encode(['success' => false, 'message' => 'Service non spécifié']);
+            return;
+        }
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        if (!$patient) {
+            echo json_encode(['success' => false, 'message' => 'Patient introuvable']);
+            return;
+        }
+
+        // Get the service/item
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('i.id', $item_id);
+        $this->db->where('ig.name', 'Services');
+        $this->db->where('i.active', 1);
+        $service = $this->db->get()->row();
+
+        if (!$service) {
+            echo json_encode(['success' => false, 'message' => 'Service introuvable ou inactif']);
+            return;
+        }
+
+        // Re-check eligibility
+        $unpaid_count = $this->db
+            ->where('clientid', $client_id)
+            ->where_in('status', [1, 2, 4, 5])
+            ->count_all_results(db_prefix() . 'invoices');
+
+        if ($unpaid_count > 0) {
+            echo json_encode(['success' => false, 'message' => 'Vous avez des factures impayées']);
+            return;
+        }
+
+        // Load Perfex invoices model
+        $this->load->model('invoices_model');
+
+        // Prepare invoice data
+        $invoice_data = [
+            'clientid' => $client_id,
+            'number' => get_option('next_invoice_number'),
+            'date' => date('Y-m-d'),
+            'duedate' => date('Y-m-d', strtotime('+7 days')),
+            'currency' => get_base_currency()->id,
+            'subtotal' => $service->rate,
+            'total' => $service->rate,
+            'adjustment' => 0,
+            'discount_percent' => 0,
+            'discount_total' => 0,
+            'discount_type' => '',
+            'sale_agent' => 0,
+            'status' => 1,
+            'billing_street' => '',
+            'billing_city' => '',
+            'billing_state' => '',
+            'billing_zip' => '',
+            'billing_country' => 0,
+            'shipping_street' => '',
+            'shipping_city' => '',
+            'shipping_state' => '',
+            'shipping_zip' => '',
+            'shipping_country' => 0,
+            'include_shipping' => 0,
+            'show_shipping_on_invoice' => 0,
+            'show_quantity_as' => 1,
+            'project_id' => 0,
+            'adminnote' => 'Souscription automatique au service: ' . $service->description,
+            'terms' => get_option('predefined_terms_invoice'),
+            'clientnote' => 'Merci de votre souscription !',
+            'tags' => 'service_subscription',
+            'allowed_payment_modes' => ['1', '2'],
+            'recurring' => 0,
+            'discount_type' => 'before_tax',
+            'recurring_type' => null,
+            'custom_recurring' => 0,
+            'cycles' => 0,
+            'total_cycles' => 0,
+            'is_recurring_from' => null,
+            'last_recurring_date' => null,
+            'hash' => app_generate_hash(),
+            'datecreated' => date('Y-m-d H:i:s'),
+            'deleted_customer_name' => null,
+            'cancel_overdue_reminders' => 0
+        ];
+
+        // Create the invoice
+        $invoice_id = $this->invoices_model->add($invoice_data);
+
+        if (!$invoice_id) {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la création de la facture']);
+            return;
+        }
+
+        // Add invoice item
+        $item_data = [
+            'rel_id' => $invoice_id,
+            'rel_type' => 'invoice',
+            'item_order' => 1,
+            'description' => $service->description,
+            'long_description' => $service->long_description,
+            'qty' => 1,
+            'rate' => $service->rate,
+            'tax' => $service->tax,
+            'tax2' => $service->tax2,
+            'unit' => $service->unit
+        ];
+
+        $this->db->insert(db_prefix() . 'itemable', $item_data);
+
+        // Update invoice subtotal and total
+        $this->db->where('id', $invoice_id);
+        $this->db->update(db_prefix() . 'invoices', [
+            'subtotal' => $service->rate,
+            'total' => $service->rate
+        ]);
+
+        // Log activity
+        log_activity('Patient subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
+
+        // Send response with invoice details
+        echo json_encode([
+            'success' => true,
+            'message' => 'Souscription réussie !',
+            'invoice_id' => $invoice_id,
+            'invoice_url' => site_url('dietetic/portal/invoice/' . $invoice_id)
+        ]);
     }
 }

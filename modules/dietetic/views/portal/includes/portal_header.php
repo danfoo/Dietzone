@@ -1478,6 +1478,13 @@
             </a>
             <?php } ?>
 
+            <a href="<?php echo site_url('dietetic/portal/services'); ?>" class="menu-item <?php echo (isset($active_page) && $active_page == 'services') ? 'active' : ''; ?>">
+                <div class="menu-item-icon">
+                    <span class="material-symbols-rounded">shopping_bag</span>
+                </div>
+                <span>Services</span>
+            </a>
+
             <?php
             // Check if blog is enabled
             if ($CI_menu->db->table_exists(db_prefix() . 'dietic_blog_articles')) {
