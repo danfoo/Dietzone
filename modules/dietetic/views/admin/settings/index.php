@@ -203,10 +203,10 @@
                         <i class="fa fa-credit-card"></i> Passerelles de Paiement
                     </h4>
                     <p class="text-muted">
-                        Configurer PayPal, Wave, Orange Money et autres méthodes de paiement.
+                        Configurer Wave, PayPal et Orange Money pour les paiements de services.
                     </p>
-                    <a href="<?php echo admin_url('dietetic/payments/gateways'); ?>" class="btn btn-info" disabled>
-                        <i class="fa fa-plug"></i> Configurer (Bientôt disponible)
+                    <a href="<?php echo admin_url('dietetic/settings'); ?>" class="btn btn-success">
+                        <i class="fa fa-cog"></i> Configurer
                     </a>
                 </div>
             </div>
