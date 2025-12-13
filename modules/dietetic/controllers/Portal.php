@@ -13815,6 +13815,22 @@ php index.php cron/index</pre>';
     }
 
     /**
+     * Test PayPal Callback - Diagnostic Page
+     * URL: dietetic/portal/test_paypal_callback/{invoice_id}
+     *
+     * Page de diagnostic pour tester le callback PayPal sans redirections
+     * Affiche toutes les informations nécessaires pour debugger
+     */
+    public function test_paypal_callback($invoice_id = null)
+    {
+        // Set invoice_id in GET for the view
+        $_GET['invoice_id'] = $invoice_id;
+
+        // Load the diagnostic view
+        $this->load->view('portal/test_paypal_callback');
+    }
+
+    /**
      * Debug payment - Show payment debug information
      */
     public function debug_payment()
