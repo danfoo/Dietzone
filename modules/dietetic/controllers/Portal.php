@@ -142,6 +142,11 @@ class Portal extends App_Controller
             // Invoice and payment methods
             'invoices',
             'invoice',
+            'pay',
+            'initiate_payment',
+            'wave_callback',
+            'paypal_callback',
+            'debug_payment',
             // Services subscription methods
             'services',
             'services_debug',
