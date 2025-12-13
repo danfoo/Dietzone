@@ -141,6 +141,18 @@ class Dietetic extends AdminController
     }
 
     /**
+     * Debug settings page to check if payment settings exist
+     */
+    public function settings_debug()
+    {
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $this->load->view('admin/settings_debug');
+    }
+
+    /**
      * Test cron job (for debugging)
      */
     public function test_cron()
