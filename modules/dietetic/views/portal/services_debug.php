@@ -212,11 +212,11 @@
                     echo '</table>';
                 }
 
-                // Check unpaid
+                // Check unpaid (1=Unpaid, 3=Partially Paid, 4=Overdue)
                 $this->db->select('id, number, total, status');
                 $this->db->from(db_prefix() . 'invoices');
                 $this->db->where('clientid', $client_id);
-                $this->db->where_in('status', [1, 2, 4, 5]);
+                $this->db->where_in('status', [1, 3, 4]);
                 $unpaid = $this->db->get()->result();
 
                 echo '<p class="' . (count($unpaid) > 0 ? 'warning' : 'success') . '">';

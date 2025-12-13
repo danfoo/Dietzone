@@ -12872,7 +12872,7 @@ php index.php cron/index</pre>';
             $this->db->select('id, number, total, status');
             $this->db->from(db_prefix() . 'invoices');
             $this->db->where('clientid', $client_id);
-            $this->db->where_in('status', [1, 2, 4, 5]);
+            $this->db->where_in('status', [1, 3, 4]); // 1=Unpaid, 3=Partially Paid, 4=Overdue
             $unpaid_invoices = $this->db->get()->result();
             $data['unpaid_invoices'] = $unpaid_invoices ? $unpaid_invoices : [];
             $data['has_unpaid_invoices'] = count($data['unpaid_invoices']) > 0;
@@ -12963,7 +12963,7 @@ php index.php cron/index</pre>';
         // Check if patient has unpaid invoices
         $unpaid_count = $this->db
             ->where('clientid', $client_id)
-            ->where_in('status', [1, 2, 4, 5])
+            ->where_in('status', [1, 3, 4]) // 1=Unpaid, 3=Partially Paid, 4=Overdue
             ->count_all_results(db_prefix() . 'invoices');
 
         if ($unpaid_count > 0) {
@@ -13047,7 +13047,7 @@ php index.php cron/index</pre>';
         // Re-check eligibility
         $unpaid_count = $this->db
             ->where('clientid', $client_id)
-            ->where_in('status', [1, 2, 4, 5])
+            ->where_in('status', [1, 3, 4]) // 1=Unpaid, 3=Partially Paid, 4=Overdue
             ->count_all_results(db_prefix() . 'invoices');
 
         if ($unpaid_count > 0) {
