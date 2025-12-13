@@ -13056,27 +13056,20 @@ php index.php cron/index</pre>';
                 return;
             }
 
-            // Get next invoice number with Perfex format
+            // Get next invoice number (Perfex stores just the number, not formatted)
             $next_number = 1;
-            $invoice_prefix = 'INV-';
 
             // Get the last invoice to calculate next number
             $last_invoice = $this->db->select('number')
                 ->from(db_prefix() . 'invoices')
-                ->order_by('id', 'DESC')
+                ->order_by('number', 'DESC')
                 ->limit(1)
                 ->get()
                 ->row();
 
-            if ($last_invoice) {
-                // Extract number from format like "INV-000003"
-                if (preg_match('/(\d+)/', $last_invoice->number, $matches)) {
-                    $next_number = intval($matches[1]) + 1;
-                }
+            if ($last_invoice && is_numeric($last_invoice->number)) {
+                $next_number = intval($last_invoice->number) + 1;
             }
-
-            // Format with leading zeros (6 digits)
-            $formatted_number = $invoice_prefix . str_pad($next_number, 6, '0', STR_PAD_LEFT);
 
             // Get base currency (usually XOF for FCFA)
             $base_currency = $this->db->select('id')
@@ -13090,7 +13083,7 @@ php index.php cron/index</pre>';
             // Create invoice directly with SQL
             $invoice_data = [
                 'clientid' => $client_id,
-                'number' => $formatted_number,
+                'number' => $next_number,  // Store just the number, Perfex formats it on display
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
                 'currency' => $currency_id,

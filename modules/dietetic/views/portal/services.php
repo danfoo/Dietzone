@@ -361,6 +361,112 @@
     transform: none;
 }
 
+/* Toast Notifications - Mobile First Ultra Modern */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    width: 90%;
+    max-width: 500px;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: all;
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateY(-100px);
+    opacity: 0;
+}
+
+.toast-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.toast.success .toast-icon {
+    background: linear-gradient(135deg, #00c851 0%, #00a040 100%);
+    color: white;
+}
+
+.toast.error .toast-icon {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    color: white;
+}
+
+.toast.warning .toast-icon {
+    background: linear-gradient(135deg, #ffbb33 0%, #ff8800 100%);
+    color: white;
+}
+
+.toast.info .toast-icon {
+    background: linear-gradient(135deg, #33b5e5 0%, #0099cc 100%);
+    color: white;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+    color: #2c3e50;
+}
+
+.toast-message {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.toast-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #6c757d;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: rotate(90deg);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .services-grid {
@@ -380,8 +486,34 @@
         width: 95%;
         padding: 24px;
     }
+
+    .toast-container {
+        width: 95%;
+        top: 10px;
+    }
+
+    .toast {
+        padding: 14px 16px;
+    }
+
+    .toast-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+
+    .toast-title {
+        font-size: 14px;
+    }
+
+    .toast-message {
+        font-size: 13px;
+    }
 }
 </style>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
 <div class="services-page">
     <h1 class="page-title">🎯 Nos Services</h1>
@@ -498,6 +630,41 @@
 <script>
 let currentServiceId = null;
 
+// Modern Toast Notification System
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || '✓'}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.classList.add('hide'); setTimeout(() => this.parentElement.remove(), 400);">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+}
+
 function checkEligibilityAndSubscribe(event, serviceId, serviceName, servicePrice) {
     // Show loading state
     event.target.disabled = true;
@@ -525,8 +692,8 @@ function checkEligibilityAndSubscribe(event, serviceId, serviceName, servicePric
             document.getElementById('modalServicePrice').textContent = new Intl.NumberFormat('fr-FR').format(servicePrice);
             openModal();
         } else {
-            // Show error
-            alert(data.message);
+            // Show error toast
+            showToast('error', 'Erreur', data.message);
 
             // Redirect if needed
             if (data.requires_payment) {
@@ -540,7 +707,7 @@ function checkEligibilityAndSubscribe(event, serviceId, serviceName, servicePric
         console.error('Error:', error);
         event.target.disabled = false;
         event.target.textContent = 'Souscrire';
-        alert('Une erreur est survenue. Veuillez réessayer.');
+        showToast('error', 'Erreur', 'Une erreur est survenue. Veuillez réessayer.');
     });
 }
 
@@ -575,19 +742,24 @@ function confirmSubscription() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Success! Redirect to invoice
-            alert('✅ ' + data.message + '\n\nVous allez être redirigé vers la facture.');
-            window.location.href = data.invoice_url;
+            // Success! Close modal and show toast
+            closeModal();
+            showToast('success', 'Souscription réussie !', 'Votre facture a été créée. Redirection en cours...', 3000);
+
+            // Redirect to invoices page
+            setTimeout(() => {
+                window.location.href = data.invoice_url;
+            }, 2000);
         } else {
             // Error
-            alert('❌ ' + data.message);
+            showToast('error', 'Erreur', data.message);
             confirmBtn.disabled = false;
             confirmBtn.textContent = 'Confirmer';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Une erreur est survenue. Veuillez réessayer.');
+        showToast('error', 'Erreur', 'Une erreur est survenue. Veuillez réessayer.');
         confirmBtn.disabled = false;
         confirmBtn.textContent = 'Confirmer';
     });
