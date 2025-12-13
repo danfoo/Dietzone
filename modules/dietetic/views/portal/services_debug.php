@@ -180,7 +180,7 @@
         <?php
         if ($client_id) {
             try {
-                $this->db->select('id, invoicenumber, total, status, date, duedate');
+                $this->db->select('id, number, total, status, date, duedate');
                 $this->db->from(db_prefix() . 'invoices');
                 $this->db->where('clientid', $client_id);
                 $all_invoices = $this->db->get()->result();
@@ -203,7 +203,7 @@
 
                         echo '<tr>';
                         echo '<td>' . $inv->id . '</td>';
-                        echo '<td>' . $inv->invoicenumber . '</td>';
+                        echo '<td>' . $inv->number . '</td>';
                         echo '<td>' . number_format($inv->total, 0, ',', ' ') . ' FCFA</td>';
                         echo '<td>' . $status_label . '</td>';
                         echo '<td>' . $inv->date . '</td>';
@@ -213,7 +213,7 @@
                 }
 
                 // Check unpaid
-                $this->db->select('id, invoicenumber, total, status');
+                $this->db->select('id, number, total, status');
                 $this->db->from(db_prefix() . 'invoices');
                 $this->db->where('clientid', $client_id);
                 $this->db->where_in('status', [1, 2, 4, 5]);

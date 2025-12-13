@@ -12869,7 +12869,7 @@ php index.php cron/index</pre>';
 
         // Get patient's unpaid invoices
         try {
-            $this->db->select('id, invoicenumber, total, status');
+            $this->db->select('id, number, total, status');
             $this->db->from(db_prefix() . 'invoices');
             $this->db->where('clientid', $client_id);
             $this->db->where_in('status', [1, 2, 4, 5]);
@@ -12882,18 +12882,16 @@ php index.php cron/index</pre>';
 
         // Check if patient has had initial consultation
         try {
-            $consultation_count = $this->db
-                ->where('patient_id', $patient->id)
-                ->where('status !=', 'cancelled')
-                ->count_all_results(db_prefix() . 'dietic_consultations');
+            $this->db->where('patient_id', $patient->id);
+            $this->db->where('status !=', 'cancelled');
+            $consultation_count = $this->db->count_all_results(db_prefix() . 'dietic_consultations');
             $data['has_initial_consultation'] = $consultation_count > 0;
         } catch (Exception $e) {
             // Try alternative table name
             try {
-                $consultation_count = $this->db
-                    ->where('patient_id', $patient->id)
-                    ->where('status !=', 'cancelled')
-                    ->count_all_results(db_prefix() . 'dietetic_consultations');
+                $this->db->where('patient_id', $patient->id);
+                $this->db->where('status !=', 'cancelled');
+                $consultation_count = $this->db->count_all_results(db_prefix() . 'dietetic_consultations');
                 $data['has_initial_consultation'] = $consultation_count > 0;
             } catch (Exception $e2) {
                 log_message('error', 'Services - Error checking consultations: ' . $e2->getMessage());
