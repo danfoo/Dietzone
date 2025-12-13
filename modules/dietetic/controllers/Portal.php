@@ -13184,17 +13184,23 @@ php index.php cron/index</pre>';
      */
     public function initiate_payment($gateway = null, $invoice_id = null)
     {
-        // Check authentication
+        // Check authentication - redirect to login if not authenticated
         if (!$this->session->userdata('client_logged_in')) {
-            show_error('Non authentifié', 403);
+            log_activity('PAYMENT INITIATE - Non authentifié, redirection vers login');
+            redirect(site_url('dietetic/portal'));
             return;
         }
 
         $client_id = $this->session->userdata('client_user_id');
 
+        // Log pour debugging
+        log_activity('PAYMENT INITIATE - Client ID: ' . $client_id . ', Gateway: ' . $gateway . ', Invoice: ' . $invoice_id);
+
         // Validate parameters
         if (!$gateway || !$invoice_id) {
-            show_error('Paramètres manquants', 400);
+            log_activity('PAYMENT INITIATE - Paramètres manquants');
+            set_alert('danger', 'Paramètres de paiement manquants.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
@@ -13207,24 +13213,32 @@ php index.php cron/index</pre>';
             ->row();
 
         if (!$invoice) {
-            show_error('Facture introuvable', 404);
+            log_activity('PAYMENT INITIATE - Facture introuvable ou non autorisée');
+            set_alert('danger', 'Facture introuvable.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
         // Check if invoice is unpaid
         if ($invoice->status == 2) {
-            redirect('dietetic/portal/invoices');
+            log_activity('PAYMENT INITIATE - Facture déjà payée');
+            set_alert('info', 'Cette facture est déjà payée.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
         // Check if gateway is enabled
         if (!dietetic_is_payment_gateway_enabled($gateway)) {
-            show_error('Moyen de paiement non disponible', 400);
+            log_activity('PAYMENT INITIATE - Passerelle non disponible: ' . $gateway);
+            set_alert('danger', 'Moyen de paiement non disponible.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
         // Get gateway settings
         $gateway_settings = dietetic_get_payment_gateway_settings($gateway);
+
+        log_activity('PAYMENT INITIATE - Lancement du paiement via ' . $gateway);
 
         // Route to appropriate payment gateway handler
         switch ($gateway) {
@@ -13241,7 +13255,9 @@ php index.php cron/index</pre>';
                 break;
 
             default:
-                show_error('Passerelle de paiement non supportée', 400);
+                log_activity('PAYMENT INITIATE - Passerelle non supportée: ' . $gateway);
+                set_alert('danger', 'Passerelle de paiement non supportée.');
+                redirect(site_url('dietetic/portal/invoices'));
                 break;
         }
     }
@@ -13251,17 +13267,25 @@ php index.php cron/index</pre>';
      */
     private function initiate_wave_payment($invoice, $settings)
     {
+        log_activity('WAVE PAYMENT - Démarrage pour facture #' . $invoice->id);
+        log_activity('WAVE PAYMENT - Settings: ' . json_encode($settings));
+
         // Get Wave API credentials
         $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
 
         if (empty($api_key)) {
-            show_error('Wave API key not configured', 500);
+            log_activity('WAVE PAYMENT - ERREUR: API key non configurée');
+            set_alert('danger', 'La passerelle Wave n\'est pas configurée. Veuillez contacter l\'administrateur.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
         // Prepare callback URLs
         $success_url = site_url('dietetic/portal/wave_callback/success/' . $invoice->id);
         $error_url = site_url('dietetic/portal/wave_callback/error/' . $invoice->id);
+
+        log_activity('WAVE PAYMENT - Success URL: ' . $success_url);
+        log_activity('WAVE PAYMENT - Error URL: ' . $error_url);
 
         // Prepare Wave API request
         $amount = number_format($invoice->total, 0, '', ''); // XOF has no decimals
@@ -13272,6 +13296,8 @@ php index.php cron/index</pre>';
             'success_url' => $success_url,
             'client_reference' => 'INV-' . $invoice->id
         ];
+
+        log_activity('WAVE PAYMENT - Payload: ' . json_encode($payload));
 
         // Initialize cURL
         $ch = curl_init('https://api.wave.com/v1/checkout/sessions');
@@ -13284,15 +13310,20 @@ php index.php cron/index</pre>';
         ]);
 
         // Execute request
+        log_activity('WAVE PAYMENT - Envoi de la requête à Wave API');
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curl_error = curl_error($ch);
         curl_close($ch);
 
+        log_activity('WAVE PAYMENT - HTTP Code: ' . $http_code);
+        log_activity('WAVE PAYMENT - Response: ' . substr($response, 0, 500));
+
         // Handle errors
         if ($curl_error) {
-            log_message('error', 'Wave API cURL Error: ' . $curl_error);
-            show_error('Erreur de connexion à Wave: ' . $curl_error, 500);
+            log_activity('WAVE PAYMENT - ERREUR cURL: ' . $curl_error);
+            set_alert('danger', 'Erreur de connexion à Wave. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
@@ -13300,8 +13331,9 @@ php index.php cron/index</pre>';
         $result = json_decode($response, true);
 
         if ($http_code !== 200 || !isset($result['wave_launch_url'])) {
-            log_message('error', 'Wave API Error: ' . $response);
-            show_error('Erreur lors de l\'initialisation du paiement Wave', 500);
+            log_activity('WAVE PAYMENT - ERREUR API: Code ' . $http_code . ' - Response: ' . $response);
+            set_alert('danger', 'Erreur lors de l\'initialisation du paiement Wave. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
@@ -13313,6 +13345,8 @@ php index.php cron/index</pre>';
             'invoice_id' => $invoice->id
         ]);
 
+        log_activity('WAVE PAYMENT - SUCCÈS - Redirection vers: ' . $result['wave_launch_url']);
+
         // Redirect to Wave checkout page
         redirect($result['wave_launch_url']);
     }
@@ -13322,13 +13356,18 @@ php index.php cron/index</pre>';
      */
     private function initiate_paypal_payment($invoice, $settings)
     {
+        log_activity('PAYPAL PAYMENT - Démarrage pour facture #' . $invoice->id);
+        log_activity('PAYPAL PAYMENT - Settings: ' . json_encode($settings));
+
         // Get PayPal credentials
         $client_id = isset($settings['client_id']) ? $settings['client_id'] : '';
         $secret = isset($settings['secret']) ? $settings['secret'] : '';
         $mode = isset($settings['mode']) ? $settings['mode'] : 'sandbox';
 
         if (empty($client_id) || empty($secret)) {
-            show_error('PayPal credentials not configured', 500);
+            log_activity('PAYPAL PAYMENT - ERREUR: Credentials non configurées');
+            set_alert('danger', 'La passerelle PayPal n\'est pas configurée. Veuillez contacter l\'administrateur.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
@@ -13337,12 +13376,19 @@ php index.php cron/index</pre>';
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
 
+        log_activity('PAYPAL PAYMENT - Mode: ' . $mode . ', Base URL: ' . $base_url);
+
         // Step 1: Get access token
+        log_activity('PAYPAL PAYMENT - Obtention du token d\'accès');
         $token = $this->get_paypal_access_token($base_url, $client_id, $secret);
         if (!$token) {
-            show_error('Impossible d\'obtenir le token PayPal', 500);
+            log_activity('PAYPAL PAYMENT - ERREUR: Impossible d\'obtenir le token');
+            set_alert('danger', 'Erreur d\'authentification PayPal. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
+
+        log_activity('PAYPAL PAYMENT - Token obtenu avec succès');
 
         // Prepare callback URLs
         $return_url = site_url('dietetic/portal/paypal_callback/success/' . $invoice->id);
@@ -13380,22 +13426,28 @@ php index.php cron/index</pre>';
             'Content-Type: application/json'
         ]);
 
+        log_activity('PAYPAL PAYMENT - Envoi de la requête de création d\'ordre');
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curl_error = curl_error($ch);
         curl_close($ch);
 
+        log_activity('PAYPAL PAYMENT - HTTP Code: ' . $http_code);
+        log_activity('PAYPAL PAYMENT - Response: ' . substr($response, 0, 500));
+
         if ($curl_error) {
-            log_message('error', 'PayPal API cURL Error: ' . $curl_error);
-            show_error('Erreur de connexion à PayPal: ' . $curl_error, 500);
+            log_activity('PAYPAL PAYMENT - ERREUR cURL: ' . $curl_error);
+            set_alert('danger', 'Erreur de connexion à PayPal. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
         $result = json_decode($response, true);
 
         if ($http_code !== 201 || !isset($result['id'])) {
-            log_message('error', 'PayPal API Error: ' . $response);
-            show_error('Erreur lors de l\'initialisation du paiement PayPal', 500);
+            log_activity('PAYPAL PAYMENT - ERREUR API: Code ' . $http_code . ' - Response: ' . $response);
+            set_alert('danger', 'Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
@@ -13411,7 +13463,9 @@ php index.php cron/index</pre>';
         }
 
         if (empty($approval_url)) {
-            show_error('URL d\'approbation PayPal introuvable', 500);
+            log_activity('PAYPAL PAYMENT - ERREUR: URL d\'approbation introuvable');
+            set_alert('danger', 'Erreur lors de l\'initialisation du paiement PayPal. Veuillez réessayer.');
+            redirect(site_url('dietetic/portal/invoice/' . $invoice->id));
             return;
         }
 
@@ -13421,6 +13475,8 @@ php index.php cron/index</pre>';
             'amount' => $amount_usd,
             'invoice_id' => $invoice->id
         ]);
+
+        log_activity('PAYPAL PAYMENT - SUCCÈS - Redirection vers: ' . $approval_url);
 
         // Redirect to PayPal approval page
         redirect($approval_url);
@@ -13474,16 +13530,21 @@ php index.php cron/index</pre>';
     public function wave_callback($status = 'success', $invoice_id = null)
     {
         if (!$invoice_id) {
-            show_error('ID de facture manquant', 400);
+            log_activity('WAVE CALLBACK - ID de facture manquant');
+            set_alert('danger', 'ID de facture manquant.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
-        // Get client ID from session
-        $client_id = $this->session->userdata('client_id');
-        if (!$client_id) {
-            redirect('dietetic/portal/login');
+        // Get client ID from session - use correct session key
+        if (!$this->session->userdata('client_logged_in')) {
+            log_activity('WAVE CALLBACK - Non authentifié');
+            redirect(site_url('dietetic/portal'));
             return;
         }
+
+        $client_id = $this->session->userdata('client_user_id');
+        log_activity('WAVE CALLBACK - Client ID: ' . $client_id . ', Status: ' . $status . ', Invoice: ' . $invoice_id);
 
         // Verify invoice belongs to client
         $invoice = $this->db->select('id, clientid, total, status')
@@ -13542,16 +13603,21 @@ php index.php cron/index</pre>';
     public function paypal_callback($status = 'success', $invoice_id = null)
     {
         if (!$invoice_id) {
-            show_error('ID de facture manquant', 400);
+            log_activity('PAYPAL CALLBACK - ID de facture manquant');
+            set_alert('danger', 'ID de facture manquant.');
+            redirect(site_url('dietetic/portal/invoices'));
             return;
         }
 
-        // Get client ID from session
-        $client_id = $this->session->userdata('client_id');
-        if (!$client_id) {
-            redirect('dietetic/portal/login');
+        // Get client ID from session - use correct session key
+        if (!$this->session->userdata('client_logged_in')) {
+            log_activity('PAYPAL CALLBACK - Non authentifié');
+            redirect(site_url('dietetic/portal'));
             return;
         }
+
+        $client_id = $this->session->userdata('client_user_id');
+        log_activity('PAYPAL CALLBACK - Client ID: ' . $client_id . ', Status: ' . $status . ', Invoice: ' . $invoice_id);
 
         // Verify invoice belongs to client
         $invoice = $this->db->select('id, clientid, total, status')
