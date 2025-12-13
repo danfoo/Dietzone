@@ -846,4 +846,132 @@ class Dietetic extends AdminController
         $name = str_replace('_', ' ', $name);
         return ucwords($name);
     }
+
+    /**
+     * Apply PayPal Session Fix Migration
+     * Page admin pour appliquer la migration de correction du bug de session PayPal
+     */
+    public function apply_paypal_fix()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Migration PayPal Session Fix';
+
+        // Vérifier si la table existe déjà
+        $table_exists = $this->db->table_exists(db_prefix() . 'dietic_payment_tokens');
+        $data['table_exists'] = $table_exists;
+
+        // Si la table existe, récupérer des stats
+        if ($table_exists) {
+            // Nombre total de tokens
+            $data['total_tokens'] = $this->db->count_all(db_prefix() . 'dietic_payment_tokens');
+
+            // Tokens par statut
+            $this->db->select('status, COUNT(*) as count');
+            $this->db->from(db_prefix() . 'dietic_payment_tokens');
+            $this->db->group_by('status');
+            $data['tokens_by_status'] = $this->db->get()->result();
+
+            // Derniers tokens
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'dietic_payment_tokens');
+            $this->db->order_by('created_at', 'DESC');
+            $this->db->limit(10);
+            $data['recent_tokens'] = $this->db->get()->result();
+        }
+
+        // Traiter la soumission du formulaire (application de la migration)
+        if ($this->input->post('apply_migration')) {
+            $this->apply_migration_sql();
+            return;
+        }
+
+        $this->load->view('admin/migrations/paypal_fix', $data);
+    }
+
+    /**
+     * Execute PayPal fix migration
+     * Méthode privée pour exécuter la migration SQL
+     */
+    private function apply_migration_sql()
+    {
+        try {
+            // Charger le fichier SQL
+            $migration_file = DIETETIC_MODULE_PATH . 'migrations/fix_paypal_session_issue.sql';
+
+            if (!file_exists($migration_file)) {
+                set_alert('danger', 'Fichier de migration introuvable: ' . $migration_file);
+                redirect(admin_url('dietetic/apply_paypal_fix'));
+                return;
+            }
+
+            // Lire le contenu SQL
+            $sql_content = file_get_contents($migration_file);
+
+            // Remplacer les préfixes
+            $sql_content = str_replace('tbldietic_', db_prefix() . 'dietic_', $sql_content);
+
+            // Nettoyer les commentaires SQL
+            $sql_content = preg_replace('/^--.*$/m', '', $sql_content);
+            $sql_content = preg_replace('/\/\*.*?\*\//s', '', $sql_content);
+
+            // Séparer les instructions SQL
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql_content)),
+                function($stmt) {
+                    return !empty($stmt) && strlen($stmt) > 10;
+                }
+            );
+
+            $success_count = 0;
+            $error_count = 0;
+            $errors = [];
+
+            // Exécuter chaque instruction
+            foreach ($statements as $statement) {
+                try {
+                    $this->db->query($statement);
+                    $success_count++;
+                } catch (Exception $e) {
+                    $error_msg = $e->getMessage();
+
+                    // Ignorer les erreurs "already exists"
+                    if (
+                        strpos($error_msg, 'already exists') === false &&
+                        strpos($error_msg, 'Duplicate') === false
+                    ) {
+                        $error_count++;
+                        $errors[] = substr($error_msg, 0, 200);
+                    } else {
+                        $success_count++; // Compter comme succès si déjà existe
+                    }
+                }
+            }
+
+            if ($error_count === 0) {
+                log_activity('Migration PayPal Session Fix appliquée avec succès');
+                set_alert('success', sprintf(
+                    'Migration appliquée avec succès! %d instructions SQL exécutées.',
+                    $success_count
+                ));
+            } else {
+                log_activity('Migration PayPal Session Fix terminée avec erreurs: ' . json_encode($errors));
+                set_alert('warning', sprintf(
+                    'Migration terminée avec %d erreurs sur %d instructions. Erreurs: %s',
+                    $error_count,
+                    $success_count + $error_count,
+                    implode(', ', array_slice($errors, 0, 3))
+                ));
+            }
+
+        } catch (Exception $e) {
+            log_activity('Erreur lors de la migration PayPal Session Fix: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
+        }
+
+        redirect(admin_url('dietetic/apply_paypal_fix'));
+    }
 }
