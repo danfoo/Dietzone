@@ -458,7 +458,7 @@
 
             <button
                 class="subscribe-btn"
-                onclick="checkEligibilityAndSubscribe(<?php echo $service->id; ?>, '<?php echo addslashes(htmlspecialchars($service->description)); ?>', <?php echo $service->rate; ?>)"
+                onclick="checkEligibilityAndSubscribe(event, <?php echo $service->id; ?>, '<?php echo addslashes(htmlspecialchars($service->description)); ?>', <?php echo $service->rate; ?>)"
                 <?php echo $has_unpaid_invoices ? 'disabled' : ''; ?>>
                 <?php echo $has_unpaid_invoices ? 'Réglez vos factures' : 'Souscrire'; ?>
             </button>
@@ -498,7 +498,7 @@
 <script>
 let currentServiceId = null;
 
-function checkEligibilityAndSubscribe(serviceId, serviceName, servicePrice) {
+function checkEligibilityAndSubscribe(event, serviceId, serviceName, servicePrice) {
     // Show loading state
     event.target.disabled = true;
     event.target.textContent = 'Vérification...';
