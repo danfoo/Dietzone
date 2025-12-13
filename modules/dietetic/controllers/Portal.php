@@ -13475,14 +13475,22 @@ php index.php cron/index</pre>';
             return;
         }
 
-        // Store order details in session
-        $this->session->set_userdata('paypal_order_' . $invoice->id, [
-            'order_id' => $result['id'],
-            'amount' => $amount_usd,
-            'invoice_id' => $invoice->id
-        ]);
+        // Store order details in DATABASE instead of session (avoid session loss on redirect)
+        $client_id = $this->session->userdata('client_user_id');
+        dietetic_create_payment_token(
+            $invoice->id,
+            $client_id,
+            'paypal',
+            $result['id'], // PayPal order_id
+            $amount_usd,
+            'USD',
+            [
+                'invoice_total_xof' => $invoice->total,
+                'approval_url' => $approval_url
+            ]
+        );
 
-        log_activity('PAYPAL PAYMENT - SUCCÈS - Redirection vers: ' . $approval_url);
+        log_activity('PAYPAL PAYMENT - SUCCÈS - Order ID stocké en BD - Redirection vers: ' . $approval_url);
 
         // Redirect to PayPal approval page
         redirect($approval_url);
@@ -13615,14 +13623,16 @@ php index.php cron/index</pre>';
             return;
         }
 
-        // Get client ID from session - use correct session key
-        if (!$this->session->userdata('client_logged_in')) {
-            log_activity('PAYPAL CALLBACK - Non authentifié');
+        // Use is_client_logged_in() which restores from cookies if session was lost
+        if (!is_client_logged_in()) {
+            log_activity('PAYPAL CALLBACK - Non authentifié (session+cookies)');
+            // Store return URL to redirect after login
+            $this->session->set_userdata('redirect_after_login', current_url());
             redirect(site_url('dietetic/portal'));
             return;
         }
 
-        $client_id = $this->session->userdata('client_user_id');
+        $client_id = get_client_user_id();
         log_activity('PAYPAL CALLBACK - Client ID: ' . $client_id . ', Status: ' . $status . ', Invoice: ' . $invoice_id);
 
         // Verify invoice belongs to client
@@ -13634,22 +13644,40 @@ php index.php cron/index</pre>';
             ->row();
 
         if (!$invoice) {
+            log_activity('PAYPAL CALLBACK - Facture introuvable ou non autorisée');
             show_error('Facture introuvable', 404);
             return;
         }
 
         if ($status === 'cancel') {
+            // Mark token as cancelled
+            $payment_token = dietetic_get_payment_token($invoice_id, 'paypal');
+            if ($payment_token) {
+                dietetic_update_payment_token_status($payment_token->id, 'cancelled');
+            }
+
             set_alert('warning', 'Paiement PayPal annulé.');
             redirect('dietetic/portal/invoices');
             return;
         }
 
-        // Get order details from session
-        $order_data = $this->session->userdata('paypal_order_' . $invoice_id);
-        if (!$order_data || !isset($order_data['order_id'])) {
-            show_error('Données de commande PayPal introuvables', 400);
+        // Get order details from DATABASE instead of session
+        $payment_token = dietetic_get_payment_token($invoice_id, 'paypal');
+
+        if (!$payment_token || !$payment_token->order_id) {
+            log_activity('PAYPAL CALLBACK - Token de paiement introuvable ou expiré');
+            show_error('Données de paiement introuvables ou expirées. Veuillez réessayer.', 400);
             return;
         }
+
+        // Verify client_id matches
+        if ((int)$payment_token->client_id !== (int)$client_id) {
+            log_activity('PAYPAL CALLBACK - Client ID mismatch: Token=' . $payment_token->client_id . ' vs Session=' . $client_id);
+            show_error('Erreur de validation du paiement', 403);
+            return;
+        }
+
+        $order_id = $payment_token->order_id;
 
         // Get PayPal token parameter from URL
         $token = $this->input->get('token');
@@ -13679,8 +13707,11 @@ php index.php cron/index</pre>';
             return;
         }
 
+        // Update token status to processing
+        dietetic_update_payment_token_status($payment_token->id, 'processing');
+
         // Capture the order
-        $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_data['order_id'] . '/capture');
+        $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_id . '/capture');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -13717,12 +13748,12 @@ php index.php cron/index</pre>';
                     'paymentmethod' => 'PayPal',
                     'date' => date('Y-m-d'),
                     'daterecorded' => date('Y-m-d H:i:s'),
-                    'note' => 'Paiement PayPal - Order: ' . $order_data['order_id'],
+                    'note' => 'Paiement PayPal - Order: ' . $order_id,
                     'transactionid' => $transaction_id
                 ]);
 
-                // Clear session data
-                $this->session->unset_userdata('paypal_order_' . $invoice_id);
+                // Mark payment token as completed
+                dietetic_update_payment_token_status($payment_token->id, 'completed');
 
                 set_alert('success', 'Paiement PayPal effectué avec succès!');
             }

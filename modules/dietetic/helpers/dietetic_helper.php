@@ -1785,3 +1785,137 @@ if (!function_exists('dietetic_get_payment_gateway_name')) {
         return isset($names[$gateway]) ? $names[$gateway] : ucfirst($gateway);
     }
 }
+
+// ==================== PAYMENT TOKENS (SESSION-LESS) ====================
+
+/**
+ * Create a payment token in database to avoid session loss during payment redirects
+ * This solves the PayPal callback session issue when redirecting from paypal.com
+ *
+ * @param int $invoice_id Invoice ID
+ * @param int $client_id Client ID for validation
+ * @param string $gateway Gateway name (paypal, wave, orange_money)
+ * @param string|null $order_id External order ID (PayPal order_id, etc)
+ * @param float $amount Payment amount
+ * @param string $currency Currency code (default: XOF)
+ * @param array $metadata Additional data as associative array (will be JSON encoded)
+ * @return int|false Payment token ID or false on failure
+ */
+if (!function_exists('dietetic_create_payment_token')) {
+    function dietetic_create_payment_token($invoice_id, $client_id, $gateway, $order_id = null, $amount = 0, $currency = 'XOF', $metadata = [])
+    {
+        $CI = &get_instance();
+
+        // Generate a unique token
+        $token = bin2hex(random_bytes(32));
+
+        // Delete any existing pending tokens for this invoice+gateway (cleanup)
+        $CI->db->where('invoice_id', $invoice_id);
+        $CI->db->where('gateway', $gateway);
+        $CI->db->where('status', 'pending');
+        $CI->db->delete(db_prefix() . 'dietic_payment_tokens');
+
+        $data = [
+            'invoice_id' => $invoice_id,
+            'client_id' => $client_id,
+            'gateway' => $gateway,
+            'order_id' => $order_id,
+            'token' => $token,
+            'amount' => $amount,
+            'currency' => $currency,
+            'status' => 'pending',
+            'metadata' => !empty($metadata) ? json_encode($metadata) : null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+1 hour')) // 1 hour expiration
+        ];
+
+        if ($CI->db->insert(db_prefix() . 'dietic_payment_tokens', $data)) {
+            $token_id = $CI->db->insert_id();
+            log_activity('PAYMENT TOKEN CREATED - ID: ' . $token_id . ', Invoice: ' . $invoice_id . ', Gateway: ' . $gateway);
+            return $token_id;
+        }
+
+        return false;
+    }
+}
+
+/**
+ * Get payment token data by invoice ID and gateway
+ * Used in payment callbacks to retrieve order information
+ *
+ * @param int $invoice_id Invoice ID
+ * @param string $gateway Gateway name
+ * @return object|null Payment token object or null if not found
+ */
+if (!function_exists('dietetic_get_payment_token')) {
+    function dietetic_get_payment_token($invoice_id, $gateway)
+    {
+        $CI = &get_instance();
+
+        $token = $CI->db->select('*')
+            ->from(db_prefix() . 'dietic_payment_tokens')
+            ->where('invoice_id', $invoice_id)
+            ->where('gateway', $gateway)
+            ->where('status', 'pending')
+            ->where('expires_at >', date('Y-m-d H:i:s')) // Not expired
+            ->order_by('created_at', 'DESC')
+            ->limit(1)
+            ->get()
+            ->row();
+
+        return $token;
+    }
+}
+
+/**
+ * Update payment token status
+ *
+ * @param int $token_id Payment token ID
+ * @param string $status New status (pending, processing, completed, cancelled, expired)
+ * @return bool
+ */
+if (!function_exists('dietetic_update_payment_token_status')) {
+    function dietetic_update_payment_token_status($token_id, $status)
+    {
+        $CI = &get_instance();
+
+        $CI->db->where('id', $token_id);
+        $result = $CI->db->update(db_prefix() . 'dietic_payment_tokens', [
+            'status' => $status,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        if ($result) {
+            log_activity('PAYMENT TOKEN UPDATED - ID: ' . $token_id . ', Status: ' . $status);
+        }
+
+        return $result;
+    }
+}
+
+/**
+ * Delete expired payment tokens (cleanup function for cron)
+ * Should be called periodically to clean up old tokens
+ *
+ * @return int Number of tokens deleted
+ */
+if (!function_exists('dietetic_cleanup_expired_payment_tokens')) {
+    function dietetic_cleanup_expired_payment_tokens()
+    {
+        $CI = &get_instance();
+
+        $CI->db->where('expires_at <', date('Y-m-d H:i:s'));
+        $CI->db->or_where('status', 'completed');
+        $CI->db->or_where('status', 'cancelled');
+        $CI->db->where('created_at <', date('Y-m-d H:i:s', strtotime('-7 days'))); // Keep for 7 days
+
+        $CI->db->delete(db_prefix() . 'dietic_payment_tokens');
+        $deleted = $CI->db->affected_rows();
+
+        if ($deleted > 0) {
+            log_activity('PAYMENT TOKENS CLEANUP - Deleted ' . $deleted . ' expired/old tokens');
+        }
+
+        return $deleted;
+    }
+}
