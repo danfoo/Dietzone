@@ -13251,14 +13251,70 @@ php index.php cron/index</pre>';
      */
     private function initiate_wave_payment($invoice, $settings)
     {
-        // For now, show a placeholder message
-        // TODO: Implement Wave Payment API integration
-        $data['title'] = 'Paiement Wave';
-        $data['invoice'] = $invoice;
-        $data['settings'] = $settings;
-        $data['message'] = 'Intégration Wave en cours de développement...';
+        // Get Wave API credentials
+        $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
 
-        $this->load->view('portal/payment/wave_redirect', $data);
+        if (empty($api_key)) {
+            show_error('Wave API key not configured', 500);
+            return;
+        }
+
+        // Prepare callback URLs
+        $success_url = site_url('dietetic/portal/wave_callback/success/' . $invoice->id);
+        $error_url = site_url('dietetic/portal/wave_callback/error/' . $invoice->id);
+
+        // Prepare Wave API request
+        $amount = number_format($invoice->total, 0, '', ''); // XOF has no decimals
+        $payload = [
+            'amount' => $amount,
+            'currency' => 'XOF',
+            'error_url' => $error_url,
+            'success_url' => $success_url,
+            'client_reference' => 'INV-' . $invoice->id
+        ];
+
+        // Initialize cURL
+        $ch = curl_init('https://api.wave.com/v1/checkout/sessions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json'
+        ]);
+
+        // Execute request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        // Handle errors
+        if ($curl_error) {
+            log_message('error', 'Wave API cURL Error: ' . $curl_error);
+            show_error('Erreur de connexion à Wave: ' . $curl_error, 500);
+            return;
+        }
+
+        // Parse response
+        $result = json_decode($response, true);
+
+        if ($http_code !== 200 || !isset($result['wave_launch_url'])) {
+            log_message('error', 'Wave API Error: ' . $response);
+            show_error('Erreur lors de l\'initialisation du paiement Wave', 500);
+            return;
+        }
+
+        // Store transaction details in session for verification
+        $this->session->set_userdata('wave_transaction_' . $invoice->id, [
+            'transaction_id' => $result['id'] ?? '',
+            'checkout_status' => $result['checkout_status'] ?? '',
+            'amount' => $amount,
+            'invoice_id' => $invoice->id
+        ]);
+
+        // Redirect to Wave checkout page
+        redirect($result['wave_launch_url']);
     }
 
     /**
@@ -13266,14 +13322,135 @@ php index.php cron/index</pre>';
      */
     private function initiate_paypal_payment($invoice, $settings)
     {
-        // For now, show a placeholder message
-        // TODO: Implement PayPal API integration
-        $data['title'] = 'Paiement PayPal';
-        $data['invoice'] = $invoice;
-        $data['settings'] = $settings;
-        $data['message'] = 'Intégration PayPal en cours de développement...';
+        // Get PayPal credentials
+        $client_id = isset($settings['client_id']) ? $settings['client_id'] : '';
+        $secret = isset($settings['secret']) ? $settings['secret'] : '';
+        $mode = isset($settings['mode']) ? $settings['mode'] : 'sandbox';
 
-        $this->load->view('portal/payment/paypal_redirect', $data);
+        if (empty($client_id) || empty($secret)) {
+            show_error('PayPal credentials not configured', 500);
+            return;
+        }
+
+        // Set API base URL based on mode
+        $base_url = ($mode === 'live')
+            ? 'https://api-m.paypal.com'
+            : 'https://api-m.sandbox.paypal.com';
+
+        // Step 1: Get access token
+        $token = $this->get_paypal_access_token($base_url, $client_id, $secret);
+        if (!$token) {
+            show_error('Impossible d\'obtenir le token PayPal', 500);
+            return;
+        }
+
+        // Prepare callback URLs
+        $return_url = site_url('dietetic/portal/paypal_callback/success/' . $invoice->id);
+        $cancel_url = site_url('dietetic/portal/paypal_callback/cancel/' . $invoice->id);
+
+        // Convert XOF to USD (approximate rate, should use real exchange rate API)
+        $amount_xof = $invoice->total;
+        $amount_usd = number_format($amount_xof / 600, 2, '.', ''); // Approximate XOF to USD
+
+        // Step 2: Create order
+        $order_payload = [
+            'intent' => 'CAPTURE',
+            'purchase_units' => [[
+                'reference_id' => 'INV-' . $invoice->id,
+                'amount' => [
+                    'currency_code' => 'USD',
+                    'value' => $amount_usd
+                ],
+                'description' => 'Paiement facture #' . $invoice->id
+            ]],
+            'application_context' => [
+                'return_url' => $return_url,
+                'cancel_url' => $cancel_url,
+                'brand_name' => 'DietSenegal',
+                'user_action' => 'PAY_NOW'
+            ]
+        ];
+
+        $ch = curl_init($base_url . '/v2/checkout/orders');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($order_payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($curl_error) {
+            log_message('error', 'PayPal API cURL Error: ' . $curl_error);
+            show_error('Erreur de connexion à PayPal: ' . $curl_error, 500);
+            return;
+        }
+
+        $result = json_decode($response, true);
+
+        if ($http_code !== 201 || !isset($result['id'])) {
+            log_message('error', 'PayPal API Error: ' . $response);
+            show_error('Erreur lors de l\'initialisation du paiement PayPal', 500);
+            return;
+        }
+
+        // Extract approval URL
+        $approval_url = '';
+        if (isset($result['links'])) {
+            foreach ($result['links'] as $link) {
+                if ($link['rel'] === 'approve') {
+                    $approval_url = $link['href'];
+                    break;
+                }
+            }
+        }
+
+        if (empty($approval_url)) {
+            show_error('URL d\'approbation PayPal introuvable', 500);
+            return;
+        }
+
+        // Store order details in session
+        $this->session->set_userdata('paypal_order_' . $invoice->id, [
+            'order_id' => $result['id'],
+            'amount' => $amount_usd,
+            'invoice_id' => $invoice->id
+        ]);
+
+        // Redirect to PayPal approval page
+        redirect($approval_url);
+    }
+
+    /**
+     * Get PayPal access token
+     */
+    private function get_paypal_access_token($base_url, $client_id, $secret)
+    {
+        $ch = curl_init($base_url . '/v1/oauth2/token');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+        curl_setopt($ch, CURLOPT_USERPWD, $client_id . ':' . $secret);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/x-www-form-urlencoded'
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($http_code !== 200) {
+            log_message('error', 'PayPal Token Error: ' . $response);
+            return false;
+        }
+
+        $result = json_decode($response, true);
+        return isset($result['access_token']) ? $result['access_token'] : false;
     }
 
     /**
@@ -13289,5 +13466,200 @@ php index.php cron/index</pre>';
         $data['message'] = 'Intégration Orange Money en cours de développement...';
 
         $this->load->view('portal/payment/orange_money_redirect', $data);
+    }
+
+    /**
+     * Wave payment callback handler
+     */
+    public function wave_callback($status = 'success', $invoice_id = null)
+    {
+        if (!$invoice_id) {
+            show_error('ID de facture manquant', 400);
+            return;
+        }
+
+        // Get client ID from session
+        $client_id = $this->session->userdata('client_id');
+        if (!$client_id) {
+            redirect('dietetic/portal/login');
+            return;
+        }
+
+        // Verify invoice belongs to client
+        $invoice = $this->db->select('id, clientid, total, status')
+            ->from(db_prefix() . 'invoices')
+            ->where('id', $invoice_id)
+            ->where('clientid', $client_id)
+            ->get()
+            ->row();
+
+        if (!$invoice) {
+            show_error('Facture introuvable', 404);
+            return;
+        }
+
+        // Get transaction details from session
+        $transaction = $this->session->userdata('wave_transaction_' . $invoice_id);
+
+        if ($status === 'success') {
+            // Mark invoice as paid
+            if ($invoice->status != 2) {
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', [
+                    'status' => 2,
+                    'datepaid' => date('Y-m-d H:i:s')
+                ]);
+
+                // Log payment
+                $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
+                    'invoiceid' => $invoice_id,
+                    'amount' => $invoice->total,
+                    'paymentmode' => 'wave',
+                    'paymentmethod' => 'Wave',
+                    'date' => date('Y-m-d'),
+                    'daterecorded' => date('Y-m-d H:i:s'),
+                    'note' => 'Paiement Wave - Transaction: ' . ($transaction['transaction_id'] ?? 'N/A'),
+                    'transactionid' => $transaction['transaction_id'] ?? ''
+                ]);
+
+                // Clear session data
+                $this->session->unset_userdata('wave_transaction_' . $invoice_id);
+
+                set_alert('success', 'Paiement effectué avec succès!');
+            }
+
+            redirect('dietetic/portal/invoices');
+        } else {
+            // Payment failed or cancelled
+            set_alert('danger', 'Le paiement a échoué ou a été annulé.');
+            redirect('dietetic/portal/invoices');
+        }
+    }
+
+    /**
+     * PayPal payment callback handler
+     */
+    public function paypal_callback($status = 'success', $invoice_id = null)
+    {
+        if (!$invoice_id) {
+            show_error('ID de facture manquant', 400);
+            return;
+        }
+
+        // Get client ID from session
+        $client_id = $this->session->userdata('client_id');
+        if (!$client_id) {
+            redirect('dietetic/portal/login');
+            return;
+        }
+
+        // Verify invoice belongs to client
+        $invoice = $this->db->select('id, clientid, total, status')
+            ->from(db_prefix() . 'invoices')
+            ->where('id', $invoice_id)
+            ->where('clientid', $client_id)
+            ->get()
+            ->row();
+
+        if (!$invoice) {
+            show_error('Facture introuvable', 404);
+            return;
+        }
+
+        if ($status === 'cancel') {
+            set_alert('warning', 'Paiement PayPal annulé.');
+            redirect('dietetic/portal/invoices');
+            return;
+        }
+
+        // Get order details from session
+        $order_data = $this->session->userdata('paypal_order_' . $invoice_id);
+        if (!$order_data || !isset($order_data['order_id'])) {
+            show_error('Données de commande PayPal introuvables', 400);
+            return;
+        }
+
+        // Get PayPal token parameter from URL
+        $token = $this->input->get('token');
+        $payer_id = $this->input->get('PayerID');
+
+        if (!$token || !$payer_id) {
+            set_alert('danger', 'Paramètres de paiement PayPal manquants.');
+            redirect('dietetic/portal/invoices');
+            return;
+        }
+
+        // Get gateway settings
+        $gateway_settings = dietetic_get_payment_gateway_settings('paypal');
+        $client_id = $gateway_settings['client_id'] ?? '';
+        $secret = $gateway_settings['secret'] ?? '';
+        $mode = $gateway_settings['mode'] ?? 'sandbox';
+
+        $base_url = ($mode === 'live')
+            ? 'https://api-m.paypal.com'
+            : 'https://api-m.sandbox.paypal.com';
+
+        // Get access token
+        $access_token = $this->get_paypal_access_token($base_url, $client_id, $secret);
+        if (!$access_token) {
+            set_alert('danger', 'Erreur d\'authentification PayPal.');
+            redirect('dietetic/portal/invoices');
+            return;
+        }
+
+        // Capture the order
+        $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_data['order_id'] . '/capture');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $access_token,
+            'Content-Type: application/json'
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        if ($http_code === 201 && isset($result['status']) && $result['status'] === 'COMPLETED') {
+            // Mark invoice as paid
+            if ($invoice->status != 2) {
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', [
+                    'status' => 2,
+                    'datepaid' => date('Y-m-d H:i:s')
+                ]);
+
+                // Get transaction ID
+                $transaction_id = '';
+                if (isset($result['purchase_units'][0]['payments']['captures'][0]['id'])) {
+                    $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
+                }
+
+                // Log payment
+                $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
+                    'invoiceid' => $invoice_id,
+                    'amount' => $invoice->total,
+                    'paymentmode' => 'paypal',
+                    'paymentmethod' => 'PayPal',
+                    'date' => date('Y-m-d'),
+                    'daterecorded' => date('Y-m-d H:i:s'),
+                    'note' => 'Paiement PayPal - Order: ' . $order_data['order_id'],
+                    'transactionid' => $transaction_id
+                ]);
+
+                // Clear session data
+                $this->session->unset_userdata('paypal_order_' . $invoice_id);
+
+                set_alert('success', 'Paiement PayPal effectué avec succès!');
+            }
+
+            redirect('dietetic/portal/invoices');
+        } else {
+            log_message('error', 'PayPal Capture Error: ' . $response);
+            set_alert('danger', 'Erreur lors de la capture du paiement PayPal.');
+            redirect('dietetic/portal/invoices');
+        }
     }
 }
