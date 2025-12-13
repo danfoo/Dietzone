@@ -24,6 +24,16 @@ class Settings extends AdminController
     }
 
     /**
+     * Payment gateways configuration
+     * Redirect to main settings page with payment gateways
+     */
+    public function payment_gateways()
+    {
+        // Redirect to dietetic controller settings method
+        redirect(admin_url('dietetic#payment-gateways'));
+    }
+
+    /**
      * Patient booking migration page
      */
     public function patient_booking_migration()
