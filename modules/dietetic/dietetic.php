@@ -261,10 +261,10 @@ function dietetic_module_init_menu_items()
         // Settings - requires settings permission
         if (has_permission('dietetic', '', 'settings') || is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
-                'slug'     => 'dietetic-settings',
-                'name'     => _l('settings'),
-                'icon'     => 'fa fa-cog',
-                'href'     => admin_url('dietetic/settings'),
+                'slug'     => 'dietetic-payment-settings',
+                'name'     => 'Passerelles de Paiement',
+                'icon'     => 'fa fa-credit-card',
+                'href'     => admin_url('dietetic/payment_settings'),
                 'position' => 99,
             ]);
         }
