@@ -87,6 +87,34 @@
                             }
                             echo "</ul>";
                         }
+
+                        // Check for duplicates
+                        $duplicates = $CI->db->select('*')
+                            ->from(db_prefix() . 'dietic_settings')
+                            ->like('setting_key', 'payment_', 'after')
+                            ->get()
+                            ->result();
+
+                        if (!empty($duplicates)) {
+                            echo "<hr />";
+                            echo "<div class='alert alert-warning'>";
+                            echo "<h5>⚠️ Duplicate Settings Detected!</h5>";
+                            echo "<p><strong>" . count($duplicates) . " duplicate settings</strong> found with 'payment_' prefix. These should be cleaned up.</p>";
+                            echo "<ul>";
+                            foreach ($duplicates as $d) {
+                                echo "<li><code>" . htmlspecialchars($d->setting_key) . "</code></li>";
+                            }
+                            echo "</ul>";
+                            echo "<a href='" . admin_url('dietetic/cleanup_payment_settings') . "' class='btn btn-warning'>";
+                            echo "<i class='fa fa-broom'></i> Clean Up Duplicates";
+                            echo "</a>";
+                            echo "</div>";
+                        } else {
+                            echo "<hr />";
+                            echo "<div class='alert alert-success'>";
+                            echo "<strong>✓ No duplicates found!</strong> Your database is clean.";
+                            echo "</div>";
+                        }
                         ?>
 
                         <hr />

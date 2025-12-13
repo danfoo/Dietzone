@@ -153,6 +153,18 @@ class Dietetic extends AdminController
     }
 
     /**
+     * Cleanup duplicate payment settings
+     */
+    public function cleanup_payment_settings()
+    {
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $this->load->view('admin/cleanup_payment_settings');
+    }
+
+    /**
      * Test cron job (for debugging)
      */
     public function test_cron()
