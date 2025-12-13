@@ -205,7 +205,7 @@
                     <p class="text-muted">
                         Configurer Wave, PayPal et Orange Money pour les paiements de services.
                     </p>
-                    <a href="<?php echo admin_url('dietetic'); ?>" class="btn btn-success">
+                    <a href="<?php echo admin_url('dietetic/payment_settings'); ?>" class="btn btn-success">
                         <i class="fa fa-cog"></i> Configurer
                     </a>
                 </div>

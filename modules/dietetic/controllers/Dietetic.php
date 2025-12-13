@@ -153,6 +153,36 @@ class Dietetic extends AdminController
     }
 
     /**
+     * Payment gateways settings page
+     */
+    public function payment_settings()
+    {
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Configuration des Passerelles de Paiement';
+
+        // Handle form submission
+        if ($this->input->post()) {
+            $settings = $this->input->post();
+
+            foreach ($settings as $key => $value) {
+                dietetic_update_option($key, $value);
+            }
+
+            set_alert('success', 'Paramètres de paiement enregistrés avec succès');
+            redirect(admin_url('dietetic/payment_settings'));
+        }
+
+        // Get all settings
+        $this->db->select('*');
+        $data['settings'] = $this->db->get(db_prefix() . 'dietic_settings')->result();
+
+        $this->load->view('admin/payment_settings', $data);
+    }
+
+    /**
      * Cleanup duplicate payment settings
      */
     public function cleanup_payment_settings()
