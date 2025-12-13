@@ -12859,7 +12859,6 @@ php index.php cron/index</pre>';
             $this->db->from(db_prefix() . 'items i');
             $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
             $this->db->where('ig.name', 'Services');
-            $this->db->where('i.active', 1);
             $this->db->order_by('i.rate', 'DESC');
             $services = $this->db->get()->result();
             $data['services'] = $services ? $services : [];
@@ -12956,11 +12955,10 @@ php index.php cron/index</pre>';
         $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
         $this->db->where('i.id', $item_id);
         $this->db->where('ig.name', 'Services');
-        $this->db->where('i.active', 1);
         $service = $this->db->get()->row();
 
         if (!$service) {
-            echo json_encode(['success' => false, 'message' => 'Service introuvable ou inactif']);
+            echo json_encode(['success' => false, 'message' => 'Service introuvable']);
             return;
         }
 
@@ -13041,11 +13039,10 @@ php index.php cron/index</pre>';
         $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
         $this->db->where('i.id', $item_id);
         $this->db->where('ig.name', 'Services');
-        $this->db->where('i.active', 1);
         $service = $this->db->get()->row();
 
         if (!$service) {
-            echo json_encode(['success' => false, 'message' => 'Service introuvable ou inactif']);
+            echo json_encode(['success' => false, 'message' => 'Service introuvable']);
             return;
         }
 

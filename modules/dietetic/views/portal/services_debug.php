@@ -138,20 +138,18 @@
             $this->db->from(db_prefix() . 'items i');
             $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
             $this->db->where('ig.name', 'Services');
-            $this->db->where('i.active', 1);
             $this->db->order_by('i.rate', 'DESC');
             $services = $this->db->get()->result();
 
             if ($services) {
                 echo '<p class="success">✓ ' . count($services) . ' service(s) trouvé(s)</p>';
                 echo '<table>';
-                echo '<tr><th>ID</th><th>Description</th><th>Prix</th><th>Actif</th><th>Groupe</th></tr>';
+                echo '<tr><th>ID</th><th>Description</th><th>Prix</th><th>Groupe</th></tr>';
                 foreach ($services as $service) {
                     echo '<tr>';
                     echo '<td>' . $service->id . '</td>';
                     echo '<td>' . htmlspecialchars($service->description) . '</td>';
                     echo '<td>' . number_format($service->rate, 0, ',', ' ') . ' FCFA</td>';
-                    echo '<td>' . ($service->active ? 'Oui' : 'Non') . '</td>';
                     echo '<td>' . $service->group_name . '</td>';
                     echo '</tr>';
                 }
