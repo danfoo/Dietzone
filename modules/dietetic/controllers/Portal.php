@@ -2893,6 +2893,47 @@ app.dietsenegal.net/dietetic/portal";
         // Get current dietitian
         $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
 
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+            }
+        }
+
         // Get dietitian's average rating (with error handling for missing table)
         if ($this->load_ratings_model()) {
             try {

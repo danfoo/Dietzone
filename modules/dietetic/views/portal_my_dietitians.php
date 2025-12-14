@@ -103,6 +103,220 @@ $this->load->view('portal/includes/portal_header');
             font-size: 14px;
         }
 
+        .referral-code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #01807B;
+            margin-top: 4px;
+            border: 1px solid rgba(1, 128, 123, 0.2);
+        }
+
+        .referral-code-badge i {
+            font-size: 14px;
+        }
+
+        .specialties-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .specialties-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .specialties-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .specialty-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: var(--specialty-color, #01807B);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .specialty-badge:hover {
+            transform: translateY(-2px);
+        }
+
+        .specialty-badge i {
+            font-size: 14px;
+        }
+
+        .bio-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, rgba(243, 145, 29, 0.05) 100%);
+            border-radius: 12px;
+            border-left: 4px solid #01807B;
+        }
+
+        .bio-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bio-title i {
+            color: #01807B;
+            font-size: 16px;
+        }
+
+        .bio-text {
+            color: #495057;
+            font-size: 14px;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        .info-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .info-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .info-pill:hover {
+            border-color: #01807B;
+            color: #01807B;
+        }
+
+        .info-pill i {
+            font-size: 14px;
+            color: #01807B;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #01807B;
+            transform: translateY(-2px);
+        }
+
+        .stat-card i {
+            font-size: 24px;
+            color: #01807B;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .certifications-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .certifications-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .certification-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #F3911D;
+        }
+
+        .certification-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .certification-item i {
+            color: #F3911D;
+            font-size: 18px;
+        }
+
+        .certification-text {
+            flex: 1;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
         .dietitian-details {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -642,8 +856,109 @@ $this->load->view('portal/includes/portal_header');
                         <div class="dietitian-info">
                             <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>
                             <div class="dietitian-specialty">Diététicien-Nutritionniste</div>
+                            <?php if (!empty($dietitian->dietitian_referral_code)) { ?>
+                            <div class="referral-code-badge">
+                                <i class="fa fa-qrcode"></i>
+                                <span><?php echo htmlspecialchars($dietitian->dietitian_referral_code); ?></span>
+                            </div>
+                            <?php } ?>
                         </div>
                     </div>
+
+                    <!-- Info Pills: Experience & Languages -->
+                    <?php if (!empty($dietitian->dietitian_years_experience) || !empty($languages)) { ?>
+                    <div class="info-pills">
+                        <?php if (!empty($dietitian->dietitian_years_experience) && $dietitian->dietitian_years_experience > 0) { ?>
+                        <div class="info-pill">
+                            <i class="fa fa-briefcase"></i>
+                            <span><?php echo $dietitian->dietitian_years_experience; ?> an<?php echo $dietitian->dietitian_years_experience > 1 ? 's' : ''; ?> d'expérience</span>
+                        </div>
+                        <?php } ?>
+                        <?php if (!empty($languages)) { ?>
+                        <div class="info-pill">
+                            <i class="fa fa-globe"></i>
+                            <span><?php echo implode(', ', $languages); ?></span>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Specialties -->
+                    <?php if (!empty($specialties)) { ?>
+                    <div class="specialties-section">
+                        <div class="specialties-title">
+                            <i class="fa fa-star"></i>
+                            Spécialités
+                        </div>
+                        <div class="specialties-list">
+                            <?php foreach ($specialties as $specialty) { ?>
+                            <div class="specialty-badge" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
+                                <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
+                                <span><?php echo htmlspecialchars($specialty['name_fr']); ?></span>
+                            </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Bio -->
+                    <?php if (!empty($dietitian->dietitian_bio)) { ?>
+                    <div class="bio-section">
+                        <div class="bio-title">
+                            <i class="fa fa-user"></i>
+                            À propos
+                        </div>
+                        <div class="bio-text">
+                            <?php echo nl2br(htmlspecialchars($dietitian->dietitian_bio)); ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Stats Grid -->
+                    <?php if (isset($dietitian_stats) && $dietitian_stats) { ?>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fa fa-users"></i>
+                            <div class="stat-value"><?php echo $dietitian_stats['total_patients']; ?></div>
+                            <div class="stat-label">Patients</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-heartbeat"></i>
+                            <div class="stat-value"><?php echo $dietitian_stats['total_consultations']; ?></div>
+                            <div class="stat-label">Consultations</div>
+                        </div>
+                        <?php if ($dietitian_stats['total_referrals'] > 0) { ?>
+                        <div class="stat-card">
+                            <i class="fa fa-share-alt"></i>
+                            <div class="stat-value"><?php echo $dietitian_stats['total_referrals']; ?></div>
+                            <div class="stat-label">Références</div>
+                        </div>
+                        <?php } ?>
+                        <?php if ($dietitian_stats['average_rating'] > 0) { ?>
+                        <div class="stat-card">
+                            <i class="fa fa-star"></i>
+                            <div class="stat-value"><?php echo number_format($dietitian_stats['average_rating'], 1); ?></div>
+                            <div class="stat-label">Note moyenne</div>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Certifications -->
+                    <?php if (!empty($certifications)) { ?>
+                    <div class="certifications-section">
+                        <div class="certifications-title">
+                            <i class="fa fa-certificate"></i>
+                            Certifications & Diplômes
+                        </div>
+                        <?php foreach ($certifications as $certification) { ?>
+                        <div class="certification-item">
+                            <i class="fa fa-check-circle"></i>
+                            <span class="certification-text"><?php echo htmlspecialchars($certification); ?></span>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
 
                     <div class="dietitian-details">
                         <?php if (isset($dietitian->email)) { ?>
