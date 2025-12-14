@@ -1893,8 +1893,15 @@ if (!function_exists('dietetic_update_payment_token_status')) {
         log_activity('HELPER dietetic_update_payment_token_status - Update result: ' . var_export($result, true));
         log_activity('HELPER dietetic_update_payment_token_status - DB last query: ' . $CI->db->last_query());
 
-        if ($CI->db->error()['code'] !== 0) {
-            log_activity('HELPER dietetic_update_payment_token_status - DB ERROR: ' . json_encode($CI->db->error()));
+        $error = $CI->db->error();
+        if ($error['code'] !== 0) {
+            log_activity('HELPER dietetic_update_payment_token_status - DB ERROR: ' . json_encode($error));
+
+            // Error 1062 = Duplicate entry - ignore it, status is already set correctly
+            if ($error['code'] == 1062) {
+                log_activity('HELPER dietetic_update_payment_token_status - Duplicate key ignored (status already set)');
+                return true; // Consider this a success - the desired state exists
+            }
         }
 
         if ($result) {
