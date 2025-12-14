@@ -729,6 +729,7 @@ class Portal extends App_Controller
         $phone_full = trim($this->input->post('phone_full'));
         $password = $this->input->post('password');
         $password_confirm = $this->input->post('password_confirm');
+        $referral_code = trim($this->input->post('referral_code')); // Code de référence diététicien (optionnel)
 
         // VALIDATION DES CHAMPS
         $errors = [];
@@ -761,6 +762,17 @@ class Portal extends App_Controller
         // Confirmation mot de passe
         if ($password !== $password_confirm) {
             $errors[] = 'Les mots de passe ne correspondent pas';
+        }
+
+        // Code de référence (optionnel mais validé si fourni)
+        $dietitian_id = null;
+        if (!empty($referral_code)) {
+            $dietitian = dietetic_get_dietitian_by_referral_code($referral_code);
+            if (!$dietitian) {
+                $errors[] = 'Code de référence invalide. Vérifiez le code ou laissez le champ vide.';
+            } else {
+                $dietitian_id = $dietitian['staffid'];
+            }
         }
 
         // Vérifier doublons EMAIL
@@ -823,6 +835,8 @@ class Portal extends App_Controller
                     'email' => $email,
                     'phone_full' => $phone_full,
                     'password' => $password,
+                    'referral_code' => $referral_code,
+                    'dietitian_id' => $dietitian_id,
                     'timestamp' => time()
                 ]
             ]);
@@ -1003,13 +1017,26 @@ class Portal extends App_Controller
 
             // 3. Créer PATIENT DIÉTÉTIQUE
             log_activity('INSCRIPTION OTP - Création patient diététique');
-            // Trouver un diététicien par défaut (le premier disponible) ou mettre 0
-            $this->db->select('staffid');
-            $this->db->from(db_prefix() . 'staff');
-            $this->db->where('active', 1);
-            $this->db->limit(1);
-            $default_dietitian = $this->db->get()->row();
-            $dietitian_id = $default_dietitian ? $default_dietitian->staffid : 0;
+
+            // Déterminer le diététicien assigné
+            $dietitian_id = 0;
+            $referral_code_used = null;
+
+            // Priorité 1: Diététicien du code de référence
+            if (!empty($pending['dietitian_id'])) {
+                $dietitian_id = $pending['dietitian_id'];
+                $referral_code_used = $pending['referral_code'];
+                log_activity('INSCRIPTION OTP - Assignation via code référence: ' . $referral_code_used . ' -> Dietitian ID: ' . $dietitian_id);
+            } else {
+                // Priorité 2: Trouver un diététicien par défaut (le premier disponible) ou mettre 0
+                $this->db->select('staffid');
+                $this->db->from(db_prefix() . 'staff');
+                $this->db->where('active', 1);
+                $this->db->limit(1);
+                $default_dietitian = $this->db->get()->row();
+                $dietitian_id = $default_dietitian ? $default_dietitian->staffid : 0;
+                log_activity('INSCRIPTION OTP - Assignation automatique -> Dietitian ID: ' . $dietitian_id);
+            }
 
             $patient_data = [
                 'client_id' => $client_id,
@@ -1026,6 +1053,17 @@ class Portal extends App_Controller
             }
 
             log_activity('INSCRIPTION OTP - Patient créé, ID: ' . $patient_id);
+
+            // Enregistrer la référence si un code a été utilisé
+            if (!empty($referral_code_used) && $dietitian_id > 0) {
+                try {
+                    dietetic_assign_patient_via_referral($patient_id, $referral_code_used);
+                    log_activity('INSCRIPTION OTP - Référence enregistrée: Patient ' . $patient_id . ' référé par code ' . $referral_code_used);
+                } catch (Exception $e) {
+                    log_activity('INSCRIPTION OTP - ERREUR enregistrement référence: ' . $e->getMessage());
+                    // Ne pas bloquer l'inscription si l'enregistrement de la référence échoue
+                }
+            }
 
             // Terminer transaction
             $this->db->trans_complete();

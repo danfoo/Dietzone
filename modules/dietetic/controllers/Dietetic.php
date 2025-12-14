@@ -992,4 +992,213 @@ class Dietetic extends AdminController
         // Load the diagnostic view
         $this->load->view('admin/diagnostic/paypal_callback', $data);
     }
+
+    /**
+     * My Profile - View dietitian's own profile
+     * URL: /admin/dietetic/my_profile
+     */
+    public function my_profile()
+    {
+        $staff_id = get_staff_user_id();
+
+        // Get staff member info
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!$staff_member) {
+            set_alert('danger', 'Profil introuvable');
+            redirect(admin_url('dietetic/dashboard'));
+            return;
+        }
+
+        // Get statistics for this dietitian
+        $stats = dietetic_get_dietitian_stats($staff_id);
+
+        // Get selected specialties
+        $selected_specialties = [];
+        if (!empty($staff_member->dietitian_specialties)) {
+            $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+            if (!is_array($selected_specialties)) {
+                $selected_specialties = [];
+            }
+        }
+
+        // Get specialty details
+        $specialties = [];
+        if (!empty($selected_specialties)) {
+            $this->db->where_in('id', $selected_specialties);
+            $query = $this->db->get(db_prefix() . 'dietic_specialties');
+            $specialties = $query->result_array();
+        }
+
+        // Parse certifications
+        $certifications = [];
+        if (!empty($staff_member->dietitian_certifications)) {
+            $certifications = json_decode($staff_member->dietitian_certifications, true);
+            if (!is_array($certifications)) {
+                $certifications = [];
+            }
+        }
+
+        // Convert staff object to array for view
+        $data['staff_member'] = (array) $staff_member;
+        $data['stats'] = $stats;
+        $data['specialties'] = $specialties;
+        $data['certifications'] = $certifications;
+        $data['title'] = 'Mon Profil';
+
+        $this->load->view('admin/dietitians/my_profile', $data);
+    }
+
+    /**
+     * Edit My Profile - Edit form for dietitian's own profile
+     * URL: /admin/dietetic/edit_my_profile
+     */
+    public function edit_my_profile()
+    {
+        $staff_id = get_staff_user_id();
+
+        // Get staff member info
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!$staff_member) {
+            set_alert('danger', 'Profil introuvable');
+            redirect(admin_url('dietetic/dashboard'));
+            return;
+        }
+
+        // Get all available specialties
+        $query = $this->db->get(db_prefix() . 'dietic_specialties');
+        $available_specialties = $query->result_array();
+
+        // Get selected specialties
+        $selected_specialties = [];
+        if (!empty($staff_member->dietitian_specialties)) {
+            $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+            if (!is_array($selected_specialties)) {
+                $selected_specialties = [];
+            }
+        }
+
+        // Parse certifications
+        $certifications = [];
+        if (!empty($staff_member->dietitian_certifications)) {
+            $certifications = json_decode($staff_member->dietitian_certifications, true);
+            if (!is_array($certifications)) {
+                $certifications = [];
+            }
+        }
+
+        // Convert staff object to array for view
+        $data['staff_member'] = (array) $staff_member;
+        $data['available_specialties'] = $available_specialties;
+        $data['selected_specialties'] = $selected_specialties;
+        $data['certifications'] = $certifications;
+        $data['title'] = 'Modifier Mon Profil';
+
+        $this->load->view('admin/dietitians/edit_my_profile', $data);
+    }
+
+    /**
+     * Update My Profile - Process profile update
+     * URL: /admin/dietetic/update_my_profile (POST)
+     */
+    public function update_my_profile()
+    {
+        header('Content-Type: application/json');
+
+        $staff_id = get_staff_user_id();
+
+        // Get form data
+        $specialties = $this->input->post('specialties');
+        $bio = $this->input->post('dietitian_bio');
+        $years_experience = $this->input->post('dietitian_years_experience');
+        $languages = $this->input->post('dietitian_languages');
+        $certifications = $this->input->post('certifications');
+
+        // Prepare data for update
+        $update_data = [
+            'dietitian_bio' => $bio,
+            'dietitian_years_experience' => (int) $years_experience,
+            'dietitian_languages' => $languages,
+            'dietitian_profile_updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        // Process specialties (store as JSON array of IDs)
+        if (!empty($specialties) && is_array($specialties)) {
+            $update_data['dietitian_specialties'] = json_encode(array_map('intval', $specialties));
+        } else {
+            $update_data['dietitian_specialties'] = null;
+        }
+
+        // Process certifications (store as JSON)
+        if (!empty($certifications) && is_array($certifications)) {
+            // Filter out empty certifications
+            $valid_certifications = array_filter($certifications, function($cert) {
+                return !empty($cert['name']);
+            });
+
+            $update_data['dietitian_certifications'] = !empty($valid_certifications)
+                ? json_encode(array_values($valid_certifications))
+                : null;
+        } else {
+            $update_data['dietitian_certifications'] = null;
+        }
+
+        // Update profile
+        $result = dietetic_update_dietitian_profile($staff_id, $update_data);
+
+        if ($result) {
+            log_activity('Dietitian Profile Updated - Staff ID: ' . $staff_id);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Profil mis à jour avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du profil'
+            ]);
+        }
+    }
+
+    /**
+     * Generate My Referral Code - Generate unique referral code
+     * URL: /admin/dietetic/generate_my_referral_code (POST)
+     */
+    public function generate_my_referral_code()
+    {
+        header('Content-Type: application/json');
+
+        $staff_id = get_staff_user_id();
+
+        // Check if code already exists
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!empty($staff_member->dietitian_referral_code)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Vous avez déjà un code de référence'
+            ]);
+            return;
+        }
+
+        // Generate new code
+        $referral_code = dietetic_generate_referral_code($staff_id);
+
+        if ($referral_code) {
+            log_activity('Referral Code Generated - Staff ID: ' . $staff_id . ', Code: ' . $referral_code);
+
+            echo json_encode([
+                'success' => true,
+                'code' => $referral_code,
+                'message' => 'Code de référence généré avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la génération du code'
+            ]);
+        }
+    }
 }
