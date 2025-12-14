@@ -156,7 +156,7 @@ $this->load->view('portal/includes/portal_header');
         .specialty-card {
             background: white;
             border-radius: 16px;
-            padding: 24px 16px;
+            padding: 15px 15px;
             text-align: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
