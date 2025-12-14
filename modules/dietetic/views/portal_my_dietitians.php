@@ -123,49 +123,81 @@ $this->load->view('portal/includes/portal_header');
 
         .specialties-section {
             margin: 16px 0;
-            padding: 16px;
-            background: #f8f9fa;
-            border-radius: 12px;
         }
 
         .specialties-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #6c757d;
+            font-size: 18px;
+            font-weight: 800;
+            color: #2c3e50;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-align: center;
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .specialties-title::before,
+        .specialties-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dee2e6;
+            max-width: 100px;
         }
 
         .specialties-list {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 16px;
         }
 
-        .specialty-badge {
-            display: inline-flex;
+        .specialty-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .specialty-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: var(--specialty-color, #01807B);
+        }
+
+        .specialty-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 20px;
+            justify-content: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+        }
+
+        .specialty-icon i {
+            font-size: 40px;
+            color: var(--specialty-color, #01807B);
+        }
+
+        .specialty-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .specialty-description {
             font-size: 13px;
-            font-weight: 600;
-            color: white;
-            background: var(--specialty-color, #01807B);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
-        }
-
-        .specialty-badge:hover {
-            transform: translateY(-2px);
-        }
-
-        .specialty-badge i {
-            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.5;
         }
 
         .bio-section {
@@ -897,17 +929,44 @@ $this->load->view('portal/includes/portal_header');
                     <?php } ?>
 
                     <!-- Specialties -->
-                    <?php if (!empty($specialties)) { ?>
+                    <?php if (!empty($specialties)) {
+                        // Descriptions pour chaque spécialité
+                        $specialty_descriptions = [
+                            'Perte de poids' => 'Atteignez vos objectifs santé durablement',
+                            'Nutrition sportive' => 'Optimisez performance et récupération',
+                            'Diabète' => 'Équilibrez votre glycémie au quotidien',
+                            'Nutrition pédiatrique' => 'Croissance et développement de l\'enfant',
+                            'Grossesse' => 'Accompagnement avant, pendant, après',
+                            'Troubles du comportement alimentaire (TCA)' => 'Retrouvez une relation saine avec la nourriture',
+                            'Végétarisme/Véganisme' => 'Équilibre nutritionnel sans produits animaux',
+                            'Maladies cardiovasculaires' => 'Protégez votre cœur par l\'alimentation',
+                            'Allergies alimentaires' => 'Gérez vos intolérances en toute sécurité',
+                            'Nutrition gériatrique' => 'Vitalité et santé à tout âge',
+                            'Nutrition clinique' => 'Prise en charge pathologies chroniques',
+                            'Bien-être général' => 'Équilibre et vitalité au quotidien',
+                            'Nutrition de la femme' => 'Hormones, cycles et étapes à vie',
+                            'Nutrition santé publique & collective' => 'Programs pour communautés',
+                            'Nutrition fonctionnelle & préventive' => 'Approche personnalisée et globale'
+                        ];
+                    ?>
                     <div class="specialties-section">
                         <div class="specialties-title">
-                            <i class="fa fa-star"></i>
-                            Spécialités
+                            Spécialités du Diététicien
                         </div>
                         <div class="specialties-list">
-                            <?php foreach ($specialties as $specialty) { ?>
-                            <div class="specialty-badge" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
-                                <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
-                                <span><?php echo htmlspecialchars($specialty['name_fr']); ?></span>
+                            <?php foreach ($specialties as $specialty) {
+                                $description = isset($specialty_descriptions[$specialty['name_fr']])
+                                    ? $specialty_descriptions[$specialty['name_fr']]
+                                    : '';
+                            ?>
+                            <div class="specialty-card" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
+                                <div class="specialty-icon">
+                                    <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
+                                </div>
+                                <div class="specialty-name"><?php echo htmlspecialchars($specialty['name_fr']); ?></div>
+                                <?php if ($description) { ?>
+                                <div class="specialty-description"><?php echo htmlspecialchars($description); ?></div>
+                                <?php } ?>
                             </div>
                             <?php } ?>
                         </div>
