@@ -816,20 +816,33 @@ if (isset($_GET['debug'])) {
         gap: 10px;
     }
 }
-    .specialties-section {
-    position: relative;
-    z-index: 5;
-    overflow: visible;
+/* FORCE DISPLAY SPECIALTIES (pour tuer tout CSS global qui les cache) */
+.specialties-section,
+.specialties-list,
+.specialty-card {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 9999 !important;
 }
 
+/* fallback layout (au cas où grid casse en WebView) */
 .specialties-list {
-    position: relative;
-    z-index: 5;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
 }
 
 .specialty-card {
-    background: #ffffff;
-    z-index: 6;
+  width: calc(50% - 6px) !important;
+}
+
+@media (max-width: 480px) {
+  .specialty-card { width: 100% !important; }
 }
 </style>
 
