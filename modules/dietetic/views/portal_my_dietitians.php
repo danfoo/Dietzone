@@ -816,6 +816,21 @@ if (isset($_GET['debug'])) {
         gap: 10px;
     }
 }
+    .specialties-section {
+    position: relative;
+    z-index: 5;
+    overflow: visible;
+}
+
+.specialties-list {
+    position: relative;
+    z-index: 5;
+}
+
+.specialty-card {
+    background: #ffffff;
+    z-index: 6;
+}
 </style>
 
 <div class="content-container">
