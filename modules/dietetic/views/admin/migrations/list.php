@@ -7,15 +7,62 @@
             <div class="col-md-12">
                 <div class="panel_s">
                     <div class="panel-body">
-                        <h4 class="no-margin">
-                            <i class="fa fa-database"></i> <?php echo $title; ?>
-                        </h4>
+                        <div class="clearfix">
+                            <div class="pull-left">
+                                <h4 class="no-margin">
+                                    <i class="fa fa-database"></i> <?php echo $title; ?>
+                                </h4>
+                            </div>
+                            <div class="pull-right">
+                                <a href="<?php echo admin_url('dietetic/dietitian_profile_migration'); ?>" class="btn btn-info">
+                                    <i class="fa fa-user-md"></i>
+                                    Migration: Profil Diététicien
+                                </a>
+                            </div>
+                        </div>
                         <hr class="hr-panel-heading">
 
                         <div class="alert alert-info">
                             <i class="fa fa-info-circle"></i>
                             Les migrations permettent de mettre à jour la structure de la base de données automatiquement.
                             Cliquez sur "Appliquer" pour exécuter une migration non appliquée.
+                        </div>
+
+                        <!-- Migrations SQL Spéciales -->
+                        <div class="row mtop20 mbot20">
+                            <div class="col-md-12">
+                                <h4 class="tw-font-semibold">
+                                    <i class="fa fa-star text-warning"></i> Migrations SQL Spéciales
+                                </h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th width="50%">Migration</th>
+                                                <th width="30%">Description</th>
+                                                <th width="20%" class="text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong><i class="fa fa-user-md text-info"></i> Système de Profil Diététicien</strong>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        Codes de référence, spécialités, bio professionnelle
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="<?php echo admin_url('dietetic/dietitian_profile_migration'); ?>" class="btn btn-primary btn-sm">
+                                                        <i class="fa fa-arrow-right"></i> Gérer
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <?php if (empty($migrations)): ?>

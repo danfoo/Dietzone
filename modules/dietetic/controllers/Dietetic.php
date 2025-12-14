@@ -1201,4 +1201,170 @@ class Dietetic extends AdminController
             ]);
         }
     }
+
+    /**
+     * Dietitian Profile System Migration Page
+     * URL: /admin/dietetic/dietitian_profile_migration
+     */
+    public function dietitian_profile_migration()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Migration: Système de Profil Diététicien';
+
+        // Vérifier si la migration a été appliquée
+        $migration_applied = false;
+        $specialties_table_exists = $this->db->table_exists(db_prefix() . 'dietic_specialties');
+        $referrals_table_exists = $this->db->table_exists(db_prefix() . 'dietic_referrals');
+
+        // Vérifier si les colonnes existent dans tblstaff
+        $columns_exist = $this->db->field_exists('dietitian_referral_code', db_prefix() . 'staff');
+
+        $migration_applied = $specialties_table_exists && $referrals_table_exists && $columns_exist;
+
+        $data['migration_applied'] = $migration_applied;
+
+        // Si la migration est appliquée, récupérer les statistiques
+        if ($migration_applied) {
+            $stats = [];
+
+            // Nombre total de spécialités
+            $stats['total_specialties'] = $this->db->count_all(db_prefix() . 'dietic_specialties');
+
+            // Nombre de diététiciens avec codes générés
+            $this->db->where('dietitian_referral_code IS NOT NULL', null, false);
+            $this->db->where('dietitian_referral_code !=', '');
+            $stats['dietitians_with_codes'] = $this->db->count_all_results(db_prefix() . 'staff');
+
+            // Nombre total de références
+            if ($referrals_table_exists) {
+                $stats['total_referrals'] = $this->db->count_all(db_prefix() . 'dietic_referrals');
+            } else {
+                $stats['total_referrals'] = 0;
+            }
+
+            // Nombre de profils complets (avec bio ET spécialités)
+            $this->db->where('dietitian_bio IS NOT NULL', null, false);
+            $this->db->where('dietitian_bio !=', '');
+            $this->db->where('dietitian_specialties IS NOT NULL', null, false);
+            $this->db->where('dietitian_specialties !=', '');
+            $stats['profiles_completed'] = $this->db->count_all_results(db_prefix() . 'staff');
+
+            $data['stats'] = $stats;
+
+            // Récupérer la liste des spécialités
+            if ($specialties_table_exists) {
+                $this->db->order_by('name_fr', 'ASC');
+                $data['specialties'] = $this->db->get(db_prefix() . 'dietic_specialties')->result_array();
+            }
+
+            // Récupérer les dernières références
+            if ($referrals_table_exists) {
+                $this->db->select(db_prefix() . 'dietic_referrals.*,
+                                   CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
+                $this->db->from(db_prefix() . 'dietic_referrals');
+                $this->db->join(db_prefix() . 'staff',
+                               db_prefix() . 'staff.staffid = ' . db_prefix() . 'dietic_referrals.dietitian_staff_id',
+                               'left');
+                $this->db->order_by(db_prefix() . 'dietic_referrals.referred_at', 'DESC');
+                $this->db->limit(10);
+                $data['recent_referrals'] = $this->db->get()->result_array();
+            }
+        }
+
+        $this->load->view('admin/migrations/dietitian_profile_system', $data);
+    }
+
+    /**
+     * Apply Dietitian Profile System Migration
+     * URL: /admin/dietetic/apply_dietitian_profile_migration (POST)
+     */
+    public function apply_dietitian_profile_migration()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        try {
+            // Charger le fichier SQL
+            $migration_file = DIETETIC_MODULE_PATH . 'migrations/add_dietitian_profile_system.sql';
+
+            if (!file_exists($migration_file)) {
+                set_alert('danger', 'Fichier de migration introuvable: ' . $migration_file);
+                redirect(admin_url('dietetic/dietitian_profile_migration'));
+                return;
+            }
+
+            // Lire le contenu SQL
+            $sql_content = file_get_contents($migration_file);
+
+            // Remplacer les préfixes
+            $sql_content = str_replace('tbldietic_', db_prefix() . 'dietic_', $sql_content);
+            $sql_content = str_replace('tblstaff', db_prefix() . 'staff', $sql_content);
+
+            // Nettoyer les commentaires SQL
+            $sql_content = preg_replace('/^--.*$/m', '', $sql_content);
+            $sql_content = preg_replace('/\/\*.*?\*\//s', '', $sql_content);
+
+            // Séparer les instructions SQL
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql_content)),
+                function($stmt) {
+                    return !empty($stmt) && strlen($stmt) > 10;
+                }
+            );
+
+            $success_count = 0;
+            $error_count = 0;
+            $errors = [];
+
+            // Exécuter chaque instruction
+            foreach ($statements as $statement) {
+                try {
+                    $this->db->query($statement);
+                    $success_count++;
+                } catch (Exception $e) {
+                    $error_msg = $e->getMessage();
+
+                    // Ignorer les erreurs "already exists" et "Duplicate"
+                    if (
+                        strpos($error_msg, 'already exists') === false &&
+                        strpos($error_msg, 'Duplicate column') === false &&
+                        strpos($error_msg, 'Duplicate key') === false
+                    ) {
+                        $error_count++;
+                        $errors[] = substr($error_msg, 0, 200);
+                    } else {
+                        $success_count++; // Compter comme succès si déjà existe
+                    }
+                }
+            }
+
+            if ($error_count === 0) {
+                log_activity('Migration Dietitian Profile System appliquée avec succès');
+                set_alert('success', sprintf(
+                    'Migration appliquée avec succès ! %d instructions SQL exécutées.',
+                    $success_count
+                ));
+            } else {
+                log_activity('Migration Dietitian Profile System terminée avec erreurs: ' . json_encode($errors));
+                set_alert('warning', sprintf(
+                    'Migration terminée avec %d erreurs sur %d instructions. Erreurs: %s',
+                    $error_count,
+                    $success_count + $error_count,
+                    implode(', ', array_slice($errors, 0, 3))
+                ));
+            }
+
+        } catch (Exception $e) {
+            log_activity('Erreur lors de la migration Dietitian Profile System: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
+        }
+
+        redirect(admin_url('dietetic/dietitian_profile_migration'));
+    }
 }
