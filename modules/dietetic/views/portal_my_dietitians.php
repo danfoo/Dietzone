@@ -90,7 +90,8 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .dietitian-name {
-            font-size: 20px;
+            font-size: 14px;
+            padding-top: 10px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 4px;
@@ -98,7 +99,7 @@ $this->load->view('portal/includes/portal_header');
 
         .dietitian-specialty {
             color: #6c757d;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .referral-code-badge {
