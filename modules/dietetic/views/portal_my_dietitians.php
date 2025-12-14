@@ -4,6 +4,23 @@ $page_title = 'Mon Diététicien';
 $this->load->view('portal/includes/portal_header');
 ?>
 
+<!-- VERSION: 2.0 - Réécriture complète 14/12/2025 21:30 -->
+<?php
+// Debug temporaire - à retirer après vérification
+if (isset($_GET['debug'])) {
+    echo '<div style="background: yellow; padding: 20px; margin: 20px;">';
+    echo '<h2>DEBUG VARIABLES</h2>';
+    echo '<p><strong>$specialties count:</strong> ' . (isset($specialties) ? count($specialties) : 'NOT SET') . '</p>';
+    echo '<p><strong>$dietitian_rating:</strong> ' . (isset($dietitian_rating) ? 'SET' : 'NOT SET') . '</p>';
+    echo '<p><strong>$my_rating:</strong> ' . (isset($my_rating) ? 'SET' : 'NOT SET') . '</p>';
+    echo '<p><strong>$can_rate:</strong> ' . (isset($can_rate) ? ($can_rate ? 'TRUE' : 'FALSE') : 'NOT SET') . '</p>';
+    if (isset($specialties) && !empty($specialties)) {
+        echo '<pre>'; print_r($specialties); echo '</pre>';
+    }
+    echo '</div>';
+}
+?>
+
 <style>
 /* ========================================
    MODERN MOBILE-FIRST DESIGN
