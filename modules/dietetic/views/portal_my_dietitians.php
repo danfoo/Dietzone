@@ -117,7 +117,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .referral-code-badge i {
-            font-size: 14px;
+            font-size: 10px;
         }
 
         .specialties-section {
@@ -170,8 +170,8 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .specialty-icon {
-            width: 80px;
-            height: 80px;
+            width: 50px;
+            height: 50px;
             margin: 0 auto 16px;
             display: flex;
             align-items: center;
@@ -181,7 +181,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .specialty-icon i {
-            font-size: 40px;
+            font-size: 20px;
             color: var(--specialty-color, #01807B);
         }
 
