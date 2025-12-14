@@ -2958,6 +2958,141 @@ app.dietsenegal.net/dietetic/portal";
     }
 
     /**
+     * Debug my_dietitians data - temporary debugging function
+     */
+    public function debug_my_dietitians()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            echo '<h1>No patient found</h1>';
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+
+        // Load models
+        $this->load->model('staff_model');
+
+        // Get current dietitian
+        $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
+
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                    $data['specialties_error'] = $e->getMessage();
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+                $data['stats_error'] = $e->getMessage();
+            }
+        }
+
+        // Get dietitian's average rating
+        if ($this->load_ratings_model()) {
+            try {
+                $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+                $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+                $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_rating'] = null;
+                $data['my_rating'] = null;
+                $data['can_rate'] = false;
+                $data['rating_error'] = $e->getMessage();
+            }
+        } else {
+            $data['rating_error'] = 'Ratings model not loaded';
+        }
+
+        // Display debug info
+        echo '<html><head><style>body{font-family:monospace;padding:20px;}pre{background:#f5f5f5;padding:10px;border-radius:5px;}h2{color:#01807B;}</style></head><body>';
+        echo '<h1>Debug My Dietitians Data</h1>';
+
+        echo '<h2>Patient Info:</h2>';
+        echo '<pre>' . print_r($patient, true) . '</pre>';
+
+        echo '<h2>Dietitian Info:</h2>';
+        echo '<pre>' . print_r($data['dietitian'], true) . '</pre>';
+
+        echo '<h2>Specialties (' . count($data['specialties']) . '):</h2>';
+        echo '<pre>' . print_r($data['specialties'], true) . '</pre>';
+        if (isset($data['specialties_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['specialties_error'] . '</p>';
+        }
+
+        echo '<h2>Certifications (' . count($data['certifications']) . '):</h2>';
+        echo '<pre>' . print_r($data['certifications'], true) . '</pre>';
+
+        echo '<h2>Languages (' . count($data['languages']) . '):</h2>';
+        echo '<pre>' . print_r($data['languages'], true) . '</pre>';
+
+        echo '<h2>Dietitian Stats:</h2>';
+        echo '<pre>' . print_r($data['dietitian_stats'], true) . '</pre>';
+        if (isset($data['stats_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['stats_error'] . '</p>';
+        }
+
+        echo '<h2>Dietitian Rating:</h2>';
+        echo '<pre>' . print_r($data['dietitian_rating'], true) . '</pre>';
+
+        echo '<h2>My Rating:</h2>';
+        echo '<pre>' . print_r($data['my_rating'], true) . '</pre>';
+
+        echo '<h2>Can Rate:</h2>';
+        echo '<pre>' . ($data['can_rate'] ? 'true' : 'false') . '</pre>';
+        if (isset($data['rating_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['rating_error'] . '</p>';
+        }
+
+        echo '</body></html>';
+    }
+
+    /**
      * Rate dietitian - submit or update rating
      */
     public function rate_dietitian($dietitian_id = null)
