@@ -3,6 +3,16 @@
 $active_page = 'invoices';
 $page_title = 'Paiement Réussi';
 $this->load->view('portal/includes/portal_header');
+
+// Helper function for formatting money
+if (!function_exists('format_money_safe')) {
+    function format_money_safe($amount, $currency = 'XOF') {
+        if (function_exists('app_format_money')) {
+            return app_format_money($amount, $currency);
+        }
+        return number_format($amount, 0, ',', ' ') . ' ' . $currency;
+    }
+}
 ?>
 
 <style>
@@ -325,7 +335,7 @@ body {
                 <div class="invoice-detail-row">
                     <span class="detail-label">Montant Payé</span>
                     <span class="detail-value amount">
-                        <?php echo format_money($invoice->total); ?>
+                        <?php echo format_money_safe($invoice->total); ?>
                     </span>
                 </div>
                 <div class="invoice-detail-row">
