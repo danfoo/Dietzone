@@ -1,7 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php
-$active_page = 'invoices';
-$page_title = 'Paiement Annulé';
+// Variables are passed from controller: $invoice, $client_id, $active_page, $page_title
 $this->load->view('portal/includes/portal_header');
 
 // Helper function for formatting money

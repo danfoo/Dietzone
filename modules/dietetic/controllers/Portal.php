@@ -13693,16 +13693,34 @@ php index.php cron/index</pre>';
         // Handle CANCEL status
         if ($status === 'cancel') {
             log_activity('PAYPAL CALLBACK - Paiement annulé par l\'utilisateur');
+            log_activity('PAYPAL CALLBACK CANCEL - Invoice ID: ' . $invoice->id . ', Total: ' . $invoice->total . ', Client: ' . $client_id);
 
             // Mark token as cancelled
             dietetic_update_payment_token_status($payment_token->id, 'cancelled');
 
-            // Load custom cancel page
-            $data = [
-                'invoice' => $invoice,
-                'client_id' => $client_id
-            ];
-            $this->load->view('portal/payment_cancel', $data);
+            // Prepare data for view
+            $data = [];
+            $data['invoice'] = $invoice;
+            $data['client_id'] = $client_id;
+            $data['active_page'] = 'invoices';
+            $data['page_title'] = 'Paiement Annulé';
+
+            log_activity('PAYPAL CALLBACK CANCEL - Loading view with data prepared');
+
+            // Load view with proper error handling
+            try {
+                $this->load->view('portal/payment_cancel', $data);
+                log_activity('PAYPAL CALLBACK CANCEL - View loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK CANCEL - View loading error: ' . $e->getMessage());
+                echo '<!DOCTYPE html><html><head><title>Paiement Annulé</title></head><body>';
+                echo '<h1>Paiement Annulé</h1>';
+                echo '<p>Votre paiement a été annulé.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Retour aux factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
             return;
         }
 
