@@ -201,7 +201,7 @@ $this->load->view('portal/includes/portal_header');
         .bio-section {
             margin: 16px 0;
             padding: 20px;
-            background: #f8f9fa;
+            background: #fff;
             border-radius: 12px;
         }
 
@@ -224,7 +224,7 @@ $this->load->view('portal/includes/portal_header');
 
         .bio-text {
             color: #2c3e50;
-            font-size: 14px;
+            font-size: 12px;
             line-height: 1.8;
         }
 
@@ -243,7 +243,7 @@ $this->load->view('portal/includes/portal_header');
             background: white;
             border: 2px solid #e9ecef;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 600;
             color: #495057;
             transition: all 0.2s ease;
