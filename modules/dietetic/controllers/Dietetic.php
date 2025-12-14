@@ -1581,4 +1581,193 @@ class Dietetic extends AdminController
         $data['title'] = 'Debug: Mon Profil';
         $this->load->view('admin/diagnostics/debug_profile', $data);
     }
+
+    /**
+     * Debug patient portal view - accessible from admin
+     * Usage: /admin/dietetic/debug_patient_portal/PATIENT_ID
+     */
+    public function debug_patient_portal($patient_id = null)
+    {
+        if (!is_staff_logged_in()) {
+            access_denied('Dietetic Debug');
+        }
+
+        if (!$patient_id) {
+            echo '<h1>Error</h1><p>Patient ID required. Usage: /admin/dietetic/debug_patient_portal/PATIENT_ID</p>';
+            return;
+        }
+
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('staff_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get($patient_id);
+
+        if (!$patient) {
+            echo '<h1>Error</h1><p>Patient not found with ID: ' . $patient_id . '</p>';
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+
+        // Get dietitian
+        $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
+
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                    $data['specialties_error'] = $e->getMessage();
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+                $data['stats_error'] = $e->getMessage();
+            }
+        } else {
+            $data['stats_error'] = 'Function dietetic_get_dietitian_stats not found';
+        }
+
+        // Get dietitian's average rating
+        if ($this->db->table_exists(db_prefix() . 'dietic_ratings')) {
+            try {
+                $this->load->model('dietetic/dietetic_ratings_model');
+                $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+                $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+                $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_rating'] = null;
+                $data['my_rating'] = null;
+                $data['can_rate'] = false;
+                $data['rating_error'] = $e->getMessage();
+            }
+        } else {
+            $data['rating_error'] = 'Table dietic_ratings does not exist';
+        }
+
+        // Display debug info
+        echo '<html><head><style>
+            body{font-family:monospace;padding:20px;background:#f5f5f5;}
+            pre{background:#fff;padding:10px;border-radius:5px;border:1px solid #ddd;}
+            h2{color:#01807B;border-bottom:2px solid #01807B;padding-bottom:5px;}
+            .error{color:red;background:#ffe6e6;padding:10px;border-radius:5px;border:1px solid red;}
+            .success{color:green;background:#e6ffe6;padding:10px;border-radius:5px;border:1px solid green;}
+            .info{background:#e6f3ff;padding:10px;border-radius:5px;border:1px solid #0066cc;margin-bottom:20px;}
+        </style></head><body>';
+
+        echo '<h1>🔍 Debug Patient Portal View - Patient ID: ' . $patient_id . '</h1>';
+
+        echo '<div class="info">';
+        echo '<strong>📍 URL du portail patient:</strong> ' . site_url('dietetic/portal/my_dietitians') . '<br>';
+        echo '<strong>👤 Patient:</strong> ' . htmlspecialchars($patient->first_name . ' ' . $patient->last_name) . '<br>';
+        echo '<strong>👨‍⚕️ Diététicien:</strong> ' . htmlspecialchars($data['dietitian']->firstname . ' ' . $data['dietitian']->lastname);
+        echo '</div>';
+
+        // Specialties
+        echo '<h2>🎯 Spécialités (' . count($data['specialties']) . ')</h2>';
+        if (isset($data['specialties_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['specialties_error']) . '</div>';
+        }
+        if (!empty($data['specialties'])) {
+            echo '<div class="success">✅ ' . count($data['specialties']) . ' spécialité(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['specialties'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune spécialité trouvée</div>';
+            echo '<p><strong>dietitian_specialties (JSON):</strong> ' . htmlspecialchars($data['dietitian']->dietitian_specialties) . '</p>';
+        }
+
+        // Certifications
+        echo '<h2>🎓 Certifications (' . count($data['certifications']) . ')</h2>';
+        if (!empty($data['certifications'])) {
+            echo '<div class="success">✅ ' . count($data['certifications']) . ' certification(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['certifications'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune certification trouvée</div>';
+            echo '<p><strong>dietitian_certifications (JSON):</strong> ' . htmlspecialchars($data['dietitian']->dietitian_certifications) . '</p>';
+        }
+
+        // Languages
+        echo '<h2>🌐 Langues (' . count($data['languages']) . ')</h2>';
+        if (!empty($data['languages'])) {
+            echo '<div class="success">✅ ' . count($data['languages']) . ' langue(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['languages'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune langue trouvée</div>';
+        }
+
+        // Stats
+        echo '<h2>📊 Statistiques</h2>';
+        if (isset($data['stats_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['stats_error']) . '</div>';
+        }
+        if ($data['dietitian_stats']) {
+            echo '<div class="success">✅ Statistiques chargées</div>';
+            echo '<pre>' . print_r($data['dietitian_stats'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune statistique trouvée</div>';
+        }
+
+        // Rating
+        echo '<h2>⭐ Notations</h2>';
+        if (isset($data['rating_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['rating_error']) . '</div>';
+        }
+
+        echo '<h3>Moyenne générale du diététicien:</h3>';
+        if ($data['dietitian_rating']) {
+            echo '<div class="success">✅ Notation moyenne chargée</div>';
+            echo '<pre>' . print_r($data['dietitian_rating'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune notation moyenne trouvée</div>';
+        }
+
+        echo '<h3>Notation de ce patient:</h3>';
+        if ($data['my_rating']) {
+            echo '<div class="success">✅ Notation du patient chargée</div>';
+            echo '<pre>' . print_r($data['my_rating'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Ce patient n\'a pas encore noté le diététicien</div>';
+        }
+
+        echo '<h3>Peut noter:</h3>';
+        echo '<pre>' . ($data['can_rate'] ? 'OUI (true)' : 'NON (false)') . '</pre>';
+
+        // Full dietitian object
+        echo '<h2>👨‍⚕️ Objet Diététicien Complet</h2>';
+        echo '<pre>' . print_r($data['dietitian'], true) . '</pre>';
+
+        echo '</body></html>';
+    }
 }
