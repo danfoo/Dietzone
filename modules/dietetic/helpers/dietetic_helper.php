@@ -1940,3 +1940,283 @@ if (!function_exists('dietetic_cleanup_expired_payment_tokens')) {
         return $deleted;
     }
 }
+
+// ============================================================================
+// DIETITIAN PROFILE & REFERRAL CODE FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate unique referral code for a dietitian
+ * Format: DZ-{FirstLetterFirstName}{FirstLetterLastName}_{Number}
+ * Example: Marie DIOP → DZ-MD_001
+ *
+ * @param int $staff_id Staff member ID
+ * @return string|false Referral code or false on error
+ */
+if (!function_exists('dietetic_generate_referral_code')) {
+    function dietetic_generate_referral_code($staff_id)
+    {
+        $CI = &get_instance();
+
+        // Get staff info
+        $staff = $CI->db->get_where('tblstaff', ['staffid' => $staff_id])->row();
+        if (!$staff) {
+            return false;
+        }
+
+        // Extract initials
+        $first_initial = strtoupper(substr($staff->firstname, 0, 1));
+        $last_initial = strtoupper(substr($staff->lastname, 0, 1));
+
+        // Base code format
+        $base_code = 'DZ-' . $first_initial . $last_initial . '_';
+
+        // Find next available number
+        $number = 1;
+        $code = $base_code . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+        // Check if code exists and increment until unique
+        while (true) {
+            $exists = $CI->db->get_where('tblstaff', [
+                'dietitian_referral_code' => $code
+            ])->row();
+
+            if (!$exists) {
+                break; // Code is unique
+            }
+
+            $number++;
+            $code = $base_code . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+            // Safety limit
+            if ($number > 999) {
+                return false;
+            }
+        }
+
+        // Update staff with referral code
+        $CI->db->where('staffid', $staff_id);
+        $CI->db->update('tblstaff', [
+            'dietitian_referral_code' => $code
+        ]);
+
+        log_activity('Referral code generated for staff: ' . $staff->firstname . ' ' . $staff->lastname . ' - Code: ' . $code);
+
+        return $code;
+    }
+}
+
+/**
+ * Get dietitian by referral code
+ *
+ * @param string $referral_code Referral code to search for
+ * @return object|null Staff object or null if not found
+ */
+if (!function_exists('dietetic_get_dietitian_by_referral_code')) {
+    function dietetic_get_dietitian_by_referral_code($referral_code)
+    {
+        $CI = &get_instance();
+
+        $referral_code = trim(strtoupper($referral_code));
+
+        return $CI->db->select('staffid, firstname, lastname, email, dietitian_referral_code, dietitian_specialties, dietitian_years_experience')
+            ->from('tblstaff')
+            ->where('dietitian_referral_code', $referral_code)
+            ->where('active', 1)
+            ->get()
+            ->row();
+    }
+}
+
+/**
+ * Assign patient to dietitian via referral code
+ *
+ * @param int $patient_id Patient ID
+ * @param string $referral_code Referral code
+ * @return bool Success status
+ */
+if (!function_exists('dietetic_assign_patient_via_referral')) {
+    function dietetic_assign_patient_via_referral($patient_id, $referral_code)
+    {
+        $CI = &get_instance();
+
+        // Get dietitian by code
+        $dietitian = dietetic_get_dietitian_by_referral_code($referral_code);
+        if (!$dietitian) {
+            log_activity('Referral failed - Invalid code: ' . $referral_code);
+            return false;
+        }
+
+        // Check if assignment table exists
+        $assignment_table = db_prefix() . 'dietic_patient_dietitians';
+        if (!$CI->db->table_exists($assignment_table)) {
+            log_activity('Referral failed - Assignment table does not exist');
+            return false;
+        }
+
+        // Check if already assigned
+        $existing = $CI->db->get_where($assignment_table, [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian->staffid
+        ])->row();
+
+        if ($existing) {
+            log_activity('Patient already assigned to this dietitian');
+            return true; // Already assigned, consider it success
+        }
+
+        // Create assignment
+        $CI->db->insert($assignment_table, [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian->staffid,
+            'assigned_at' => date('Y-m-d H:i:s'),
+            'assigned_by' => 'referral_code',
+            'is_primary' => 1
+        ]);
+
+        // Track referral
+        $referrals_table = db_prefix() . 'dietic_referrals';
+        if ($CI->db->table_exists($referrals_table)) {
+            $CI->db->insert($referrals_table, [
+                'dietitian_staff_id' => $dietitian->staffid,
+                'patient_id' => $patient_id,
+                'referral_code' => $referral_code,
+                'referred_at' => date('Y-m-d H:i:s'),
+                'source' => 'registration'
+            ]);
+        }
+
+        // Update patient with referral code
+        $CI->db->where('id', $patient_id);
+        $CI->db->update(db_prefix() . 'dietic_patients', [
+            'registration_referral_code' => $referral_code
+        ]);
+
+        log_activity('Patient ' . $patient_id . ' assigned to dietitian ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' via code: ' . $referral_code);
+
+        return true;
+    }
+}
+
+/**
+ * Get dietitian statistics
+ *
+ * @param int $staff_id Staff member ID
+ * @return array Statistics
+ */
+if (!function_exists('dietetic_get_dietitian_stats')) {
+    function dietetic_get_dietitian_stats($staff_id)
+    {
+        $CI = &get_instance();
+
+        $stats = [
+            'total_patients' => 0,
+            'active_patients' => 0,
+            'consultations_this_month' => 0,
+            'programs_active' => 0,
+            'referrals_total' => 0,
+            'referrals_this_month' => 0,
+            'avg_rating' => 0,
+            'total_ratings' => 0
+        ];
+
+        // Get total patients assigned
+        if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+        }
+
+        // Get active patients (with recent activity)
+        // Define active as having consultation in last 90 days
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            $stats['active_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                ->where('consultation_date >=', date('Y-m-d', strtotime('-90 days')))
+                ->group_by('patient_id')
+                ->count_all_results(db_prefix() . 'dietic_consultations');
+        }
+
+        // Get consultations this month
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            $stats['consultations_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                ->where('consultation_date >=', date('Y-m-01'))
+                ->where('consultation_date <=', date('Y-m-t'))
+                ->count_all_results(db_prefix() . 'dietic_consultations');
+        }
+
+        // Get active programs
+        if ($CI->db->table_exists(db_prefix() . 'dietic_programs')) {
+            $stats['programs_active'] = $CI->db->where('created_by', $staff_id)
+                ->where('status', 'active')
+                ->count_all_results(db_prefix() . 'dietic_programs');
+        }
+
+        // Get referrals
+        if ($CI->db->table_exists(db_prefix() . 'dietic_referrals')) {
+            $stats['referrals_total'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                ->count_all_results(db_prefix() . 'dietic_referrals');
+
+            $stats['referrals_this_month'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                ->where('referred_at >=', date('Y-m-01'))
+                ->count_all_results(db_prefix() . 'dietic_referrals');
+        }
+
+        // Get ratings
+        if ($CI->db->table_exists(db_prefix() . 'dietic_ratings')) {
+            $ratings = $CI->db->select('AVG(rating) as avg_rating, COUNT(*) as total_ratings')
+                ->where('dietitian_id', $staff_id)
+                ->get(db_prefix() . 'dietic_ratings')
+                ->row();
+
+            if ($ratings) {
+                $stats['avg_rating'] = round($ratings->avg_rating, 1);
+                $stats['total_ratings'] = $ratings->total_ratings;
+            }
+        }
+
+        return $stats;
+    }
+}
+
+/**
+ * Update dietitian profile
+ *
+ * @param int $staff_id Staff member ID
+ * @param array $data Profile data to update
+ * @return bool Success status
+ */
+if (!function_exists('dietetic_update_dietitian_profile')) {
+    function dietetic_update_dietitian_profile($staff_id, $data)
+    {
+        $CI = &get_instance();
+
+        $allowed_fields = [
+            'dietitian_specialties',
+            'dietitian_years_experience',
+            'dietitian_bio',
+            'dietitian_languages',
+            'dietitian_certifications'
+        ];
+
+        $update_data = [];
+        foreach ($allowed_fields as $field) {
+            if (isset($data[$field])) {
+                $update_data[$field] = $data[$field];
+            }
+        }
+
+        if (empty($update_data)) {
+            return false;
+        }
+
+        $update_data['dietitian_profile_updated_at'] = date('Y-m-d H:i:s');
+
+        $CI->db->where('staffid', $staff_id);
+        $result = $CI->db->update('tblstaff', $update_data);
+
+        if ($result) {
+            log_activity('Dietitian profile updated - Staff ID: ' . $staff_id);
+        }
+
+        return $result;
+    }
+}
