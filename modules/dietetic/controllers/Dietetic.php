@@ -1396,4 +1396,176 @@ class Dietetic extends AdminController
 
         redirect(admin_url('dietetic/dietitian_profile_migration'));
     }
+
+    /**
+     * Debug Profile - Diagnostic page for my_profile
+     * URL: /admin/dietetic/debug_profile
+     */
+    public function debug_profile()
+    {
+        $staff_id = get_staff_user_id();
+        $results = [];
+
+        // Test 1: Get staff member info
+        $results[] = ['test' => 'Get Staff Member', 'status' => 'testing'];
+        try {
+            $staff_member = $this->staff_model->get($staff_id);
+            if ($staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Staff Member',
+                    'status' => 'success',
+                    'data' => [
+                        'staff_id' => $staff_id,
+                        'name' => $staff_member->firstname . ' ' . $staff_member->lastname,
+                        'referral_code' => isset($staff_member->dietitian_referral_code) ? $staff_member->dietitian_referral_code : 'NULL'
+                    ]
+                ];
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Staff Member',
+                    'status' => 'error',
+                    'message' => 'Staff member not found'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Staff Member',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 2: Check if helper function exists
+        $results[] = [
+            'test' => 'Function dietetic_get_dietitian_stats exists',
+            'status' => function_exists('dietetic_get_dietitian_stats') ? 'success' : 'error',
+            'message' => function_exists('dietetic_get_dietitian_stats') ? 'Function exists' : 'Function not found'
+        ];
+
+        // Test 3: Check tables existence
+        $tables_to_check = [
+            'dietic_patients',
+            'dietic_patient_dietitians',
+            'dietic_consultations',
+            'dietic_programs',
+            'dietic_referrals',
+            'dietic_ratings',
+            'dietic_specialties'
+        ];
+
+        foreach ($tables_to_check as $table) {
+            $exists = $this->db->table_exists(db_prefix() . $table);
+            $results[] = [
+                'test' => 'Table: ' . db_prefix() . $table,
+                'status' => $exists ? 'success' : 'warning',
+                'message' => $exists ? 'Exists' : 'Does not exist'
+            ];
+        }
+
+        // Test 4: Try to get stats
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            $results[] = ['test' => 'Get Dietitian Stats', 'status' => 'testing'];
+            try {
+                $stats = dietetic_get_dietitian_stats($staff_id);
+                $results[count($results)-1] = [
+                    'test' => 'Get Dietitian Stats',
+                    'status' => 'success',
+                    'data' => $stats
+                ];
+            } catch (Exception $e) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Dietitian Stats',
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ];
+            }
+        }
+
+        // Test 5: Try to get specialties
+        $results[] = ['test' => 'Get Specialties', 'status' => 'testing'];
+        try {
+            if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
+                $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+                if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $specialties = $query->result_array();
+                    $results[count($results)-1] = [
+                        'test' => 'Get Specialties',
+                        'status' => 'success',
+                        'data' => $specialties
+                    ];
+                } else {
+                    $results[count($results)-1] = [
+                        'test' => 'Get Specialties',
+                        'status' => 'warning',
+                        'message' => 'No specialties selected or table does not exist'
+                    ];
+                }
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Specialties',
+                    'status' => 'warning',
+                    'message' => 'dietitian_specialties is empty or null'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Specialties',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 6: Try to get certifications
+        $results[] = ['test' => 'Get Certifications', 'status' => 'testing'];
+        try {
+            if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
+                $certifications = json_decode($staff_member->dietitian_certifications, true);
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => is_array($certifications) ? 'success' : 'error',
+                    'data' => $certifications,
+                    'message' => is_array($certifications) ? 'Valid JSON' : 'Invalid JSON'
+                ];
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => 'warning',
+                    'message' => 'dietitian_certifications is empty or null'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Certifications',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 7: Try to load the view
+        $results[] = ['test' => 'Check View File', 'status' => 'testing'];
+        $view_path = module_dir_path('dietetic') . 'views/admin/dietitians/my_profile.php';
+        if (file_exists($view_path)) {
+            $results[count($results)-1] = [
+                'test' => 'Check View File',
+                'status' => 'success',
+                'message' => 'View file exists',
+                'path' => $view_path
+            ];
+        } else {
+            $results[count($results)-1] = [
+                'test' => 'Check View File',
+                'status' => 'error',
+                'message' => 'View file not found',
+                'path' => $view_path
+            ];
+        }
+
+        // Display results
+        $data['results'] = $results;
+        $data['title'] = 'Debug: Mon Profil';
+        $this->load->view('admin/diagnostics/debug_profile', $data);
+    }
 }
