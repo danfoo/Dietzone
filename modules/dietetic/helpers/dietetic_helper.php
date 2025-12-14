@@ -1881,8 +1881,8 @@ if (!function_exists('dietetic_update_payment_token_status')) {
 
         $CI->db->where('id', $token_id);
         $result = $CI->db->update(db_prefix() . 'dietic_payment_tokens', [
-            'status' => $status,
-            'updated_at' => date('Y-m-d H:i:s')
+            'status' => $status
+            // Note: updated_at column doesn't exist in table schema
         ]);
 
         if ($result) {
