@@ -2181,11 +2181,12 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
         // Define active as having consultation in last 90 days
         if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
             try {
-                $stats['active_patients'] = $CI->db->select('COUNT(DISTINCT patient_id) as count')
+                $result = $CI->db->select('COUNT(DISTINCT patient_id) as count')
                     ->where('dietitian_id', $staff_id)
                     ->where('consultation_date >=', date('Y-m-d', strtotime('-90 days')))
                     ->get(db_prefix() . 'dietic_consultations')
-                    ->row()->count;
+                    ->row();
+                $stats['active_patients'] = $result ? $result->count : 0;
             } catch (Exception $e) {
                 log_activity('Error counting active patients: ' . $e->getMessage());
             }
@@ -2241,8 +2242,8 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
                     ->row();
 
                 if ($ratings) {
-                    $stats['average_rating'] = round($ratings->avg_rating, 1);
-                    $stats['total_reviews'] = $ratings->total_ratings;
+                    $stats['average_rating'] = $ratings->avg_rating ? round($ratings->avg_rating, 1) : 0;
+                    $stats['total_reviews'] = $ratings->total_ratings ? $ratings->total_ratings : 0;
                 }
             } catch (Exception $e) {
                 log_activity('Error getting ratings: ' . $e->getMessage());

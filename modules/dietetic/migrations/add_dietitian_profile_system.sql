@@ -47,15 +47,18 @@ INSERT INTO `tbldietic_specialties` (`name_fr`, `name_en`, `icon`, `color`, `dis
 ('Perte de poids', 'Weight Loss', 'fa-balance-scale', '#e74c3c', 1),
 ('Nutrition sportive', 'Sports Nutrition', 'fa-heartbeat', '#3498db', 2),
 ('Diabète', 'Diabetes', 'fa-medkit', '#e67e22', 3),
-('Pédiatrie', 'Pediatric Nutrition', 'fa-child', '#9b59b6', 4),
+('Nutrition pédiatrique', 'Pediatric Nutrition', 'fa-child', '#9b59b6', 4),
 ('Grossesse', 'Pregnancy Nutrition', 'fa-female', '#e91e63', 5),
-('Troubles alimentaires', 'Eating Disorders', 'fa-user-md', '#f39c12', 6),
+('Troubles du comportement alimentaire (TCA)', 'Eating Disorders', 'fa-user-md', '#f39c12', 6),
 ('Végétarisme/Véganisme', 'Vegetarian/Vegan', 'fa-leaf', '#27ae60', 7),
 ('Maladies cardiovasculaires', 'Cardiovascular Disease', 'fa-heart', '#c0392b', 8),
 ('Allergies alimentaires', 'Food Allergies', 'fa-warning', '#d35400', 9),
 ('Nutrition gériatrique', 'Geriatric Nutrition', 'fa-wheelchair', '#7f8c8d', 10),
 ('Nutrition clinique', 'Clinical Nutrition', 'fa-hospital-o', '#16a085', 11),
-('Bien-être général', 'General Wellness', 'fa-smile-o', '#01807B', 12);
+('Bien-être général', 'General Wellness', 'fa-smile-o', '#01807B', 12),
+('Nutrition de la femme', 'Women\'s Nutrition', 'fa-venus', '#e91e8f', 13),
+('Nutrition santé publique & collective', 'Public & Community Health Nutrition', 'fa-users', '#2980b9', 14),
+('Nutrition fonctionnelle & préventive', 'Functional & Preventive Nutrition', 'fa-shield', '#16a085', 15);
 
 -- 6. Add referral_code column to patient registration tracking (if needed)
 -- This allows us to track which code was used even if the assignment changes later
