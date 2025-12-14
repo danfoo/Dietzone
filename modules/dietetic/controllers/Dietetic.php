@@ -1010,29 +1010,48 @@ class Dietetic extends AdminController
             return;
         }
 
-        // Get statistics for this dietitian
-        $stats = dietetic_get_dietitian_stats($staff_id);
+        // Get statistics for this dietitian (with error handling)
+        $stats = [];
+        try {
+            if (function_exists('dietetic_get_dietitian_stats')) {
+                $stats = dietetic_get_dietitian_stats($staff_id);
+            }
+        } catch (Exception $e) {
+            log_activity('Error getting dietitian stats: ' . $e->getMessage());
+            $stats = [
+                'total_patients' => 0,
+                'total_consultations' => 0,
+                'total_referrals' => 0,
+                'average_rating' => 0,
+                'total_reviews' => 0,
+            ];
+        }
 
-        // Get selected specialties
+        // Get selected specialties (with error handling)
         $selected_specialties = [];
-        if (!empty($staff_member->dietitian_specialties)) {
+        if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
             $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
             if (!is_array($selected_specialties)) {
                 $selected_specialties = [];
             }
         }
 
-        // Get specialty details
+        // Get specialty details (with error handling)
         $specialties = [];
-        if (!empty($selected_specialties)) {
-            $this->db->where_in('id', $selected_specialties);
-            $query = $this->db->get(db_prefix() . 'dietic_specialties');
-            $specialties = $query->result_array();
+        if (!empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+            try {
+                $this->db->where_in('id', $selected_specialties);
+                $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                $specialties = $query->result_array();
+            } catch (Exception $e) {
+                log_activity('Error getting specialties: ' . $e->getMessage());
+                $specialties = [];
+            }
         }
 
-        // Parse certifications
+        // Parse certifications (with error handling)
         $certifications = [];
-        if (!empty($staff_member->dietitian_certifications)) {
+        if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
             $certifications = json_decode($staff_member->dietitian_certifications, true);
             if (!is_array($certifications)) {
                 $certifications = [];
@@ -1066,22 +1085,32 @@ class Dietetic extends AdminController
             return;
         }
 
-        // Get all available specialties
-        $query = $this->db->get(db_prefix() . 'dietic_specialties');
-        $available_specialties = $query->result_array();
+        // Get all available specialties (with error handling)
+        $available_specialties = [];
+        if ($this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+            try {
+                $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                $available_specialties = $query->result_array();
+            } catch (Exception $e) {
+                log_activity('Error getting available specialties: ' . $e->getMessage());
+                set_alert('warning', 'Les spécialités ne sont pas encore configurées. Veuillez appliquer la migration du profil diététicien.');
+            }
+        } else {
+            set_alert('warning', 'Les tables du profil diététicien ne sont pas créées. Veuillez appliquer la migration.');
+        }
 
-        // Get selected specialties
+        // Get selected specialties (with error handling)
         $selected_specialties = [];
-        if (!empty($staff_member->dietitian_specialties)) {
+        if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
             $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
             if (!is_array($selected_specialties)) {
                 $selected_specialties = [];
             }
         }
 
-        // Parse certifications
+        // Parse certifications (with error handling)
         $certifications = [];
-        if (!empty($staff_member->dietitian_certifications)) {
+        if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
             $certifications = json_decode($staff_member->dietitian_certifications, true);
             if (!is_array($certifications)) {
                 $certifications = [];
