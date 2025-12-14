@@ -13697,8 +13697,12 @@ php index.php cron/index</pre>';
             // Mark token as cancelled
             dietetic_update_payment_token_status($payment_token->id, 'cancelled');
 
-            set_alert('warning', 'Paiement PayPal annulé.');
-            redirect('dietetic/portal/invoices');
+            // Load custom cancel page
+            $data = [
+                'invoice' => $invoice,
+                'client_id' => $client_id
+            ];
+            $this->load->view('portal/payment_cancel', $data);
             return;
         }
 
@@ -13723,8 +13727,8 @@ php index.php cron/index</pre>';
 
         // Get gateway settings
         $gateway_settings = dietetic_get_payment_gateway_settings('paypal');
-        $client_id = $gateway_settings['client_id'] ?? '';
-        $secret = $gateway_settings['secret'] ?? '';
+        $paypal_client_id = $gateway_settings['client_id'] ?? '';
+        $paypal_secret = $gateway_settings['secret'] ?? '';
         $mode = $gateway_settings['mode'] ?? 'sandbox';
 
         $base_url = ($mode === 'live')
@@ -13732,7 +13736,7 @@ php index.php cron/index</pre>';
             : 'https://api-m.sandbox.paypal.com';
 
         // Get access token
-        $access_token = $this->get_paypal_access_token($base_url, $client_id, $secret);
+        $access_token = $this->get_paypal_access_token($base_url, $paypal_client_id, $paypal_secret);
         if (!$access_token) {
             set_alert('danger', 'Erreur d\'authentification PayPal.');
             redirect('dietetic/portal/invoices');
@@ -13786,15 +13790,26 @@ php index.php cron/index</pre>';
 
                 // Mark payment token as completed
                 dietetic_update_payment_token_status($payment_token->id, 'completed');
-
-                set_alert('success', 'Paiement PayPal effectué avec succès!');
             }
 
-            redirect('dietetic/portal/invoices');
+            // Load custom success page
+            $data = [
+                'invoice' => $invoice,
+                'client_id' => $client_id,
+                'transaction_id' => $transaction_id ?? '',
+                'order_id' => $order_id
+            ];
+            $this->load->view('portal/payment_success', $data);
         } else {
             log_message('error', 'PayPal Capture Error: ' . $response);
-            set_alert('danger', 'Erreur lors de la capture du paiement PayPal.');
-            redirect('dietetic/portal/invoices');
+
+            // Load custom error page
+            $data = [
+                'invoice' => $invoice,
+                'client_id' => $client_id,
+                'error_message' => 'Erreur lors de la capture du paiement PayPal.'
+            ];
+            $this->load->view('portal/payment_error', $data);
         }
     }
 
