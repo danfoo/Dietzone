@@ -1877,16 +1877,30 @@ if (!function_exists('dietetic_get_payment_token')) {
 if (!function_exists('dietetic_update_payment_token_status')) {
     function dietetic_update_payment_token_status($token_id, $status)
     {
+        log_activity('HELPER dietetic_update_payment_token_status - START - Token ID: ' . $token_id . ', Status: ' . $status);
+
         $CI = &get_instance();
 
+        $table_name = db_prefix() . 'dietic_payment_tokens';
+        log_activity('HELPER dietetic_update_payment_token_status - Table: ' . $table_name);
+
         $CI->db->where('id', $token_id);
-        $result = $CI->db->update(db_prefix() . 'dietic_payment_tokens', [
+        $result = $CI->db->update($table_name, [
             'status' => $status
             // Note: updated_at column doesn't exist in table schema
         ]);
 
+        log_activity('HELPER dietetic_update_payment_token_status - Update result: ' . var_export($result, true));
+        log_activity('HELPER dietetic_update_payment_token_status - DB last query: ' . $CI->db->last_query());
+
+        if ($CI->db->error()['code'] !== 0) {
+            log_activity('HELPER dietetic_update_payment_token_status - DB ERROR: ' . json_encode($CI->db->error()));
+        }
+
         if ($result) {
             log_activity('PAYMENT TOKEN UPDATED - ID: ' . $token_id . ', Status: ' . $status);
+        } else {
+            log_activity('PAYMENT TOKEN UPDATE FAILED - ID: ' . $token_id . ', Status: ' . $status);
         }
 
         return $result;

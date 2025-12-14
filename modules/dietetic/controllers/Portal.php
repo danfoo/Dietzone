@@ -13694,9 +13694,16 @@ php index.php cron/index</pre>';
         if ($status === 'cancel') {
             log_activity('PAYPAL CALLBACK - Paiement annulé par l\'utilisateur');
             log_activity('PAYPAL CALLBACK CANCEL - Invoice ID: ' . $invoice->id . ', Total: ' . $invoice->total . ', Client: ' . $client_id);
+            log_activity('PAYPAL CALLBACK CANCEL - Payment Token ID: ' . $payment_token->id);
 
             // Mark token as cancelled
-            dietetic_update_payment_token_status($payment_token->id, 'cancelled');
+            log_activity('PAYPAL CALLBACK CANCEL - AVANT dietetic_update_payment_token_status');
+            try {
+                $update_result = dietetic_update_payment_token_status($payment_token->id, 'cancelled');
+                log_activity('PAYPAL CALLBACK CANCEL - APRÈS dietetic_update_payment_token_status - Result: ' . var_export($update_result, true));
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK CANCEL - ERREUR dietetic_update_payment_token_status: ' . $e->getMessage());
+            }
 
             // Prepare data for view
             $data = [];
