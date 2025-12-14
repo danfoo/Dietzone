@@ -1054,22 +1054,250 @@ $this->load->view('portal/includes/portal_header');
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    /* Responsive */
+    /* Responsive - Ultra Modern Mobile Design */
     @media (max-width: 768px) {
-        .form-section {
-            padding: 20px;
+        body {
+            padding-top: 20px;
+            padding-bottom: 100px;
         }
 
-        .beverage-item {
-            grid-template-columns: 1fr;
+        .container-fluid {
+            max-width: 100%;
+            padding-left: 12px;
+            padding-right: 12px;
         }
 
-        .meal-card-title {
+        .page-header {
+            padding: 24px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .page-header h1 {
+            font-size: 20px;
+            gap: 10px;
+        }
+
+        .page-header h1 i {
+            padding: 8px;
+            font-size: 18px;
+        }
+
+        .page-header p {
             font-size: 14px;
         }
 
+        .form-section {
+            padding: 20px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* Enhanced Form Controls for Mobile */
+        .form-control {
+            padding: 16px 14px;
+            font-size: 16px; /* Prevent iOS zoom */
+            border-radius: 12px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-label i {
+            font-size: 14px;
+            padding: 5px;
+        }
+
+        /* Mobile-Optimized Buttons */
+        .btn-primary,
+        .submit-btn,
+        .save-btn {
+            padding: 18px 24px !important;
+            font-size: 16px !important;
+            border-radius: 12px !important;
+            width: 100%;
+            margin-bottom: 12px;
+            min-height: 56px; /* Optimal touch target */
+            font-weight: 700;
+        }
+
+        .add-beverage-btn {
+            padding: 16px 20px;
+            font-size: 15px;
+            width: 100%;
+            border-radius: 12px;
+            min-height: 52px;
+        }
+
+        /* Beverage Items - Stack on Mobile */
+        .beverage-item {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .beverage-item button {
+            width: 100%;
+            padding: 16px;
+            font-size: 15px;
+            min-height: 52px;
+        }
+
+        .beverage-item .form-control {
+            font-size: 16px;
+        }
+
+        /* Meal Cards - Better Mobile UX */
+        .meal-card {
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .meal-card-header {
+            padding: 16px;
+        }
+
+        .meal-card-title {
+            font-size: 15px;
+        }
+
+        .meal-card-title i {
+            padding: 6px;
+            font-size: 13px;
+        }
+
         .meal-card-toggle {
+            font-size: 12px;
+        }
+
+        .meal-card-toggle i {
+            font-size: 14px;
+        }
+
+        .meal-card.active .meal-card-body {
+            padding: 16px;
+        }
+
+        /* Photo Upload - Mobile Optimized */
+        .photo-upload-area {
+            padding: 32px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .photo-upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .photo-upload-text {
+            font-size: 15px;
+        }
+
+        .photo-upload-hint {
             font-size: 11px;
+        }
+
+        .photo-preview {
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .photo-preview-remove {
+            top: 10px;
+            right: 10px;
+            width: 44px;
+            height: 44px;
+            font-size: 18px;
+        }
+
+        /* Date Navigation - Mobile Stack */
+        .date-nav-btn {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-radius: 10px;
+            min-height: 48px;
+        }
+
+        /* Audio Recording - Mobile Enhanced */
+        .audio-recorder {
+            padding: 20px 16px;
+            border-radius: 12px;
+        }
+
+        .audio-controls button {
+            padding: 16px;
+            font-size: 15px;
+            min-height: 52px;
+            border-radius: 12px;
+        }
+
+        /* Form Groups - Better Spacing */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .action-buttons button {
+            width: 100%;
+            min-height: 56px;
+        }
+
+        /* Time Inputs - Larger Touch Target */
+        .time-input {
+            font-size: 16px;
+            padding: 16px 14px;
+            min-height: 52px;
+        }
+
+        /* Improved Select Dropdowns */
+        select.form-control {
+            font-size: 16px;
+            padding: 16px 14px;
+            background-position: right 12px center;
+            min-height: 52px;
+        }
+    }
+
+    /* Extra Small Devices */
+    @media (max-width: 480px) {
+        .container-fluid {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .form-section {
+            padding: 16px 12px;
+        }
+
+        .page-header {
+            padding: 20px 16px;
+        }
+
+        .page-header h1 {
+            font-size: 18px;
+        }
+
+        .beverage-item {
+            padding: 12px;
         }
     }
     </style>

@@ -278,6 +278,13 @@ foreach ($invoices as $invoice) {
     background: none;
 }
 
+.container-fluid {
+    padding-right: 0px;
+    padding-left: 0px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
 /* Dashboard Header */
 .dashboard-header {
     background: white;
