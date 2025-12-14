@@ -2207,7 +2207,7 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
         // Get active programs
         if ($CI->db->table_exists(db_prefix() . 'dietic_programs')) {
             try {
-                $stats['programs_active'] = $CI->db->where('created_by', $staff_id)
+                $stats['programs_active'] = $CI->db->where('dietitian_id', $staff_id)
                     ->where('status', 'active')
                     ->count_all_results(db_prefix() . 'dietic_programs');
             } catch (Exception $e) {
@@ -2236,7 +2236,7 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
         // Get ratings
         if ($CI->db->table_exists(db_prefix() . 'dietic_ratings')) {
             try {
-                $ratings = $CI->db->select('AVG(rating) as avg_rating, COUNT(*) as total_ratings')
+                $ratings = $CI->db->select('AVG(overall_rating) as avg_rating, COUNT(*) as total_ratings')
                     ->where('dietitian_id', $staff_id)
                     ->get(db_prefix() . 'dietic_ratings')
                     ->row();
