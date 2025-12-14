@@ -97,7 +97,8 @@ $this->load->view('portal/includes/portal_header');
     }
 
     .container-fluid {
-        padding: 15px;
+        padding-right: 0px;
+        padding-left: 0px;
         max-width: calc(100% - 30px);
         margin: 0 auto;
     }
@@ -285,10 +286,6 @@ $this->load->view('portal/includes/portal_header');
 
         .page-header h1 {
             font-size: 18px;
-        }
-
-        .container-fluid {
-            padding: 15px;
         }
     }
 
