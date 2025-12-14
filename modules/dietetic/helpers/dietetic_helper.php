@@ -1969,7 +1969,7 @@ if (!function_exists('dietetic_generate_referral_code')) {
         $last_initial = strtoupper(substr($staff->lastname, 0, 1));
 
         // Base code format
-        $base_code = 'DZ-' . $first_initial . $last_initial . '_';
+        $base_code = 'DZ-' . $first_initial . $last_initial . '-';
 
         // Find next available number
         $number = 1;
@@ -2112,67 +2112,144 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
         $stats = [
             'total_patients' => 0,
             'active_patients' => 0,
+            'new_patients_this_month' => 0,
+            'total_consultations' => 0,
             'consultations_this_month' => 0,
             'programs_active' => 0,
-            'referrals_total' => 0,
+            'total_referrals' => 0,
             'referrals_this_month' => 0,
-            'avg_rating' => 0,
-            'total_ratings' => 0
+            'average_rating' => 0,
+            'total_reviews' => 0
         ];
 
         // Get total patients assigned
+        // Try both patient_dietitians table and direct dietitian_id column
         if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
-            $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
-                ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+            try {
+                $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+            } catch (Exception $e) {
+                log_activity('Error counting patients from patient_dietitians: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: check direct assignment in patients table
+        if ($stats['total_patients'] == 0 && $CI->db->table_exists(db_prefix() . 'dietic_patients')) {
+            try {
+                $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('status', 'active')
+                    ->count_all_results(db_prefix() . 'dietic_patients');
+            } catch (Exception $e) {
+                log_activity('Error counting patients from patients: ' . $e->getMessage());
+            }
+        }
+
+        // Get new patients this month
+        if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            try {
+                $stats['new_patients_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('assigned_date >=', date('Y-m-01'))
+                    ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+            } catch (Exception $e) {
+                log_activity('Error counting new patients this month from patient_dietitians: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: check patients created this month
+        if ($stats['new_patients_this_month'] == 0 && $CI->db->table_exists(db_prefix() . 'dietic_patients')) {
+            try {
+                $stats['new_patients_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('created_at >=', date('Y-m-01 00:00:00'))
+                    ->where('created_at <=', date('Y-m-t 23:59:59'))
+                    ->count_all_results(db_prefix() . 'dietic_patients');
+            } catch (Exception $e) {
+                log_activity('Error counting new patients this month from patients: ' . $e->getMessage());
+            }
+        }
+
+        // Get total consultations
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            try {
+                $stats['total_consultations'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_consultations');
+            } catch (Exception $e) {
+                log_activity('Error counting total consultations: ' . $e->getMessage());
+            }
         }
 
         // Get active patients (with recent activity)
         // Define active as having consultation in last 90 days
         if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
-            $stats['active_patients'] = $CI->db->where('dietitian_id', $staff_id)
-                ->where('consultation_date >=', date('Y-m-d', strtotime('-90 days')))
-                ->group_by('patient_id')
-                ->count_all_results(db_prefix() . 'dietic_consultations');
+            try {
+                $stats['active_patients'] = $CI->db->select('COUNT(DISTINCT patient_id) as count')
+                    ->where('dietitian_id', $staff_id)
+                    ->where('consultation_date >=', date('Y-m-d', strtotime('-90 days')))
+                    ->get(db_prefix() . 'dietic_consultations')
+                    ->row()->count;
+            } catch (Exception $e) {
+                log_activity('Error counting active patients: ' . $e->getMessage());
+            }
         }
 
         // Get consultations this month
         if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
-            $stats['consultations_this_month'] = $CI->db->where('dietitian_id', $staff_id)
-                ->where('consultation_date >=', date('Y-m-01'))
-                ->where('consultation_date <=', date('Y-m-t'))
-                ->count_all_results(db_prefix() . 'dietic_consultations');
+            try {
+                $stats['consultations_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('consultation_date >=', date('Y-m-01'))
+                    ->where('consultation_date <=', date('Y-m-t'))
+                    ->count_all_results(db_prefix() . 'dietic_consultations');
+            } catch (Exception $e) {
+                log_activity('Error counting consultations this month: ' . $e->getMessage());
+            }
         }
 
         // Get active programs
         if ($CI->db->table_exists(db_prefix() . 'dietic_programs')) {
-            $stats['programs_active'] = $CI->db->where('created_by', $staff_id)
-                ->where('status', 'active')
-                ->count_all_results(db_prefix() . 'dietic_programs');
+            try {
+                $stats['programs_active'] = $CI->db->where('created_by', $staff_id)
+                    ->where('status', 'active')
+                    ->count_all_results(db_prefix() . 'dietic_programs');
+            } catch (Exception $e) {
+                log_activity('Error counting active programs: ' . $e->getMessage());
+            }
         }
 
         // Get referrals
         if ($CI->db->table_exists(db_prefix() . 'dietic_referrals')) {
-            $stats['referrals_total'] = $CI->db->where('dietitian_staff_id', $staff_id)
-                ->count_all_results(db_prefix() . 'dietic_referrals');
+            try {
+                $stats['total_referrals'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_referrals');
+            } catch (Exception $e) {
+                log_activity('Error counting total referrals: ' . $e->getMessage());
+            }
 
-            $stats['referrals_this_month'] = $CI->db->where('dietitian_staff_id', $staff_id)
-                ->where('referred_at >=', date('Y-m-01'))
-                ->count_all_results(db_prefix() . 'dietic_referrals');
+            try {
+                $stats['referrals_this_month'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                    ->where('referred_at >=', date('Y-m-01'))
+                    ->count_all_results(db_prefix() . 'dietic_referrals');
+            } catch (Exception $e) {
+                log_activity('Error counting referrals this month: ' . $e->getMessage());
+            }
         }
 
         // Get ratings
         if ($CI->db->table_exists(db_prefix() . 'dietic_ratings')) {
-            $ratings = $CI->db->select('AVG(rating) as avg_rating, COUNT(*) as total_ratings')
-                ->where('dietitian_id', $staff_id)
-                ->get(db_prefix() . 'dietic_ratings')
-                ->row();
+            try {
+                $ratings = $CI->db->select('AVG(rating) as avg_rating, COUNT(*) as total_ratings')
+                    ->where('dietitian_id', $staff_id)
+                    ->get(db_prefix() . 'dietic_ratings')
+                    ->row();
 
-            if ($ratings) {
-                $stats['avg_rating'] = round($ratings->avg_rating, 1);
-                $stats['total_ratings'] = $ratings->total_ratings;
+                if ($ratings) {
+                    $stats['average_rating'] = round($ratings->avg_rating, 1);
+                    $stats['total_reviews'] = $ratings->total_ratings;
+                }
+            } catch (Exception $e) {
+                log_activity('Error getting ratings: ' . $e->getMessage());
             }
         }
 
+        log_activity('Dietitian stats retrieved for staff ' . $staff_id . ': ' . json_encode($stats));
         return $stats;
     }
 }
