@@ -141,8 +141,8 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .specialties-list {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
         }
 
@@ -170,32 +170,32 @@ $this->load->view('portal/includes/portal_header');
 
         .bio-section {
             margin: 16px 0;
-            padding: 16px;
-            background: linear-gradient(135deg, rgba(1, 128, 123, 0.05) 0%, rgba(243, 145, 29, 0.05) 100%);
+            padding: 20px;
+            background: #f8f9fa;
             border-radius: 12px;
-            border-left: 4px solid #01807B;
         }
 
         .bio-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .bio-title i {
             color: #01807B;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .bio-text {
-            color: #495057;
+            color: #2c3e50;
             font-size: 14px;
-            line-height: 1.7;
-            text-align: justify;
+            line-height: 1.8;
         }
 
         .info-pills {
@@ -883,6 +883,19 @@ $this->load->view('portal/includes/portal_header');
                     </div>
                     <?php } ?>
 
+                    <!-- Bio -->
+                    <?php if (!empty($dietitian->dietitian_bio)) { ?>
+                    <div class="bio-section">
+                        <div class="bio-title">
+                            <i class="fa fa-info-circle"></i>
+                            À propos
+                        </div>
+                        <div class="bio-text">
+                            <?php echo nl2br(htmlspecialchars($dietitian->dietitian_bio)); ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
                     <!-- Specialties -->
                     <?php if (!empty($specialties)) { ?>
                     <div class="specialties-section">
@@ -901,32 +914,9 @@ $this->load->view('portal/includes/portal_header');
                     </div>
                     <?php } ?>
 
-                    <!-- Bio -->
-                    <?php if (!empty($dietitian->dietitian_bio)) { ?>
-                    <div class="bio-section">
-                        <div class="bio-title">
-                            <i class="fa fa-user"></i>
-                            À propos
-                        </div>
-                        <div class="bio-text">
-                            <?php echo nl2br(htmlspecialchars($dietitian->dietitian_bio)); ?>
-                        </div>
-                    </div>
-                    <?php } ?>
-
-                    <!-- Stats Grid -->
-                    <?php if (isset($dietitian_stats) && $dietitian_stats) { ?>
+                    <!-- Stats Grid (Only referrals and rating) -->
+                    <?php if (isset($dietitian_stats) && $dietitian_stats && ($dietitian_stats['total_referrals'] > 0 || $dietitian_stats['average_rating'] > 0)) { ?>
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fa fa-users"></i>
-                            <div class="stat-value"><?php echo $dietitian_stats['total_patients']; ?></div>
-                            <div class="stat-label">Patients</div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fa fa-heartbeat"></i>
-                            <div class="stat-value"><?php echo $dietitian_stats['total_consultations']; ?></div>
-                            <div class="stat-label">Consultations</div>
-                        </div>
                         <?php if ($dietitian_stats['total_referrals'] > 0) { ?>
                         <div class="stat-card">
                             <i class="fa fa-share-alt"></i>
