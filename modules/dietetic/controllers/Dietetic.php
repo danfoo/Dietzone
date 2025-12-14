@@ -1405,6 +1405,7 @@ class Dietetic extends AdminController
     {
         $staff_id = get_staff_user_id();
         $results = [];
+        $staff_member = null; // Initialize to avoid undefined variable errors
 
         // Test 1: Get staff member info
         $results[] = ['test' => 'Get Staff Member', 'status' => 'testing'];
@@ -1485,7 +1486,7 @@ class Dietetic extends AdminController
         // Test 5: Try to get specialties
         $results[] = ['test' => 'Get Specialties', 'status' => 'testing'];
         try {
-            if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
+            if ($staff_member && isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
                 $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
                 if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
                     $this->db->where_in('id', $selected_specialties);
@@ -1503,6 +1504,12 @@ class Dietetic extends AdminController
                         'message' => 'No specialties selected or table does not exist'
                     ];
                 }
+            } elseif (!$staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Specialties',
+                    'status' => 'error',
+                    'message' => 'Staff member not found (prerequisite test failed)'
+                ];
             } else {
                 $results[count($results)-1] = [
                     'test' => 'Get Specialties',
@@ -1521,13 +1528,19 @@ class Dietetic extends AdminController
         // Test 6: Try to get certifications
         $results[] = ['test' => 'Get Certifications', 'status' => 'testing'];
         try {
-            if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
+            if ($staff_member && isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
                 $certifications = json_decode($staff_member->dietitian_certifications, true);
                 $results[count($results)-1] = [
                     'test' => 'Get Certifications',
                     'status' => is_array($certifications) ? 'success' : 'error',
                     'data' => $certifications,
                     'message' => is_array($certifications) ? 'Valid JSON' : 'Invalid JSON'
+                ];
+            } elseif (!$staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => 'error',
+                    'message' => 'Staff member not found (prerequisite test failed)'
                 ];
             } else {
                 $results[count($results)-1] = [
