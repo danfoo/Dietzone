@@ -273,9 +273,9 @@ foreach ($invoices as $invoice) {
 <style>
 /* Mobile-First Design */
 .portal-content {
-    padding: 15px 10px;
+    padding: none;
     min-height: calc(100vh - 200px);
-    background: #f8f9fa;
+    background: none;
 }
 
 /* Dashboard Header */
@@ -344,7 +344,7 @@ foreach ($invoices as $invoice) {
 
 .stat-card:last-child {
     border-bottom: none;
-    grid-column: 1 / -1;
+    grid-column: -2 / -1;
 }
 
 .stat-card:nth-last-child(2) {
