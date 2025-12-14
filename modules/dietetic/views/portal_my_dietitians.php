@@ -187,7 +187,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .specialty-name {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 8px;
@@ -195,7 +195,7 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .specialty-description {
-            font-size: 13px;
+            font-size: 10px;
             color: #6c757d;
             line-height: 1.5;
         }
@@ -928,51 +928,6 @@ $this->load->view('portal/includes/portal_header');
                     </div>
                     <?php } ?>
 
-                    <!-- Specialties -->
-                    <?php if (!empty($specialties)) {
-                        // Descriptions pour chaque spécialité
-                        $specialty_descriptions = [
-                            'Perte de poids' => 'Atteignez vos objectifs santé durablement',
-                            'Nutrition sportive' => 'Optimisez performance et récupération',
-                            'Diabète' => 'Équilibrez votre glycémie au quotidien',
-                            'Nutrition pédiatrique' => 'Croissance et développement de l\'enfant',
-                            'Grossesse' => 'Accompagnement avant, pendant, après',
-                            'Troubles du comportement alimentaire (TCA)' => 'Retrouvez une relation saine avec la nourriture',
-                            'Végétarisme/Véganisme' => 'Équilibre nutritionnel sans produits animaux',
-                            'Maladies cardiovasculaires' => 'Protégez votre cœur par l\'alimentation',
-                            'Allergies alimentaires' => 'Gérez vos intolérances en toute sécurité',
-                            'Nutrition gériatrique' => 'Vitalité et santé à tout âge',
-                            'Nutrition clinique' => 'Prise en charge pathologies chroniques',
-                            'Bien-être général' => 'Équilibre et vitalité au quotidien',
-                            'Nutrition de la femme' => 'Hormones, cycles et étapes à vie',
-                            'Nutrition santé publique & collective' => 'Programs pour communautés',
-                            'Nutrition fonctionnelle & préventive' => 'Approche personnalisée et globale'
-                        ];
-                    ?>
-                    <div class="specialties-section">
-                        <div class="specialties-title">
-                            Spécialités du Diététicien
-                        </div>
-                        <div class="specialties-list">
-                            <?php foreach ($specialties as $specialty) {
-                                $description = isset($specialty_descriptions[$specialty['name_fr']])
-                                    ? $specialty_descriptions[$specialty['name_fr']]
-                                    : '';
-                            ?>
-                            <div class="specialty-card" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
-                                <div class="specialty-icon">
-                                    <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
-                                </div>
-                                <div class="specialty-name"><?php echo htmlspecialchars($specialty['name_fr']); ?></div>
-                                <?php if ($description) { ?>
-                                <div class="specialty-description"><?php echo htmlspecialchars($description); ?></div>
-                                <?php } ?>
-                            </div>
-                            <?php } ?>
-                        </div>
-                    </div>
-                    <?php } ?>
-
                     <!-- Stats Grid (Only referrals and rating) -->
                     <?php if (isset($dietitian_stats) && $dietitian_stats && ($dietitian_stats['total_referrals'] > 0 || $dietitian_stats['average_rating'] > 0)) { ?>
                     <div class="stats-grid">
@@ -1035,6 +990,51 @@ $this->load->view('portal/includes/portal_header');
                         <?php } ?>
                     </div>
                 </div>
+
+                <!-- Specialties Section (Outside white card) -->
+                <?php if (!empty($specialties)) {
+                    // Descriptions pour chaque spécialité
+                    $specialty_descriptions = [
+                        'Perte de poids' => 'Atteignez vos objectifs santé durablement',
+                        'Nutrition sportive' => 'Optimisez performance et récupération',
+                        'Diabète' => 'Équilibrez votre glycémie au quotidien',
+                        'Nutrition pédiatrique' => 'Croissance et développement de l\'enfant',
+                        'Grossesse' => 'Accompagnement avant, pendant, après',
+                        'Troubles du comportement alimentaire (TCA)' => 'Retrouvez une relation saine avec la nourriture',
+                        'Végétarisme/Véganisme' => 'Équilibre nutritionnel sans produits animaux',
+                        'Maladies cardiovasculaires' => 'Protégez votre cœur par l\'alimentation',
+                        'Allergies alimentaires' => 'Gérez vos intolérances en toute sécurité',
+                        'Nutrition gériatrique' => 'Vitalité et santé à tout âge',
+                        'Nutrition clinique' => 'Prise en charge pathologies chroniques',
+                        'Bien-être général' => 'Équilibre et vitalité au quotidien',
+                        'Nutrition de la femme' => 'Hormones, cycles et étapes à vie',
+                        'Nutrition santé publique & collective' => 'Programs pour communautés',
+                        'Nutrition fonctionnelle & préventive' => 'Approche personnalisée et globale'
+                    ];
+                ?>
+                <div class="specialties-section">
+                    <div class="specialties-title">
+                        Spécialités du Diététicien
+                    </div>
+                    <div class="specialties-list">
+                        <?php foreach ($specialties as $specialty) {
+                            $description = isset($specialty_descriptions[$specialty['name_fr']])
+                                ? $specialty_descriptions[$specialty['name_fr']]
+                                : '';
+                        ?>
+                        <div class="specialty-card" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
+                            <div class="specialty-icon">
+                                <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
+                            </div>
+                            <div class="specialty-name"><?php echo htmlspecialchars($specialty['name_fr']); ?></div>
+                            <?php if ($description) { ?>
+                            <div class="specialty-description"><?php echo htmlspecialchars($description); ?></div>
+                            <?php } ?>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
 
                 <!-- Rating Section -->
                 <div class="rating-card">
