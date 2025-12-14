@@ -965,7 +965,7 @@ if (isset($_GET['debug'])) {
             <!-- ===================================
                  SPECIALTIES SECTION (OUTSIDE CARD)
                  =================================== -->
-            <?php if (!empty($specialties)) {
+            <?php if (isset($specialties) && is_array($specialties) && count($specialties) > 0) { ?> {
                 // Descriptions for each specialty
                 $specialty_descriptions = [
                     'Perte de poids' => 'Atteignez vos objectifs santé durablement',
