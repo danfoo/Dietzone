@@ -1149,7 +1149,7 @@ $currency = isset($invoice->currency_name) ? $invoice->currency_name : 'XOF';
     }
 
     .gateway-info p {
-        font-size: 13px;
+        font-size: 9px;
     }
 }
 </style>

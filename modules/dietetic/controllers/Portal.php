@@ -13983,9 +13983,12 @@ php index.php cron/index</pre>';
         }
 
         // Update token status to processing
+        log_activity('PAYPAL CALLBACK SUCCESS - Updating token status to processing');
         dietetic_update_payment_token_status($payment_token->id, 'processing');
+        log_activity('PAYPAL CALLBACK SUCCESS - Token status updated to processing');
 
         // Capture the order
+        log_activity('PAYPAL CALLBACK SUCCESS - Capturing PayPal order: ' . $order_id);
         $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_id . '/capture');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -13996,26 +13999,38 @@ php index.php cron/index</pre>';
 
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
+        log_activity('PAYPAL CALLBACK SUCCESS - HTTP Code: ' . $http_code);
+        log_activity('PAYPAL CALLBACK SUCCESS - Response: ' . substr($response, 0, 500));
+        if ($curl_error) {
+            log_activity('PAYPAL CALLBACK SUCCESS - cURL Error: ' . $curl_error);
+        }
+
         $result = json_decode($response, true);
+        log_activity('PAYPAL CALLBACK SUCCESS - Decoded result status: ' . ($result['status'] ?? 'N/A'));
 
         if ($http_code === 201 && isset($result['status']) && $result['status'] === 'COMPLETED') {
+            log_activity('PAYPAL CALLBACK SUCCESS - Payment COMPLETED, processing invoice');
+
+            // Get transaction ID first
+            $transaction_id = '';
+            if (isset($result['purchase_units'][0]['payments']['captures'][0]['id'])) {
+                $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
+            }
+
             // Mark invoice as paid
             if ($invoice->status != 2) {
+                log_activity('PAYPAL CALLBACK SUCCESS - Updating invoice status to paid');
                 $this->db->where('id', $invoice_id);
                 $this->db->update(db_prefix() . 'invoices', [
                     'status' => 2,
                     'datepaid' => date('Y-m-d H:i:s')
                 ]);
 
-                // Get transaction ID
-                $transaction_id = '';
-                if (isset($result['purchase_units'][0]['payments']['captures'][0]['id'])) {
-                    $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
-                }
-
                 // Log payment
+                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment in database');
                 $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
                     'invoiceid' => $invoice_id,
                     'amount' => $invoice->total,
@@ -14028,27 +14043,78 @@ php index.php cron/index</pre>';
                 ]);
 
                 // Mark payment token as completed
+                log_activity('PAYPAL CALLBACK SUCCESS - Marking token as completed');
                 dietetic_update_payment_token_status($payment_token->id, 'completed');
+                log_activity('PAYPAL CALLBACK SUCCESS - Token marked as completed');
+            } else {
+                log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping update');
             }
 
-            // Load custom success page
             $data = [
                 'invoice' => $invoice,
                 'client_id' => $client_id,
-                'transaction_id' => $transaction_id ?? '',
-                'order_id' => $order_id
+                'transaction_id' => $transaction_id,
+                'order_id' => $order_id,
+                'active_page' => 'invoices',
+                'page_title' => 'Paiement Réussi'
             ];
-            $this->load->view('portal/payment_success', $data);
+
+            log_activity('PAYPAL CALLBACK SUCCESS - Loading success view');
+            log_activity('PAYPAL CALLBACK SUCCESS - Data prepared: Invoice #' . $invoice->id . ', Transaction: ' . $transaction_id);
+
+            // Load success view with error handling
+            try {
+                $this->load->view('portal/payment_success', $data);
+                log_activity('PAYPAL CALLBACK SUCCESS - View loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK SUCCESS - View loading error: ' . $e->getMessage());
+                // Fallback HTML
+                echo '<!DOCTYPE html><html><head><title>Paiement Réussi</title></head><body>';
+                echo '<h1>✅ Paiement Réussi!</h1>';
+                echo '<p>Votre paiement a été traité avec succès.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p>Montant: ' . htmlspecialchars($invoice->total) . ' XOF</p>';
+                if ($transaction_id) {
+                    echo '<p>Transaction ID: ' . htmlspecialchars($transaction_id) . '</p>';
+                }
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Voir mes factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
         } else {
+            log_activity('PAYPAL CALLBACK SUCCESS - Payment capture FAILED');
+            log_activity('PAYPAL CALLBACK SUCCESS - HTTP Code: ' . $http_code . ', Status: ' . ($result['status'] ?? 'N/A'));
             log_message('error', 'PayPal Capture Error: ' . $response);
 
-            // Load custom error page
+            // Mark token as failed
+            dietetic_update_payment_token_status($payment_token->id, 'failed');
+
+            // Prepare data for error view
             $data = [
                 'invoice' => $invoice,
                 'client_id' => $client_id,
-                'error_message' => 'Erreur lors de la capture du paiement PayPal.'
+                'error_message' => 'Erreur lors de la capture du paiement PayPal.',
+                'active_page' => 'invoices',
+                'page_title' => 'Erreur de Paiement'
             ];
-            $this->load->view('portal/payment_error', $data);
+
+            log_activity('PAYPAL CALLBACK SUCCESS - Loading error view');
+
+            // Load error view with error handling
+            try {
+                $this->load->view('portal/payment_error', $data);
+                log_activity('PAYPAL CALLBACK SUCCESS - Error view loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK SUCCESS - Error view loading error: ' . $e->getMessage());
+                // Fallback HTML
+                echo '<!DOCTYPE html><html><head><title>Erreur de Paiement</title></head><body>';
+                echo '<h1>❌ Erreur de Paiement</h1>';
+                echo '<p>Une erreur est survenue lors du traitement de votre paiement.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Retour aux factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
         }
     }
 
