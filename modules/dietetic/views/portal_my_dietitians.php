@@ -363,7 +363,7 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         .certification-text {
             flex: 1;
             color: #2c3e50;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
         }
 
@@ -525,42 +525,6 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
             font-size: 22px;
         }
 
-        .average-rating {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .rating-score {
-            font-size: 36px;
-            font-weight: 700;
-            color: #01807B;
-            margin-bottom: 8px;
-        }
-
-        .rating-stars {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 8px;
-        }
-
-        .rating-stars i {
-            font-size: 24px;
-            color: #F3911D;
-        }
-
-        .rating-stars i.fa-star-o {
-            color: #dee2e6;
-        }
-
-        .rating-count {
-            color: #6c757d;
-            font-size: 13px;
-        }
-
         .my-rating-section {
             background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
             padding: 16px;
@@ -696,10 +660,6 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         .current-rating-text {
             font-size: 14px;
             color: #6c757d;
-        }
-
-        .criteria-ratings {
-            margin-top: 16px;
         }
 
         .criterion-item {
@@ -1151,71 +1111,6 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
                         <h3>Évaluation</h3>
                     </div>
 
-                    <?php if (isset($dietitian_rating) && $dietitian_rating && $dietitian_rating->total_ratings > 0) { ?>
-                    <!-- Average Rating Display -->
-                    <div class="average-rating">
-                        <div class="rating-score">
-                            <?php echo number_format($dietitian_rating->avg_overall, 1); ?> / 5
-                        </div>
-                        <div class="rating-stars">
-                            <?php
-                            $avg = round($dietitian_rating->avg_overall);
-                            for ($i = 1; $i <= 5; $i++) {
-                                if ($i <= $avg) {
-                                    echo '<i class="fa fa-star"></i>';
-                                } else {
-                                    echo '<i class="fa fa-star-o"></i>';
-                                }
-                            }
-                            ?>
-                        </div>
-                        <div class="rating-count">
-                            Basé sur <?php echo $dietitian_rating->total_ratings; ?>
-                            <?php echo $dietitian_rating->total_ratings > 1 ? 'évaluations' : 'évaluation'; ?>
-                        </div>
-
-                        <!-- Criteria Details -->
-                        <div class="criteria-ratings">
-                            <?php
-                            $criteria = [
-                                'professionalism' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
-                                'listening' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
-                                'advice' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
-                                'results' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
-                                'availability' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
-                            ];
-
-                            foreach ($criteria as $key => $info) {
-                                $avg_key = 'avg_' . $key;
-                                if (isset($dietitian_rating->$avg_key) && $dietitian_rating->$avg_key > 0) {
-                                    $criterion_avg = $dietitian_rating->$avg_key;
-                                    $criterion_rounded = round($criterion_avg);
-                            ?>
-                            <div class="criterion-item">
-                                <div class="criterion-label">
-                                    <i class="fa <?php echo $info['icon']; ?>"></i>
-                                    <?php echo $info['label']; ?>
-                                </div>
-                                <div class="criterion-stars">
-                                    <?php
-                                    for ($i = 1; $i <= 5; $i++) {
-                                        if ($i <= $criterion_rounded) {
-                                            echo '<i class="fa fa-star"></i>';
-                                        } else {
-                                            echo '<i class="fa fa-star-o"></i>';
-                                        }
-                                    }
-                                    ?>
-                                    <span class="criterion-score"><?php echo number_format($criterion_avg, 1); ?>/5</span>
-                                </div>
-                            </div>
-                            <?php
-                                }
-                            }
-                            ?>
-                        </div>
-                    </div>
-                    <?php } ?>
 
                     <?php if (isset($my_rating) && $my_rating) { ?>
                     <!-- Patient's Current Rating -->
