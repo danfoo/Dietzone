@@ -13352,24 +13352,12 @@ php index.php cron/index</pre>';
             // Load Perfex's invoice model for proper invoice creation
             $this->load->model('invoices_model');
 
-            // Get next invoice number from Perfex
-            $next_number = get_option('next_invoice_number');
-            if (empty($next_number)) {
-                $next_number = 1;
-            }
-
-            log_activity('SUBSCRIBE SERVICE - Creating invoice with number: ' . $next_number);
-
-            // Prepare invoice data using Perfex's format
+            // Prepare invoice data using Perfex's format (simplified to let Perfex handle calculations)
             $invoice_data = [
                 'clientid' => $client_id,
-                'number' => $next_number,
-                'number_format' => get_option('invoice_number_format'),
-                'prefix' => get_option('invoice_prefix'),
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
                 'currency' => get_base_currency()->id,
-                'status' => 1, // IMPORTANT: Force status to 1 (Unpaid)
                 'adminnote' => 'Souscription automatique au service: ' . $service->description,
                 'newitems' => [
                     [
@@ -13384,7 +13372,9 @@ php index.php cron/index</pre>';
                 'tags' => ['service_subscription']
             ];
 
-            // Use Perfex's model to create invoice (handles numbering, formatting, etc.)
+            log_activity('SUBSCRIBE SERVICE - Creating invoice with item rate: ' . $service->rate);
+
+            // Use Perfex's model to create invoice (handles numbering, totals, etc.)
             $invoice_id = $this->invoices_model->add($invoice_data);
 
             if (!$invoice_id) {
@@ -13393,13 +13383,29 @@ php index.php cron/index</pre>';
                 return;
             }
 
-            // Verify invoice was created with correct status (Unpaid)
+            // Verify invoice was created with correct values
             $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
-            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created - Number: ' . $created_invoice->number . ', Prefix: ' . $created_invoice->prefix . ', Status: ' . $created_invoice->status . ', Total: ' . $created_invoice->total);
+            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created - Number: ' . $created_invoice->number . ', Prefix: ' . $created_invoice->prefix . ', Status: ' . $created_invoice->status . ', Subtotal: ' . $created_invoice->subtotal . ', Total: ' . $created_invoice->total);
 
-            // If invoice was auto-marked as paid, force it back to unpaid
-            if ($created_invoice->status == 2) {
-                log_activity('SUBSCRIBE SERVICE - WARNING: Invoice was auto-marked as paid, forcing back to unpaid');
+            // If total is 0 or NULL, there's a problem with invoice creation
+            if (empty($created_invoice->total) || $created_invoice->total == 0) {
+                log_activity('SUBSCRIBE SERVICE - ERROR: Invoice total is 0 or NULL, expected: ' . $service->rate);
+
+                // Try to fix by manually updating totals
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', [
+                    'subtotal' => $service->rate,
+                    'total' => $service->rate
+                ]);
+                log_activity('SUBSCRIBE SERVICE - Manually set invoice totals to: ' . $service->rate);
+
+                // Reload invoice
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            }
+
+            // Ensure invoice status is Unpaid (status = 1)
+            if ($created_invoice->status != 1) {
+                log_activity('SUBSCRIBE SERVICE - WARNING: Invoice status is ' . $created_invoice->status . ', forcing to Unpaid (1)');
                 $this->db->where('id', $invoice_id);
                 $this->db->update(db_prefix() . 'invoices', ['status' => 1]);
 
@@ -13409,7 +13415,7 @@ php index.php cron/index</pre>';
                 log_activity('SUBSCRIBE SERVICE - Removed auto-created payment records');
             }
 
-            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created for client ' . $client_id . ' - Service: ' . $service->description);
+            log_activity('SUBSCRIBE SERVICE - Final invoice state - ID: ' . $invoice_id . ', Total: ' . $created_invoice->total . ', Status: 1 (Unpaid)');
 
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
