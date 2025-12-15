@@ -13401,10 +13401,7 @@ php index.php cron/index</pre>';
             if ($created_invoice->status == 2) {
                 log_activity('SUBSCRIBE SERVICE - WARNING: Invoice was auto-marked as paid, forcing back to unpaid');
                 $this->db->where('id', $invoice_id);
-                $this->db->update(db_prefix() . 'invoices', [
-                    'status' => 1,
-                    'datepaid' => NULL
-                ]);
+                $this->db->update(db_prefix() . 'invoices', ['status' => 1]);
 
                 // Delete any auto-created payment records
                 $this->db->where('invoiceid', $invoice_id);
