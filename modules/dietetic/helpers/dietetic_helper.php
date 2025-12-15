@@ -1879,38 +1879,87 @@ if (!function_exists('dietetic_update_payment_token_status')) {
     {
         log_activity('HELPER dietetic_update_payment_token_status - START - Token ID: ' . $token_id . ', Status: ' . $status);
 
-        $CI = &get_instance();
+        try {
+            $CI = &get_instance();
+            log_activity('HELPER dietetic_update_payment_token_status - Got CI instance');
 
-        $table_name = db_prefix() . 'dietic_payment_tokens';
-        log_activity('HELPER dietetic_update_payment_token_status - Table: ' . $table_name);
+            $table_name = db_prefix() . 'dietic_payment_tokens';
+            log_activity('HELPER dietetic_update_payment_token_status - Table: ' . $table_name);
 
-        $CI->db->where('id', $token_id);
-        $result = $CI->db->update($table_name, [
-            'status' => $status
-            // Note: updated_at column doesn't exist in table schema
-        ]);
+            // First, verify the token exists
+            log_activity('HELPER dietetic_update_payment_token_status - Checking if token exists...');
+            $token_check = $CI->db->select('id, status')
+                ->from($table_name)
+                ->where('id', $token_id)
+                ->get()
+                ->row();
 
-        log_activity('HELPER dietetic_update_payment_token_status - Update result: ' . var_export($result, true));
-        log_activity('HELPER dietetic_update_payment_token_status - DB last query: ' . $CI->db->last_query());
-
-        $error = $CI->db->error();
-        if ($error['code'] !== 0) {
-            log_activity('HELPER dietetic_update_payment_token_status - DB ERROR: ' . json_encode($error));
-
-            // Error 1062 = Duplicate entry - ignore it, status is already set correctly
-            if ($error['code'] == 1062) {
-                log_activity('HELPER dietetic_update_payment_token_status - Duplicate key ignored (status already set)');
-                return true; // Consider this a success - the desired state exists
+            if (!$token_check) {
+                log_activity('HELPER dietetic_update_payment_token_status - ERROR: Token not found - ID: ' . $token_id);
+                return false;
             }
-        }
 
-        if ($result) {
-            log_activity('PAYMENT TOKEN UPDATED - ID: ' . $token_id . ', Status: ' . $status);
-        } else {
-            log_activity('PAYMENT TOKEN UPDATE FAILED - ID: ' . $token_id . ', Status: ' . $status);
-        }
+            log_activity('HELPER dietetic_update_payment_token_status - Token found, current status: ' . $token_check->status);
 
-        return $result;
+            // If already at the desired status, consider it success
+            if ($token_check->status === $status) {
+                log_activity('HELPER dietetic_update_payment_token_status - Token already at status: ' . $status . ' - Success');
+                return true;
+            }
+
+            // Attempt update using Query Builder
+            log_activity('HELPER dietetic_update_payment_token_status - Attempting Query Builder update...');
+            $CI->db->where('id', $token_id);
+            $result = $CI->db->update($table_name, ['status' => $status]);
+            log_activity('HELPER dietetic_update_payment_token_status - Query Builder result: ' . var_export($result, true));
+
+            // Check for database errors
+            $error = $CI->db->error();
+            log_activity('HELPER dietetic_update_payment_token_status - DB error check: ' . json_encode($error));
+
+            if ($error['code'] !== 0) {
+                log_activity('HELPER dietetic_update_payment_token_status - DB ERROR detected: Code ' . $error['code'] . ' - ' . $error['message']);
+
+                // Error 1062 = Duplicate entry - ignore it
+                if ($error['code'] == 1062) {
+                    log_activity('HELPER dietetic_update_payment_token_status - Duplicate key ignored (status already set)');
+                    return true;
+                }
+
+                // Try fallback with direct SQL query
+                log_activity('HELPER dietetic_update_payment_token_status - Trying fallback with direct SQL...');
+                $sql = "UPDATE " . $table_name . " SET status = '" . $CI->db->escape_str($status) . "' WHERE id = " . (int)$token_id;
+                log_activity('HELPER dietetic_update_payment_token_status - SQL: ' . $sql);
+                $fallback_result = $CI->db->query($sql);
+                log_activity('HELPER dietetic_update_payment_token_status - Fallback result: ' . var_export($fallback_result, true));
+                return $fallback_result;
+            }
+
+            if ($result) {
+                log_activity('PAYMENT TOKEN UPDATED - ID: ' . $token_id . ', Status: ' . $status);
+                return true;
+            } else {
+                log_activity('PAYMENT TOKEN UPDATE FAILED - ID: ' . $token_id . ', Status: ' . $status . ' (no error, but result false)');
+
+                // Verify if update actually happened despite false return
+                $verify = $CI->db->select('status')
+                    ->from($table_name)
+                    ->where('id', $token_id)
+                    ->get()
+                    ->row();
+
+                if ($verify && $verify->status === $status) {
+                    log_activity('PAYMENT TOKEN UPDATE VERIFIED - Status actually updated despite false return');
+                    return true;
+                }
+
+                return false;
+            }
+        } catch (Exception $e) {
+            log_activity('HELPER dietetic_update_payment_token_status - EXCEPTION: ' . $e->getMessage());
+            log_activity('HELPER dietetic_update_payment_token_status - TRACE: ' . $e->getTraceAsString());
+            return false;
+        }
     }
 }
 
