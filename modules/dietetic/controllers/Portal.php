@@ -14112,6 +14112,8 @@ php index.php cron/index</pre>';
             if ($invoice->status != 2) {
                 log_activity('PAYPAL CALLBACK SUCCESS - Recording payment via Perfex model');
 
+                $payment_recorded = false;
+
                 try {
                     // Load Perfex's invoice model
                     $this->load->model('invoices_model');
@@ -14143,12 +14145,47 @@ php index.php cron/index</pre>';
 
                     if ($payment_id) {
                         log_activity('PAYPAL CALLBACK SUCCESS - Payment recorded successfully via Perfex model - Payment ID: ' . $payment_id);
+                        $payment_recorded = true;
                     } else {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recording failed via Perfex model');
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recording failed via Perfex model - Trying fallback');
                     }
                 } catch (Exception $e) {
                     log_activity('PAYPAL CALLBACK SUCCESS - Payment recording exception: ' . $e->getMessage());
                     log_activity('PAYPAL CALLBACK SUCCESS - Exception trace: ' . $e->getTraceAsString());
+                }
+
+                // Fallback: If Perfex model failed, use direct SQL
+                if (!$payment_recorded) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Using SQL fallback to record payment');
+                    try {
+                        // Get or create PayPal payment mode ID
+                        $paypal_mode = $this->db->get_where(db_prefix() . 'payment_modes', ['name' => 'PayPal'])->row();
+                        $paypal_mode_id = $paypal_mode ? $paypal_mode->id : 1; // Default to 1 if not found
+
+                        // Insert payment record directly
+                        $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
+                            'invoiceid' => $invoice_id,
+                            'amount' => $invoice->total,
+                            'paymentmode' => $paypal_mode_id,
+                            'paymentmethod' => 'PayPal',
+                            'date' => date('Y-m-d'),
+                            'daterecorded' => date('Y-m-d H:i:s'),
+                            'note' => 'Paiement PayPal - Order: ' . $order_id,
+                            'transactionid' => $transaction_id
+                        ]);
+
+                        $payment_id = $this->db->insert_id();
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recorded via SQL fallback - Payment ID: ' . $payment_id);
+
+                        // Update invoice status to paid manually
+                        $this->db->where('id', $invoice_id);
+                        $this->db->update(db_prefix() . 'invoices', ['status' => 2]);
+                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated to Paid via SQL');
+
+                        $payment_recorded = true;
+                    } catch (Exception $e) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - SQL fallback also failed: ' . $e->getMessage());
+                    }
                 }
 
                 // Mark payment token as completed
@@ -14158,6 +14195,13 @@ php index.php cron/index</pre>';
                     log_activity('PAYPAL CALLBACK SUCCESS - Token marked as completed');
                 } catch (Exception $e) {
                     log_activity('PAYPAL CALLBACK SUCCESS - Token update exception: ' . $e->getMessage());
+                }
+
+                // Log final payment status
+                if ($payment_recorded) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Payment successfully recorded and invoice marked as paid');
+                } else {
+                    log_activity('PAYPAL CALLBACK SUCCESS - CRITICAL ERROR: Payment could not be recorded!');
                 }
             } else {
                 log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping payment recording');
