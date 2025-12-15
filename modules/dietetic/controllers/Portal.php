@@ -13141,13 +13141,70 @@ php index.php cron/index</pre>';
     }
 
     /**
-     * Debug page for services
+     * Debug page for services - Shows raw data from database
      */
     public function services_debug()
     {
-        // No authentication check - for debugging only
-        // Load the debug view
-        $this->load->view('portal/services_debug');
+        header('Content-Type: text/html; charset=utf-8');
+
+        echo '<h1>Services Debug - Données brutes de la base de données</h1>';
+        echo '<style>table { border-collapse: collapse; width: 100%; margin: 20px 0; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background: #01807B; color: white; }</style>';
+
+        // Get services directly from database
+        $this->db->select('i.id, i.description, i.long_description, i.rate, i.group_id, ig.name as group_name, i.unit');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.id', 'ASC');
+        $services = $this->db->get()->result();
+
+        echo '<h2>Services du groupe "Services" (requête directe)</h2>';
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Description</th><th>Prix (rate)</th><th>Groupe</th><th>Unit</th></tr>';
+
+        if ($services) {
+            foreach ($services as $service) {
+                echo '<tr>';
+                echo '<td>' . $service->id . '</td>';
+                echo '<td>' . htmlspecialchars($service->description) . '</td>';
+                echo '<td style="font-weight: bold; color: #01807B;">' . $service->rate . ' FCFA</td>';
+                echo '<td>' . ($service->group_name ?? 'N/A') . '</td>';
+                echo '<td>' . ($service->unit ?? 'N/A') . '</td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="5">Aucun service trouvé</td></tr>';
+        }
+
+        echo '</table>';
+
+        echo '<br><h2>Requête SQL utilisée :</h2>';
+        echo '<pre>' . $this->db->last_query() . '</pre>';
+
+        echo '<br><h2>Tous les items (pour vérification) :</h2>';
+        $all_items = $this->db->select('id, description, rate, group_id')->from(db_prefix() . 'items')->order_by('id', 'ASC')->get()->result();
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Description</th><th>Prix</th><th>Group ID</th></tr>';
+        foreach ($all_items as $item) {
+            echo '<tr>';
+            echo '<td>' . $item->id . '</td>';
+            echo '<td>' . htmlspecialchars($item->description) . '</td>';
+            echo '<td>' . $item->rate . '</td>';
+            echo '<td>' . $item->group_id . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+
+        echo '<br><h2>Groupes d\'items :</h2>';
+        $groups = $this->db->select('*')->from(db_prefix() . 'items_groups')->get()->result();
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Nom</th></tr>';
+        foreach ($groups as $group) {
+            echo '<tr><td>' . $group->id . '</td><td>' . $group->name . '</td></tr>';
+        }
+        echo '</table>';
+
+        echo '<p><a href="' . site_url('dietetic/portal/services') . '">← Retour à la page services</a></p>';
     }
 
     /**
