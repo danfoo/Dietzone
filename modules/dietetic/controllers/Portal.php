@@ -14108,83 +14108,66 @@ php index.php cron/index</pre>';
                 $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
             }
 
-            // Record payment using Perfex's invoice model
+            // Record payment using direct SQL (more reliable than Perfex model in portal context)
             if ($invoice->status != 2) {
-                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment via Perfex model');
+                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment via direct SQL');
 
                 $payment_recorded = false;
 
                 try {
-                    // Load Perfex's invoice model
-                    $this->load->model('invoices_model');
-                    $this->load->model('payment_modes_model');
-
                     // Register all custom payment modes (PayPal, Wave, Orange Money)
                     $payment_mode_ids = dietetic_register_payment_modes();
                     $paypal_mode_id = $payment_mode_ids['PayPal'] ?? null;
 
                     if (!$paypal_mode_id) {
-                        log_activity('PAYPAL CALLBACK SUCCESS - ERROR: Could not get/create PayPal payment mode');
-                        throw new Exception('PayPal payment mode not found');
+                        // Fallback: try to get PayPal mode ID directly
+                        $paypal_mode = $this->db->get_where(db_prefix() . 'payment_modes', ['name' => 'PayPal'])->row();
+                        $paypal_mode_id = $paypal_mode ? $paypal_mode->id : 1;
+                        log_activity('PAYPAL CALLBACK SUCCESS - Using fallback PayPal payment mode ID: ' . $paypal_mode_id);
+                    } else {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Using PayPal payment mode ID: ' . $paypal_mode_id);
                     }
 
-                    log_activity('PAYPAL CALLBACK SUCCESS - Using PayPal payment mode ID: ' . $paypal_mode_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice ID: ' . $invoice_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice total: ' . $invoice->total);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Transaction ID: ' . $transaction_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Order ID: ' . $order_id);
 
-                    // Prepare payment data
-                    $payment_data = [
+                    // Insert payment record directly into database
+                    $payment_insert_data = [
+                        'invoiceid' => $invoice_id,
                         'amount' => $invoice->total,
                         'paymentmode' => $paypal_mode_id,
                         'paymentmethod' => 'PayPal',
                         'date' => date('Y-m-d'),
+                        'daterecorded' => date('Y-m-d H:i:s'),
                         'note' => 'Paiement PayPal - Order: ' . $order_id,
                         'transactionid' => $transaction_id
                     ];
 
-                    // Use Perfex's model to record payment (handles status update, emails, etc.)
-                    $payment_id = $this->invoices_model->add_payment($payment_data, $invoice_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Inserting payment record: ' . json_encode($payment_insert_data));
+
+                    $this->db->insert(db_prefix() . 'invoicepaymentrecords', $payment_insert_data);
+                    $payment_id = $this->db->insert_id();
 
                     if ($payment_id) {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recorded successfully via Perfex model - Payment ID: ' . $payment_id);
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record inserted successfully - Payment ID: ' . $payment_id);
+
+                        // Update invoice status to paid
+                        $this->db->where('id', $invoice_id);
+                        $this->db->update(db_prefix() . 'invoices', ['status' => 2]);
+
+                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated to Paid (status=2)');
                         $payment_recorded = true;
                     } else {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recording failed via Perfex model - Trying fallback');
+                        log_activity('PAYPAL CALLBACK SUCCESS - ERROR: Failed to insert payment record, insert_id returned: ' . var_export($payment_id, true));
+                        log_activity('PAYPAL CALLBACK SUCCESS - DB Error: ' . $this->db->error()['message']);
                     }
                 } catch (Exception $e) {
                     log_activity('PAYPAL CALLBACK SUCCESS - Payment recording exception: ' . $e->getMessage());
                     log_activity('PAYPAL CALLBACK SUCCESS - Exception trace: ' . $e->getTraceAsString());
-                }
-
-                // Fallback: If Perfex model failed, use direct SQL
-                if (!$payment_recorded) {
-                    log_activity('PAYPAL CALLBACK SUCCESS - Using SQL fallback to record payment');
-                    try {
-                        // Get or create PayPal payment mode ID
-                        $paypal_mode = $this->db->get_where(db_prefix() . 'payment_modes', ['name' => 'PayPal'])->row();
-                        $paypal_mode_id = $paypal_mode ? $paypal_mode->id : 1; // Default to 1 if not found
-
-                        // Insert payment record directly
-                        $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
-                            'invoiceid' => $invoice_id,
-                            'amount' => $invoice->total,
-                            'paymentmode' => $paypal_mode_id,
-                            'paymentmethod' => 'PayPal',
-                            'date' => date('Y-m-d'),
-                            'daterecorded' => date('Y-m-d H:i:s'),
-                            'note' => 'Paiement PayPal - Order: ' . $order_id,
-                            'transactionid' => $transaction_id
-                        ]);
-
-                        $payment_id = $this->db->insert_id();
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recorded via SQL fallback - Payment ID: ' . $payment_id);
-
-                        // Update invoice status to paid manually
-                        $this->db->where('id', $invoice_id);
-                        $this->db->update(db_prefix() . 'invoices', ['status' => 2]);
-                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated to Paid via SQL');
-
-                        $payment_recorded = true;
-                    } catch (Exception $e) {
-                        log_activity('PAYPAL CALLBACK SUCCESS - SQL fallback also failed: ' . $e->getMessage());
+                    if (isset($this->db)) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - DB Error info: ' . json_encode($this->db->error()));
                     }
                 }
 
