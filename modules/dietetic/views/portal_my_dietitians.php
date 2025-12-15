@@ -585,17 +585,18 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         .interactive-stars {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
         .interactive-stars i {
-            font-size: 36px;
+            font-size: 24px;
             color: #dee2e6;
             cursor: pointer;
             transition: all 0.2s ease;
-            min-width: 44px;
-            min-height: 44px;
+            min-width: 40px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -604,7 +605,7 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         .interactive-stars i:hover,
         .interactive-stars i.hover {
             color: #F3911D;
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
         .interactive-stars i.selected {
@@ -714,28 +715,29 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         }
 
         .criterion-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .criterion-label i {
             color: #01807B;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .criterion-stars {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
+            flex-wrap: wrap;
         }
 
         .criterion-stars i {
-            font-size: 18px;
+            font-size: 16px;
             color: #F3911D;
         }
 
@@ -744,28 +746,29 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
         }
 
         .criterion-stars .criterion-score {
-            margin-left: 8px;
-            font-size: 14px;
+            margin-left: 6px;
+            font-size: 13px;
             font-weight: 600;
             color: #6c757d;
         }
 
         .rating-form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .rating-form-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .rating-form-label i {
             color: #01807B;
+            font-size: 14px;
         }
 
         .rating-form-label .required {
@@ -795,6 +798,94 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
 
         .btn-edit-rating:active {
             transform: scale(0.97);
+        }
+
+        /* Rating Form Buttons Container */
+        .rating-buttons-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .rating-buttons-container .btn-submit-rating {
+            flex: 1;
+        }
+
+        .rating-buttons-container .btn-back {
+            flex: 0 0 auto;
+            min-width: 120px;
+        }
+
+        /* Mobile responsive for rating buttons */
+        @media (max-width: 480px) {
+            .rating-buttons-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .rating-buttons-container .btn-submit-rating,
+            .rating-buttons-container .btn-back {
+                width: 100%;
+                flex: none;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .interactive-stars {
+                gap: 3px;
+            }
+
+            .interactive-stars i {
+                font-size: 20px;
+                min-width: 34px;
+                min-height: 34px;
+            }
+
+            .rating-form-label {
+                font-size: 12px;
+            }
+
+            .rating-form-label i {
+                font-size: 13px;
+            }
+
+            .rating-comment {
+                font-size: 13px;
+                min-height: 60px;
+                padding: 10px;
+            }
+
+            .rating-form-group {
+                margin-bottom: 14px;
+            }
+
+            .criterion-label {
+                font-size: 12px;
+            }
+
+            .criterion-label i {
+                font-size: 13px;
+            }
+
+            .criterion-stars i {
+                font-size: 14px;
+            }
+
+            .criterion-stars .criterion-score {
+                font-size: 12px;
+            }
+
+            .rating-card {
+                padding: 20px 16px;
+            }
+
+            .my-rating-section {
+                padding: 14px;
+            }
+
+            .my-rating-header {
+                font-size: 14px;
+            }
         }
 
         @keyframes fadeInUp {
@@ -1252,12 +1343,12 @@ if (isset($_GET['debug']) && $_GET['debug'] == '1') {
                                 ><?php echo isset($my_rating->comment) ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
                             </div>
 
-                            <div style="display: flex; gap: 10px;">
+                            <div class="rating-buttons-container">
                                 <button type="submit" class="btn-submit-rating" id="submitRatingBtn">
                                     <i class="fa fa-check"></i>
                                     Enregistrer les modifications
                                 </button>
-                                <button type="button" class="btn-back" onclick="cancelEdit()" style="flex: 0; min-width: auto; padding: 14px 20px;">
+                                <button type="button" class="btn-back" onclick="cancelEdit()">
                                     <i class="fa fa-times"></i>
                                     Annuler
                                 </button>
