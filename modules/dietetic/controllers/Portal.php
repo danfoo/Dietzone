@@ -13413,9 +13413,44 @@ php index.php cron/index</pre>';
                 $this->db->where('invoiceid', $invoice_id);
                 $this->db->delete(db_prefix() . 'invoicepaymentrecords');
                 log_activity('SUBSCRIBE SERVICE - Removed auto-created payment records');
+
+                // Reload invoice to get updated status
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
             }
 
-            log_activity('SUBSCRIBE SERVICE - Final invoice state - ID: ' . $invoice_id . ', Total: ' . $created_invoice->total . ', Status: 1 (Unpaid)');
+            // Fix invoice number if it's 0
+            if (empty($created_invoice->number) || $created_invoice->number == 0) {
+                log_activity('SUBSCRIBE SERVICE - ERROR: Invoice number is 0, getting next number from Perfex');
+
+                // Get next invoice number
+                $next_number = get_option('next_invoice_number');
+                if (empty($next_number)) {
+                    // If not set, get the highest number + 1
+                    $last_invoice = $this->db->select('number')
+                        ->from(db_prefix() . 'invoices')
+                        ->where('id !=', $invoice_id)
+                        ->order_by('CAST(number AS UNSIGNED)', 'DESC')
+                        ->limit(1)
+                        ->get()
+                        ->row();
+
+                    $next_number = $last_invoice && is_numeric($last_invoice->number) ? intval($last_invoice->number) + 1 : 1;
+                }
+
+                // Update invoice with correct number
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', ['number' => $next_number]);
+                log_activity('SUBSCRIBE SERVICE - Set invoice number to: ' . $next_number);
+
+                // Update Perfex's next_invoice_number option
+                update_option('next_invoice_number', $next_number + 1);
+                log_activity('SUBSCRIBE SERVICE - Updated next_invoice_number to: ' . ($next_number + 1));
+
+                // Reload invoice
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            }
+
+            log_activity('SUBSCRIBE SERVICE - Final invoice state - ID: ' . $invoice_id . ', Number: ' . $created_invoice->number . ', Total: ' . $created_invoice->total . ', Status: ' . $created_invoice->status);
 
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
