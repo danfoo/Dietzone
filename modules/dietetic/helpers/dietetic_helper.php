@@ -1888,7 +1888,7 @@ if (!function_exists('dietetic_update_payment_token_status')) {
 
             // First, verify the token exists
             log_activity('HELPER dietetic_update_payment_token_status - Checking if token exists...');
-            $token_check = $CI->db->select('id, status')
+            $token_check = $CI->db->select('id, status, invoice_id, gateway')
                 ->from($table_name)
                 ->where('id', $token_id)
                 ->get()
@@ -1905,6 +1905,19 @@ if (!function_exists('dietetic_update_payment_token_status')) {
             if ($token_check->status === $status) {
                 log_activity('HELPER dietetic_update_payment_token_status - Token already at status: ' . $status . ' - Success');
                 return true;
+            }
+
+            // Delete any conflicting tokens with same invoice+gateway+status (in case of unique constraint)
+            // This handles the case where unique constraint is on (invoice_id, gateway, status)
+            if (isset($token_check->invoice_id) && isset($token_check->gateway)) {
+                log_activity('HELPER dietetic_update_payment_token_status - Deleting conflicting tokens with invoice=' . $token_check->invoice_id . ', gateway=' . $token_check->gateway . ', status=' . $status);
+                $CI->db->where('invoice_id', $token_check->invoice_id);
+                $CI->db->where('gateway', $token_check->gateway);
+                $CI->db->where('status', $status);
+                $CI->db->where('id !=', $token_id);
+                $CI->db->delete($table_name);
+                $affected = $CI->db->affected_rows();
+                log_activity('HELPER dietetic_update_payment_token_status - Deleted ' . $affected . ' conflicting token(s)');
             }
 
             // Attempt update using Query Builder
@@ -1958,6 +1971,28 @@ if (!function_exists('dietetic_update_payment_token_status')) {
         } catch (Exception $e) {
             log_activity('HELPER dietetic_update_payment_token_status - EXCEPTION: ' . $e->getMessage());
             log_activity('HELPER dietetic_update_payment_token_status - TRACE: ' . $e->getTraceAsString());
+
+            // Check if it's a duplicate key error (1062)
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), '1062') !== false) {
+                log_activity('HELPER dietetic_update_payment_token_status - Duplicate key exception - verifying final status...');
+
+                // Verify the current status of the token
+                try {
+                    $verify = $CI->db->select('status')
+                        ->from($table_name)
+                        ->where('id', $token_id)
+                        ->get()
+                        ->row();
+
+                    if ($verify && $verify->status === $status) {
+                        log_activity('HELPER dietetic_update_payment_token_status - Token already at desired status despite duplicate key error - SUCCESS');
+                        return true;
+                    }
+                } catch (Exception $verify_ex) {
+                    log_activity('HELPER dietetic_update_payment_token_status - Verification failed: ' . $verify_ex->getMessage());
+                }
+            }
+
             return false;
         }
     }
