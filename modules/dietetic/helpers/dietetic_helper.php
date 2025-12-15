@@ -2340,6 +2340,66 @@ if (!function_exists('dietetic_get_dietitian_stats')) {
 }
 
 /**
+ * Register custom payment modes in Perfex
+ * This ensures PayPal, Wave, and Orange Money are recognized by Perfex's core
+ *
+ * @return array Array of created/existing payment mode IDs
+ */
+if (!function_exists('dietetic_register_payment_modes')) {
+    function dietetic_register_payment_modes()
+    {
+        $CI = &get_instance();
+
+        $payment_modes = [
+            'PayPal' => [
+                'name' => 'PayPal',
+                'description' => 'Paiement en ligne sécurisé via PayPal',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ],
+            'Wave' => [
+                'name' => 'Wave',
+                'description' => 'Paiement mobile via Wave',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ],
+            'Orange Money' => [
+                'name' => 'Orange Money',
+                'description' => 'Paiement mobile via Orange Money',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ]
+        ];
+
+        $mode_ids = [];
+
+        foreach ($payment_modes as $key => $mode_data) {
+            // Check if mode already exists
+            $existing = $CI->db->get_where(db_prefix() . 'payment_modes', ['name' => $mode_data['name']])->row();
+
+            if ($existing) {
+                $mode_ids[$key] = $existing->id;
+                log_activity('Payment mode already exists: ' . $mode_data['name'] . ' (ID: ' . $existing->id . ')');
+            } else {
+                // Create new payment mode
+                $CI->db->insert(db_prefix() . 'payment_modes', $mode_data);
+                $new_id = $CI->db->insert_id();
+                $mode_ids[$key] = $new_id;
+                log_activity('Payment mode created: ' . $mode_data['name'] . ' (ID: ' . $new_id . ')');
+            }
+        }
+
+        return $mode_ids;
+    }
+}
+
+/**
  * Update dietitian profile
  *
  * @param int $staff_id Staff member ID

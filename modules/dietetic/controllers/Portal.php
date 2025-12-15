@@ -13276,93 +13276,39 @@ php index.php cron/index</pre>';
                 return;
             }
 
-            // Get next invoice number (Perfex stores just the number, not formatted)
-            $next_number = 1;
+            // Load Perfex's invoice model for proper invoice creation
+            $this->load->model('invoices_model');
 
-            // Get the last invoice to calculate next number
-            $last_invoice = $this->db->select('number')
-                ->from(db_prefix() . 'invoices')
-                ->order_by('number', 'DESC')
-                ->limit(1)
-                ->get()
-                ->row();
-
-            if ($last_invoice && is_numeric($last_invoice->number)) {
-                $next_number = intval($last_invoice->number) + 1;
-            }
-
-            // Get base currency (usually XOF for FCFA)
-            $base_currency = $this->db->select('id')
-                ->from(db_prefix() . 'currencies')
-                ->where('isdefault', 1)
-                ->get()
-                ->row();
-
-            $currency_id = $base_currency ? $base_currency->id : 1;
-
-            // Create invoice directly with SQL
+            // Prepare invoice data using Perfex's format
             $invoice_data = [
                 'clientid' => $client_id,
-                'number' => $next_number,  // Store just the number, Perfex formats it on display
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
-                'currency' => $currency_id,
-                'subtotal' => $service->rate,
-                'total' => $service->rate,
-                'status' => 1, // Unpaid
-                'datecreated' => date('Y-m-d H:i:s'),
-                'hash' => md5(uniqid(rand(), true)),
-                'adminnote' => 'Souscription automatique au service: ' . $service->description
+                'currency' => get_base_currency()->id,
+                'adminnote' => 'Souscription automatique au service: ' . $service->description,
+                'newitems' => [
+                    [
+                        'description' => $service->description,
+                        'long_description' => isset($service->long_description) ? $service->long_description : '',
+                        'qty' => 1,
+                        'rate' => $service->rate,
+                        'unit' => isset($service->unit) ? $service->unit : '',
+                        'taxname' => []
+                    ]
+                ],
+                'tags' => ['service_subscription']
             ];
 
-            $this->db->insert(db_prefix() . 'invoices', $invoice_data);
-            $invoice_id = $this->db->insert_id();
+            // Use Perfex's model to create invoice (handles numbering, formatting, etc.)
+            $invoice_id = $this->invoices_model->add($invoice_data);
 
             if (!$invoice_id) {
+                log_activity('SUBSCRIBE SERVICE - Invoice creation failed for client ' . $client_id);
                 echo json_encode(['success' => false, 'message' => 'Erreur lors de la création de la facture']);
                 return;
             }
 
-            // Add invoice item
-            $item_data = [
-                'rel_id' => $invoice_id,
-                'rel_type' => 'invoice',
-                'item_order' => 1,
-                'description' => $service->description,
-                'long_description' => isset($service->long_description) ? $service->long_description : '',
-                'qty' => 1,
-                'rate' => $service->rate,
-                'unit' => isset($service->unit) ? $service->unit : ''
-            ];
-
-            $this->db->insert(db_prefix() . 'itemable', $item_data);
-
-            // Add tags to invoice
-            $tag_id = null;
-
-            // Check if tag "service_subscription" exists
-            $existing_tag = $this->db->select('id')
-                ->from(db_prefix() . 'tags')
-                ->where('name', 'service_subscription')
-                ->get()
-                ->row();
-
-            if ($existing_tag) {
-                $tag_id = $existing_tag->id;
-            } else {
-                // Create the tag
-                $this->db->insert(db_prefix() . 'tags', ['name' => 'service_subscription']);
-                $tag_id = $this->db->insert_id();
-            }
-
-            // Link tag to invoice
-            if ($tag_id) {
-                $this->db->insert(db_prefix() . 'taggables', [
-                    'rel_id' => $invoice_id,
-                    'rel_type' => 'invoice',
-                    'tag_id' => $tag_id
-                ]);
-            }
+            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created for client ' . $client_id . ' - Service: ' . $service->description);
 
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
@@ -14020,47 +13966,47 @@ php index.php cron/index</pre>';
                 $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
             }
 
-            // Mark invoice as paid
+            // Record payment using Perfex's invoice model
             if ($invoice->status != 2) {
-                log_activity('PAYPAL CALLBACK SUCCESS - Updating invoice status to paid');
+                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment via Perfex model');
 
                 try {
-                    $this->db->where('id', $invoice_id);
-                    $this->db->update(db_prefix() . 'invoices', [
-                        'status' => 2,
-                        'datepaid' => date('Y-m-d H:i:s')
-                    ]);
-                    $error = $this->db->error();
-                    if ($error['code'] !== 0) {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice update error: ' . json_encode($error));
-                    } else {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated successfully');
+                    // Load Perfex's invoice model
+                    $this->load->model('invoices_model');
+                    $this->load->model('payment_modes_model');
+
+                    // Register all custom payment modes (PayPal, Wave, Orange Money)
+                    $payment_mode_ids = dietetic_register_payment_modes();
+                    $paypal_mode_id = $payment_mode_ids['PayPal'] ?? null;
+
+                    if (!$paypal_mode_id) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - ERROR: Could not get/create PayPal payment mode');
+                        throw new Exception('PayPal payment mode not found');
                     }
-                } catch (Exception $e) {
-                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice update exception: ' . $e->getMessage());
-                }
 
-                // Log payment
-                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment in database');
-                try {
-                    $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
-                        'invoiceid' => $invoice_id,
+                    log_activity('PAYPAL CALLBACK SUCCESS - Using PayPal payment mode ID: ' . $paypal_mode_id);
+
+                    // Prepare payment data
+                    $payment_data = [
                         'amount' => $invoice->total,
-                        'paymentmode' => 'paypal',
+                        'paymentmode' => $paypal_mode_id,
                         'paymentmethod' => 'PayPal',
                         'date' => date('Y-m-d'),
-                        'daterecorded' => date('Y-m-d H:i:s'),
                         'note' => 'Paiement PayPal - Order: ' . $order_id,
                         'transactionid' => $transaction_id
-                    ]);
-                    $error = $this->db->error();
-                    if ($error['code'] !== 0) {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record insert error: ' . json_encode($error));
+                    ];
+
+                    // Use Perfex's model to record payment (handles status update, emails, etc.)
+                    $payment_id = $this->invoices_model->add_payment($payment_data, $invoice_id);
+
+                    if ($payment_id) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recorded successfully via Perfex model - Payment ID: ' . $payment_id);
                     } else {
-                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record inserted successfully');
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment recording failed via Perfex model');
                     }
                 } catch (Exception $e) {
-                    log_activity('PAYPAL CALLBACK SUCCESS - Payment record exception: ' . $e->getMessage());
+                    log_activity('PAYPAL CALLBACK SUCCESS - Payment recording exception: ' . $e->getMessage());
+                    log_activity('PAYPAL CALLBACK SUCCESS - Exception trace: ' . $e->getTraceAsString());
                 }
 
                 // Mark payment token as completed
@@ -14072,7 +14018,7 @@ php index.php cron/index</pre>';
                     log_activity('PAYPAL CALLBACK SUCCESS - Token update exception: ' . $e->getMessage());
                 }
             } else {
-                log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping update');
+                log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping payment recording');
             }
 
             $data = [
