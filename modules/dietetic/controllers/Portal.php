@@ -13352,12 +13352,24 @@ php index.php cron/index</pre>';
             // Load Perfex's invoice model for proper invoice creation
             $this->load->model('invoices_model');
 
+            // Get next invoice number from Perfex
+            $next_number = get_option('next_invoice_number');
+            if (empty($next_number)) {
+                $next_number = 1;
+            }
+
+            log_activity('SUBSCRIBE SERVICE - Creating invoice with number: ' . $next_number);
+
             // Prepare invoice data using Perfex's format
             $invoice_data = [
                 'clientid' => $client_id,
+                'number' => $next_number,
+                'number_format' => get_option('invoice_number_format'),
+                'prefix' => get_option('invoice_prefix'),
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
                 'currency' => get_base_currency()->id,
+                'status' => 1, // IMPORTANT: Force status to 1 (Unpaid)
                 'adminnote' => 'Souscription automatique au service: ' . $service->description,
                 'newitems' => [
                     [
@@ -13379,6 +13391,25 @@ php index.php cron/index</pre>';
                 log_activity('SUBSCRIBE SERVICE - Invoice creation failed for client ' . $client_id);
                 echo json_encode(['success' => false, 'message' => 'Erreur lors de la création de la facture']);
                 return;
+            }
+
+            // Verify invoice was created with correct status (Unpaid)
+            $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created - Number: ' . $created_invoice->number . ', Prefix: ' . $created_invoice->prefix . ', Status: ' . $created_invoice->status . ', Total: ' . $created_invoice->total);
+
+            // If invoice was auto-marked as paid, force it back to unpaid
+            if ($created_invoice->status == 2) {
+                log_activity('SUBSCRIBE SERVICE - WARNING: Invoice was auto-marked as paid, forcing back to unpaid');
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', [
+                    'status' => 1,
+                    'datepaid' => NULL
+                ]);
+
+                // Delete any auto-created payment records
+                $this->db->where('invoiceid', $invoice_id);
+                $this->db->delete(db_prefix() . 'invoicepaymentrecords');
+                log_activity('SUBSCRIBE SERVICE - Removed auto-created payment records');
             }
 
             log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created for client ' . $client_id . ' - Service: ' . $service->description);
