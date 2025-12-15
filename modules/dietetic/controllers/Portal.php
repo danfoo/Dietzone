@@ -14023,29 +14023,54 @@ php index.php cron/index</pre>';
             // Mark invoice as paid
             if ($invoice->status != 2) {
                 log_activity('PAYPAL CALLBACK SUCCESS - Updating invoice status to paid');
-                $this->db->where('id', $invoice_id);
-                $this->db->update(db_prefix() . 'invoices', [
-                    'status' => 2,
-                    'datepaid' => date('Y-m-d H:i:s')
-                ]);
+
+                try {
+                    $this->db->where('id', $invoice_id);
+                    $this->db->update(db_prefix() . 'invoices', [
+                        'status' => 2,
+                        'datepaid' => date('Y-m-d H:i:s')
+                    ]);
+                    $error = $this->db->error();
+                    if ($error['code'] !== 0) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice update error: ' . json_encode($error));
+                    } else {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated successfully');
+                    }
+                } catch (Exception $e) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice update exception: ' . $e->getMessage());
+                }
 
                 // Log payment
                 log_activity('PAYPAL CALLBACK SUCCESS - Recording payment in database');
-                $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
-                    'invoiceid' => $invoice_id,
-                    'amount' => $invoice->total,
-                    'paymentmode' => 'paypal',
-                    'paymentmethod' => 'PayPal',
-                    'date' => date('Y-m-d'),
-                    'daterecorded' => date('Y-m-d H:i:s'),
-                    'note' => 'Paiement PayPal - Order: ' . $order_id,
-                    'transactionid' => $transaction_id
-                ]);
+                try {
+                    $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
+                        'invoiceid' => $invoice_id,
+                        'amount' => $invoice->total,
+                        'paymentmode' => 'paypal',
+                        'paymentmethod' => 'PayPal',
+                        'date' => date('Y-m-d'),
+                        'daterecorded' => date('Y-m-d H:i:s'),
+                        'note' => 'Paiement PayPal - Order: ' . $order_id,
+                        'transactionid' => $transaction_id
+                    ]);
+                    $error = $this->db->error();
+                    if ($error['code'] !== 0) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record insert error: ' . json_encode($error));
+                    } else {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record inserted successfully');
+                    }
+                } catch (Exception $e) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Payment record exception: ' . $e->getMessage());
+                }
 
                 // Mark payment token as completed
                 log_activity('PAYPAL CALLBACK SUCCESS - Marking token as completed');
-                dietetic_update_payment_token_status($payment_token->id, 'completed');
-                log_activity('PAYPAL CALLBACK SUCCESS - Token marked as completed');
+                try {
+                    dietetic_update_payment_token_status($payment_token->id, 'completed');
+                    log_activity('PAYPAL CALLBACK SUCCESS - Token marked as completed');
+                } catch (Exception $e) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Token update exception: ' . $e->getMessage());
+                }
             } else {
                 log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping update');
             }
