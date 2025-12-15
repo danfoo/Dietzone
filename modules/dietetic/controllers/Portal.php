@@ -13041,6 +13041,12 @@ php index.php cron/index</pre>';
      */
     public function services()
     {
+        // Disable caching for this page to ensure fresh data
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Cache-Control: post-check=0, pre-check=0', false);
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
         // Check authentication
         if (!$this->session->userdata('client_logged_in')) {
             redirect(site_url('dietetic/portal'));
@@ -13082,8 +13088,18 @@ php index.php cron/index</pre>';
             $this->db->order_by('i.rate', 'DESC');
             $services = $this->db->get()->result();
             $data['services'] = $services ? $services : [];
+
+            // Log service prices for debugging
+            if ($services) {
+                foreach ($services as $service) {
+                    log_activity('SERVICES PAGE - Retrieved service: ' . $service->description . ' - Price: ' . $service->rate . ' FCFA (ID: ' . $service->id . ')');
+                }
+            } else {
+                log_activity('SERVICES PAGE - No services found in "Services" group');
+            }
         } catch (Exception $e) {
             log_message('error', 'Services - Error getting services: ' . $e->getMessage());
+            log_activity('SERVICES PAGE - Database error: ' . $e->getMessage());
             $data['services'] = [];
         }
 
