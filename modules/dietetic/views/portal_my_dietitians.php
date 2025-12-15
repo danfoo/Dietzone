@@ -1001,7 +1001,7 @@ $this->load->view('portal/includes/portal_header');
                         <?php foreach ($certifications as $certification) { ?>
                         <div class="certification-item">
                             <i class="fa fa-check-circle"></i>
-                            <span class="certification-text"><?php echo htmlspecialchars($certification); ?></span>
+                            <span class="certification-text"><?php echo htmlspecialchars($certification['name']); ?></span>
                         </div>
                         <?php } ?>
                     </div>
