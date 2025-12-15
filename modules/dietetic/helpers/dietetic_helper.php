@@ -2442,3 +2442,285 @@ if (!function_exists('dietetic_update_dietitian_profile')) {
         return $result;
     }
 }
+
+/**
+ * Auto-assign a dietitian to a patient based on availability, specialty, and workload
+ *
+ * @param int|null $patient_id Patient ID (optional, for logging)
+ * @param string|null $specialty Required specialty (optional)
+ * @return int|null Assigned dietitian staff ID or null if none available
+ */
+if (!function_exists('dietetic_auto_assign_dietitian')) {
+    function dietetic_auto_assign_dietitian($patient_id = null, $specialty = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('AUTO ASSIGN DIETITIAN - Starting auto-assignment for patient: ' . ($patient_id ?? 'N/A') . ', specialty: ' . ($specialty ?? 'any'));
+
+        // Get all active dietitians with dietetic role
+        $CI->db->select('s.staffid, s.firstname, s.lastname, s.email, ' .
+                       's.dietitian_specialties, s.dietitian_is_available, ' .
+                       's.dietitian_max_patients, s.dietitian_years_experience');
+        $CI->db->from(db_prefix() . 'staff s');
+        $CI->db->where('s.active', 1);
+
+        // Check if staff has dietitian role (role_id for dietitian role)
+        $CI->db->join(db_prefix() . 'staff_roles sr', 'sr.staffid = s.staffid', 'inner');
+
+        $dietitians = $CI->db->get()->result();
+
+        if (empty($dietitians)) {
+            log_activity('AUTO ASSIGN DIETITIAN - No active dietitians found');
+            return null;
+        }
+
+        log_activity('AUTO ASSIGN DIETITIAN - Found ' . count($dietitians) . ' active dietitians');
+
+        $eligible_dietitians = [];
+
+        foreach ($dietitians as $dietitian) {
+            // Check if dietitian is available
+            if (isset($dietitian->dietitian_is_available) && $dietitian->dietitian_is_available == 0) {
+                log_activity('AUTO ASSIGN DIETITIAN - Skipping unavailable dietitian: ' . $dietitian->firstname . ' ' . $dietitian->lastname);
+                continue;
+            }
+
+            // Check specialty match if required
+            if ($specialty !== null && !empty($specialty)) {
+                if (empty($dietitian->dietitian_specialties)) {
+                    continue;
+                }
+
+                $dietitian_specialties = json_decode($dietitian->dietitian_specialties, true);
+                if (!is_array($dietitian_specialties) || !in_array($specialty, $dietitian_specialties)) {
+                    log_activity('AUTO ASSIGN DIETITIAN - Skipping dietitian without required specialty: ' . $dietitian->firstname . ' ' . $dietitian->lastname);
+                    continue;
+                }
+            }
+
+            // Count current active subscriptions (workload)
+            $CI->load->model('dietetic/dietetic_subscriptions_model');
+            $workload = $CI->dietetic_subscriptions_model->count_active_by_dietitian($dietitian->staffid);
+
+            // Check if dietitian has reached max patients
+            if (isset($dietitian->dietitian_max_patients) && $dietitian->dietitian_max_patients > 0) {
+                if ($workload >= $dietitian->dietitian_max_patients) {
+                    log_activity('AUTO ASSIGN DIETITIAN - Skipping dietitian at max capacity: ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' (' . $workload . '/' . $dietitian->dietitian_max_patients . ')');
+                    continue;
+                }
+            }
+
+            $eligible_dietitians[] = [
+                'staffid' => $dietitian->staffid,
+                'name' => $dietitian->firstname . ' ' . $dietitian->lastname,
+                'workload' => $workload,
+                'experience' => $dietitian->dietitian_years_experience ?? 0
+            ];
+
+            log_activity('AUTO ASSIGN DIETITIAN - Eligible: ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' (workload: ' . $workload . ', experience: ' . ($dietitian->dietitian_years_experience ?? 0) . ' years)');
+        }
+
+        if (empty($eligible_dietitians)) {
+            log_activity('AUTO ASSIGN DIETITIAN - No eligible dietitians found');
+            return null;
+        }
+
+        // Sort by workload (ascending), then by experience (descending)
+        usort($eligible_dietitians, function($a, $b) {
+            if ($a['workload'] == $b['workload']) {
+                return $b['experience'] - $a['experience']; // More experience first if same workload
+            }
+            return $a['workload'] - $b['workload']; // Lower workload first
+        });
+
+        $selected = $eligible_dietitians[0];
+
+        log_activity('AUTO ASSIGN DIETITIAN - Selected: ' . $selected['name'] . ' (ID: ' . $selected['staffid'] . ', workload: ' . $selected['workload'] . ', experience: ' . $selected['experience'] . ' years)');
+
+        return $selected['staffid'];
+    }
+}
+
+/**
+ * Create a subscription after successful payment
+ *
+ * @param int $patient_id Patient ID
+ * @param int $invoice_id Perfex invoice ID
+ * @param object $service Service/item object from Perfex
+ * @param int|null $dietitian_id Dietitian ID (if null, will auto-assign)
+ * @return int|false Subscription ID or false on failure
+ */
+if (!function_exists('dietetic_create_subscription_from_payment')) {
+    function dietetic_create_subscription_from_payment($patient_id, $invoice_id, $service, $dietitian_id = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('CREATE SUBSCRIPTION - Starting for patient: ' . $patient_id . ', invoice: ' . $invoice_id . ', service: ' . ($service->description ?? 'N/A'));
+
+        // Load required models
+        $CI->load->model('dietetic/dietetic_subscriptions_model');
+        $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        // Auto-assign dietitian if not specified
+        if ($dietitian_id === null) {
+            log_activity('CREATE SUBSCRIPTION - No dietitian specified, auto-assigning...');
+            $dietitian_id = dietetic_auto_assign_dietitian($patient_id);
+
+            if (!$dietitian_id) {
+                log_activity('CREATE SUBSCRIPTION - ERROR: Could not auto-assign dietitian');
+                return false;
+            }
+        }
+
+        log_activity('CREATE SUBSCRIPTION - Using dietitian ID: ' . $dietitian_id);
+
+        // Prepare subscription data
+        $subscription_data = [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian_id,
+            'referral_source' => 'platform', // Default to platform
+            'start_date' => date('Y-m-d'),
+            'status' => 'active',
+            'billing_cycle' => 'monthly',
+            'amount' => $service->rate ?? 0,
+            'duration_months' => 1, // Default 1 month for single service purchase
+            'notes' => 'Subscription created from invoice #' . $invoice_id . ' - Service: ' . ($service->description ?? '')
+        ];
+
+        // Check if service has a linked service_plan_id (custom field or metadata)
+        // For now, we'll create a basic subscription without service_plan_id
+
+        // Create subscription
+        $subscription_id = $CI->dietetic_subscriptions_model->add($subscription_data);
+
+        if (!$subscription_id) {
+            log_activity('CREATE SUBSCRIPTION - ERROR: Failed to create subscription');
+            return false;
+        }
+
+        log_activity('CREATE SUBSCRIPTION - Subscription created successfully: ' . $subscription_id);
+
+        // Update patient-dietitian relationship if not exists
+        try {
+            if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+                $existing = $CI->db->get_where(db_prefix() . 'dietic_patient_dietitians', [
+                    'patient_id' => $patient_id,
+                    'dietitian_id' => $dietitian_id
+                ])->row();
+
+                if (!$existing) {
+                    $CI->db->insert(db_prefix() . 'dietic_patient_dietitians', [
+                        'patient_id' => $patient_id,
+                        'dietitian_id' => $dietitian_id,
+                        'assigned_date' => date('Y-m-d'),
+                        'status' => 'active',
+                        'is_primary' => 1
+                    ]);
+
+                    log_activity('CREATE SUBSCRIPTION - Patient-dietitian relationship created');
+                } else {
+                    log_activity('CREATE SUBSCRIPTION - Patient-dietitian relationship already exists');
+                }
+            }
+        } catch (Exception $e) {
+            log_activity('CREATE SUBSCRIPTION - Warning: Could not update patient-dietitian relationship: ' . $e->getMessage());
+        }
+
+        // Update primary dietitian in patients table
+        $CI->db->where('id', $patient_id);
+        $CI->db->update(db_prefix() . 'dietic_patients', ['dietitian_id' => $dietitian_id]);
+
+        log_activity('CREATE SUBSCRIPTION - Updated patient primary dietitian');
+
+        return $subscription_id;
+    }
+}
+
+/**
+ * Create revenue share records after payment
+ *
+ * @param int $subscription_id Subscription ID
+ * @param int $invoice_id Invoice ID (Perfex or dietetic)
+ * @param int $payment_id Payment ID (optional)
+ * @param float $total_amount Total payment amount
+ * @return int|false Revenue share ID or false on failure
+ */
+if (!function_exists('dietetic_create_revenue_share')) {
+    function dietetic_create_revenue_share($subscription_id, $invoice_id, $total_amount, $payment_id = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('CREATE REVENUE SHARE - Starting for subscription: ' . $subscription_id . ', amount: ' . $total_amount);
+
+        // Get subscription details
+        $CI->load->model('dietetic/dietetic_subscriptions_model');
+        $subscription = $CI->dietetic_subscriptions_model->get($subscription_id);
+
+        if (!$subscription) {
+            log_activity('CREATE REVENUE SHARE - ERROR: Subscription not found');
+            return false;
+        }
+
+        // Get active commission settings for referral source
+        $CI->db->where('referral_source', $subscription->referral_source);
+        $CI->db->where('is_active', 1);
+        $CI->db->where('effective_from <=', date('Y-m-d'));
+        $CI->db->where('(effective_to IS NULL OR effective_to >=', date('Y-m-d') . ')', false);
+        $CI->db->order_by('effective_from', 'DESC');
+        $CI->db->limit(1);
+
+        $commission_setting = $CI->db->get(db_prefix() . 'dietic_commission_settings')->row();
+
+        if (!$commission_setting) {
+            // Use default percentages
+            if ($subscription->referral_source == 'dietitian') {
+                $dietitian_percentage = 80.00;
+                $platform_percentage = 20.00;
+            } else {
+                $dietitian_percentage = 60.00;
+                $platform_percentage = 40.00;
+            }
+            $commission_setting_id = null;
+
+            log_activity('CREATE REVENUE SHARE - Using default commission rates: Dietitian ' . $dietitian_percentage . '%, Platform ' . $platform_percentage . '%');
+        } else {
+            $dietitian_percentage = $commission_setting->dietitian_percentage;
+            $platform_percentage = $commission_setting->platform_percentage;
+            $commission_setting_id = $commission_setting->id;
+
+            log_activity('CREATE REVENUE SHARE - Using commission setting ID ' . $commission_setting_id . ': Dietitian ' . $dietitian_percentage . '%, Platform ' . $platform_percentage . '%');
+        }
+
+        // Calculate shares
+        $dietitian_share = round($total_amount * ($dietitian_percentage / 100), 2);
+        $platform_share = round($total_amount * ($platform_percentage / 100), 2);
+
+        // Prepare revenue share data
+        $revenue_data = [
+            'invoice_id' => $invoice_id,
+            'payment_id' => $payment_id,
+            'subscription_id' => $subscription_id,
+            'dietitian_id' => $subscription->dietitian_id,
+            'patient_id' => $subscription->patient_id,
+            'total_amount' => $total_amount,
+            'dietitian_share' => $dietitian_share,
+            'platform_share' => $platform_share,
+            'dietitian_percentage' => $dietitian_percentage,
+            'platform_percentage' => $platform_percentage,
+            'referral_source' => $subscription->referral_source,
+            'commission_setting_id' => $commission_setting_id,
+            'status' => 'pending'
+        ];
+
+        $CI->db->insert(db_prefix() . 'dietic_revenue_shares', $revenue_data);
+        $revenue_share_id = $CI->db->insert_id();
+
+        if ($revenue_share_id) {
+            log_activity('CREATE REVENUE SHARE - Created successfully: ID ' . $revenue_share_id . ' - Dietitian: ' . $dietitian_share . ' XOF, Platform: ' . $platform_share . ' XOF');
+        } else {
+            log_activity('CREATE REVENUE SHARE - ERROR: Failed to create revenue share record');
+        }
+
+        return $revenue_share_id;
+    }
+}
