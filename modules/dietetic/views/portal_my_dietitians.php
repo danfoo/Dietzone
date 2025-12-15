@@ -2,7 +2,26 @@
 $active_page = 'my_dietitians';
 $page_title = 'Mon Diététicien';
 $this->load->view('portal/includes/portal_header');
+
+// DEBUG TEMPORAIRE - À RETIRER
+if (isset($_GET['debug']) && $_GET['debug'] == '1') {
+    echo '<div style="background: yellow; padding: 20px; margin: 20px; border: 3px solid red; position: relative; z-index: 99999;">';
+    echo '<h2>🐛 DEBUG MODE</h2>';
+    echo '<h3>Certifications:</h3>';
+    echo '<pre>'; var_dump($certifications); echo '</pre>';
+    echo '<h3>Specialties:</h3>';
+    echo '<pre>'; var_dump($specialties); echo '</pre>';
+    echo '<h3>Rating System:</h3>';
+    echo '<p>Can rate: ' . (isset($can_rate) ? ($can_rate ? 'OUI' : 'NON') : 'NOT SET') . '</p>';
+    echo '<p>My rating: ' . (isset($my_rating) ? 'SET' : 'NOT SET') . '</p>';
+    echo '<p>Dietitian rating: ' . (isset($dietitian_rating) ? 'SET' : 'NOT SET') . '</p>';
+    if (isset($error)) {
+        echo '<p style="color: red; font-weight: bold;">ERROR: ' . $error . '</p>';
+    }
+    echo '</div>';
+}
 ?>
+
 
 <style>
 /* Modern Mobile App Design - No Borders */
@@ -1467,6 +1486,44 @@ $this->load->view('portal/includes/portal_header');
 
     // Check initial form validity
     checkFormValidity();
+
+    // DEBUG TEMPORAIRE - Menu Toggle
+    if (window.location.search.includes('debug=1')) {
+        console.log('🐛 DEBUG MODE ACTIVÉ');
+
+        // Vérifier si les éléments du menu existent
+        const menuToggleBtn = document.getElementById('menuToggle');
+        const slideMenuEl = document.getElementById('slideMenu');
+        const menuOverlayEl = document.getElementById('menuOverlay');
+
+        console.log('Menu Toggle Button:', menuToggleBtn ? '✅ EXISTS' : '❌ NOT FOUND');
+        console.log('Slide Menu:', slideMenuEl ? '✅ EXISTS' : '❌ NOT FOUND');
+        console.log('Menu Overlay:', menuOverlayEl ? '✅ EXISTS' : '❌ NOT FOUND');
+
+        if (menuToggleBtn) {
+            console.log('Menu Toggle Click Listeners:', getEventListeners(menuToggleBtn));
+        }
+
+        // Ajouter un indicateur visuel
+        if (menuToggleBtn) {
+            menuToggleBtn.style.border = '3px solid red';
+            menuToggleBtn.title = 'DEBUG: Menu Toggle Button';
+        }
+
+        // Test manuel
+        window.testMenuToggle = function() {
+            console.log('Testing menu toggle...');
+            if (slideMenuEl) {
+                slideMenuEl.classList.toggle('active');
+                console.log('Menu active:', slideMenuEl.classList.contains('active'));
+            }
+            if (menuOverlayEl) {
+                menuOverlayEl.classList.toggle('active');
+            }
+        };
+
+        console.log('Pour tester le menu manuellement, tapez: testMenuToggle()');
+    }
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
