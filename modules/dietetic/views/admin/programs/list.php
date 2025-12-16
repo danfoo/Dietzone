@@ -444,6 +444,9 @@ $(document).ready(function() {
                 url: '<?php echo admin_url("dietetic/programs/delete/"); ?>' + programId,
                 type: 'POST',
                 dataType: 'json',
+                data: {
+                    <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
                 success: function(response) {
                     if (response.success) {
                         // Succès - animer la suppression de la ligne
