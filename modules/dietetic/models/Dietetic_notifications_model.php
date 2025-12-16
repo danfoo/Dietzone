@@ -3062,6 +3062,7 @@ class Dietetic_notifications_model extends App_Model
             'reminder_water' => 'fa-tint',
             'milestone' => 'fa-trophy',
             'program_assigned' => 'fa-clipboard',
+            'program_created_with_invoice' => 'fa-file-text-o',
             'program_updated' => 'fa-refresh',
             'program_ending' => 'fa-clock-o',
             'recipe_assigned' => 'fa-cutlery',
@@ -3822,7 +3823,7 @@ class Dietetic_notifications_model extends App_Model
                      ' | WhatsApp enabled: ' . $preferences->channel_whatsapp .
                      ' | Email enabled: ' . $preferences->channel_email);
 
-        return $this->send_notification([
+        return $this->send_notification_with_frontend([
             'patient_id' => $patient_id,
             'type' => 'program_created_with_invoice',
             'subject' => '🎉 Nouveau Programme Créé - ' . $program_name,
@@ -3830,6 +3831,7 @@ class Dietetic_notifications_model extends App_Model
             'message_sms' => $sms_message, // Separate short message for SMS
             'email' => $contact->email ?? '',
             'phone' => $contact->phonenumber ?? '',
+            'url' => 'dietetic/portal/programs', // URL to redirect in notification center
             'channels' => [
                 'email' => $preferences->channel_email ?? 1,
                 'sms' => $preferences->channel_sms ?? 1,
