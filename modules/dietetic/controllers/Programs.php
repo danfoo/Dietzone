@@ -195,6 +195,14 @@ class Programs extends AdminController
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
 
+        // Get available services from Perfex items (for billing)
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.description', 'ASC');
+        $data['services'] = $this->db->get()->result();
+
         // Auto-calculate nutritional objectives from anamnesis data if patient_id is provided
         $data['calculated_objectives'] = null;
         $patient_id = $this->input->get('patient_id');
