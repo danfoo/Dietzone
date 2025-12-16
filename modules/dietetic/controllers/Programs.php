@@ -70,6 +70,9 @@ class Programs extends AdminController
             show_404();
         }
 
+        // Log activity - Program viewed
+        log_activity('Programme consulté : "' . $data['program']->program_name . '" (ID: ' . $id . ')');
+
         $data['title'] = $data['program']->program_name;
         $data['patient'] = $this->dietetic_patients_model->get($data['program']->patient_id);
         $data['meal_plans'] = $this->dietetic_programs_model->get_meal_plans($id);
@@ -521,7 +524,28 @@ class Programs extends AdminController
         if ($this->input->post()) {
             $update_data = $this->input->post();
 
+            // Check if status changed for logging
+            $old_status = $data['program']->status;
+            $new_status = isset($update_data['status']) ? $update_data['status'] : $old_status;
+            $status_changed = ($old_status != $new_status);
+
             if ($this->dietetic_programs_model->update($id, $update_data)) {
+                // Log program update
+                log_activity('Programme modifié : "' . $data['program']->program_name . '" (ID: ' . $id . ')');
+
+                // Log status change if applicable
+                if ($status_changed) {
+                    $status_labels = [
+                        'active' => 'Actif',
+                        'completed' => 'Terminé',
+                        'cancelled' => 'Annulé'
+                    ];
+                    $old_label = isset($status_labels[$old_status]) ? $status_labels[$old_status] : $old_status;
+                    $new_label = isset($status_labels[$new_status]) ? $status_labels[$new_status] : $new_status;
+
+                    log_activity('Changement de statut du programme "' . $data['program']->program_name . '" (ID: ' . $id . ') : ' . $old_label . ' → ' . $new_label);
+                }
+
                 // Send notification to patient
                 try {
                     if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $data['program']->patient_id) {
@@ -644,9 +668,20 @@ class Programs extends AdminController
             ajax_access_denied();
         }
 
+        // Get program info before deletion for logging
+        $program = $this->dietetic_programs_model->get($id);
+        $program_name = $program ? $program->program_name : 'Programme #' . $id;
+        $patient_name = $program && $program->patient_id ? $this->dietetic_patients_model->get($program->patient_id)->client->company ?? 'N/A' : 'N/A';
+
         if ($this->dietetic_programs_model->delete($id)) {
+            // Log successful deletion
+            log_activity('Programme supprimé : "' . $program_name . '" (ID: ' . $id . ') - Patient: ' . $patient_name);
+
             echo json_encode(['success' => true, 'message' => _l('deleted')]);
         } else {
+            // Log failed deletion attempt
+            log_activity('Échec de suppression du programme : "' . $program_name . '" (ID: ' . $id . ')');
+
             echo json_encode(['success' => false, 'message' => _l('dietetic_error_delete_failed')]);
         }
     }
