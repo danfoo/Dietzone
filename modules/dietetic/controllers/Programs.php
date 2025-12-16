@@ -141,19 +141,34 @@ class Programs extends AdminController
         // Load invoices related to this program
         // ============================================
         $data['invoices'] = [];
-        if ($data['patient']->client_id) {
-            $this->db->select('i.*, s.name as status_name, s.color as status_color');
+        if (isset($data['patient']) && $data['patient'] && isset($data['patient']->client_id)) {
+            // Simple query: get all invoices for this client and filter by program reference
+            $this->db->select('i.*');
             $this->db->from(db_prefix() . 'invoices i');
-            $this->db->join(db_prefix() . 'invoice_statuses s', 's.id = i.status', 'left');
             $this->db->where('i.clientid', $data['patient']->client_id);
-            $this->db->where('(i.adminnote LIKE "%Programme%' . $id . '%" OR i.id IN (
-                SELECT invoice_id FROM ' . db_prefix() . 'taggables
-                WHERE tag_id IN (
-                    SELECT id FROM ' . db_prefix() . 'tags WHERE name = "programme_' . $id . '"
-                )
-            ))');
+            $this->db->group_start();
+            $this->db->like('i.adminnote', 'Programme');
+            $this->db->like('i.adminnote', 'ID: ' . $id);
+            $this->db->group_end();
             $this->db->order_by('i.date', 'DESC');
-            $data['invoices'] = $this->db->get()->result();
+            $invoices_result = $this->db->get()->result();
+
+            // Also try to get invoices with the program tag
+            $this->db->select('i.*');
+            $this->db->from(db_prefix() . 'invoices i');
+            $this->db->join(db_prefix() . 'taggables tg', 'tg.rel_id = i.id AND tg.rel_type = "invoice"', 'inner');
+            $this->db->join(db_prefix() . 'tags t', 't.id = tg.tag_id', 'inner');
+            $this->db->where('i.clientid', $data['patient']->client_id);
+            $this->db->where('t.name', 'programme_' . $id);
+            $invoices_tagged = $this->db->get()->result();
+
+            // Merge results and remove duplicates
+            $all_invoices = array_merge($invoices_result, $invoices_tagged);
+            $unique_invoices = [];
+            foreach ($all_invoices as $invoice) {
+                $unique_invoices[$invoice->id] = $invoice;
+            }
+            $data['invoices'] = array_values($unique_invoices);
         }
 
         // ============================================
@@ -162,8 +177,12 @@ class Programs extends AdminController
         $data['history'] = [];
         $this->db->select('*');
         $this->db->from(db_prefix() . 'activity_log');
-        $this->db->where('(description LIKE "%programme ' . $id . '%" OR description LIKE "%program ' . $id . '%")');
-        $this->db->or_where('(description LIKE "%Programme ID: ' . $id . '%" OR description LIKE "%Program ID: ' . $id . '%")');
+        $this->db->group_start();
+            $this->db->like('description', 'programme ' . $id);
+            $this->db->or_like('description', 'program ' . $id);
+            $this->db->or_like('description', 'Programme ID: ' . $id);
+            $this->db->or_like('description', 'Program ID: ' . $id);
+        $this->db->group_end();
         $this->db->order_by('date', 'DESC');
         $this->db->limit(50); // Last 50 activities
         $data['history'] = $this->db->get()->result();
