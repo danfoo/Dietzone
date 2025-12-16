@@ -671,7 +671,15 @@ class Programs extends AdminController
         // Get program info before deletion for logging
         $program = $this->dietetic_programs_model->get($id);
         $program_name = $program ? $program->program_name : 'Programme #' . $id;
-        $patient_name = $program && $program->patient_id ? $this->dietetic_patients_model->get($program->patient_id)->client->company ?? 'N/A' : 'N/A';
+
+        // Safely get patient name
+        $patient_name = 'N/A';
+        if ($program && $program->patient_id) {
+            $patient = $this->dietetic_patients_model->get($program->patient_id);
+            if ($patient && isset($patient->client) && isset($patient->client->company)) {
+                $patient_name = $patient->client->company;
+            }
+        }
 
         if ($this->dietetic_programs_model->delete($id)) {
             // Log successful deletion
