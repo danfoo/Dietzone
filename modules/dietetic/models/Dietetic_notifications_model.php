@@ -3736,6 +3736,13 @@ class Dietetic_notifications_model extends App_Model
             return false;
         }
 
+        // Get primary contact for email and phone
+        $contact = $this->get_client_primary_contact($patient->client_id);
+        if (!$contact) {
+            log_activity('NOTIFICATION - No contact found for client: ' . $patient->client_id);
+            return false;
+        }
+
         // Extract billing data
         $duration = $billing_data['duration_months'] ?? '';
         $total_price = $billing_data['total_price'] ?? 0;
@@ -3809,8 +3816,8 @@ class Dietetic_notifications_model extends App_Model
 
         // ========== SEND NOTIFICATION ==========
         log_activity('NOTIFICATION - Sending program created notification to patient: ' . $patient_id .
-                     ' | Email: ' . $client->email .
-                     ' | Phone: ' . $client->phonenumber .
+                     ' | Email: ' . ($contact->email ?? 'N/A') .
+                     ' | Phone: ' . ($contact->phonenumber ?? 'N/A') .
                      ' | SMS enabled: ' . $preferences->channel_sms .
                      ' | WhatsApp enabled: ' . $preferences->channel_whatsapp .
                      ' | Email enabled: ' . $preferences->channel_email);
@@ -3821,8 +3828,8 @@ class Dietetic_notifications_model extends App_Model
             'subject' => '🎉 Nouveau Programme Créé - ' . $program_name,
             'message' => $email_message,
             'message_sms' => $sms_message, // Separate short message for SMS
-            'email' => $client->email,
-            'phone' => $client->phonenumber,
+            'email' => $contact->email ?? '',
+            'phone' => $contact->phonenumber ?? '',
             'channels' => [
                 'email' => $preferences->channel_email ?? 1,
                 'sms' => $preferences->channel_sms ?? 1,
