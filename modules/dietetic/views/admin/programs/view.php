@@ -1108,6 +1108,153 @@
                     <?php } ?>
                 </div>
 
+                <!-- Invoices Section -->
+                <div class="meal-plans-section animate-in delay-5" style="margin-top: 30px;">
+                    <div class="meal-plans-header">
+                        <h3 class="meal-plans-title">
+                            <i class="fa fa-file-text-o"></i>
+                            Factures liées au programme
+                        </h3>
+                    </div>
+
+                    <?php if (!empty($invoices)) { ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                    <tr>
+                                        <th>Numéro</th>
+                                        <th>Date</th>
+                                        <th>Date d'échéance</th>
+                                        <th>Montant</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($invoices as $invoice) { ?>
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #01807B;">
+                                                    <i class="fa fa-file-text-o"></i>
+                                                    <?php echo format_invoice_number($invoice->id); ?>
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <i class="fa fa-calendar" style="color: #999;"></i>
+                                                <?php echo _d($invoice->date); ?>
+                                            </td>
+                                            <td>
+                                                <i class="fa fa-clock-o" style="color: #999;"></i>
+                                                <?php echo _d($invoice->duedate); ?>
+                                            </td>
+                                            <td>
+                                                <strong style="font-size: 15px; color: #2c3e50;">
+                                                    <?php echo app_format_money($invoice->total, $invoice->currency_name); ?>
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $status_class = 'default';
+                                                if ($invoice->status == 2) {
+                                                    $status_class = 'success'; // Paid
+                                                } elseif ($invoice->status == 1) {
+                                                    $status_class = 'warning'; // Unpaid
+                                                } elseif ($invoice->status == 5) {
+                                                    $status_class = 'danger'; // Overdue
+                                                } elseif ($invoice->status == 3) {
+                                                    $status_class = 'info'; // Partially Paid
+                                                }
+                                                ?>
+                                                <span class="label label-<?php echo $status_class; ?>" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">
+                                                    <?php echo format_invoice_status($invoice->status); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="<?php echo admin_url('invoices/list_invoices/' . $invoice->id); ?>"
+                                                   class="btn btn-sm btn-default"
+                                                   style="border-radius: 6px;"
+                                                   target="_blank">
+                                                    <i class="fa fa-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php } else { ?>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fa fa-file-text-o"></i>
+                            </div>
+                            <div class="empty-state-title">Aucune facture</div>
+                            <div class="empty-state-text">
+                                Aucune facture n'est associée à ce programme pour le moment
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+
+                <!-- Activity History Section -->
+                <div class="meal-plans-section animate-in delay-6" style="margin-top: 30px;">
+                    <div class="meal-plans-header">
+                        <h3 class="meal-plans-title">
+                            <i class="fa fa-history"></i>
+                            Historique d'activité
+                        </h3>
+                    </div>
+
+                    <?php if (!empty($history)) { ?>
+                        <div class="timeline-container" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                            <div class="timeline">
+                                <?php foreach ($history as $activity) { ?>
+                                    <div class="timeline-item" style="position: relative; padding-left: 40px; padding-bottom: 30px; border-left: 2px solid #e9ecef;">
+                                        <div class="timeline-marker" style="position: absolute; left: -8px; top: 0; width: 14px; height: 14px; border-radius: 50%; background: #01807B; border: 3px solid white; box-shadow: 0 0 0 2px #e9ecef;"></div>
+                                        <div class="timeline-content">
+                                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                                <div>
+                                                    <strong style="color: #2c3e50; font-size: 14px;">
+                                                        <?php
+                                                        if (!empty($activity->staffid)) {
+                                                            $staff = $this->staff_model->get($activity->staffid);
+                                                            echo $staff ? get_staff_full_name($activity->staffid) : 'Système';
+                                                        } else {
+                                                            echo 'Système';
+                                                        }
+                                                        ?>
+                                                    </strong>
+                                                </div>
+                                                <small style="color: #999; font-size: 12px;">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <?php echo time_ago($activity->date); ?>
+                                                </small>
+                                            </div>
+                                            <div style="color: #555; font-size: 13px; line-height: 1.6;">
+                                                <?php echo $activity->description; ?>
+                                            </div>
+                                            <?php if (!empty($activity->additional_data)) { ?>
+                                                <div style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
+                                                    <i class="fa fa-info-circle"></i> Détails supplémentaires
+                                                </div>
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    <?php } else { ?>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fa fa-history"></i>
+                            </div>
+                            <div class="empty-state-title">Aucun historique</div>
+                            <div class="empty-state-text">
+                                Aucune activité n'a été enregistrée pour ce programme
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+
             </div>
         </div>
     </div>

@@ -137,6 +137,37 @@ class Programs extends AdminController
             }
         }
 
+        // ============================================
+        // Load invoices related to this program
+        // ============================================
+        $data['invoices'] = [];
+        if ($data['patient']->client_id) {
+            $this->db->select('i.*, s.name as status_name, s.color as status_color');
+            $this->db->from(db_prefix() . 'invoices i');
+            $this->db->join(db_prefix() . 'invoice_statuses s', 's.id = i.status', 'left');
+            $this->db->where('i.clientid', $data['patient']->client_id);
+            $this->db->where('(i.adminnote LIKE "%Programme%' . $id . '%" OR i.id IN (
+                SELECT invoice_id FROM ' . db_prefix() . 'taggables
+                WHERE tag_id IN (
+                    SELECT id FROM ' . db_prefix() . 'tags WHERE name = "programme_' . $id . '"
+                )
+            ))');
+            $this->db->order_by('i.date', 'DESC');
+            $data['invoices'] = $this->db->get()->result();
+        }
+
+        // ============================================
+        // Load activity history for this program
+        // ============================================
+        $data['history'] = [];
+        $this->db->select('*');
+        $this->db->from(db_prefix() . 'activity_log');
+        $this->db->where('(description LIKE "%programme ' . $id . '%" OR description LIKE "%program ' . $id . '%")');
+        $this->db->or_where('(description LIKE "%Programme ID: ' . $id . '%" OR description LIKE "%Program ID: ' . $id . '%")');
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(50); // Last 50 activities
+        $data['history'] = $this->db->get()->result();
+
         $this->load->view('admin/programs/view', $data);
     }
 
