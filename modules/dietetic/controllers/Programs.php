@@ -391,7 +391,7 @@ class Programs extends AdminController
 
                         // Get program info
                         $program = $this->dietetic_programs_model->get($program_id);
-                        log_activity('PROGRAM CREATE - Program retrieved: ' . ($program ? $program->name : 'NULL'));
+                        log_activity('PROGRAM CREATE - Program retrieved: ' . ($program ? $program->program_name : 'NULL'));
 
                         // Get dietitian info
                         $dietitian_id = $data['dietitian_id'] ?? get_staff_user_id();
@@ -423,7 +423,7 @@ class Programs extends AdminController
                         log_activity('PROGRAM CREATE - Calling notify_program_created_with_invoice...');
                         $result = $this->dietetic_notifications_model->notify_program_created_with_invoice(
                             $data['patient_id'],
-                            $program->name,
+                            $program->program_name,
                             $dietitian_name,
                             $billing_data
                         );
