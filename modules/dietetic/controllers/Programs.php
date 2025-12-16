@@ -384,16 +384,29 @@ class Programs extends AdminController
                 // SEND NOTIFICATIONS (SMS, WhatsApp, Email, Push)
                 // ============================================
                 try {
+                    log_activity('PROGRAM CREATE - Starting notification process for patient: ' . ($data['patient_id'] ?? 'N/A'));
+
                     if (isset($data['patient_id']) && $this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
                         $this->load->model('dietetic/dietetic_notifications_model');
 
                         // Get program info
                         $program = $this->dietetic_programs_model->get($program_id);
+                        log_activity('PROGRAM CREATE - Program retrieved: ' . ($program ? $program->name : 'NULL'));
 
                         // Get dietitian info
                         $dietitian_id = $data['dietitian_id'] ?? get_staff_user_id();
                         $dietitian = $this->staff_model->get($dietitian_id);
                         $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+                        log_activity('PROGRAM CREATE - Dietitian: ' . $dietitian_name);
+
+                        // Check if patient has notification preferences
+                        $prefs = $this->dietetic_notifications_model->get_preferences($data['patient_id']);
+                        if (!$prefs) {
+                            log_activity('PROGRAM CREATE - No preferences found, creating default preferences for patient: ' . $data['patient_id']);
+                            $this->dietetic_notifications_model->create_default_preferences($data['patient_id']);
+                            $prefs = $this->dietetic_notifications_model->get_preferences($data['patient_id']);
+                        }
+                        log_activity('PROGRAM CREATE - Preferences: ' . ($prefs ? 'EXISTS (SMS:' . $prefs->channel_sms . ', WhatsApp:' . $prefs->channel_whatsapp . ', Email:' . $prefs->channel_email . ')' : 'NULL'));
 
                         // Prepare billing data for notification
                         $billing_data = [
@@ -407,6 +420,7 @@ class Programs extends AdminController
                         ];
 
                         // Send comprehensive notification via all channels
+                        log_activity('PROGRAM CREATE - Calling notify_program_created_with_invoice...');
                         $result = $this->dietetic_notifications_model->notify_program_created_with_invoice(
                             $data['patient_id'],
                             $program->name,
@@ -415,13 +429,16 @@ class Programs extends AdminController
                         );
 
                         if ($result) {
-                            log_activity('PROGRAM CREATE - All notifications sent successfully');
+                            log_activity('PROGRAM CREATE - ✅ All notifications sent successfully');
                         } else {
-                            log_activity('PROGRAM CREATE - Notifications may not have been sent (preferences disabled or error)');
+                            log_activity('PROGRAM CREATE - ⚠️ Notifications may not have been sent (preferences disabled or error)');
                         }
+                    } else {
+                        log_activity('PROGRAM CREATE - ❌ Cannot send notifications: ' .
+                            (!isset($data['patient_id']) ? 'No patient_id' : 'Preferences table does not exist'));
                     }
                 } catch (Exception $e) {
-                    log_activity('PROGRAM CREATE - Notification error: ' . $e->getMessage());
+                    log_activity('PROGRAM CREATE - ❌ Notification error: ' . $e->getMessage());
                 }
 
                 redirect(admin_url('dietetic/programs/view/' . $program_id));
