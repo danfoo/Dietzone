@@ -328,12 +328,13 @@ class Programs extends AdminController
                 }
 
                 // ============================================
-                // SEND NOTIFICATIONS (SMS, WhatsApp, Email)
+                // SEND NOTIFICATIONS (SMS, WhatsApp, Email, Push)
                 // ============================================
                 try {
-                    if (isset($data['patient_id'])) {
-                        // Get patient and program info
-                        $patient = $this->dietetic_patients_model->get($data['patient_id'], false);
+                    if (isset($data['patient_id']) && $this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                        $this->load->model('dietetic/dietetic_notifications_model');
+
+                        // Get program info
                         $program = $this->dietetic_programs_model->get($program_id);
 
                         // Get dietitian info
@@ -341,94 +342,29 @@ class Programs extends AdminController
                         $dietitian = $this->staff_model->get($dietitian_id);
                         $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
 
-                        if ($patient && $patient->client) {
-                            $client = $patient->client;
+                        // Prepare billing data for notification
+                        $billing_data = [
+                            'program_id' => $program_id,
+                            'duration_months' => $data['duration_months'] ?? null,
+                            'total_price' => $data['total_price'] ?? 0,
+                            'payment_mode' => $data['payment_mode'] ?? null,
+                            'start_date' => $program->start_date ?? null,
+                            'end_date' => $program->end_date ?? null,
+                            'invoice_id' => $invoice_id ?? null
+                        ];
 
-                            // ========== SMS (MAX 160 CARACTÈRES) ==========
-                            if (!empty($client->phonenumber)) {
-                                $sms_message = "Programme " . substr($program->name, 0, 30) . " cree par " . $dietitian_name . ". Duree: " . ($data['duration_months'] ?? '1') . " mois. Consultez votre espace.";
+                        // Send comprehensive notification via all channels
+                        $result = $this->dietetic_notifications_model->notify_program_created_with_invoice(
+                            $data['patient_id'],
+                            $program->name,
+                            $dietitian_name,
+                            $billing_data
+                        );
 
-                                // Truncate to 160 characters
-                                $sms_message = substr($sms_message, 0, 160);
-
-                                // Send SMS via notification model
-                                if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
-                                    $this->load->model('dietetic/dietetic_notifications_model');
-                                    $this->dietetic_notifications_model->send_sms($client->phonenumber, $sms_message);
-                                    log_activity('PROGRAM CREATE - SMS sent to patient: ' . $client->phonenumber);
-                                }
-                            }
-
-                            // ========== WhatsApp ==========
-                            if (!empty($client->phonenumber)) {
-                                $whatsapp_message = "🎉 *Nouveau Programme Créé*\n\n";
-                                $whatsapp_message .= "Bonjour " . $client->company . ",\n\n";
-                                $whatsapp_message .= "Votre diététicien *" . $dietitian_name . "* a créé un nouveau programme pour vous :\n\n";
-                                $whatsapp_message .= "📋 *Programme:* " . $program->name . "\n";
-                                $whatsapp_message .= "⏱️ *Durée:* " . ($data['duration_months'] ?? '1') . " mois\n";
-                                $whatsapp_message .= "📅 *Début:* " . date('d/m/Y', strtotime($program->start_date)) . "\n";
-
-                                if (!empty($data['total_price'])) {
-                                    $whatsapp_message .= "💰 *Montant:* " . number_format($data['total_price'], 0, ',', ' ') . " FCFA\n";
-                                }
-
-                                $whatsapp_message .= "\nConsultez votre espace patient pour plus de détails.";
-
-                                // Send WhatsApp
-                                if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
-                                    $this->load->model('dietetic/dietetic_notifications_model');
-                                    $this->dietetic_notifications_model->send_whatsapp($client->phonenumber, $whatsapp_message);
-                                    log_activity('PROGRAM CREATE - WhatsApp sent to patient: ' . $client->phonenumber);
-                                }
-                            }
-
-                            // ========== Email ==========
-                            if (!empty($client->email)) {
-                                $this->load->library('email');
-
-                                $this->email->from(get_option('smtp_email'), get_option('companyname'));
-                                $this->email->to($client->email);
-                                $this->email->subject('Nouveau Programme Créé - ' . $program->name);
-
-                                $email_body = "Bonjour " . $client->company . ",<br><br>";
-                                $email_body .= "Votre diététicien <strong>" . $dietitian_name . "</strong> a créé un nouveau programme nutritionnel personnalisé pour vous.<br><br>";
-
-                                $email_body .= "<strong>Détails du programme :</strong><br>";
-                                $email_body .= "📋 Nom : " . $program->name . "<br>";
-                                $email_body .= "⏱️ Durée : " . ($data['duration_months'] ?? '1') . " mois<br>";
-                                $email_body .= "📅 Date de début : " . date('d/m/Y', strtotime($program->start_date)) . "<br>";
-                                $email_body .= "📅 Date de fin : " . date('d/m/Y', strtotime($program->end_date)) . "<br><br>";
-
-                                if (!empty($data['total_price'])) {
-                                    $email_body .= "<strong>Facturation :</strong><br>";
-                                    $email_body .= "💰 Montant total : " . number_format($data['total_price'], 0, ',', ' ') . " FCFA<br>";
-                                    $email_body .= "💳 Mode de paiement : " . ($data['payment_mode'] == 'one_time' ? 'Paiement unique' : 'Paiement mensuel') . "<br>";
-                                    $email_body .= "📄 Une facture a été générée et est disponible dans votre espace.<br><br>";
-                                }
-
-                                $email_body .= "Vous pouvez consulter tous les détails de votre programme dans votre espace patient.<br><br>";
-                                $email_body .= "Cordialement,<br>";
-                                $email_body .= get_option('companyname');
-
-                                $this->email->message($email_body);
-
-                                if ($this->email->send()) {
-                                    log_activity('PROGRAM CREATE - Email sent to patient: ' . $client->email);
-                                } else {
-                                    log_activity('PROGRAM CREATE - Email send failed: ' . $this->email->print_debugger());
-                                }
-                            }
-
-                            // ========== Push Notification (existing) ==========
-                            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
-                                $this->load->model('dietetic/dietetic_notifications_model');
-                                $this->dietetic_notifications_model->notify_program_assigned(
-                                    $data['patient_id'],
-                                    $program->name,
-                                    $dietitian_name
-                                );
-                                log_activity('PROGRAM CREATE - Push notification sent');
-                            }
+                        if ($result) {
+                            log_activity('PROGRAM CREATE - All notifications sent successfully');
+                        } else {
+                            log_activity('PROGRAM CREATE - Notifications may not have been sent (preferences disabled or error)');
                         }
                     }
                 } catch (Exception $e) {
@@ -570,6 +506,14 @@ class Programs extends AdminController
         $data['title'] = _l('dietetic_edit_program');
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
+
+        // Get available services from Perfex items (for billing)
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.description', 'ASC');
+        $data['services'] = $this->db->get()->result();
 
         // Auto-calculate nutritional objectives from anamnesis data
         $data['calculated_objectives'] = null;
