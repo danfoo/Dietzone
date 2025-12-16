@@ -211,12 +211,129 @@ class Programs extends AdminController
             $program_id = $this->dietetic_programs_model->add($data);
 
             if ($program_id) {
-                // Send notification to patient
-                try {
-                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && isset($data['patient_id'])) {
-                        $this->load->model('dietetic/dietetic_notifications_model');
+                log_activity('PROGRAM CREATE - Program created successfully: ID ' . $program_id);
 
-                        // Get program info
+                // ============================================
+                // CREATE INVOICE AUTOMATICALLY
+                // ============================================
+                if (!empty($data['service_id']) && !empty($data['total_price'])) {
+                    try {
+                        log_activity('PROGRAM CREATE - Creating invoice for program: ' . $program_id);
+
+                        $this->load->model('invoices_model');
+
+                        // Get patient info
+                        $patient = $this->dietetic_patients_model->get($data['patient_id'], false);
+
+                        if (!$patient || !$patient->client_id) {
+                            throw new Exception('Patient or client not found');
+                        }
+
+                        // Get service info
+                        $service = $this->db->get_where(db_prefix() . 'items', ['id' => $data['service_id']])->row();
+
+                        if (!$service) {
+                            throw new Exception('Service not found');
+                        }
+
+                        // Determine invoice amount based on payment mode
+                        $invoice_amount = ($data['payment_mode'] == 'one_time')
+                            ? $data['total_price']  // Full amount for one-time payment
+                            : $data['monthly_price']; // First month for recurring
+
+                        // Prepare invoice data
+                        $invoice_data = [
+                            'clientid' => $patient->client_id,
+                            'date' => date('Y-m-d'),
+                            'duedate' => date('Y-m-d', strtotime('+7 days')), // 7 days to pay
+                            'currency' => get_base_currency()->id,
+                            'adminnote' => 'Programme: ' . $data['program_name'] . ' (ID: ' . $program_id . ')',
+                            'newitems' => [
+                                [
+                                    'description' => $service->description . ' - ' . $data['duration_months'] . ' mois',
+                                    'long_description' => $data['payment_mode'] == 'one_time'
+                                        ? 'Paiement unique pour ' . $data['duration_months'] . ' mois'
+                                        : 'Paiement mensuel (Mois 1/' . $data['duration_months'] . ')',
+                                    'qty' => 1,
+                                    'rate' => $invoice_amount,
+                                    'taxname' => []
+                                ]
+                            ],
+                            'tags' => ['programme_' . $program_id]
+                        ];
+
+                        // Create invoice
+                        $invoice_id = $this->invoices_model->add($invoice_data);
+
+                        if ($invoice_id) {
+                            log_activity('PROGRAM CREATE - Invoice created: #' . $invoice_id . ' for ' . $invoice_amount . ' FCFA');
+
+                            // Verify and fix invoice if needed (like in portal subscribe_service)
+                            $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+
+                            if (empty($created_invoice->total) || $created_invoice->total == 0) {
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', [
+                                    'subtotal' => $invoice_amount,
+                                    'total' => $invoice_amount
+                                ]);
+                                log_activity('PROGRAM CREATE - Fixed invoice totals');
+                            }
+
+                            if ($created_invoice->status != 1) {
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', ['status' => 1]);
+                                log_activity('PROGRAM CREATE - Set invoice status to Unpaid');
+                            }
+
+                            if (empty($created_invoice->number) || $created_invoice->number == 0) {
+                                $next_number = get_option('next_invoice_number');
+                                if (empty($next_number)) {
+                                    $last_invoice = $this->db->select('number')
+                                        ->from(db_prefix() . 'invoices')
+                                        ->where('id !=', $invoice_id)
+                                        ->order_by('CAST(number AS UNSIGNED)', 'DESC')
+                                        ->limit(1)
+                                        ->get()
+                                        ->row();
+
+                                    $next_number = $last_invoice && is_numeric($last_invoice->number) ? intval($last_invoice->number) + 1 : 1;
+                                }
+
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', ['number' => $next_number]);
+
+                                update_option('next_invoice_number', $next_number + 1);
+                                log_activity('PROGRAM CREATE - Fixed invoice number: ' . $next_number);
+                            }
+
+                            // Update program with billing status
+                            $this->db->where('id', $program_id);
+                            $this->db->update(db_prefix() . 'dietic_programs', [
+                                'billing_status' => 'pending', // Will be active after payment
+                                'last_billing_date' => date('Y-m-d')
+                            ]);
+
+                            set_alert('success', 'Programme créé avec succès. Facture #' . $invoice_id . ' générée (' . number_format($invoice_amount, 0, ',', ' ') . ' FCFA).');
+
+                        } else {
+                            log_activity('PROGRAM CREATE - ERROR: Failed to create invoice');
+                            set_alert('warning', 'Programme créé mais erreur lors de la création de la facture.');
+                        }
+
+                    } catch (Exception $e) {
+                        log_activity('PROGRAM CREATE - Invoice creation error: ' . $e->getMessage());
+                        set_alert('warning', 'Programme créé mais erreur lors de la création de la facture: ' . $e->getMessage());
+                    }
+                }
+
+                // ============================================
+                // SEND NOTIFICATIONS (SMS, WhatsApp, Email)
+                // ============================================
+                try {
+                    if (isset($data['patient_id'])) {
+                        // Get patient and program info
+                        $patient = $this->dietetic_patients_model->get($data['patient_id'], false);
                         $program = $this->dietetic_programs_model->get($program_id);
 
                         // Get dietitian info
@@ -224,18 +341,100 @@ class Programs extends AdminController
                         $dietitian = $this->staff_model->get($dietitian_id);
                         $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
 
-                        // Send notification
-                        $this->dietetic_notifications_model->notify_program_assigned(
-                            $data['patient_id'],
-                            $program->name,
-                            $dietitian_name
-                        );
+                        if ($patient && $patient->client) {
+                            $client = $patient->client;
+
+                            // ========== SMS (MAX 160 CARACTÈRES) ==========
+                            if (!empty($client->phonenumber)) {
+                                $sms_message = "Programme " . substr($program->name, 0, 30) . " cree par " . $dietitian_name . ". Duree: " . ($data['duration_months'] ?? '1') . " mois. Consultez votre espace.";
+
+                                // Truncate to 160 characters
+                                $sms_message = substr($sms_message, 0, 160);
+
+                                // Send SMS via notification model
+                                if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                                    $this->load->model('dietetic/dietetic_notifications_model');
+                                    $this->dietetic_notifications_model->send_sms($client->phonenumber, $sms_message);
+                                    log_activity('PROGRAM CREATE - SMS sent to patient: ' . $client->phonenumber);
+                                }
+                            }
+
+                            // ========== WhatsApp ==========
+                            if (!empty($client->phonenumber)) {
+                                $whatsapp_message = "🎉 *Nouveau Programme Créé*\n\n";
+                                $whatsapp_message .= "Bonjour " . $client->company . ",\n\n";
+                                $whatsapp_message .= "Votre diététicien *" . $dietitian_name . "* a créé un nouveau programme pour vous :\n\n";
+                                $whatsapp_message .= "📋 *Programme:* " . $program->name . "\n";
+                                $whatsapp_message .= "⏱️ *Durée:* " . ($data['duration_months'] ?? '1') . " mois\n";
+                                $whatsapp_message .= "📅 *Début:* " . date('d/m/Y', strtotime($program->start_date)) . "\n";
+
+                                if (!empty($data['total_price'])) {
+                                    $whatsapp_message .= "💰 *Montant:* " . number_format($data['total_price'], 0, ',', ' ') . " FCFA\n";
+                                }
+
+                                $whatsapp_message .= "\nConsultez votre espace patient pour plus de détails.";
+
+                                // Send WhatsApp
+                                if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                                    $this->load->model('dietetic/dietetic_notifications_model');
+                                    $this->dietetic_notifications_model->send_whatsapp($client->phonenumber, $whatsapp_message);
+                                    log_activity('PROGRAM CREATE - WhatsApp sent to patient: ' . $client->phonenumber);
+                                }
+                            }
+
+                            // ========== Email ==========
+                            if (!empty($client->email)) {
+                                $this->load->library('email');
+
+                                $this->email->from(get_option('smtp_email'), get_option('companyname'));
+                                $this->email->to($client->email);
+                                $this->email->subject('Nouveau Programme Créé - ' . $program->name);
+
+                                $email_body = "Bonjour " . $client->company . ",<br><br>";
+                                $email_body .= "Votre diététicien <strong>" . $dietitian_name . "</strong> a créé un nouveau programme nutritionnel personnalisé pour vous.<br><br>";
+
+                                $email_body .= "<strong>Détails du programme :</strong><br>";
+                                $email_body .= "📋 Nom : " . $program->name . "<br>";
+                                $email_body .= "⏱️ Durée : " . ($data['duration_months'] ?? '1') . " mois<br>";
+                                $email_body .= "📅 Date de début : " . date('d/m/Y', strtotime($program->start_date)) . "<br>";
+                                $email_body .= "📅 Date de fin : " . date('d/m/Y', strtotime($program->end_date)) . "<br><br>";
+
+                                if (!empty($data['total_price'])) {
+                                    $email_body .= "<strong>Facturation :</strong><br>";
+                                    $email_body .= "💰 Montant total : " . number_format($data['total_price'], 0, ',', ' ') . " FCFA<br>";
+                                    $email_body .= "💳 Mode de paiement : " . ($data['payment_mode'] == 'one_time' ? 'Paiement unique' : 'Paiement mensuel') . "<br>";
+                                    $email_body .= "📄 Une facture a été générée et est disponible dans votre espace.<br><br>";
+                                }
+
+                                $email_body .= "Vous pouvez consulter tous les détails de votre programme dans votre espace patient.<br><br>";
+                                $email_body .= "Cordialement,<br>";
+                                $email_body .= get_option('companyname');
+
+                                $this->email->message($email_body);
+
+                                if ($this->email->send()) {
+                                    log_activity('PROGRAM CREATE - Email sent to patient: ' . $client->email);
+                                } else {
+                                    log_activity('PROGRAM CREATE - Email send failed: ' . $this->email->print_debugger());
+                                }
+                            }
+
+                            // ========== Push Notification (existing) ==========
+                            if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
+                                $this->load->model('dietetic/dietetic_notifications_model');
+                                $this->dietetic_notifications_model->notify_program_assigned(
+                                    $data['patient_id'],
+                                    $program->name,
+                                    $dietitian_name
+                                );
+                                log_activity('PROGRAM CREATE - Push notification sent');
+                            }
+                        }
                     }
                 } catch (Exception $e) {
-                    log_activity('Program notification error: ' . $e->getMessage());
+                    log_activity('PROGRAM CREATE - Notification error: ' . $e->getMessage());
                 }
 
-                set_alert('success', _l('added_successfully'));
                 redirect(admin_url('dietetic/programs/view/' . $program_id));
             } else {
                 set_alert('danger', _l('dietetic_error_add_failed'));
