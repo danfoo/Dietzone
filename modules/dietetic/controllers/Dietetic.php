@@ -1770,4 +1770,105 @@ class Dietetic extends AdminController
 
         echo '</body></html>';
     }
+
+    /**
+     * Run billing migration
+     * URL: admin/dietetic/run_billing_migration
+     */
+    public function run_billing_migration()
+    {
+        if (!is_admin()) {
+            access_denied('Admin access required');
+        }
+
+        $data = [];
+
+        // Check if migration is already applied
+        $columns_to_check = ['service_id', 'duration_months', 'payment_mode', 'monthly_price', 'total_price', 'billing_status'];
+        $existing_columns = [];
+
+        foreach ($columns_to_check as $column) {
+            $check = $this->db->query("SHOW COLUMNS FROM " . db_prefix() . "dietic_programs LIKE '" . $column . "'")->row();
+            if ($check) {
+                $existing_columns[] = $column;
+            }
+        }
+
+        // If all columns exist, migration is already applied
+        if (count($existing_columns) === count($columns_to_check)) {
+            $data['migration_status'] = 'already_applied';
+            $data['existing_columns'] = $existing_columns;
+            $this->load->view('admin/migrations/run_billing_migration', $data);
+            return;
+        }
+
+        // Handle POST - Execute migration
+        if ($this->input->post('confirm_migration')) {
+            try {
+                // Read migration file
+                $migration_file = FCPATH . 'modules/dietetic/migrations/add_service_billing_metadata.sql';
+
+                if (!file_exists($migration_file)) {
+                    throw new Exception('Migration file not found: ' . $migration_file);
+                }
+
+                $sql = file_get_contents($migration_file);
+
+                if (empty($sql)) {
+                    throw new Exception('Migration file is empty');
+                }
+
+                // Remove comments and split into statements
+                $sql = preg_replace('/--.*$/m', '', $sql); // Remove single-line comments
+                $sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remove multi-line comments
+
+                // Split by semicolon but not within quotes
+                $statements = array_filter(array_map('trim', explode(';', $sql)));
+
+                $executed = 0;
+                $errors = [];
+
+                // Execute each statement
+                foreach ($statements as $statement) {
+                    if (empty($statement)) {
+                        continue;
+                    }
+
+                    // Try to execute
+                    try {
+                        $this->db->query($statement);
+                        $executed++;
+                        log_activity('Billing migration statement executed: ' . substr($statement, 0, 100) . '...');
+                    } catch (Exception $e) {
+                        // Check if error is "column already exists" - that's ok
+                        if (strpos($e->getMessage(), 'Duplicate column') !== false) {
+                            log_activity('Billing migration column already exists (skipped): ' . $e->getMessage());
+                            continue;
+                        }
+                        $errors[] = $e->getMessage();
+                        log_activity('Billing migration error: ' . $e->getMessage());
+                    }
+                }
+
+                if (!empty($errors)) {
+                    throw new Exception('Migration completed with errors: ' . implode('; ', $errors));
+                }
+
+                log_activity('Billing migration completed successfully - ' . $executed . ' statements executed');
+
+                $data['migration_status'] = 'success';
+
+            } catch (Exception $e) {
+                log_activity('Billing migration failed: ' . $e->getMessage());
+                $data['migration_status'] = 'error';
+                $data['error_message'] = $e->getMessage();
+            }
+
+            $this->load->view('admin/migrations/run_billing_migration', $data);
+            return;
+        }
+
+        // Show confirmation form
+        $this->load->view('admin/migrations/run_billing_migration', $data);
+    }
 }
