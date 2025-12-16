@@ -675,8 +675,7 @@ class Dietetic_notifications_model extends App_Model
                     'message' => $message,
                     'status' => 'sent',
                     'created_at' => date('Y-m-d H:i:s'),
-                    'sent_at' => date('Y-m-d H:i:s'),
-                    'external_id' => $result['notification_id'] ?? null
+                    'sent_at' => date('Y-m-d H:i:s')
                 ]);
 
                 return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
@@ -768,8 +767,7 @@ class Dietetic_notifications_model extends App_Model
                     'message' => $message,
                     'status' => 'sent',
                     'created_at' => date('Y-m-d H:i:s'),
-                    'sent_at' => date('Y-m-d H:i:s'),
-                    'external_id' => $result['notification_id'] ?? null
+                    'sent_at' => date('Y-m-d H:i:s')
                 ]);
 
                 return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
@@ -871,8 +869,7 @@ class Dietetic_notifications_model extends App_Model
                     'message' => $message,
                     'status' => 'sent',
                     'created_at' => date('Y-m-d H:i:s'),
-                    'sent_at' => date('Y-m-d H:i:s'),
-                    'external_id' => $result['notification_id'] ?? null
+                    'sent_at' => date('Y-m-d H:i:s')
                 ]);
 
                 return ['success' => true, 'recipients' => $result['recipients'] ?? 0];
@@ -1639,11 +1636,6 @@ class Dietetic_notifications_model extends App_Model
                 $log_data['status'] = 'sent';
                 $log_data['sent_at'] = date('Y-m-d H:i:s');
                 $log_data['recipient'] = ($result['recipients'] ?? 1) . ' device(s)';
-
-                // Log notification ID for tracking
-                if (isset($result['notification_id'])) {
-                    $log_data['external_id'] = $result['notification_id'];
-                }
             } else {
                 $log_data['status'] = 'failed';
                 $log_data['error_message'] = $result['error'] ?? 'Push notification failed';
