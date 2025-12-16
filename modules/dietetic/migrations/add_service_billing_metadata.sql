@@ -18,6 +18,7 @@ ADD COLUMN `service_is_recurring` TINYINT(1) DEFAULT 1 COMMENT 'Service avec fac
 ALTER TABLE `tbldietic_programs`
 ADD COLUMN `service_id` INT DEFAULT NULL COMMENT 'Service lié (depuis tblitems)',
 ADD COLUMN `duration_months` INT DEFAULT NULL COMMENT 'Durée choisie du programme (mois)',
+ADD COLUMN `payment_mode` ENUM('one_time', 'recurring') DEFAULT 'recurring' COMMENT 'Mode de paiement: unique ou mensuel',
 ADD COLUMN `monthly_price` DECIMAL(15,2) DEFAULT NULL COMMENT 'Prix mensuel',
 ADD COLUMN `total_price` DECIMAL(15,2) DEFAULT NULL COMMENT 'Prix total avec réductions',
 ADD COLUMN `discount_applied` DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Réduction appliquée (pourcentage)',

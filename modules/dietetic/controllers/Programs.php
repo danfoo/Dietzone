@@ -157,6 +157,57 @@ class Programs extends AdminController
                 $data['dietitian_id'] = get_staff_user_id();
             }
 
+            // Calculate billing if service is selected
+            if (!empty($data['service_id']) && !empty($data['duration_months']) && !empty($data['payment_mode'])) {
+                $service_id = $data['service_id'];
+                $duration = (int)$data['duration_months'];
+                $payment_mode = $data['payment_mode'];
+
+                // Get service details
+                $service = $this->db->get_where(db_prefix() . 'items', ['id' => $service_id])->row();
+
+                if ($service) {
+                    $monthly_price = $service->rate;
+                    $subtotal = $monthly_price * $duration;
+
+                    // Determine discount percentage
+                    $discount_percent = 0;
+                    if ($duration == 6) {
+                        $discount_percent = $service->service_discount_6_months ?? 0;
+                    } elseif ($duration == 12) {
+                        $discount_percent = $service->service_discount_12_months ?? 0;
+                    }
+
+                    // Calculate total with discount
+                    $discount_amount = ($subtotal * $discount_percent) / 100;
+                    $total_price = $subtotal - $discount_amount;
+
+                    // Add calculated billing data
+                    $data['monthly_price'] = $monthly_price;
+                    $data['total_price'] = $total_price;
+                    $data['discount_applied'] = $discount_percent;
+                    $data['billing_status'] = 'pending'; // Will be active after first payment
+
+                    // Calculate end_date based on duration if not set
+                    if (empty($data['end_date']) && !empty($data['start_date'])) {
+                        $data['end_date'] = date('Y-m-d', strtotime($data['start_date'] . ' +' . $duration . ' months'));
+                    }
+
+                    // Set next billing date
+                    if ($payment_mode == 'recurring') {
+                        // First bill immediately, next one in 1 month
+                        $data['next_billing_date'] = date('Y-m-d', strtotime($data['start_date'] . ' +1 month'));
+                        $data['total_invoices_expected'] = $duration;
+                    } else {
+                        // One-time payment, no recurring
+                        $data['next_billing_date'] = null;
+                        $data['total_invoices_expected'] = 1;
+                    }
+
+                    log_activity('PROGRAM CREATE - Billing calculated: Service ID ' . $service_id . ', Duration ' . $duration . ' months, Total: ' . $total_price . ' FCFA');
+                }
+            }
+
             $program_id = $this->dietetic_programs_model->add($data);
 
             if ($program_id) {
