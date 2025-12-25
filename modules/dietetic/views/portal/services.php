@@ -4,7 +4,7 @@
 .services-page {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: none;
 }
 
 .page-title {
@@ -359,6 +359,30 @@
     background: #ccc;
     cursor: not-allowed;
     transform: none;
+}
+
+/* Mobile Responsive - Full Width Buttons */
+@media (max-width: 768px) {
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 16px;
+    }
+
+    .modal {
+        width: 95%;
+        padding: 24px;
+    }
+
+    .modal-title {
+        font-size: 20px;
+    }
 }
 
 /* Payment Gateway Buttons */

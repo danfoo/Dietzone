@@ -111,6 +111,28 @@ function dietetic_force_blog_menu_js()
     echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_blog_menu.js') . '?v=' . time() . '"></script>';
 }
 
+/**
+ * Add JavaScript to force "Mon Profil" menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_my_profile_menu_js');
+
+function dietetic_force_my_profile_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Mon Profil
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_my_profile_menu.js') . '?v=' . time() . '"></script>';
+}
+
+/**
+ * Add JavaScript to force "Passerelles de Paiement" menu in admin
+ */
+hooks()->add_action('app_admin_footer', 'dietetic_force_payment_settings_menu_js');
+
+function dietetic_force_payment_settings_menu_js()
+{
+    // Charger le script qui force l'ajout du menu Passerelles de Paiement
+    echo '<script src="' . module_dir_url('dietetic', 'assets/js/force_payment_settings_menu.js') . '?v=' . time() . '"></script>';
+}
+
 
 /**
  * Define module menu items
@@ -189,6 +211,15 @@ function dietetic_module_init_menu_items()
             'position' => 5.3,
         ]);
 
+        // Mon Profil - For all dietitians (staff members)
+        $CI->app_menu->add_sidebar_children_item('dietetic', [
+            'slug'     => 'dietetic-my-profile',
+            'name'     => 'Mon Profil',
+            'icon'     => 'fa fa-user-circle',
+            'href'     => admin_url('dietetic/my_profile'),
+            'position' => 5.4,
+        ]);
+
         // Notifications - Show if table exists and user is admin
         if ($CI->db->table_exists(db_prefix() . 'dietic_notification_preferences') && is_admin()) {
             $CI->app_menu->add_sidebar_children_item('dietetic', [
@@ -255,6 +286,15 @@ function dietetic_module_init_menu_items()
                 'icon'     => 'fa fa-gavel',
                 'href'     => admin_url('dietetic/legal_pages/manage'),
                 'position' => 98.5,
+            ]);
+
+            // Migrations - Admin only
+            $CI->app_menu->add_sidebar_children_item('dietetic', [
+                'slug'     => 'dietetic-migrations',
+                'name'     => 'Migrations',
+                'icon'     => 'fa fa-database',
+                'href'     => admin_url('dietetic/migrations'),
+                'position' => 98.7,
             ]);
         }
 

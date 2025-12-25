@@ -2,7 +2,26 @@
 $active_page = 'my_dietitians';
 $page_title = 'Mon Diététicien';
 $this->load->view('portal/includes/portal_header');
+
+// DEBUG TEMPORAIRE - À RETIRER
+if (isset($_GET['debug']) && $_GET['debug'] == '1') {
+    echo '<div style="background: yellow; padding: 20px; margin: 20px; border: 3px solid red; position: relative; z-index: 99999;">';
+    echo '<h2>🐛 DEBUG MODE</h2>';
+    echo '<h3>Certifications:</h3>';
+    echo '<pre>'; var_dump($certifications); echo '</pre>';
+    echo '<h3>Specialties:</h3>';
+    echo '<pre>'; var_dump($specialties); echo '</pre>';
+    echo '<h3>Rating System:</h3>';
+    echo '<p>Can rate: ' . (isset($can_rate) ? ($can_rate ? 'OUI' : 'NON') : 'NOT SET') . '</p>';
+    echo '<p>My rating: ' . (isset($my_rating) ? 'SET' : 'NOT SET') . '</p>';
+    echo '<p>Dietitian rating: ' . (isset($dietitian_rating) ? 'SET' : 'NOT SET') . '</p>';
+    if (isset($error)) {
+        echo '<p style="color: red; font-weight: bold;">ERROR: ' . $error . '</p>';
+    }
+    echo '</div>';
+}
 ?>
+
 
 <style>
 /* Modern Mobile App Design - No Borders */
@@ -32,11 +51,9 @@ $this->load->view('portal/includes/portal_header');
 }
 
 .dietitian-card {
-    background: white;
     border-radius: 24px;
-    padding: 24px;
+    padding: 0px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     position: relative;
@@ -92,7 +109,8 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .dietitian-name {
-            font-size: 20px;
+            font-size: 14px;
+            padding-top: 10px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 4px;
@@ -100,7 +118,253 @@ $this->load->view('portal/includes/portal_header');
 
         .dietitian-specialty {
             color: #6c757d;
+            font-size: 12px;
+        }
+
+        .referral-code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #01807B;
+            margin-top: 4px;
+            border: 1px solid rgba(1, 128, 123, 0.2);
+        }
+
+        .referral-code-badge i {
+            font-size: 10px;
+        }
+
+        .specialties-section {
+            margin: 16px 0;
+        }
+
+        .specialties-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .specialties-title::before,
+        .specialties-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dee2e6;
+            max-width: 100px;
+        }
+
+        .specialties-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .specialty-card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .specialty-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: var(--specialty-color, #01807B);
+        }
+
+        .specialty-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
+        }
+
+        .specialty-icon i {
+            font-size: 20px;
+            color: var(--specialty-color, #01807B);
+        }
+
+        .specialty-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .specialty-description {
+            font-size: 10px;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        .bio-section {
+            margin: 16px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+        }
+
+        .bio-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bio-title i {
+            color: #01807B;
             font-size: 14px;
+        }
+
+        .bio-text {
+            color: #2c3e50;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .info-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .info-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .info-pill:hover {
+            border-color: #01807B;
+            color: #01807B;
+        }
+
+        .info-pill i {
+            font-size: 14px;
+            color: #01807B;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #01807B;
+            transform: translateY(-2px);
+        }
+
+        .stat-card i {
+            font-size: 24px;
+            color: #01807B;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .certifications-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .certifications-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .certification-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #F3911D;
+        }
+
+        .certification-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .certification-item i {
+            color: #F3911D;
+            font-size: 18px;
+        }
+
+        .certification-text {
+            flex: 1;
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: 600;
         }
 
         .dietitian-details {
@@ -261,42 +525,6 @@ $this->load->view('portal/includes/portal_header');
             font-size: 22px;
         }
 
-        .average-rating {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .rating-score {
-            font-size: 36px;
-            font-weight: 700;
-            color: #01807B;
-            margin-bottom: 8px;
-        }
-
-        .rating-stars {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 8px;
-        }
-
-        .rating-stars i {
-            font-size: 24px;
-            color: #F3911D;
-        }
-
-        .rating-stars i.fa-star-o {
-            color: #dee2e6;
-        }
-
-        .rating-count {
-            color: #6c757d;
-            font-size: 13px;
-        }
-
         .my-rating-section {
             background: linear-gradient(135deg, rgba(1, 128, 123, 0.1) 0%, rgba(243, 145, 29, 0.1) 100%);
             padding: 16px;
@@ -321,17 +549,18 @@ $this->load->view('portal/includes/portal_header');
         .interactive-stars {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
         .interactive-stars i {
-            font-size: 36px;
+            font-size: 24px;
             color: #dee2e6;
             cursor: pointer;
             transition: all 0.2s ease;
-            min-width: 44px;
-            min-height: 44px;
+            min-width: 40px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -340,7 +569,7 @@ $this->load->view('portal/includes/portal_header');
         .interactive-stars i:hover,
         .interactive-stars i.hover {
             color: #F3911D;
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
         .interactive-stars i.selected {
@@ -433,10 +662,6 @@ $this->load->view('portal/includes/portal_header');
             color: #6c757d;
         }
 
-        .criteria-ratings {
-            margin-top: 16px;
-        }
-
         .criterion-item {
             margin-bottom: 14px;
             padding-bottom: 14px;
@@ -450,28 +675,29 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .criterion-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .criterion-label i {
             color: #01807B;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .criterion-stars {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
+            flex-wrap: wrap;
         }
 
         .criterion-stars i {
-            font-size: 18px;
+            font-size: 16px;
             color: #F3911D;
         }
 
@@ -480,28 +706,29 @@ $this->load->view('portal/includes/portal_header');
         }
 
         .criterion-stars .criterion-score {
-            margin-left: 8px;
-            font-size: 14px;
+            margin-left: 6px;
+            font-size: 13px;
             font-weight: 600;
             color: #6c757d;
         }
 
         .rating-form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .rating-form-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .rating-form-label i {
             color: #01807B;
+            font-size: 14px;
         }
 
         .rating-form-label .required {
@@ -531,6 +758,94 @@ $this->load->view('portal/includes/portal_header');
 
         .btn-edit-rating:active {
             transform: scale(0.97);
+        }
+
+        /* Rating Form Buttons Container */
+        .rating-buttons-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .rating-buttons-container .btn-submit-rating {
+            flex: 1;
+        }
+
+        .rating-buttons-container .btn-back {
+            flex: 0 0 auto;
+            min-width: 120px;
+        }
+
+        /* Mobile responsive for rating buttons */
+        @media (max-width: 480px) {
+            .rating-buttons-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .rating-buttons-container .btn-submit-rating,
+            .rating-buttons-container .btn-back {
+                width: 100%;
+                flex: none;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .interactive-stars {
+                gap: 3px;
+            }
+
+            .interactive-stars i {
+                font-size: 20px;
+                min-width: 34px;
+                min-height: 34px;
+            }
+
+            .rating-form-label {
+                font-size: 12px;
+            }
+
+            .rating-form-label i {
+                font-size: 13px;
+            }
+
+            .rating-comment {
+                font-size: 13px;
+                min-height: 60px;
+                padding: 10px;
+            }
+
+            .rating-form-group {
+                margin-bottom: 14px;
+            }
+
+            .criterion-label {
+                font-size: 12px;
+            }
+
+            .criterion-label i {
+                font-size: 13px;
+            }
+
+            .criterion-stars i {
+                font-size: 14px;
+            }
+
+            .criterion-stars .criterion-score {
+                font-size: 12px;
+            }
+
+            .rating-card {
+                padding: 20px 16px;
+            }
+
+            .my-rating-section {
+                padding: 14px;
+            }
+
+            .my-rating-header {
+                font-size: 14px;
+            }
         }
 
         @keyframes fadeInUp {
@@ -593,7 +908,6 @@ $this->load->view('portal/includes/portal_header');
             }
 
             .dietitian-card {
-                padding: 16px;
                 border-radius: 12px;
             }
 
@@ -642,8 +956,126 @@ $this->load->view('portal/includes/portal_header');
                         <div class="dietitian-info">
                             <div class="dietitian-name"><?php echo htmlspecialchars($dietitian->firstname . ' ' . $dietitian->lastname); ?></div>
                             <div class="dietitian-specialty">Diététicien-Nutritionniste</div>
+                            <?php if (!empty($dietitian->dietitian_referral_code)) { ?>
+                            <div class="referral-code-badge">
+                                <i class="fa fa-qrcode"></i>
+                                <span><?php echo htmlspecialchars($dietitian->dietitian_referral_code); ?></span>
+                            </div>
+                            <?php } ?>
                         </div>
                     </div>
+
+                    <!-- Info Pills: Experience & Languages -->
+                    <?php if (!empty($dietitian->dietitian_years_experience) || !empty($languages)) { ?>
+                    <div class="info-pills">
+                        <?php if (!empty($dietitian->dietitian_years_experience) && $dietitian->dietitian_years_experience > 0) { ?>
+                        <div class="info-pill">
+                            <i class="fa fa-briefcase"></i>
+                            <span><?php echo $dietitian->dietitian_years_experience; ?> an<?php echo $dietitian->dietitian_years_experience > 1 ? 's' : ''; ?> d'expérience</span>
+                        </div>
+                        <?php } ?>
+                        <?php if (!empty($languages)) { ?>
+                        <div class="info-pill">
+                            <i class="fa fa-globe"></i>
+                            <span><?php echo implode(', ', $languages); ?></span>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Bio -->
+                    <?php if (!empty($dietitian->dietitian_bio)) { ?>
+                    <div class="bio-section">
+                        <div class="bio-title">
+                            <i class="fa fa-info-circle"></i>
+                            À propos
+                        </div>
+                        <div class="bio-text">
+                            <?php echo nl2br(htmlspecialchars($dietitian->dietitian_bio)); ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Specialties -->
+                    <?php if (!empty($specialties)) {
+                        // Descriptions pour chaque spécialité
+                        $specialty_descriptions = [
+                            'Perte de poids' => 'Atteignez vos objectifs santé durablement',
+                            'Nutrition sportive' => 'Optimisez performance et récupération',
+                            'Diabète' => 'Équilibrez votre glycémie au quotidien',
+                            'Nutrition pédiatrique' => 'Croissance et développement de l\'enfant',
+                            'Grossesse' => 'Accompagnement avant, pendant, après',
+                            'Troubles du comportement alimentaire (TCA)' => 'Retrouvez une relation saine avec la nourriture',
+                            'Végétarisme/Véganisme' => 'Équilibre nutritionnel sans produits animaux',
+                            'Maladies cardiovasculaires' => 'Protégez votre cœur par l\'alimentation',
+                            'Allergies alimentaires' => 'Gérez vos intolérances en toute sécurité',
+                            'Nutrition gériatrique' => 'Vitalité et santé à tout âge',
+                            'Nutrition clinique' => 'Prise en charge pathologies chroniques',
+                            'Bien-être général' => 'Équilibre et vitalité au quotidien',
+                            'Nutrition de la femme' => 'Hormones, cycles et étapes à vie',
+                            'Nutrition santé publique & collective' => 'Programs pour communautés',
+                            'Nutrition fonctionnelle & préventive' => 'Approche personnalisée et globale'
+                        ];
+                    ?>
+                    <div class="specialties-section">
+                        <div class="specialties-title">
+                            Spécialités du Diététicien
+                        </div>
+                        <div class="specialties-list">
+                            <?php foreach ($specialties as $specialty) {
+                                $description = isset($specialty_descriptions[$specialty['name_fr']])
+                                    ? $specialty_descriptions[$specialty['name_fr']]
+                                    : '';
+                            ?>
+                            <div class="specialty-card" style="--specialty-color: <?php echo htmlspecialchars($specialty['color']); ?>">
+                                <div class="specialty-icon">
+                                    <i class="fa <?php echo htmlspecialchars($specialty['icon']); ?>"></i>
+                                </div>
+                                <div class="specialty-name"><?php echo htmlspecialchars($specialty['name_fr']); ?></div>
+                                <?php if ($description) { ?>
+                                <div class="specialty-description"><?php echo htmlspecialchars($description); ?></div>
+                                <?php } ?>
+                            </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Stats Grid (Only referrals and rating) -->
+                    <?php if (isset($dietitian_stats) && $dietitian_stats && ($dietitian_stats['total_referrals'] > 0 || $dietitian_stats['average_rating'] > 0)) { ?>
+                    <div class="stats-grid">
+                        <?php if ($dietitian_stats['total_referrals'] > 0) { ?>
+                        <div class="stat-card">
+                            <i class="fa fa-share-alt"></i>
+                            <div class="stat-value"><?php echo $dietitian_stats['total_referrals']; ?></div>
+                            <div class="stat-label">Références</div>
+                        </div>
+                        <?php } ?>
+                        <?php if ($dietitian_stats['average_rating'] > 0) { ?>
+                        <div class="stat-card">
+                            <i class="fa fa-star"></i>
+                            <div class="stat-value"><?php echo number_format($dietitian_stats['average_rating'], 1); ?></div>
+                            <div class="stat-label">Note moyenne</div>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
+
+                    <!-- Certifications -->
+                    <?php if (!empty($certifications)) { ?>
+                    <div class="certifications-section">
+                        <div class="certifications-title">
+                            <i class="fa fa-certificate"></i>
+                            Certifications & Diplômes
+                        </div>
+                        <?php foreach ($certifications as $certification) { ?>
+                        <div class="certification-item">
+                            <i class="fa fa-check-circle"></i>
+                            <span class="certification-text"><?php echo htmlspecialchars($certification['name']); ?></span>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
 
                     <div class="dietitian-details">
                         <?php if (isset($dietitian->email)) { ?>
@@ -679,71 +1111,6 @@ $this->load->view('portal/includes/portal_header');
                         <h3>Évaluation</h3>
                     </div>
 
-                    <?php if (isset($dietitian_rating) && $dietitian_rating && $dietitian_rating->total_ratings > 0) { ?>
-                    <!-- Average Rating Display -->
-                    <div class="average-rating">
-                        <div class="rating-score">
-                            <?php echo number_format($dietitian_rating->avg_overall, 1); ?> / 5
-                        </div>
-                        <div class="rating-stars">
-                            <?php
-                            $avg = round($dietitian_rating->avg_overall);
-                            for ($i = 1; $i <= 5; $i++) {
-                                if ($i <= $avg) {
-                                    echo '<i class="fa fa-star"></i>';
-                                } else {
-                                    echo '<i class="fa fa-star-o"></i>';
-                                }
-                            }
-                            ?>
-                        </div>
-                        <div class="rating-count">
-                            Basé sur <?php echo $dietitian_rating->total_ratings; ?>
-                            <?php echo $dietitian_rating->total_ratings > 1 ? 'évaluations' : 'évaluation'; ?>
-                        </div>
-
-                        <!-- Criteria Details -->
-                        <div class="criteria-ratings">
-                            <?php
-                            $criteria = [
-                                'professionalism' => ['label' => 'Professionnalisme', 'icon' => 'fa-user-md'],
-                                'listening' => ['label' => 'Écoute', 'icon' => 'fa-comments'],
-                                'advice' => ['label' => 'Qualité des conseils', 'icon' => 'fa-lightbulb-o'],
-                                'results' => ['label' => 'Résultats obtenus', 'icon' => 'fa-line-chart'],
-                                'availability' => ['label' => 'Disponibilité', 'icon' => 'fa-clock-o']
-                            ];
-
-                            foreach ($criteria as $key => $info) {
-                                $avg_key = 'avg_' . $key;
-                                if (isset($dietitian_rating->$avg_key) && $dietitian_rating->$avg_key > 0) {
-                                    $criterion_avg = $dietitian_rating->$avg_key;
-                                    $criterion_rounded = round($criterion_avg);
-                            ?>
-                            <div class="criterion-item">
-                                <div class="criterion-label">
-                                    <i class="fa <?php echo $info['icon']; ?>"></i>
-                                    <?php echo $info['label']; ?>
-                                </div>
-                                <div class="criterion-stars">
-                                    <?php
-                                    for ($i = 1; $i <= 5; $i++) {
-                                        if ($i <= $criterion_rounded) {
-                                            echo '<i class="fa fa-star"></i>';
-                                        } else {
-                                            echo '<i class="fa fa-star-o"></i>';
-                                        }
-                                    }
-                                    ?>
-                                    <span class="criterion-score"><?php echo number_format($criterion_avg, 1); ?>/5</span>
-                                </div>
-                            </div>
-                            <?php
-                                }
-                            }
-                            ?>
-                        </div>
-                    </div>
-                    <?php } ?>
 
                     <?php if (isset($my_rating) && $my_rating) { ?>
                     <!-- Patient's Current Rating -->
@@ -871,12 +1238,12 @@ $this->load->view('portal/includes/portal_header');
                                 ><?php echo isset($my_rating->comment) ? htmlspecialchars($my_rating->comment) : ''; ?></textarea>
                             </div>
 
-                            <div style="display: flex; gap: 10px;">
+                            <div class="rating-buttons-container">
                                 <button type="submit" class="btn-submit-rating" id="submitRatingBtn">
                                     <i class="fa fa-check"></i>
                                     Enregistrer les modifications
                                 </button>
-                                <button type="button" class="btn-back" onclick="cancelEdit()" style="flex: 0; min-width: auto; padding: 14px 20px;">
+                                <button type="button" class="btn-back" onclick="cancelEdit()">
                                     <i class="fa fa-times"></i>
                                     Annuler
                                 </button>
@@ -1105,6 +1472,45 @@ $this->load->view('portal/includes/portal_header');
 
     // Check initial form validity
     checkFormValidity();
+
+    // DEBUG TEMPORAIRE - Menu Toggle
+    if (window.location.search.includes('debug=1')) {
+        console.log('🐛 DEBUG MODE ACTIVÉ');
+
+        // Vérifier si les éléments du menu existent
+        const menuToggleBtn = document.getElementById('menuToggle');
+        const slideMenuEl = document.getElementById('slideMenu');
+        const menuOverlayEl = document.getElementById('menuOverlay');
+
+        console.log('Menu Toggle Button:', menuToggleBtn ? '✅ EXISTS' : '❌ NOT FOUND');
+        console.log('Slide Menu:', slideMenuEl ? '✅ EXISTS' : '❌ NOT FOUND');
+        console.log('Menu Overlay:', menuOverlayEl ? '✅ EXISTS' : '❌ NOT FOUND');
+
+        if (menuToggleBtn) {
+            console.log('Menu Toggle Click Listeners:', getEventListeners(menuToggleBtn));
+        }
+
+        // Ajouter un indicateur visuel
+        if (menuToggleBtn) {
+            menuToggleBtn.style.border = '3px solid red';
+            menuToggleBtn.title = 'DEBUG: Menu Toggle Button';
+        }
+
+        // Test manuel
+        window.testMenuToggle = function() {
+            console.log('Testing menu toggle...');
+            if (slideMenuEl) {
+                slideMenuEl.classList.toggle('active');
+                console.log('Menu active:', slideMenuEl.classList.contains('active'));
+            }
+            if (menuOverlayEl) {
+                menuOverlayEl.classList.toggle('active');
+            }
+        };
+
+        console.log('Pour tester le menu manuellement, tapez: testMenuToggle()');
+    }
 </script>
 
 <?php $this->load->view('portal/includes/portal_footer'); ?>
+

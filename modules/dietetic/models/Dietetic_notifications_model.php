@@ -3062,6 +3062,7 @@ class Dietetic_notifications_model extends App_Model
             'reminder_water' => 'fa-tint',
             'milestone' => 'fa-trophy',
             'program_assigned' => 'fa-clipboard',
+            'program_created_with_invoice' => 'fa-file-text-o',
             'program_updated' => 'fa-refresh',
             'program_ending' => 'fa-clock-o',
             'recipe_assigned' => 'fa-cutlery',
@@ -3708,5 +3709,135 @@ class Dietetic_notifications_model extends App_Model
             log_message('error', 'Failed to send SMS: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Notify patient when program is created with billing/invoice
+     */
+    public function notify_program_created_with_invoice($patient_id, $program_name, $dietitian_name, $billing_data = [])
+    {
+        $preferences = $this->get_preferences($patient_id);
+        if (!$preferences || !$preferences->notify_program) {
+            log_activity('NOTIFICATION - Program notifications disabled for patient: ' . $patient_id);
+            return false;
+        }
+
+        // Get patient info with email and phone from tbldietic_patients
+        $this->load->model('dietetic/dietetic_patients_model');
+        $patient = $this->db->select('p.*, c.firstname, c.lastname, c.company')
+                            ->from(db_prefix() . 'dietic_patients p')
+                            ->join(db_prefix() . 'clients cl', 'cl.userid = p.client_id', 'left')
+                            ->join(db_prefix() . 'contacts c', 'c.userid = p.client_id AND c.is_primary = 1', 'left')
+                            ->where('p.id', $patient_id)
+                            ->get()
+                            ->row();
+
+        if (!$patient) {
+            log_activity('NOTIFICATION - Patient not found: ' . $patient_id);
+            return false;
+        }
+
+        // Use patient name or company name
+        $patient_name = $patient->firstname ? ($patient->firstname . ' ' . $patient->lastname) : ($patient->company ?? 'Patient');
+
+        // Extract billing data
+        $duration = $billing_data['duration_months'] ?? '';
+        $total_price = $billing_data['total_price'] ?? 0;
+        $payment_mode = $billing_data['payment_mode'] ?? '';
+        $start_date = $billing_data['start_date'] ?? '';
+        $end_date = $billing_data['end_date'] ?? '';
+        $invoice_id = $billing_data['invoice_id'] ?? '';
+
+        // ========== SMS MESSAGE (MAX 160 CARACTÈRES) ==========
+        $sms_message = "Programme " . substr($program_name, 0, 30) . " cree par " . substr($dietitian_name, 0, 25) . ".";
+        if ($duration) {
+            $sms_message .= " Duree: " . $duration . " mois.";
+        }
+        $sms_message .= " Consultez votre espace.";
+        // Truncate to 160 characters
+        $sms_message = substr($sms_message, 0, 160);
+
+        // ========== WhatsApp MESSAGE (Formatted) ==========
+        $whatsapp_message = "🎉 *Nouveau Programme Créé*\n\n";
+        $whatsapp_message .= "Bonjour " . $patient_name . ",\n\n";
+        $whatsapp_message .= "Votre diététicien *" . $dietitian_name . "* a créé un nouveau programme pour vous :\n\n";
+        $whatsapp_message .= "📋 *Programme:* " . $program_name . "\n";
+        if ($duration) {
+            $whatsapp_message .= "⏱️ *Durée:* " . $duration . " mois\n";
+        }
+        if ($start_date) {
+            $whatsapp_message .= "📅 *Début:* " . date('d/m/Y', strtotime($start_date)) . "\n";
+        }
+        if ($total_price > 0) {
+            $whatsapp_message .= "💰 *Montant:* " . number_format($total_price, 0, ',', ' ') . " FCFA\n";
+        }
+        if ($payment_mode) {
+            $mode_text = $payment_mode == 'one_time' ? 'Paiement unique' : 'Paiement mensuel';
+            $whatsapp_message .= "💳 *Mode:* " . $mode_text . "\n";
+        }
+        if ($invoice_id) {
+            $whatsapp_message .= "📄 *Facture:* #" . $invoice_id . "\n";
+        }
+        $whatsapp_message .= "\nConsultez votre espace patient pour plus de détails.";
+
+        // ========== EMAIL MESSAGE (HTML) ==========
+        $email_message = "Bonjour " . $patient_name . ",\n\n";
+        $email_message .= "Votre diététicien " . $dietitian_name . " a créé un nouveau programme nutritionnel personnalisé pour vous.\n\n";
+        $email_message .= "**Détails du programme :**\n";
+        $email_message .= "📋 Nom : " . $program_name . "\n";
+        if ($duration) {
+            $email_message .= "⏱️ Durée : " . $duration . " mois\n";
+        }
+        if ($start_date) {
+            $email_message .= "📅 Date de début : " . date('d/m/Y', strtotime($start_date)) . "\n";
+        }
+        if ($end_date) {
+            $email_message .= "📅 Date de fin : " . date('d/m/Y', strtotime($end_date)) . "\n";
+        }
+
+        if ($total_price > 0) {
+            $email_message .= "\n**Facturation :**\n";
+            $email_message .= "💰 Montant total : " . number_format($total_price, 0, ',', ' ') . " FCFA\n";
+            if ($payment_mode) {
+                $mode_text = $payment_mode == 'one_time' ? 'Paiement unique' : 'Paiement mensuel';
+                $email_message .= "💳 Mode de paiement : " . $mode_text . "\n";
+            }
+            if ($invoice_id) {
+                $email_message .= "📄 Facture #" . $invoice_id . " générée et disponible dans votre espace.\n";
+            }
+        }
+
+        $email_message .= "\nVous pouvez consulter tous les détails de votre programme dans votre espace patient.\n\n";
+        $email_message .= "Cordialement,\n";
+        $email_message .= get_option('companyname');
+
+        // ========== SEND NOTIFICATION ==========
+        log_activity('NOTIFICATION - Sending program created notification to patient: ' . $patient_id .
+                     ' | Email: ' . ($patient->email ?? 'N/A') .
+                     ' | Phone: ' . ($patient->phone ?? 'N/A') .
+                     ' | SMS enabled: ' . $preferences->channel_sms .
+                     ' | WhatsApp enabled: ' . $preferences->channel_whatsapp .
+                     ' | Email enabled: ' . $preferences->channel_email);
+
+        return $this->send_notification_with_frontend([
+            'patient_id' => $patient_id,
+            'type' => 'program_created_with_invoice',
+            'subject' => '🎉 Nouveau Programme Créé - ' . $program_name,
+            'message' => $email_message,
+            'message_sms' => $sms_message, // Separate short message for SMS
+            'email' => $patient->email ?? '',
+            'phone' => $patient->phone ?? '',
+            'url' => 'dietetic/portal/programs', // URL to redirect in notification center
+            'channels' => [
+                'email' => $preferences->channel_email ?? 1,
+                'sms' => $preferences->channel_sms ?? 1,
+                'whatsapp' => $preferences->channel_whatsapp ?? 1,
+                'push' => $preferences->channel_push ?? 1
+            ],
+            'push_data' => [
+                'program_id' => $billing_data['program_id'] ?? null,
+                'invoice_id' => $invoice_id
+            ]
+        ]);
     }
 }

@@ -70,6 +70,9 @@ class Programs extends AdminController
             show_404();
         }
 
+        // Log activity - Program viewed
+        log_activity('Programme consulté : "' . $data['program']->program_name . '" (ID: ' . $id . ')');
+
         $data['title'] = $data['program']->program_name;
         $data['patient'] = $this->dietetic_patients_model->get($data['program']->patient_id);
         $data['meal_plans'] = $this->dietetic_programs_model->get_meal_plans($id);
@@ -137,6 +140,56 @@ class Programs extends AdminController
             }
         }
 
+        // ============================================
+        // Load invoices related to this program
+        // ============================================
+        $data['invoices'] = [];
+        if (isset($data['patient']) && $data['patient'] && isset($data['patient']->client_id)) {
+            // Simple query: get all invoices for this client and filter by program reference
+            $this->db->select('i.*');
+            $this->db->from(db_prefix() . 'invoices i');
+            $this->db->where('i.clientid', $data['patient']->client_id);
+            $this->db->group_start();
+            $this->db->like('i.adminnote', 'Programme');
+            $this->db->like('i.adminnote', 'ID: ' . $id);
+            $this->db->group_end();
+            $this->db->order_by('i.date', 'DESC');
+            $invoices_result = $this->db->get()->result();
+
+            // Also try to get invoices with the program tag
+            $this->db->select('i.*');
+            $this->db->from(db_prefix() . 'invoices i');
+            $this->db->join(db_prefix() . 'taggables tg', 'tg.rel_id = i.id AND tg.rel_type = "invoice"', 'inner');
+            $this->db->join(db_prefix() . 'tags t', 't.id = tg.tag_id', 'inner');
+            $this->db->where('i.clientid', $data['patient']->client_id);
+            $this->db->where('t.name', 'programme_' . $id);
+            $invoices_tagged = $this->db->get()->result();
+
+            // Merge results and remove duplicates
+            $all_invoices = array_merge($invoices_result, $invoices_tagged);
+            $unique_invoices = [];
+            foreach ($all_invoices as $invoice) {
+                $unique_invoices[$invoice->id] = $invoice;
+            }
+            $data['invoices'] = array_values($unique_invoices);
+        }
+
+        // ============================================
+        // Load activity history for this program
+        // ============================================
+        $data['history'] = [];
+        $this->db->select('*');
+        $this->db->from(db_prefix() . 'activity_log');
+        $this->db->group_start();
+            $this->db->like('description', 'programme ' . $id);
+            $this->db->or_like('description', 'program ' . $id);
+            $this->db->or_like('description', 'Programme ID: ' . $id);
+            $this->db->or_like('description', 'Program ID: ' . $id);
+        $this->db->group_end();
+        $this->db->order_by('date', 'DESC');
+        $this->db->limit(50); // Last 50 activities
+        $data['history'] = $this->db->get()->result();
+
         $this->load->view('admin/programs/view', $data);
     }
 
@@ -157,34 +210,237 @@ class Programs extends AdminController
                 $data['dietitian_id'] = get_staff_user_id();
             }
 
+            // Calculate billing if service is selected
+            if (!empty($data['service_id']) && !empty($data['duration_months']) && !empty($data['payment_mode'])) {
+                $service_id = $data['service_id'];
+                $duration = (int)$data['duration_months'];
+                $payment_mode = $data['payment_mode'];
+
+                // Get service details
+                $service = $this->db->get_where(db_prefix() . 'items', ['id' => $service_id])->row();
+
+                if ($service) {
+                    $monthly_price = $service->rate;
+                    $subtotal = $monthly_price * $duration;
+
+                    // Determine discount percentage
+                    $discount_percent = 0;
+                    if ($duration == 6) {
+                        $discount_percent = $service->service_discount_6_months ?? 0;
+                    } elseif ($duration == 12) {
+                        $discount_percent = $service->service_discount_12_months ?? 0;
+                    }
+
+                    // Calculate total with discount
+                    $discount_amount = ($subtotal * $discount_percent) / 100;
+                    $total_price = $subtotal - $discount_amount;
+
+                    // Add calculated billing data
+                    $data['monthly_price'] = $monthly_price;
+                    $data['total_price'] = $total_price;
+                    $data['discount_applied'] = $discount_percent;
+                    $data['billing_status'] = 'pending'; // Will be active after first payment
+
+                    // Calculate end_date based on duration if not set
+                    if (empty($data['end_date']) && !empty($data['start_date'])) {
+                        $data['end_date'] = date('Y-m-d', strtotime($data['start_date'] . ' +' . $duration . ' months'));
+                    }
+
+                    // Set next billing date
+                    if ($payment_mode == 'recurring') {
+                        // First bill immediately, next one in 1 month
+                        $data['next_billing_date'] = date('Y-m-d', strtotime($data['start_date'] . ' +1 month'));
+                        $data['total_invoices_expected'] = $duration;
+                    } else {
+                        // One-time payment, no recurring
+                        $data['next_billing_date'] = null;
+                        $data['total_invoices_expected'] = 1;
+                    }
+
+                    log_activity('PROGRAM CREATE - Billing calculated: Service ID ' . $service_id . ', Duration ' . $duration . ' months, Total: ' . $total_price . ' FCFA');
+                }
+            }
+
             $program_id = $this->dietetic_programs_model->add($data);
 
             if ($program_id) {
-                // Send notification to patient
+                log_activity('PROGRAM CREATE - Program created successfully: ID ' . $program_id);
+
+                // ============================================
+                // CREATE INVOICE AUTOMATICALLY
+                // ============================================
+                if (!empty($data['service_id']) && !empty($data['total_price'])) {
+                    try {
+                        log_activity('PROGRAM CREATE - Creating invoice for program: ' . $program_id);
+
+                        $this->load->model('invoices_model');
+
+                        // Get patient info
+                        $patient = $this->dietetic_patients_model->get($data['patient_id'], false);
+
+                        if (!$patient || !$patient->client_id) {
+                            throw new Exception('Patient or client not found');
+                        }
+
+                        // Get service info
+                        $service = $this->db->get_where(db_prefix() . 'items', ['id' => $data['service_id']])->row();
+
+                        if (!$service) {
+                            throw new Exception('Service not found');
+                        }
+
+                        // Determine invoice amount based on payment mode
+                        $invoice_amount = ($data['payment_mode'] == 'one_time')
+                            ? $data['total_price']  // Full amount for one-time payment
+                            : $data['monthly_price']; // First month for recurring
+
+                        // Prepare invoice data
+                        $invoice_data = [
+                            'clientid' => $patient->client_id,
+                            'date' => date('Y-m-d'),
+                            'duedate' => date('Y-m-d', strtotime('+7 days')), // 7 days to pay
+                            'currency' => get_base_currency()->id,
+                            'adminnote' => 'Programme: ' . $data['program_name'] . ' (ID: ' . $program_id . ')',
+                            'newitems' => [
+                                [
+                                    'description' => $service->description . ' - ' . $data['duration_months'] . ' mois',
+                                    'long_description' => $data['payment_mode'] == 'one_time'
+                                        ? 'Paiement unique pour ' . $data['duration_months'] . ' mois'
+                                        : 'Paiement mensuel (Mois 1/' . $data['duration_months'] . ')',
+                                    'qty' => 1,
+                                    'rate' => $invoice_amount,
+                                    'taxname' => []
+                                ]
+                            ],
+                            'tags' => ['programme_' . $program_id]
+                        ];
+
+                        // Create invoice
+                        $invoice_id = $this->invoices_model->add($invoice_data);
+
+                        if ($invoice_id) {
+                            log_activity('PROGRAM CREATE - Invoice created: #' . $invoice_id . ' for ' . $invoice_amount . ' FCFA');
+
+                            // Verify and fix invoice if needed (like in portal subscribe_service)
+                            $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+
+                            if (empty($created_invoice->total) || $created_invoice->total == 0) {
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', [
+                                    'subtotal' => $invoice_amount,
+                                    'total' => $invoice_amount
+                                ]);
+                                log_activity('PROGRAM CREATE - Fixed invoice totals');
+                            }
+
+                            if ($created_invoice->status != 1) {
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', ['status' => 1]);
+                                log_activity('PROGRAM CREATE - Set invoice status to Unpaid');
+                            }
+
+                            if (empty($created_invoice->number) || $created_invoice->number == 0) {
+                                $next_number = get_option('next_invoice_number');
+                                if (empty($next_number)) {
+                                    $last_invoice = $this->db->select('number')
+                                        ->from(db_prefix() . 'invoices')
+                                        ->where('id !=', $invoice_id)
+                                        ->order_by('CAST(number AS UNSIGNED)', 'DESC')
+                                        ->limit(1)
+                                        ->get()
+                                        ->row();
+
+                                    $next_number = $last_invoice && is_numeric($last_invoice->number) ? intval($last_invoice->number) + 1 : 1;
+                                }
+
+                                $this->db->where('id', $invoice_id);
+                                $this->db->update(db_prefix() . 'invoices', ['number' => $next_number]);
+
+                                update_option('next_invoice_number', $next_number + 1);
+                                log_activity('PROGRAM CREATE - Fixed invoice number: ' . $next_number);
+                            }
+
+                            // Update program with billing status
+                            $this->db->where('id', $program_id);
+                            $this->db->update(db_prefix() . 'dietic_programs', [
+                                'billing_status' => 'pending', // Will be active after payment
+                                'last_billing_date' => date('Y-m-d')
+                            ]);
+
+                            set_alert('success', 'Programme créé avec succès. Facture #' . $invoice_id . ' générée (' . number_format($invoice_amount, 0, ',', ' ') . ' FCFA).');
+
+                        } else {
+                            log_activity('PROGRAM CREATE - ERROR: Failed to create invoice');
+                            set_alert('warning', 'Programme créé mais erreur lors de la création de la facture.');
+                        }
+
+                    } catch (Exception $e) {
+                        log_activity('PROGRAM CREATE - Invoice creation error: ' . $e->getMessage());
+                        set_alert('warning', 'Programme créé mais erreur lors de la création de la facture: ' . $e->getMessage());
+                    }
+                }
+
+                // ============================================
+                // SEND NOTIFICATIONS (SMS, WhatsApp, Email, Push)
+                // ============================================
                 try {
-                    if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && isset($data['patient_id'])) {
+                    log_activity('PROGRAM CREATE - Starting notification process for patient: ' . ($data['patient_id'] ?? 'N/A'));
+
+                    if (isset($data['patient_id']) && $this->db->table_exists(db_prefix() . 'dietic_notification_preferences')) {
                         $this->load->model('dietetic/dietetic_notifications_model');
 
                         // Get program info
                         $program = $this->dietetic_programs_model->get($program_id);
+                        log_activity('PROGRAM CREATE - Program retrieved: ' . ($program ? $program->program_name : 'NULL'));
 
                         // Get dietitian info
                         $dietitian_id = $data['dietitian_id'] ?? get_staff_user_id();
                         $dietitian = $this->staff_model->get($dietitian_id);
                         $dietitian_name = $dietitian ? ($dietitian->firstname . ' ' . $dietitian->lastname) : 'Votre diététicien';
+                        log_activity('PROGRAM CREATE - Dietitian: ' . $dietitian_name);
 
-                        // Send notification
-                        $this->dietetic_notifications_model->notify_program_assigned(
+                        // Check if patient has notification preferences
+                        $prefs = $this->dietetic_notifications_model->get_preferences($data['patient_id']);
+                        if (!$prefs) {
+                            log_activity('PROGRAM CREATE - No preferences found, creating default preferences for patient: ' . $data['patient_id']);
+                            $this->dietetic_notifications_model->create_default_preferences($data['patient_id']);
+                            $prefs = $this->dietetic_notifications_model->get_preferences($data['patient_id']);
+                        }
+                        log_activity('PROGRAM CREATE - Preferences: ' . ($prefs ? 'EXISTS (SMS:' . $prefs->channel_sms . ', WhatsApp:' . $prefs->channel_whatsapp . ', Email:' . $prefs->channel_email . ')' : 'NULL'));
+
+                        // Prepare billing data for notification
+                        $billing_data = [
+                            'program_id' => $program_id,
+                            'duration_months' => $data['duration_months'] ?? null,
+                            'total_price' => $data['total_price'] ?? 0,
+                            'payment_mode' => $data['payment_mode'] ?? null,
+                            'start_date' => $program->start_date ?? null,
+                            'end_date' => $program->end_date ?? null,
+                            'invoice_id' => $invoice_id ?? null
+                        ];
+
+                        // Send comprehensive notification via all channels
+                        log_activity('PROGRAM CREATE - Calling notify_program_created_with_invoice...');
+                        $result = $this->dietetic_notifications_model->notify_program_created_with_invoice(
                             $data['patient_id'],
-                            $program->name,
-                            $dietitian_name
+                            $program->program_name,
+                            $dietitian_name,
+                            $billing_data
                         );
+
+                        if ($result) {
+                            log_activity('PROGRAM CREATE - ✅ All notifications sent successfully');
+                        } else {
+                            log_activity('PROGRAM CREATE - ⚠️ Notifications may not have been sent (preferences disabled or error)');
+                        }
+                    } else {
+                        log_activity('PROGRAM CREATE - ❌ Cannot send notifications: ' .
+                            (!isset($data['patient_id']) ? 'No patient_id' : 'Preferences table does not exist'));
                     }
                 } catch (Exception $e) {
-                    log_activity('Program notification error: ' . $e->getMessage());
+                    log_activity('PROGRAM CREATE - ❌ Notification error: ' . $e->getMessage());
                 }
 
-                set_alert('success', _l('added_successfully'));
                 redirect(admin_url('dietetic/programs/view/' . $program_id));
             } else {
                 set_alert('danger', _l('dietetic_error_add_failed'));
@@ -194,6 +450,14 @@ class Programs extends AdminController
         $data['title'] = _l('dietetic_new_program');
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
+
+        // Get available services from Perfex items (for billing)
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.description', 'ASC');
+        $data['services'] = $this->db->get()->result();
 
         // Auto-calculate nutritional objectives from anamnesis data if patient_id is provided
         $data['calculated_objectives'] = null;
@@ -277,7 +541,28 @@ class Programs extends AdminController
         if ($this->input->post()) {
             $update_data = $this->input->post();
 
+            // Check if status changed for logging
+            $old_status = $data['program']->status;
+            $new_status = isset($update_data['status']) ? $update_data['status'] : $old_status;
+            $status_changed = ($old_status != $new_status);
+
             if ($this->dietetic_programs_model->update($id, $update_data)) {
+                // Log program update
+                log_activity('Programme modifié : "' . $data['program']->program_name . '" (ID: ' . $id . ')');
+
+                // Log status change if applicable
+                if ($status_changed) {
+                    $status_labels = [
+                        'active' => 'Actif',
+                        'completed' => 'Terminé',
+                        'cancelled' => 'Annulé'
+                    ];
+                    $old_label = isset($status_labels[$old_status]) ? $status_labels[$old_status] : $old_status;
+                    $new_label = isset($status_labels[$new_status]) ? $status_labels[$new_status] : $new_status;
+
+                    log_activity('Changement de statut du programme "' . $data['program']->program_name . '" (ID: ' . $id . ') : ' . $old_label . ' → ' . $new_label);
+                }
+
                 // Send notification to patient
                 try {
                     if ($this->db->table_exists(db_prefix() . 'dietic_notification_preferences') && $data['program']->patient_id) {
@@ -312,6 +597,14 @@ class Programs extends AdminController
         $data['title'] = _l('dietetic_edit_program');
         $data['patients'] = $this->dietetic_patients_model->get_all();
         $data['staff'] = $this->staff_model->get();
+
+        // Get available services from Perfex items (for billing)
+        $this->db->select('i.*, ig.name as group_name');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.description', 'ASC');
+        $data['services'] = $this->db->get()->result();
 
         // Auto-calculate nutritional objectives from anamnesis data
         $data['calculated_objectives'] = null;
@@ -392,9 +685,28 @@ class Programs extends AdminController
             ajax_access_denied();
         }
 
+        // Get program info before deletion for logging
+        $program = $this->dietetic_programs_model->get($id);
+        $program_name = $program ? $program->program_name : 'Programme #' . $id;
+
+        // Safely get patient name
+        $patient_name = 'N/A';
+        if ($program && $program->patient_id) {
+            $patient = $this->dietetic_patients_model->get($program->patient_id);
+            if ($patient && isset($patient->client) && isset($patient->client->company)) {
+                $patient_name = $patient->client->company;
+            }
+        }
+
         if ($this->dietetic_programs_model->delete($id)) {
+            // Log successful deletion
+            log_activity('Programme supprimé : "' . $program_name . '" (ID: ' . $id . ') - Patient: ' . $patient_name);
+
             echo json_encode(['success' => true, 'message' => _l('deleted')]);
         } else {
+            // Log failed deletion attempt
+            log_activity('Échec de suppression du programme : "' . $program_name . '" (ID: ' . $id . ')');
+
             echo json_encode(['success' => false, 'message' => _l('dietetic_error_delete_failed')]);
         }
     }

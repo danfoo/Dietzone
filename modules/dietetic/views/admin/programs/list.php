@@ -334,6 +334,15 @@
                                                    title="Modifier">
                                                     <i class="fa fa-edit"></i>
                                                 </a>
+                                                <?php if (is_admin() || dietetic_has_permission('delete')) { ?>
+                                                    <a href="#"
+                                                       class="btn btn-sm btn-danger btn-action btn-delete-program"
+                                                       data-program-id="<?php echo $program->id; ?>"
+                                                       data-program-name="<?php echo htmlspecialchars($program->program_name); ?>"
+                                                       title="Supprimer">
+                                                        <i class="fa fa-trash"></i>
+                                                    </a>
+                                                <?php } ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -411,6 +420,64 @@ $(document).ready(function() {
             }
         });
     }, 500);
+
+    // ============================================
+    // Suppression de programme avec confirmation
+    // ============================================
+    $('.btn-delete-program').on('click', function(e) {
+        e.preventDefault();
+
+        var programId = $(this).data('program-id');
+        var programName = $(this).data('program-name');
+        var $row = $(this).closest('tr');
+
+        // Confirmation avant suppression
+        if (confirm('⚠️ ATTENTION !\n\nÊtes-vous sûr de vouloir supprimer le programme :\n"' + programName + '" ?\n\n⚠️ Cette action supprimera :\n• Le programme et tous ses détails\n• Tous les plans de repas associés\n• Toutes les données liées\n\n❌ Cette action est IRRÉVERSIBLE !\n\nVoulez-vous vraiment continuer ?')) {
+
+            // Afficher un indicateur de chargement
+            var $btn = $(this);
+            var originalHtml = $btn.html();
+            $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+            // Appel AJAX pour supprimer le programme
+            $.ajax({
+                url: '<?php echo admin_url("dietetic/programs/delete/"); ?>' + programId,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    <?php echo $this->security->get_csrf_token_name(); ?>: '<?php echo $this->security->get_csrf_hash(); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Succès - animer la suppression de la ligne
+                        $row.fadeOut(400, function() {
+                            $(this).remove();
+
+                            // Mettre à jour le compteur de résultats
+                            updateResultsCount();
+
+                            // Afficher un message de succès
+                            alert_float('success', '✅ Programme "' + programName + '" supprimé avec succès');
+
+                            // Recharger la page après 1 seconde
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        });
+                    } else {
+                        // Erreur
+                        alert_float('danger', '❌ Erreur lors de la suppression : ' + (response.message || 'Erreur inconnue'));
+                        $btn.html(originalHtml).prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Erreur AJAX
+                    alert_float('danger', '❌ Erreur de connexion : ' + error);
+                    $btn.html(originalHtml).prop('disabled', false);
+                }
+            });
+        }
+    });
 });
 </script>
 

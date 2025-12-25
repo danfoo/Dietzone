@@ -1785,3 +1785,942 @@ if (!function_exists('dietetic_get_payment_gateway_name')) {
         return isset($names[$gateway]) ? $names[$gateway] : ucfirst($gateway);
     }
 }
+
+// ==================== PAYMENT TOKENS (SESSION-LESS) ====================
+
+/**
+ * Create a payment token in database to avoid session loss during payment redirects
+ * This solves the PayPal callback session issue when redirecting from paypal.com
+ *
+ * @param int $invoice_id Invoice ID
+ * @param int $client_id Client ID for validation
+ * @param string $gateway Gateway name (paypal, wave, orange_money)
+ * @param string|null $order_id External order ID (PayPal order_id, etc)
+ * @param float $amount Payment amount
+ * @param string $currency Currency code (default: XOF)
+ * @param array $metadata Additional data as associative array (will be JSON encoded)
+ * @return int|false Payment token ID or false on failure
+ */
+if (!function_exists('dietetic_create_payment_token')) {
+    function dietetic_create_payment_token($invoice_id, $client_id, $gateway, $order_id = null, $amount = 0, $currency = 'XOF', $metadata = [])
+    {
+        $CI = &get_instance();
+
+        // Generate a unique token
+        $token = bin2hex(random_bytes(32));
+
+        // Delete any existing pending tokens for this invoice+gateway (cleanup)
+        $CI->db->where('invoice_id', $invoice_id);
+        $CI->db->where('gateway', $gateway);
+        $CI->db->where('status', 'pending');
+        $CI->db->delete(db_prefix() . 'dietic_payment_tokens');
+
+        $data = [
+            'invoice_id' => $invoice_id,
+            'client_id' => $client_id,
+            'gateway' => $gateway,
+            'order_id' => $order_id,
+            'token' => $token,
+            'amount' => $amount,
+            'currency' => $currency,
+            'status' => 'pending',
+            'metadata' => !empty($metadata) ? json_encode($metadata) : null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+1 hour')) // 1 hour expiration
+        ];
+
+        if ($CI->db->insert(db_prefix() . 'dietic_payment_tokens', $data)) {
+            $token_id = $CI->db->insert_id();
+            log_activity('PAYMENT TOKEN CREATED - ID: ' . $token_id . ', Invoice: ' . $invoice_id . ', Gateway: ' . $gateway);
+            return $token_id;
+        }
+
+        return false;
+    }
+}
+
+/**
+ * Get payment token data by invoice ID and gateway
+ * Used in payment callbacks to retrieve order information
+ *
+ * @param int $invoice_id Invoice ID
+ * @param string $gateway Gateway name
+ * @return object|null Payment token object or null if not found
+ */
+if (!function_exists('dietetic_get_payment_token')) {
+    function dietetic_get_payment_token($invoice_id, $gateway)
+    {
+        $CI = &get_instance();
+
+        $token = $CI->db->select('*')
+            ->from(db_prefix() . 'dietic_payment_tokens')
+            ->where('invoice_id', $invoice_id)
+            ->where('gateway', $gateway)
+            ->where('status', 'pending')
+            ->where('expires_at >', date('Y-m-d H:i:s')) // Not expired
+            ->order_by('created_at', 'DESC')
+            ->limit(1)
+            ->get()
+            ->row();
+
+        return $token;
+    }
+}
+
+/**
+ * Update payment token status
+ *
+ * @param int $token_id Payment token ID
+ * @param string $status New status (pending, processing, completed, cancelled, expired)
+ * @return bool
+ */
+if (!function_exists('dietetic_update_payment_token_status')) {
+    function dietetic_update_payment_token_status($token_id, $status)
+    {
+        log_activity('HELPER dietetic_update_payment_token_status - START - Token ID: ' . $token_id . ', Status: ' . $status);
+
+        try {
+            $CI = &get_instance();
+            log_activity('HELPER dietetic_update_payment_token_status - Got CI instance');
+
+            $table_name = db_prefix() . 'dietic_payment_tokens';
+            log_activity('HELPER dietetic_update_payment_token_status - Table: ' . $table_name);
+
+            // First, verify the token exists
+            log_activity('HELPER dietetic_update_payment_token_status - Checking if token exists...');
+            $token_check = $CI->db->select('id, status, invoice_id, gateway')
+                ->from($table_name)
+                ->where('id', $token_id)
+                ->get()
+                ->row();
+
+            if (!$token_check) {
+                log_activity('HELPER dietetic_update_payment_token_status - ERROR: Token not found - ID: ' . $token_id);
+                return false;
+            }
+
+            log_activity('HELPER dietetic_update_payment_token_status - Token found, current status: ' . $token_check->status);
+
+            // If already at the desired status, consider it success
+            if ($token_check->status === $status) {
+                log_activity('HELPER dietetic_update_payment_token_status - Token already at status: ' . $status . ' - Success');
+                return true;
+            }
+
+            // Delete any conflicting tokens with same invoice+gateway+status (in case of unique constraint)
+            // This handles the case where unique constraint is on (invoice_id, gateway, status)
+            if (isset($token_check->invoice_id) && isset($token_check->gateway)) {
+                log_activity('HELPER dietetic_update_payment_token_status - Deleting conflicting tokens with invoice=' . $token_check->invoice_id . ', gateway=' . $token_check->gateway . ', status=' . $status);
+                $CI->db->where('invoice_id', $token_check->invoice_id);
+                $CI->db->where('gateway', $token_check->gateway);
+                $CI->db->where('status', $status);
+                $CI->db->where('id !=', $token_id);
+                $CI->db->delete($table_name);
+                $affected = $CI->db->affected_rows();
+                log_activity('HELPER dietetic_update_payment_token_status - Deleted ' . $affected . ' conflicting token(s)');
+            }
+
+            // Attempt update using Query Builder
+            log_activity('HELPER dietetic_update_payment_token_status - Attempting Query Builder update...');
+            $CI->db->where('id', $token_id);
+            $result = $CI->db->update($table_name, ['status' => $status]);
+            log_activity('HELPER dietetic_update_payment_token_status - Query Builder result: ' . var_export($result, true));
+
+            // Check for database errors
+            $error = $CI->db->error();
+            log_activity('HELPER dietetic_update_payment_token_status - DB error check: ' . json_encode($error));
+
+            if ($error['code'] !== 0) {
+                log_activity('HELPER dietetic_update_payment_token_status - DB ERROR detected: Code ' . $error['code'] . ' - ' . $error['message']);
+
+                // Error 1062 = Duplicate entry - ignore it
+                if ($error['code'] == 1062) {
+                    log_activity('HELPER dietetic_update_payment_token_status - Duplicate key ignored (status already set)');
+                    return true;
+                }
+
+                // Try fallback with direct SQL query
+                log_activity('HELPER dietetic_update_payment_token_status - Trying fallback with direct SQL...');
+                $sql = "UPDATE " . $table_name . " SET status = '" . $CI->db->escape_str($status) . "' WHERE id = " . (int)$token_id;
+                log_activity('HELPER dietetic_update_payment_token_status - SQL: ' . $sql);
+                $fallback_result = $CI->db->query($sql);
+                log_activity('HELPER dietetic_update_payment_token_status - Fallback result: ' . var_export($fallback_result, true));
+                return $fallback_result;
+            }
+
+            if ($result) {
+                log_activity('PAYMENT TOKEN UPDATED - ID: ' . $token_id . ', Status: ' . $status);
+                return true;
+            } else {
+                log_activity('PAYMENT TOKEN UPDATE FAILED - ID: ' . $token_id . ', Status: ' . $status . ' (no error, but result false)');
+
+                // Verify if update actually happened despite false return
+                $verify = $CI->db->select('status')
+                    ->from($table_name)
+                    ->where('id', $token_id)
+                    ->get()
+                    ->row();
+
+                if ($verify && $verify->status === $status) {
+                    log_activity('PAYMENT TOKEN UPDATE VERIFIED - Status actually updated despite false return');
+                    return true;
+                }
+
+                return false;
+            }
+        } catch (Exception $e) {
+            log_activity('HELPER dietetic_update_payment_token_status - EXCEPTION: ' . $e->getMessage());
+            log_activity('HELPER dietetic_update_payment_token_status - TRACE: ' . $e->getTraceAsString());
+
+            // Check if it's a duplicate key error (1062)
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), '1062') !== false) {
+                log_activity('HELPER dietetic_update_payment_token_status - Duplicate key exception - verifying final status...');
+
+                // Verify the current status of the token
+                try {
+                    $verify = $CI->db->select('status')
+                        ->from($table_name)
+                        ->where('id', $token_id)
+                        ->get()
+                        ->row();
+
+                    if ($verify && $verify->status === $status) {
+                        log_activity('HELPER dietetic_update_payment_token_status - Token already at desired status despite duplicate key error - SUCCESS');
+                        return true;
+                    }
+                } catch (Exception $verify_ex) {
+                    log_activity('HELPER dietetic_update_payment_token_status - Verification failed: ' . $verify_ex->getMessage());
+                }
+            }
+
+            return false;
+        }
+    }
+}
+
+/**
+ * Delete expired payment tokens (cleanup function for cron)
+ * Should be called periodically to clean up old tokens
+ *
+ * @return int Number of tokens deleted
+ */
+if (!function_exists('dietetic_cleanup_expired_payment_tokens')) {
+    function dietetic_cleanup_expired_payment_tokens()
+    {
+        $CI = &get_instance();
+
+        $CI->db->where('expires_at <', date('Y-m-d H:i:s'));
+        $CI->db->or_where('status', 'completed');
+        $CI->db->or_where('status', 'cancelled');
+        $CI->db->where('created_at <', date('Y-m-d H:i:s', strtotime('-7 days'))); // Keep for 7 days
+
+        $CI->db->delete(db_prefix() . 'dietic_payment_tokens');
+        $deleted = $CI->db->affected_rows();
+
+        if ($deleted > 0) {
+            log_activity('PAYMENT TOKENS CLEANUP - Deleted ' . $deleted . ' expired/old tokens');
+        }
+
+        return $deleted;
+    }
+}
+
+// ============================================================================
+// DIETITIAN PROFILE & REFERRAL CODE FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate unique referral code for a dietitian
+ * Format: DZ-{FirstLetterFirstName}{FirstLetterLastName}_{Number}
+ * Example: Marie DIOP → DZ-MD_001
+ *
+ * @param int $staff_id Staff member ID
+ * @return string|false Referral code or false on error
+ */
+if (!function_exists('dietetic_generate_referral_code')) {
+    function dietetic_generate_referral_code($staff_id)
+    {
+        $CI = &get_instance();
+
+        // Get staff info
+        $staff = $CI->db->get_where('tblstaff', ['staffid' => $staff_id])->row();
+        if (!$staff) {
+            return false;
+        }
+
+        // Extract initials
+        $first_initial = strtoupper(substr($staff->firstname, 0, 1));
+        $last_initial = strtoupper(substr($staff->lastname, 0, 1));
+
+        // Base code format
+        $base_code = 'DZ-' . $first_initial . $last_initial . '-';
+
+        // Find next available number
+        $number = 1;
+        $code = $base_code . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+        // Check if code exists and increment until unique
+        while (true) {
+            $exists = $CI->db->get_where('tblstaff', [
+                'dietitian_referral_code' => $code
+            ])->row();
+
+            if (!$exists) {
+                break; // Code is unique
+            }
+
+            $number++;
+            $code = $base_code . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+            // Safety limit
+            if ($number > 999) {
+                return false;
+            }
+        }
+
+        // Update staff with referral code
+        $CI->db->where('staffid', $staff_id);
+        $CI->db->update('tblstaff', [
+            'dietitian_referral_code' => $code
+        ]);
+
+        log_activity('Referral code generated for staff: ' . $staff->firstname . ' ' . $staff->lastname . ' - Code: ' . $code);
+
+        return $code;
+    }
+}
+
+/**
+ * Get dietitian by referral code
+ *
+ * @param string $referral_code Referral code to search for
+ * @return object|null Staff object or null if not found
+ */
+if (!function_exists('dietetic_get_dietitian_by_referral_code')) {
+    function dietetic_get_dietitian_by_referral_code($referral_code)
+    {
+        $CI = &get_instance();
+
+        $referral_code = trim(strtoupper($referral_code));
+
+        return $CI->db->select('staffid, firstname, lastname, email, dietitian_referral_code, dietitian_specialties, dietitian_years_experience')
+            ->from('tblstaff')
+            ->where('dietitian_referral_code', $referral_code)
+            ->where('active', 1)
+            ->get()
+            ->row();
+    }
+}
+
+/**
+ * Assign patient to dietitian via referral code
+ *
+ * @param int $patient_id Patient ID
+ * @param string $referral_code Referral code
+ * @return bool Success status
+ */
+if (!function_exists('dietetic_assign_patient_via_referral')) {
+    function dietetic_assign_patient_via_referral($patient_id, $referral_code)
+    {
+        $CI = &get_instance();
+
+        // Get dietitian by code
+        $dietitian = dietetic_get_dietitian_by_referral_code($referral_code);
+        if (!$dietitian) {
+            log_activity('Referral failed - Invalid code: ' . $referral_code);
+            return false;
+        }
+
+        // Check if assignment table exists
+        $assignment_table = db_prefix() . 'dietic_patient_dietitians';
+        if (!$CI->db->table_exists($assignment_table)) {
+            log_activity('Referral failed - Assignment table does not exist');
+            return false;
+        }
+
+        // Check if already assigned
+        $existing = $CI->db->get_where($assignment_table, [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian->staffid
+        ])->row();
+
+        if ($existing) {
+            log_activity('Patient already assigned to this dietitian');
+            return true; // Already assigned, consider it success
+        }
+
+        // Create assignment
+        $CI->db->insert($assignment_table, [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian->staffid,
+            'assigned_at' => date('Y-m-d H:i:s'),
+            'assigned_by' => 'referral_code',
+            'is_primary' => 1
+        ]);
+
+        // Track referral
+        $referrals_table = db_prefix() . 'dietic_referrals';
+        if ($CI->db->table_exists($referrals_table)) {
+            $CI->db->insert($referrals_table, [
+                'dietitian_staff_id' => $dietitian->staffid,
+                'patient_id' => $patient_id,
+                'referral_code' => $referral_code,
+                'referred_at' => date('Y-m-d H:i:s'),
+                'source' => 'registration'
+            ]);
+        }
+
+        // Update patient with referral code
+        $CI->db->where('id', $patient_id);
+        $CI->db->update(db_prefix() . 'dietic_patients', [
+            'registration_referral_code' => $referral_code
+        ]);
+
+        log_activity('Patient ' . $patient_id . ' assigned to dietitian ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' via code: ' . $referral_code);
+
+        return true;
+    }
+}
+
+/**
+ * Get dietitian statistics
+ *
+ * @param int $staff_id Staff member ID
+ * @return array Statistics
+ */
+if (!function_exists('dietetic_get_dietitian_stats')) {
+    function dietetic_get_dietitian_stats($staff_id)
+    {
+        $CI = &get_instance();
+
+        $stats = [
+            'total_patients' => 0,
+            'active_patients' => 0,
+            'new_patients_this_month' => 0,
+            'total_consultations' => 0,
+            'consultations_this_month' => 0,
+            'programs_active' => 0,
+            'total_referrals' => 0,
+            'referrals_this_month' => 0,
+            'average_rating' => 0,
+            'total_reviews' => 0
+        ];
+
+        // Get total patients assigned
+        // Try both patient_dietitians table and direct dietitian_id column
+        if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            try {
+                $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+            } catch (Exception $e) {
+                log_activity('Error counting patients from patient_dietitians: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: check direct assignment in patients table
+        if ($stats['total_patients'] == 0 && $CI->db->table_exists(db_prefix() . 'dietic_patients')) {
+            try {
+                $stats['total_patients'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('status', 'active')
+                    ->count_all_results(db_prefix() . 'dietic_patients');
+            } catch (Exception $e) {
+                log_activity('Error counting patients from patients: ' . $e->getMessage());
+            }
+        }
+
+        // Get new patients this month
+        if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+            try {
+                $stats['new_patients_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('assigned_date >=', date('Y-m-01'))
+                    ->count_all_results(db_prefix() . 'dietic_patient_dietitians');
+            } catch (Exception $e) {
+                log_activity('Error counting new patients this month from patient_dietitians: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: check patients created this month
+        if ($stats['new_patients_this_month'] == 0 && $CI->db->table_exists(db_prefix() . 'dietic_patients')) {
+            try {
+                $stats['new_patients_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('created_at >=', date('Y-m-01 00:00:00'))
+                    ->where('created_at <=', date('Y-m-t 23:59:59'))
+                    ->count_all_results(db_prefix() . 'dietic_patients');
+            } catch (Exception $e) {
+                log_activity('Error counting new patients this month from patients: ' . $e->getMessage());
+            }
+        }
+
+        // Get total consultations
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            try {
+                $stats['total_consultations'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_consultations');
+            } catch (Exception $e) {
+                log_activity('Error counting total consultations: ' . $e->getMessage());
+            }
+        }
+
+        // Get active patients (with recent activity)
+        // Define active as having consultation in last 90 days
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            try {
+                $result = $CI->db->select('COUNT(DISTINCT patient_id) as count')
+                    ->where('dietitian_id', $staff_id)
+                    ->where('consultation_date >=', date('Y-m-d', strtotime('-90 days')))
+                    ->get(db_prefix() . 'dietic_consultations')
+                    ->row();
+                $stats['active_patients'] = $result ? $result->count : 0;
+            } catch (Exception $e) {
+                log_activity('Error counting active patients: ' . $e->getMessage());
+            }
+        }
+
+        // Get consultations this month
+        if ($CI->db->table_exists(db_prefix() . 'dietic_consultations')) {
+            try {
+                $stats['consultations_this_month'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('consultation_date >=', date('Y-m-01'))
+                    ->where('consultation_date <=', date('Y-m-t'))
+                    ->count_all_results(db_prefix() . 'dietic_consultations');
+            } catch (Exception $e) {
+                log_activity('Error counting consultations this month: ' . $e->getMessage());
+            }
+        }
+
+        // Get active programs
+        if ($CI->db->table_exists(db_prefix() . 'dietic_programs')) {
+            try {
+                $stats['programs_active'] = $CI->db->where('dietitian_id', $staff_id)
+                    ->where('status', 'active')
+                    ->count_all_results(db_prefix() . 'dietic_programs');
+            } catch (Exception $e) {
+                log_activity('Error counting active programs: ' . $e->getMessage());
+            }
+        }
+
+        // Get referrals
+        if ($CI->db->table_exists(db_prefix() . 'dietic_referrals')) {
+            try {
+                $stats['total_referrals'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                    ->count_all_results(db_prefix() . 'dietic_referrals');
+            } catch (Exception $e) {
+                log_activity('Error counting total referrals: ' . $e->getMessage());
+            }
+
+            try {
+                $stats['referrals_this_month'] = $CI->db->where('dietitian_staff_id', $staff_id)
+                    ->where('referred_at >=', date('Y-m-01'))
+                    ->count_all_results(db_prefix() . 'dietic_referrals');
+            } catch (Exception $e) {
+                log_activity('Error counting referrals this month: ' . $e->getMessage());
+            }
+        }
+
+        // Get ratings
+        if ($CI->db->table_exists(db_prefix() . 'dietic_ratings')) {
+            try {
+                $ratings = $CI->db->select('AVG(overall_rating) as avg_rating, COUNT(*) as total_ratings')
+                    ->where('dietitian_id', $staff_id)
+                    ->get(db_prefix() . 'dietic_ratings')
+                    ->row();
+
+                if ($ratings) {
+                    $stats['average_rating'] = $ratings->avg_rating ? round($ratings->avg_rating, 1) : 0;
+                    $stats['total_reviews'] = $ratings->total_ratings ? $ratings->total_ratings : 0;
+                }
+            } catch (Exception $e) {
+                log_activity('Error getting ratings: ' . $e->getMessage());
+            }
+        }
+
+        log_activity('Dietitian stats retrieved for staff ' . $staff_id . ': ' . json_encode($stats));
+        return $stats;
+    }
+}
+
+/**
+ * Register custom payment modes in Perfex
+ * This ensures PayPal, Wave, and Orange Money are recognized by Perfex's core
+ *
+ * @return array Array of created/existing payment mode IDs
+ */
+if (!function_exists('dietetic_register_payment_modes')) {
+    function dietetic_register_payment_modes()
+    {
+        $CI = &get_instance();
+
+        $payment_modes = [
+            'PayPal' => [
+                'name' => 'PayPal',
+                'description' => 'Paiement en ligne sécurisé via PayPal',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ],
+            'Wave' => [
+                'name' => 'Wave',
+                'description' => 'Paiement mobile via Wave',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ],
+            'Orange Money' => [
+                'name' => 'Orange Money',
+                'description' => 'Paiement mobile via Orange Money',
+                'active' => 1,
+                'show_on_pdf' => 1,
+                'invoices_only' => 0,
+                'expenses_only' => 0
+            ]
+        ];
+
+        $mode_ids = [];
+
+        foreach ($payment_modes as $key => $mode_data) {
+            // Check if mode already exists
+            $existing = $CI->db->get_where(db_prefix() . 'payment_modes', ['name' => $mode_data['name']])->row();
+
+            if ($existing) {
+                $mode_ids[$key] = $existing->id;
+                log_activity('Payment mode already exists: ' . $mode_data['name'] . ' (ID: ' . $existing->id . ')');
+            } else {
+                // Create new payment mode
+                $CI->db->insert(db_prefix() . 'payment_modes', $mode_data);
+                $new_id = $CI->db->insert_id();
+                $mode_ids[$key] = $new_id;
+                log_activity('Payment mode created: ' . $mode_data['name'] . ' (ID: ' . $new_id . ')');
+            }
+        }
+
+        return $mode_ids;
+    }
+}
+
+/**
+ * Update dietitian profile
+ *
+ * @param int $staff_id Staff member ID
+ * @param array $data Profile data to update
+ * @return bool Success status
+ */
+if (!function_exists('dietetic_update_dietitian_profile')) {
+    function dietetic_update_dietitian_profile($staff_id, $data)
+    {
+        $CI = &get_instance();
+
+        $allowed_fields = [
+            'dietitian_specialties',
+            'dietitian_years_experience',
+            'dietitian_bio',
+            'dietitian_languages',
+            'dietitian_certifications'
+        ];
+
+        $update_data = [];
+        foreach ($allowed_fields as $field) {
+            if (isset($data[$field])) {
+                $update_data[$field] = $data[$field];
+            }
+        }
+
+        if (empty($update_data)) {
+            return false;
+        }
+
+        $update_data['dietitian_profile_updated_at'] = date('Y-m-d H:i:s');
+
+        $CI->db->where('staffid', $staff_id);
+        $result = $CI->db->update('tblstaff', $update_data);
+
+        if ($result) {
+            log_activity('Dietitian profile updated - Staff ID: ' . $staff_id);
+        }
+
+        return $result;
+    }
+}
+
+/**
+ * Auto-assign a dietitian to a patient based on availability, specialty, and workload
+ *
+ * @param int|null $patient_id Patient ID (optional, for logging)
+ * @param string|null $specialty Required specialty (optional)
+ * @return int|null Assigned dietitian staff ID or null if none available
+ */
+if (!function_exists('dietetic_auto_assign_dietitian')) {
+    function dietetic_auto_assign_dietitian($patient_id = null, $specialty = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('AUTO ASSIGN DIETITIAN - Starting auto-assignment for patient: ' . ($patient_id ?? 'N/A') . ', specialty: ' . ($specialty ?? 'any'));
+
+        // Get all active dietitians with dietetic role
+        $CI->db->select('s.staffid, s.firstname, s.lastname, s.email, ' .
+                       's.dietitian_specialties, s.dietitian_is_available, ' .
+                       's.dietitian_max_patients, s.dietitian_years_experience');
+        $CI->db->from(db_prefix() . 'staff s');
+        $CI->db->where('s.active', 1);
+
+        // Check if staff has dietitian role (role_id for dietitian role)
+        $CI->db->join(db_prefix() . 'staff_roles sr', 'sr.staffid = s.staffid', 'inner');
+
+        $dietitians = $CI->db->get()->result();
+
+        if (empty($dietitians)) {
+            log_activity('AUTO ASSIGN DIETITIAN - No active dietitians found');
+            return null;
+        }
+
+        log_activity('AUTO ASSIGN DIETITIAN - Found ' . count($dietitians) . ' active dietitians');
+
+        $eligible_dietitians = [];
+
+        foreach ($dietitians as $dietitian) {
+            // Check if dietitian is available
+            if (isset($dietitian->dietitian_is_available) && $dietitian->dietitian_is_available == 0) {
+                log_activity('AUTO ASSIGN DIETITIAN - Skipping unavailable dietitian: ' . $dietitian->firstname . ' ' . $dietitian->lastname);
+                continue;
+            }
+
+            // Check specialty match if required
+            if ($specialty !== null && !empty($specialty)) {
+                if (empty($dietitian->dietitian_specialties)) {
+                    continue;
+                }
+
+                $dietitian_specialties = json_decode($dietitian->dietitian_specialties, true);
+                if (!is_array($dietitian_specialties) || !in_array($specialty, $dietitian_specialties)) {
+                    log_activity('AUTO ASSIGN DIETITIAN - Skipping dietitian without required specialty: ' . $dietitian->firstname . ' ' . $dietitian->lastname);
+                    continue;
+                }
+            }
+
+            // Count current active subscriptions (workload)
+            $CI->load->model('dietetic/dietetic_subscriptions_model');
+            $workload = $CI->dietetic_subscriptions_model->count_active_by_dietitian($dietitian->staffid);
+
+            // Check if dietitian has reached max patients
+            if (isset($dietitian->dietitian_max_patients) && $dietitian->dietitian_max_patients > 0) {
+                if ($workload >= $dietitian->dietitian_max_patients) {
+                    log_activity('AUTO ASSIGN DIETITIAN - Skipping dietitian at max capacity: ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' (' . $workload . '/' . $dietitian->dietitian_max_patients . ')');
+                    continue;
+                }
+            }
+
+            $eligible_dietitians[] = [
+                'staffid' => $dietitian->staffid,
+                'name' => $dietitian->firstname . ' ' . $dietitian->lastname,
+                'workload' => $workload,
+                'experience' => $dietitian->dietitian_years_experience ?? 0
+            ];
+
+            log_activity('AUTO ASSIGN DIETITIAN - Eligible: ' . $dietitian->firstname . ' ' . $dietitian->lastname . ' (workload: ' . $workload . ', experience: ' . ($dietitian->dietitian_years_experience ?? 0) . ' years)');
+        }
+
+        if (empty($eligible_dietitians)) {
+            log_activity('AUTO ASSIGN DIETITIAN - No eligible dietitians found');
+            return null;
+        }
+
+        // Sort by workload (ascending), then by experience (descending)
+        usort($eligible_dietitians, function($a, $b) {
+            if ($a['workload'] == $b['workload']) {
+                return $b['experience'] - $a['experience']; // More experience first if same workload
+            }
+            return $a['workload'] - $b['workload']; // Lower workload first
+        });
+
+        $selected = $eligible_dietitians[0];
+
+        log_activity('AUTO ASSIGN DIETITIAN - Selected: ' . $selected['name'] . ' (ID: ' . $selected['staffid'] . ', workload: ' . $selected['workload'] . ', experience: ' . $selected['experience'] . ' years)');
+
+        return $selected['staffid'];
+    }
+}
+
+/**
+ * Create a subscription after successful payment
+ *
+ * @param int $patient_id Patient ID
+ * @param int $invoice_id Perfex invoice ID
+ * @param object $service Service/item object from Perfex
+ * @param int|null $dietitian_id Dietitian ID (if null, will auto-assign)
+ * @return int|false Subscription ID or false on failure
+ */
+if (!function_exists('dietetic_create_subscription_from_payment')) {
+    function dietetic_create_subscription_from_payment($patient_id, $invoice_id, $service, $dietitian_id = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('CREATE SUBSCRIPTION - Starting for patient: ' . $patient_id . ', invoice: ' . $invoice_id . ', service: ' . ($service->description ?? 'N/A'));
+
+        // Load required models
+        $CI->load->model('dietetic/dietetic_subscriptions_model');
+        $CI->load->model('dietetic/dietetic_patient_dietitians_model');
+
+        // Auto-assign dietitian if not specified
+        if ($dietitian_id === null) {
+            log_activity('CREATE SUBSCRIPTION - No dietitian specified, auto-assigning...');
+            $dietitian_id = dietetic_auto_assign_dietitian($patient_id);
+
+            if (!$dietitian_id) {
+                log_activity('CREATE SUBSCRIPTION - ERROR: Could not auto-assign dietitian');
+                return false;
+            }
+        }
+
+        log_activity('CREATE SUBSCRIPTION - Using dietitian ID: ' . $dietitian_id);
+
+        // Prepare subscription data
+        $subscription_data = [
+            'patient_id' => $patient_id,
+            'dietitian_id' => $dietitian_id,
+            'referral_source' => 'platform', // Default to platform
+            'start_date' => date('Y-m-d'),
+            'status' => 'active',
+            'billing_cycle' => 'monthly',
+            'amount' => $service->rate ?? 0,
+            'duration_months' => 1, // Default 1 month for single service purchase
+            'notes' => 'Subscription created from invoice #' . $invoice_id . ' - Service: ' . ($service->description ?? '')
+        ];
+
+        // Check if service has a linked service_plan_id (custom field or metadata)
+        // For now, we'll create a basic subscription without service_plan_id
+
+        // Create subscription
+        $subscription_id = $CI->dietetic_subscriptions_model->add($subscription_data);
+
+        if (!$subscription_id) {
+            log_activity('CREATE SUBSCRIPTION - ERROR: Failed to create subscription');
+            return false;
+        }
+
+        log_activity('CREATE SUBSCRIPTION - Subscription created successfully: ' . $subscription_id);
+
+        // Update patient-dietitian relationship if not exists
+        try {
+            if ($CI->db->table_exists(db_prefix() . 'dietic_patient_dietitians')) {
+                $existing = $CI->db->get_where(db_prefix() . 'dietic_patient_dietitians', [
+                    'patient_id' => $patient_id,
+                    'dietitian_id' => $dietitian_id
+                ])->row();
+
+                if (!$existing) {
+                    $CI->db->insert(db_prefix() . 'dietic_patient_dietitians', [
+                        'patient_id' => $patient_id,
+                        'dietitian_id' => $dietitian_id,
+                        'assigned_date' => date('Y-m-d'),
+                        'status' => 'active',
+                        'is_primary' => 1
+                    ]);
+
+                    log_activity('CREATE SUBSCRIPTION - Patient-dietitian relationship created');
+                } else {
+                    log_activity('CREATE SUBSCRIPTION - Patient-dietitian relationship already exists');
+                }
+            }
+        } catch (Exception $e) {
+            log_activity('CREATE SUBSCRIPTION - Warning: Could not update patient-dietitian relationship: ' . $e->getMessage());
+        }
+
+        // Update primary dietitian in patients table
+        $CI->db->where('id', $patient_id);
+        $CI->db->update(db_prefix() . 'dietic_patients', ['dietitian_id' => $dietitian_id]);
+
+        log_activity('CREATE SUBSCRIPTION - Updated patient primary dietitian');
+
+        return $subscription_id;
+    }
+}
+
+/**
+ * Create revenue share records after payment
+ *
+ * @param int $subscription_id Subscription ID
+ * @param int $invoice_id Invoice ID (Perfex or dietetic)
+ * @param int $payment_id Payment ID (optional)
+ * @param float $total_amount Total payment amount
+ * @return int|false Revenue share ID or false on failure
+ */
+if (!function_exists('dietetic_create_revenue_share')) {
+    function dietetic_create_revenue_share($subscription_id, $invoice_id, $total_amount, $payment_id = null)
+    {
+        $CI = &get_instance();
+
+        log_activity('CREATE REVENUE SHARE - Starting for subscription: ' . $subscription_id . ', amount: ' . $total_amount);
+
+        // Get subscription details
+        $CI->load->model('dietetic/dietetic_subscriptions_model');
+        $subscription = $CI->dietetic_subscriptions_model->get($subscription_id);
+
+        if (!$subscription) {
+            log_activity('CREATE REVENUE SHARE - ERROR: Subscription not found');
+            return false;
+        }
+
+        // Get active commission settings for referral source
+        $CI->db->where('referral_source', $subscription->referral_source);
+        $CI->db->where('is_active', 1);
+        $CI->db->where('effective_from <=', date('Y-m-d'));
+        $CI->db->where('(effective_to IS NULL OR effective_to >=', date('Y-m-d') . ')', false);
+        $CI->db->order_by('effective_from', 'DESC');
+        $CI->db->limit(1);
+
+        $commission_setting = $CI->db->get(db_prefix() . 'dietic_commission_settings')->row();
+
+        if (!$commission_setting) {
+            // Use default percentages
+            if ($subscription->referral_source == 'dietitian') {
+                $dietitian_percentage = 80.00;
+                $platform_percentage = 20.00;
+            } else {
+                $dietitian_percentage = 60.00;
+                $platform_percentage = 40.00;
+            }
+            $commission_setting_id = null;
+
+            log_activity('CREATE REVENUE SHARE - Using default commission rates: Dietitian ' . $dietitian_percentage . '%, Platform ' . $platform_percentage . '%');
+        } else {
+            $dietitian_percentage = $commission_setting->dietitian_percentage;
+            $platform_percentage = $commission_setting->platform_percentage;
+            $commission_setting_id = $commission_setting->id;
+
+            log_activity('CREATE REVENUE SHARE - Using commission setting ID ' . $commission_setting_id . ': Dietitian ' . $dietitian_percentage . '%, Platform ' . $platform_percentage . '%');
+        }
+
+        // Calculate shares
+        $dietitian_share = round($total_amount * ($dietitian_percentage / 100), 2);
+        $platform_share = round($total_amount * ($platform_percentage / 100), 2);
+
+        // Prepare revenue share data
+        $revenue_data = [
+            'invoice_id' => $invoice_id,
+            'payment_id' => $payment_id,
+            'subscription_id' => $subscription_id,
+            'dietitian_id' => $subscription->dietitian_id,
+            'patient_id' => $subscription->patient_id,
+            'total_amount' => $total_amount,
+            'dietitian_share' => $dietitian_share,
+            'platform_share' => $platform_share,
+            'dietitian_percentage' => $dietitian_percentage,
+            'platform_percentage' => $platform_percentage,
+            'referral_source' => $subscription->referral_source,
+            'commission_setting_id' => $commission_setting_id,
+            'status' => 'pending'
+        ];
+
+        $CI->db->insert(db_prefix() . 'dietic_revenue_shares', $revenue_data);
+        $revenue_share_id = $CI->db->insert_id();
+
+        if ($revenue_share_id) {
+            log_activity('CREATE REVENUE SHARE - Created successfully: ID ' . $revenue_share_id . ' - Dietitian: ' . $dietitian_share . ' XOF, Platform: ' . $platform_share . ' XOF');
+        } else {
+            log_activity('CREATE REVENUE SHARE - ERROR: Failed to create revenue share record');
+        }
+
+        return $revenue_share_id;
+    }
+}

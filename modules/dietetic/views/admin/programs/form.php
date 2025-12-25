@@ -42,6 +42,113 @@
                                     <input type="text" class="form-control" name="program_name" value="<?php echo isset($program) ? $program->program_name : ''; ?>" required />
                                 </div>
 
+                                <!-- ===== SECTION FACTURATION ===== -->
+                                <div class="panel panel-info" style="border-left: 4px solid #01807B; margin-top: 20px;">
+                                    <div class="panel-heading" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                        <h5 style="margin: 0; color: #01807B;">
+                                            <i class="fa fa-credit-card"></i> Configuration de Facturation
+                                        </h5>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="form-group">
+                                            <label for="service_id">Service * <i class="fa fa-info-circle" data-toggle="tooltip" title="Sélectionnez le service/article Perfex à facturer"></i></label>
+                                            <select name="service_id" id="service_id" class="form-control selectpicker" data-live-search="true" required>
+                                                <option value="">-- Sélectionner un service --</option>
+                                                <?php if (isset($services) && !empty($services)) { ?>
+                                                    <?php foreach ($services as $service) { ?>
+                                                        <option value="<?php echo $service->id; ?>"
+                                                                data-rate="<?php echo $service->rate; ?>"
+                                                                data-discount-6="<?php echo $service->service_discount_6_months ?? 0; ?>"
+                                                                data-discount-12="<?php echo $service->service_discount_12_months ?? 0; ?>"
+                                                                <?php echo set_select('service_id', $service->id, isset($program) && $program->service_id == $service->id); ?>>
+                                                            <?php echo $service->description; ?> - <?php echo number_format($service->rate, 0, ',', ' '); ?> FCFA/mois
+                                                        </option>
+                                                    <?php } ?>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="duration_months">Durée du programme * <i class="fa fa-info-circle" data-toggle="tooltip" title="Durée en mois"></i></label>
+                                                    <select name="duration_months" id="duration_months" class="form-control" required>
+                                                        <option value="">-- Sélectionner --</option>
+                                                        <option value="1" <?php echo set_select('duration_months', '1', isset($program) && $program->duration_months == 1); ?>>1 mois</option>
+                                                        <option value="2" <?php echo set_select('duration_months', '2', isset($program) && $program->duration_months == 2); ?>>2 mois</option>
+                                                        <option value="3" <?php echo set_select('duration_months', '3', isset($program) && $program->duration_months == 3); ?>>3 mois</option>
+                                                        <option value="6" <?php echo set_select('duration_months', '6', isset($program) && $program->duration_months == 6); ?>>6 mois</option>
+                                                        <option value="12" <?php echo set_select('duration_months', '12', isset($program) && $program->duration_months == 12); ?>>1 an (12 mois)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="payment_mode">Mode de paiement * <i class="fa fa-info-circle" data-toggle="tooltip" title="Choisir entre paiement unique ou mensuel"></i></label>
+                                                    <select name="payment_mode" id="payment_mode" class="form-control" required>
+                                                        <option value="">-- Sélectionner --</option>
+                                                        <option value="one_time" <?php echo set_select('payment_mode', 'one_time', isset($program) && $program->payment_mode == 'one_time'); ?>>
+                                                            <i class="fa fa-check-circle"></i> Paiement unique (tout d'un coup)
+                                                        </option>
+                                                        <option value="recurring" <?php echo set_select('payment_mode', 'recurring', isset($program) && $program->payment_mode == 'recurring'); ?>>
+                                                            <i class="fa fa-calendar"></i> Paiement mensuel (facturation récurrente)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Calculateur de prix dynamique -->
+                                        <div id="price-calculator" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 6px; margin-top: 15px;">
+                                            <h6 style="color: #01807B; font-weight: 700; margin-bottom: 15px;">
+                                                <i class="fa fa-calculator"></i> Calcul du Prix
+                                            </h6>
+
+                                            <div style="font-size: 14px; line-height: 1.8;">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <strong>Prix mensuel:</strong> <span id="monthly-price">0</span> FCFA
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <strong>Durée:</strong> <span id="duration-display">0</span> mois
+                                                    </div>
+                                                </div>
+
+                                                <div class="row" style="margin-top: 10px;">
+                                                    <div class="col-md-6">
+                                                        <strong>Sous-total:</strong> <span id="subtotal">0</span> FCFA
+                                                    </div>
+                                                    <div class="col-md-6" id="discount-row" style="display: none;">
+                                                        <strong>Réduction (<span id="discount-percent">0</span>%):</strong>
+                                                        <span style="color: #28a745;">-<span id="discount-amount">0</span> FCFA</span>
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #01807B;">
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <h5 style="margin: 0; color: #01807B;">
+                                                                <strong>TOTAL À PAYER:</strong>
+                                                                <span id="total-price" style="font-size: 24px;">0</span> FCFA
+                                                            </h5>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row" style="margin-top: 10px;" id="payment-mode-info">
+                                                        <div class="col-md-12">
+                                                            <div class="alert alert-info" style="margin: 0; padding: 10px;">
+                                                                <i class="fa fa-info-circle"></i> <span id="payment-mode-text"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- ===== FIN SECTION FACTURATION ===== -->
+
                                 <div class="form-group">
                                     <label for="status"><?php echo _l('dietetic_status'); ?></label>
                                     <select name="status" class="form-control">
@@ -388,6 +495,87 @@
             }, 2000);
         });
         <?php endif; ?>
+
+        // ============================================
+        // PRICE CALCULATOR FOR BILLING
+        // ============================================
+        function calculatePrice() {
+            const serviceSelect = $('#service_id');
+            const durationSelect = $('#duration_months');
+            const paymentModeSelect = $('#payment_mode');
+            const calculator = $('#price-calculator');
+
+            // Get selected values
+            const selectedOption = serviceSelect.find('option:selected');
+            const monthlyRate = parseFloat(selectedOption.data('rate')) || 0;
+            const discount6 = parseFloat(selectedOption.data('discount-6')) || 0;
+            const discount12 = parseFloat(selectedOption.data('discount-12')) || 0;
+            const duration = parseInt(durationSelect.val()) || 0;
+            const paymentMode = paymentModeSelect.val();
+
+            // Only show calculator if all values are selected
+            if (monthlyRate > 0 && duration > 0 && paymentMode) {
+                calculator.show();
+
+                // Calculate subtotal
+                const subtotal = monthlyRate * duration;
+
+                // Determine discount percentage
+                let discountPercent = 0;
+                if (duration == 6) {
+                    discountPercent = discount6;
+                } else if (duration == 12) {
+                    discountPercent = discount12;
+                }
+
+                // Calculate discount amount
+                const discountAmount = (subtotal * discountPercent) / 100;
+
+                // Calculate total
+                const total = subtotal - discountAmount;
+
+                // Update display
+                $('#monthly-price').text(monthlyRate.toLocaleString('fr-FR'));
+                $('#duration-display').text(duration);
+                $('#subtotal').text(subtotal.toLocaleString('fr-FR'));
+
+                if (discountPercent > 0) {
+                    $('#discount-row').show();
+                    $('#discount-percent').text(discountPercent);
+                    $('#discount-amount').text(discountAmount.toLocaleString('fr-FR'));
+                } else {
+                    $('#discount-row').hide();
+                }
+
+                $('#total-price').text(total.toLocaleString('fr-FR'));
+
+                // Update payment mode info
+                if (paymentMode === 'one_time') {
+                    $('#payment-mode-text').html(
+                        '<strong>Paiement unique:</strong> Le patient paiera ' + total.toLocaleString('fr-FR') + ' FCFA en une seule fois.'
+                    );
+                } else if (paymentMode === 'recurring') {
+                    $('#payment-mode-text').html(
+                        '<strong>Paiement mensuel:</strong> Le patient paiera ' + monthlyRate.toLocaleString('fr-FR') + ' FCFA par mois pendant ' + duration + ' mois. Total: ' + total.toLocaleString('fr-FR') + ' FCFA.'
+                    );
+                }
+            } else {
+                calculator.hide();
+            }
+        }
+
+        // Trigger calculation on any change
+        $('#service_id, #duration_months, #payment_mode').on('change', function() {
+            calculatePrice();
+        });
+
+        // Calculate on page load if editing
+        <?php if (isset($program) && $program->service_id): ?>
+        calculatePrice();
+        <?php endif; ?>
+
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
     });
 })();
 </script>

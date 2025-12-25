@@ -729,6 +729,7 @@ class Portal extends App_Controller
         $phone_full = trim($this->input->post('phone_full'));
         $password = $this->input->post('password');
         $password_confirm = $this->input->post('password_confirm');
+        $referral_code = trim($this->input->post('referral_code')); // Code de référence diététicien (optionnel)
 
         // VALIDATION DES CHAMPS
         $errors = [];
@@ -761,6 +762,17 @@ class Portal extends App_Controller
         // Confirmation mot de passe
         if ($password !== $password_confirm) {
             $errors[] = 'Les mots de passe ne correspondent pas';
+        }
+
+        // Code de référence (optionnel mais validé si fourni)
+        $dietitian_id = null;
+        if (!empty($referral_code)) {
+            $dietitian = dietetic_get_dietitian_by_referral_code($referral_code);
+            if (!$dietitian) {
+                $errors[] = 'Code de référence invalide. Vérifiez le code ou laissez le champ vide.';
+            } else {
+                $dietitian_id = $dietitian['staffid'];
+            }
         }
 
         // Vérifier doublons EMAIL
@@ -823,6 +835,8 @@ class Portal extends App_Controller
                     'email' => $email,
                     'phone_full' => $phone_full,
                     'password' => $password,
+                    'referral_code' => $referral_code,
+                    'dietitian_id' => $dietitian_id,
                     'timestamp' => time()
                 ]
             ]);
@@ -1003,13 +1017,26 @@ class Portal extends App_Controller
 
             // 3. Créer PATIENT DIÉTÉTIQUE
             log_activity('INSCRIPTION OTP - Création patient diététique');
-            // Trouver un diététicien par défaut (le premier disponible) ou mettre 0
-            $this->db->select('staffid');
-            $this->db->from(db_prefix() . 'staff');
-            $this->db->where('active', 1);
-            $this->db->limit(1);
-            $default_dietitian = $this->db->get()->row();
-            $dietitian_id = $default_dietitian ? $default_dietitian->staffid : 0;
+
+            // Déterminer le diététicien assigné
+            $dietitian_id = 0;
+            $referral_code_used = null;
+
+            // Priorité 1: Diététicien du code de référence
+            if (!empty($pending['dietitian_id'])) {
+                $dietitian_id = $pending['dietitian_id'];
+                $referral_code_used = $pending['referral_code'];
+                log_activity('INSCRIPTION OTP - Assignation via code référence: ' . $referral_code_used . ' -> Dietitian ID: ' . $dietitian_id);
+            } else {
+                // Priorité 2: Trouver un diététicien par défaut (le premier disponible) ou mettre 0
+                $this->db->select('staffid');
+                $this->db->from(db_prefix() . 'staff');
+                $this->db->where('active', 1);
+                $this->db->limit(1);
+                $default_dietitian = $this->db->get()->row();
+                $dietitian_id = $default_dietitian ? $default_dietitian->staffid : 0;
+                log_activity('INSCRIPTION OTP - Assignation automatique -> Dietitian ID: ' . $dietitian_id);
+            }
 
             $patient_data = [
                 'client_id' => $client_id,
@@ -1026,6 +1053,17 @@ class Portal extends App_Controller
             }
 
             log_activity('INSCRIPTION OTP - Patient créé, ID: ' . $patient_id);
+
+            // Enregistrer la référence si un code a été utilisé
+            if (!empty($referral_code_used) && $dietitian_id > 0) {
+                try {
+                    dietetic_assign_patient_via_referral($patient_id, $referral_code_used);
+                    log_activity('INSCRIPTION OTP - Référence enregistrée: Patient ' . $patient_id . ' référé par code ' . $referral_code_used);
+                } catch (Exception $e) {
+                    log_activity('INSCRIPTION OTP - ERREUR enregistrement référence: ' . $e->getMessage());
+                    // Ne pas bloquer l'inscription si l'enregistrement de la référence échoue
+                }
+            }
 
             // Terminer transaction
             $this->db->trans_complete();
@@ -2855,6 +2893,47 @@ app.dietsenegal.net/dietetic/portal";
         // Get current dietitian
         $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
 
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+            }
+        }
+
         // Get dietitian's average rating (with error handling for missing table)
         if ($this->load_ratings_model()) {
             try {
@@ -2876,6 +2955,141 @@ app.dietsenegal.net/dietetic/portal";
         }
 
         $this->load->view('portal_my_dietitians', $data);
+    }
+
+    /**
+     * Debug my_dietitians data - temporary debugging function
+     */
+    public function debug_my_dietitians()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('authentication/login'));
+            return;
+        }
+
+        $client_id = get_client_user_id();
+
+        // Get patient
+        try {
+            $patient = $this->dietetic_patients_model->get_by_client($client_id);
+        } catch (Exception $e) {
+            $patient = null;
+        }
+
+        if (!$patient) {
+            echo '<h1>No patient found</h1>';
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+
+        // Load models
+        $this->load->model('staff_model');
+
+        // Get current dietitian
+        $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
+
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                    $data['specialties_error'] = $e->getMessage();
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+                $data['stats_error'] = $e->getMessage();
+            }
+        }
+
+        // Get dietitian's average rating
+        if ($this->load_ratings_model()) {
+            try {
+                $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+                $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+                $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_rating'] = null;
+                $data['my_rating'] = null;
+                $data['can_rate'] = false;
+                $data['rating_error'] = $e->getMessage();
+            }
+        } else {
+            $data['rating_error'] = 'Ratings model not loaded';
+        }
+
+        // Display debug info
+        echo '<html><head><style>body{font-family:monospace;padding:20px;}pre{background:#f5f5f5;padding:10px;border-radius:5px;}h2{color:#01807B;}</style></head><body>';
+        echo '<h1>Debug My Dietitians Data</h1>';
+
+        echo '<h2>Patient Info:</h2>';
+        echo '<pre>' . print_r($patient, true) . '</pre>';
+
+        echo '<h2>Dietitian Info:</h2>';
+        echo '<pre>' . print_r($data['dietitian'], true) . '</pre>';
+
+        echo '<h2>Specialties (' . count($data['specialties']) . '):</h2>';
+        echo '<pre>' . print_r($data['specialties'], true) . '</pre>';
+        if (isset($data['specialties_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['specialties_error'] . '</p>';
+        }
+
+        echo '<h2>Certifications (' . count($data['certifications']) . '):</h2>';
+        echo '<pre>' . print_r($data['certifications'], true) . '</pre>';
+
+        echo '<h2>Languages (' . count($data['languages']) . '):</h2>';
+        echo '<pre>' . print_r($data['languages'], true) . '</pre>';
+
+        echo '<h2>Dietitian Stats:</h2>';
+        echo '<pre>' . print_r($data['dietitian_stats'], true) . '</pre>';
+        if (isset($data['stats_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['stats_error'] . '</p>';
+        }
+
+        echo '<h2>Dietitian Rating:</h2>';
+        echo '<pre>' . print_r($data['dietitian_rating'], true) . '</pre>';
+
+        echo '<h2>My Rating:</h2>';
+        echo '<pre>' . print_r($data['my_rating'], true) . '</pre>';
+
+        echo '<h2>Can Rate:</h2>';
+        echo '<pre>' . ($data['can_rate'] ? 'true' : 'false') . '</pre>';
+        if (isset($data['rating_error'])) {
+            echo '<p style="color:red;">Error: ' . $data['rating_error'] . '</p>';
+        }
+
+        echo '</body></html>';
     }
 
     /**
@@ -12827,6 +13041,12 @@ php index.php cron/index</pre>';
      */
     public function services()
     {
+        // Disable caching for this page to ensure fresh data
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Cache-Control: post-check=0, pre-check=0', false);
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
         // Check authentication
         if (!$this->session->userdata('client_logged_in')) {
             redirect(site_url('dietetic/portal'));
@@ -12868,8 +13088,18 @@ php index.php cron/index</pre>';
             $this->db->order_by('i.rate', 'DESC');
             $services = $this->db->get()->result();
             $data['services'] = $services ? $services : [];
+
+            // Log service prices for debugging
+            if ($services) {
+                foreach ($services as $service) {
+                    log_activity('SERVICES PAGE - Retrieved service: ' . $service->description . ' - Price: ' . $service->rate . ' FCFA (ID: ' . $service->id . ')');
+                }
+            } else {
+                log_activity('SERVICES PAGE - No services found in "Services" group');
+            }
         } catch (Exception $e) {
             log_message('error', 'Services - Error getting services: ' . $e->getMessage());
+            log_activity('SERVICES PAGE - Database error: ' . $e->getMessage());
             $data['services'] = [];
         }
 
@@ -12911,13 +13141,70 @@ php index.php cron/index</pre>';
     }
 
     /**
-     * Debug page for services
+     * Debug page for services - Shows raw data from database
      */
     public function services_debug()
     {
-        // No authentication check - for debugging only
-        // Load the debug view
-        $this->load->view('portal/services_debug');
+        header('Content-Type: text/html; charset=utf-8');
+
+        echo '<h1>Services Debug - Données brutes de la base de données</h1>';
+        echo '<style>table { border-collapse: collapse; width: 100%; margin: 20px 0; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background: #01807B; color: white; }</style>';
+
+        // Get services directly from database
+        $this->db->select('i.id, i.description, i.long_description, i.rate, i.group_id, ig.name as group_name, i.unit');
+        $this->db->from(db_prefix() . 'items i');
+        $this->db->join(db_prefix() . 'items_groups ig', 'ig.id = i.group_id', 'left');
+        $this->db->where('ig.name', 'Services');
+        $this->db->order_by('i.id', 'ASC');
+        $services = $this->db->get()->result();
+
+        echo '<h2>Services du groupe "Services" (requête directe)</h2>';
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Description</th><th>Prix (rate)</th><th>Groupe</th><th>Unit</th></tr>';
+
+        if ($services) {
+            foreach ($services as $service) {
+                echo '<tr>';
+                echo '<td>' . $service->id . '</td>';
+                echo '<td>' . htmlspecialchars($service->description) . '</td>';
+                echo '<td style="font-weight: bold; color: #01807B;">' . $service->rate . ' FCFA</td>';
+                echo '<td>' . ($service->group_name ?? 'N/A') . '</td>';
+                echo '<td>' . ($service->unit ?? 'N/A') . '</td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="5">Aucun service trouvé</td></tr>';
+        }
+
+        echo '</table>';
+
+        echo '<br><h2>Requête SQL utilisée :</h2>';
+        echo '<pre>' . $this->db->last_query() . '</pre>';
+
+        echo '<br><h2>Tous les items (pour vérification) :</h2>';
+        $all_items = $this->db->select('id, description, rate, group_id')->from(db_prefix() . 'items')->order_by('id', 'ASC')->get()->result();
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Description</th><th>Prix</th><th>Group ID</th></tr>';
+        foreach ($all_items as $item) {
+            echo '<tr>';
+            echo '<td>' . $item->id . '</td>';
+            echo '<td>' . htmlspecialchars($item->description) . '</td>';
+            echo '<td>' . $item->rate . '</td>';
+            echo '<td>' . $item->group_id . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+
+        echo '<br><h2>Groupes d\'items :</h2>';
+        $groups = $this->db->select('*')->from(db_prefix() . 'items_groups')->get()->result();
+        echo '<table>';
+        echo '<tr><th>ID</th><th>Nom</th></tr>';
+        foreach ($groups as $group) {
+            echo '<tr><td>' . $group->id . '</td><td>' . $group->name . '</td></tr>';
+        }
+        echo '</table>';
+
+        echo '<p><a href="' . site_url('dietetic/portal/services') . '">← Retour à la page services</a></p>';
     }
 
     /**
@@ -13062,93 +13349,108 @@ php index.php cron/index</pre>';
                 return;
             }
 
-            // Get next invoice number (Perfex stores just the number, not formatted)
-            $next_number = 1;
+            // Load Perfex's invoice model for proper invoice creation
+            $this->load->model('invoices_model');
 
-            // Get the last invoice to calculate next number
-            $last_invoice = $this->db->select('number')
-                ->from(db_prefix() . 'invoices')
-                ->order_by('number', 'DESC')
-                ->limit(1)
-                ->get()
-                ->row();
-
-            if ($last_invoice && is_numeric($last_invoice->number)) {
-                $next_number = intval($last_invoice->number) + 1;
-            }
-
-            // Get base currency (usually XOF for FCFA)
-            $base_currency = $this->db->select('id')
-                ->from(db_prefix() . 'currencies')
-                ->where('isdefault', 1)
-                ->get()
-                ->row();
-
-            $currency_id = $base_currency ? $base_currency->id : 1;
-
-            // Create invoice directly with SQL
+            // Prepare invoice data using Perfex's format (simplified to let Perfex handle calculations)
             $invoice_data = [
                 'clientid' => $client_id,
-                'number' => $next_number,  // Store just the number, Perfex formats it on display
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
-                'currency' => $currency_id,
-                'subtotal' => $service->rate,
-                'total' => $service->rate,
-                'status' => 1, // Unpaid
-                'datecreated' => date('Y-m-d H:i:s'),
-                'hash' => md5(uniqid(rand(), true)),
-                'adminnote' => 'Souscription automatique au service: ' . $service->description
+                'currency' => get_base_currency()->id,
+                'adminnote' => 'Souscription automatique au service: ' . $service->description,
+                'newitems' => [
+                    [
+                        'description' => $service->description,
+                        'long_description' => isset($service->long_description) ? $service->long_description : '',
+                        'qty' => 1,
+                        'rate' => $service->rate,
+                        'unit' => isset($service->unit) ? $service->unit : '',
+                        'taxname' => []
+                    ]
+                ],
+                'tags' => ['service_subscription']
             ];
 
-            $this->db->insert(db_prefix() . 'invoices', $invoice_data);
-            $invoice_id = $this->db->insert_id();
+            log_activity('SUBSCRIBE SERVICE - Creating invoice with item rate: ' . $service->rate);
+
+            // Use Perfex's model to create invoice (handles numbering, totals, etc.)
+            $invoice_id = $this->invoices_model->add($invoice_data);
 
             if (!$invoice_id) {
+                log_activity('SUBSCRIBE SERVICE - Invoice creation failed for client ' . $client_id);
                 echo json_encode(['success' => false, 'message' => 'Erreur lors de la création de la facture']);
                 return;
             }
 
-            // Add invoice item
-            $item_data = [
-                'rel_id' => $invoice_id,
-                'rel_type' => 'invoice',
-                'item_order' => 1,
-                'description' => $service->description,
-                'long_description' => isset($service->long_description) ? $service->long_description : '',
-                'qty' => 1,
-                'rate' => $service->rate,
-                'unit' => isset($service->unit) ? $service->unit : ''
-            ];
+            // Verify invoice was created with correct values
+            $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            log_activity('SUBSCRIBE SERVICE - Invoice #' . $invoice_id . ' created - Number: ' . $created_invoice->number . ', Prefix: ' . $created_invoice->prefix . ', Status: ' . $created_invoice->status . ', Subtotal: ' . $created_invoice->subtotal . ', Total: ' . $created_invoice->total);
 
-            $this->db->insert(db_prefix() . 'itemable', $item_data);
+            // If total is 0 or NULL, there's a problem with invoice creation
+            if (empty($created_invoice->total) || $created_invoice->total == 0) {
+                log_activity('SUBSCRIBE SERVICE - ERROR: Invoice total is 0 or NULL, expected: ' . $service->rate);
 
-            // Add tags to invoice
-            $tag_id = null;
-
-            // Check if tag "service_subscription" exists
-            $existing_tag = $this->db->select('id')
-                ->from(db_prefix() . 'tags')
-                ->where('name', 'service_subscription')
-                ->get()
-                ->row();
-
-            if ($existing_tag) {
-                $tag_id = $existing_tag->id;
-            } else {
-                // Create the tag
-                $this->db->insert(db_prefix() . 'tags', ['name' => 'service_subscription']);
-                $tag_id = $this->db->insert_id();
-            }
-
-            // Link tag to invoice
-            if ($tag_id) {
-                $this->db->insert(db_prefix() . 'taggables', [
-                    'rel_id' => $invoice_id,
-                    'rel_type' => 'invoice',
-                    'tag_id' => $tag_id
+                // Try to fix by manually updating totals
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', [
+                    'subtotal' => $service->rate,
+                    'total' => $service->rate
                 ]);
+                log_activity('SUBSCRIBE SERVICE - Manually set invoice totals to: ' . $service->rate);
+
+                // Reload invoice
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
             }
+
+            // Ensure invoice status is Unpaid (status = 1)
+            if ($created_invoice->status != 1) {
+                log_activity('SUBSCRIBE SERVICE - WARNING: Invoice status is ' . $created_invoice->status . ', forcing to Unpaid (1)');
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', ['status' => 1]);
+
+                // Delete any auto-created payment records
+                $this->db->where('invoiceid', $invoice_id);
+                $this->db->delete(db_prefix() . 'invoicepaymentrecords');
+                log_activity('SUBSCRIBE SERVICE - Removed auto-created payment records');
+
+                // Reload invoice to get updated status
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            }
+
+            // Fix invoice number if it's 0
+            if (empty($created_invoice->number) || $created_invoice->number == 0) {
+                log_activity('SUBSCRIBE SERVICE - ERROR: Invoice number is 0, getting next number from Perfex');
+
+                // Get next invoice number
+                $next_number = get_option('next_invoice_number');
+                if (empty($next_number)) {
+                    // If not set, get the highest number + 1
+                    $last_invoice = $this->db->select('number')
+                        ->from(db_prefix() . 'invoices')
+                        ->where('id !=', $invoice_id)
+                        ->order_by('CAST(number AS UNSIGNED)', 'DESC')
+                        ->limit(1)
+                        ->get()
+                        ->row();
+
+                    $next_number = $last_invoice && is_numeric($last_invoice->number) ? intval($last_invoice->number) + 1 : 1;
+                }
+
+                // Update invoice with correct number
+                $this->db->where('id', $invoice_id);
+                $this->db->update(db_prefix() . 'invoices', ['number' => $next_number]);
+                log_activity('SUBSCRIBE SERVICE - Set invoice number to: ' . $next_number);
+
+                // Update Perfex's next_invoice_number option
+                update_option('next_invoice_number', $next_number + 1);
+                log_activity('SUBSCRIBE SERVICE - Updated next_invoice_number to: ' . ($next_number + 1));
+
+                // Reload invoice
+                $created_invoice = $this->db->get_where(db_prefix() . 'invoices', ['id' => $invoice_id])->row();
+            }
+
+            log_activity('SUBSCRIBE SERVICE - Final invoice state - ID: ' . $invoice_id . ', Number: ' . $created_invoice->number . ', Total: ' . $created_invoice->total . ', Status: ' . $created_invoice->status);
 
             // Log activity
             log_message('info', 'Patient ' . $patient->id . ' subscribed to service: ' . $service->description . ' (Invoice #' . $invoice_id . ')');
@@ -13475,14 +13777,22 @@ php index.php cron/index</pre>';
             return;
         }
 
-        // Store order details in session
-        $this->session->set_userdata('paypal_order_' . $invoice->id, [
-            'order_id' => $result['id'],
-            'amount' => $amount_usd,
-            'invoice_id' => $invoice->id
-        ]);
+        // Store order details in DATABASE instead of session (avoid session loss on redirect)
+        $client_id = $this->session->userdata('client_user_id');
+        dietetic_create_payment_token(
+            $invoice->id,
+            $client_id,
+            'paypal',
+            $result['id'], // PayPal order_id
+            $amount_usd,
+            'USD',
+            [
+                'invoice_total_xof' => $invoice->total,
+                'approval_url' => $approval_url
+            ]
+        );
 
-        log_activity('PAYPAL PAYMENT - SUCCÈS - Redirection vers: ' . $approval_url);
+        log_activity('PAYPAL PAYMENT - SUCCÈS - Order ID stocké en BD - Redirection vers: ' . $approval_url);
 
         // Redirect to PayPal approval page
         redirect($approval_url);
@@ -13608,6 +13918,8 @@ php index.php cron/index</pre>';
      */
     public function paypal_callback($status = 'success', $invoice_id = null)
     {
+        log_activity('PAYPAL CALLBACK START - Status: ' . $status . ', Invoice: ' . $invoice_id);
+
         if (!$invoice_id) {
             log_activity('PAYPAL CALLBACK - ID de facture manquant');
             set_alert('danger', 'ID de facture manquant.');
@@ -13615,15 +13927,56 @@ php index.php cron/index</pre>';
             return;
         }
 
-        // Get client ID from session - use correct session key
-        if (!$this->session->userdata('client_logged_in')) {
-            log_activity('PAYPAL CALLBACK - Non authentifié');
-            redirect(site_url('dietetic/portal'));
+        // FIRST: Try to get payment token from database (works without session)
+        $payment_token = dietetic_get_payment_token($invoice_id, 'paypal');
+
+        if (!$payment_token) {
+            log_activity('PAYPAL CALLBACK - Token de paiement introuvable pour invoice: ' . $invoice_id);
+            // Token not found, check if user is logged in to show proper error
+            if (!is_client_logged_in()) {
+                log_activity('PAYPAL CALLBACK - Non authentifié et token introuvable');
+                redirect(site_url('dietetic/portal'));
+                return;
+            }
+            show_error('Données de paiement introuvables ou expirées. Veuillez réessayer.', 400);
             return;
         }
 
-        $client_id = $this->session->userdata('client_user_id');
-        log_activity('PAYPAL CALLBACK - Client ID: ' . $client_id . ', Status: ' . $status . ', Invoice: ' . $invoice_id);
+        // SECOND: Use payment_token to restore/verify session
+        $token_client_id = $payment_token->client_id;
+        $session_client_id = null;
+
+        // Try to get client_id from session/cookies
+        if (is_client_logged_in()) {
+            $session_client_id = get_client_user_id();
+            log_activity('PAYPAL CALLBACK - Session active, client_id: ' . $session_client_id);
+        } else {
+            log_activity('PAYPAL CALLBACK - Session perdue, tentative de restauration depuis payment_token');
+
+            // Session lost - restore it from payment_token
+            // This is safe because payment_token was created when user was authenticated
+            $this->session->set_userdata('client_logged_in', true);
+            $this->session->set_userdata('client_user_id', $token_client_id);
+
+            // Also set cookies for future requests
+            set_client_auth_cookies($token_client_id);
+
+            $session_client_id = $token_client_id;
+            log_activity('PAYPAL CALLBACK - Session restaurée depuis payment_token, client_id: ' . $token_client_id);
+        }
+
+        // Verify client_id matches (security check)
+        if ((int)$session_client_id !== (int)$token_client_id) {
+            log_activity('PAYPAL CALLBACK - Client ID mismatch: Session=' . $session_client_id . ' vs Token=' . $token_client_id);
+            // Clear potentially corrupted session
+            $this->session->unset_userdata('client_logged_in');
+            $this->session->unset_userdata('client_user_id');
+            show_error('Erreur de validation du paiement', 403);
+            return;
+        }
+
+        $client_id = $session_client_id;
+        log_activity('PAYPAL CALLBACK - Client authentifié: ' . $client_id);
 
         // Verify invoice belongs to client
         $invoice = $this->db->select('id, clientid, total, status')
@@ -13634,22 +13987,60 @@ php index.php cron/index</pre>';
             ->row();
 
         if (!$invoice) {
+            log_activity('PAYPAL CALLBACK - Facture introuvable ou non autorisée');
             show_error('Facture introuvable', 404);
             return;
         }
 
+        // Handle CANCEL status
         if ($status === 'cancel') {
-            set_alert('warning', 'Paiement PayPal annulé.');
-            redirect('dietetic/portal/invoices');
+            log_activity('PAYPAL CALLBACK - Paiement annulé par l\'utilisateur');
+            log_activity('PAYPAL CALLBACK CANCEL - Invoice ID: ' . $invoice->id . ', Total: ' . $invoice->total . ', Client: ' . $client_id);
+            log_activity('PAYPAL CALLBACK CANCEL - Payment Token ID: ' . $payment_token->id);
+
+            // Mark token as cancelled
+            log_activity('PAYPAL CALLBACK CANCEL - AVANT dietetic_update_payment_token_status');
+            try {
+                $update_result = dietetic_update_payment_token_status($payment_token->id, 'cancelled');
+                log_activity('PAYPAL CALLBACK CANCEL - APRÈS dietetic_update_payment_token_status - Result: ' . var_export($update_result, true));
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK CANCEL - ERREUR dietetic_update_payment_token_status: ' . $e->getMessage());
+            }
+
+            // Prepare data for view
+            $data = [];
+            $data['invoice'] = $invoice;
+            $data['client_id'] = $client_id;
+            $data['active_page'] = 'invoices';
+            $data['page_title'] = 'Paiement Annulé';
+
+            log_activity('PAYPAL CALLBACK CANCEL - Loading view with data prepared');
+
+            // Load view with proper error handling
+            try {
+                $this->load->view('portal/payment_cancel', $data);
+                log_activity('PAYPAL CALLBACK CANCEL - View loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK CANCEL - View loading error: ' . $e->getMessage());
+                echo '<!DOCTYPE html><html><head><title>Paiement Annulé</title></head><body>';
+                echo '<h1>Paiement Annulé</h1>';
+                echo '<p>Votre paiement a été annulé.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Retour aux factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
             return;
         }
 
-        // Get order details from session
-        $order_data = $this->session->userdata('paypal_order_' . $invoice_id);
-        if (!$order_data || !isset($order_data['order_id'])) {
-            show_error('Données de commande PayPal introuvables', 400);
+        // Handle SUCCESS status - process payment
+        if (!$payment_token->order_id) {
+            log_activity('PAYPAL CALLBACK - Order ID manquant dans payment_token');
+            show_error('Données de commande PayPal invalides.', 400);
             return;
         }
+
+        $order_id = $payment_token->order_id;
 
         // Get PayPal token parameter from URL
         $token = $this->input->get('token');
@@ -13663,8 +14054,8 @@ php index.php cron/index</pre>';
 
         // Get gateway settings
         $gateway_settings = dietetic_get_payment_gateway_settings('paypal');
-        $client_id = $gateway_settings['client_id'] ?? '';
-        $secret = $gateway_settings['secret'] ?? '';
+        $paypal_client_id = $gateway_settings['client_id'] ?? '';
+        $paypal_secret = $gateway_settings['secret'] ?? '';
         $mode = $gateway_settings['mode'] ?? 'sandbox';
 
         $base_url = ($mode === 'live')
@@ -13672,15 +14063,21 @@ php index.php cron/index</pre>';
             : 'https://api-m.sandbox.paypal.com';
 
         // Get access token
-        $access_token = $this->get_paypal_access_token($base_url, $client_id, $secret);
+        $access_token = $this->get_paypal_access_token($base_url, $paypal_client_id, $paypal_secret);
         if (!$access_token) {
             set_alert('danger', 'Erreur d\'authentification PayPal.');
             redirect('dietetic/portal/invoices');
             return;
         }
 
+        // Update token status to processing
+        log_activity('PAYPAL CALLBACK SUCCESS - Updating token status to processing');
+        dietetic_update_payment_token_status($payment_token->id, 'processing');
+        log_activity('PAYPAL CALLBACK SUCCESS - Token status updated to processing');
+
         // Capture the order
-        $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_data['order_id'] . '/capture');
+        log_activity('PAYPAL CALLBACK SUCCESS - Capturing PayPal order: ' . $order_id);
+        $ch = curl_init($base_url . '/v2/checkout/orders/' . $order_id . '/capture');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -13690,48 +14087,174 @@ php index.php cron/index</pre>';
 
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
+        log_activity('PAYPAL CALLBACK SUCCESS - HTTP Code: ' . $http_code);
+        log_activity('PAYPAL CALLBACK SUCCESS - Response: ' . substr($response, 0, 500));
+        if ($curl_error) {
+            log_activity('PAYPAL CALLBACK SUCCESS - cURL Error: ' . $curl_error);
+        }
+
         $result = json_decode($response, true);
+        log_activity('PAYPAL CALLBACK SUCCESS - Decoded result status: ' . ($result['status'] ?? 'N/A'));
 
         if ($http_code === 201 && isset($result['status']) && $result['status'] === 'COMPLETED') {
-            // Mark invoice as paid
-            if ($invoice->status != 2) {
-                $this->db->where('id', $invoice_id);
-                $this->db->update(db_prefix() . 'invoices', [
-                    'status' => 2,
-                    'datepaid' => date('Y-m-d H:i:s')
-                ]);
+            log_activity('PAYPAL CALLBACK SUCCESS - Payment COMPLETED, processing invoice');
 
-                // Get transaction ID
-                $transaction_id = '';
-                if (isset($result['purchase_units'][0]['payments']['captures'][0]['id'])) {
-                    $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
-                }
-
-                // Log payment
-                $this->db->insert(db_prefix() . 'invoicepaymentrecords', [
-                    'invoiceid' => $invoice_id,
-                    'amount' => $invoice->total,
-                    'paymentmode' => 'paypal',
-                    'paymentmethod' => 'PayPal',
-                    'date' => date('Y-m-d'),
-                    'daterecorded' => date('Y-m-d H:i:s'),
-                    'note' => 'Paiement PayPal - Order: ' . $order_data['order_id'],
-                    'transactionid' => $transaction_id
-                ]);
-
-                // Clear session data
-                $this->session->unset_userdata('paypal_order_' . $invoice_id);
-
-                set_alert('success', 'Paiement PayPal effectué avec succès!');
+            // Get transaction ID first
+            $transaction_id = '';
+            if (isset($result['purchase_units'][0]['payments']['captures'][0]['id'])) {
+                $transaction_id = $result['purchase_units'][0]['payments']['captures'][0]['id'];
             }
 
-            redirect('dietetic/portal/invoices');
+            // Record payment using direct SQL (more reliable than Perfex model in portal context)
+            if ($invoice->status != 2) {
+                log_activity('PAYPAL CALLBACK SUCCESS - Recording payment via direct SQL');
+
+                $payment_recorded = false;
+
+                try {
+                    // Register all custom payment modes (PayPal, Wave, Orange Money)
+                    $payment_mode_ids = dietetic_register_payment_modes();
+                    $paypal_mode_id = $payment_mode_ids['PayPal'] ?? null;
+
+                    if (!$paypal_mode_id) {
+                        // Fallback: try to get PayPal mode ID directly
+                        $paypal_mode = $this->db->get_where(db_prefix() . 'payment_modes', ['name' => 'PayPal'])->row();
+                        $paypal_mode_id = $paypal_mode ? $paypal_mode->id : 1;
+                        log_activity('PAYPAL CALLBACK SUCCESS - Using fallback PayPal payment mode ID: ' . $paypal_mode_id);
+                    } else {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Using PayPal payment mode ID: ' . $paypal_mode_id);
+                    }
+
+                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice ID: ' . $invoice_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Invoice total: ' . $invoice->total);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Transaction ID: ' . $transaction_id);
+                    log_activity('PAYPAL CALLBACK SUCCESS - Order ID: ' . $order_id);
+
+                    // Insert payment record directly into database
+                    $payment_insert_data = [
+                        'invoiceid' => $invoice_id,
+                        'amount' => $invoice->total,
+                        'paymentmode' => $paypal_mode_id,
+                        'paymentmethod' => 'PayPal',
+                        'date' => date('Y-m-d'),
+                        'daterecorded' => date('Y-m-d H:i:s'),
+                        'note' => 'Paiement PayPal - Order: ' . $order_id,
+                        'transactionid' => $transaction_id
+                    ];
+
+                    log_activity('PAYPAL CALLBACK SUCCESS - Inserting payment record: ' . json_encode($payment_insert_data));
+
+                    $this->db->insert(db_prefix() . 'invoicepaymentrecords', $payment_insert_data);
+                    $payment_id = $this->db->insert_id();
+
+                    if ($payment_id) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - Payment record inserted successfully - Payment ID: ' . $payment_id);
+
+                        // Update invoice status to paid
+                        $this->db->where('id', $invoice_id);
+                        $this->db->update(db_prefix() . 'invoices', ['status' => 2]);
+
+                        log_activity('PAYPAL CALLBACK SUCCESS - Invoice status updated to Paid (status=2)');
+                        $payment_recorded = true;
+                    } else {
+                        log_activity('PAYPAL CALLBACK SUCCESS - ERROR: Failed to insert payment record, insert_id returned: ' . var_export($payment_id, true));
+                        log_activity('PAYPAL CALLBACK SUCCESS - DB Error: ' . $this->db->error()['message']);
+                    }
+                } catch (Exception $e) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Payment recording exception: ' . $e->getMessage());
+                    log_activity('PAYPAL CALLBACK SUCCESS - Exception trace: ' . $e->getTraceAsString());
+                    if (isset($this->db)) {
+                        log_activity('PAYPAL CALLBACK SUCCESS - DB Error info: ' . json_encode($this->db->error()));
+                    }
+                }
+
+                // Mark payment token as completed
+                log_activity('PAYPAL CALLBACK SUCCESS - Marking token as completed');
+                try {
+                    dietetic_update_payment_token_status($payment_token->id, 'completed');
+                    log_activity('PAYPAL CALLBACK SUCCESS - Token marked as completed');
+                } catch (Exception $e) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Token update exception: ' . $e->getMessage());
+                }
+
+                // Log final payment status
+                if ($payment_recorded) {
+                    log_activity('PAYPAL CALLBACK SUCCESS - Payment successfully recorded and invoice marked as paid');
+                } else {
+                    log_activity('PAYPAL CALLBACK SUCCESS - CRITICAL ERROR: Payment could not be recorded!');
+                }
+            } else {
+                log_activity('PAYPAL CALLBACK SUCCESS - Invoice already paid, skipping payment recording');
+            }
+
+            $data = [
+                'invoice' => $invoice,
+                'client_id' => $client_id,
+                'transaction_id' => $transaction_id,
+                'order_id' => $order_id,
+                'active_page' => 'invoices',
+                'page_title' => 'Paiement Réussi'
+            ];
+
+            log_activity('PAYPAL CALLBACK SUCCESS - Loading success view');
+            log_activity('PAYPAL CALLBACK SUCCESS - Data prepared: Invoice #' . $invoice->id . ', Transaction: ' . $transaction_id);
+
+            // Load success view with error handling
+            try {
+                $this->load->view('portal/payment_success', $data);
+                log_activity('PAYPAL CALLBACK SUCCESS - View loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK SUCCESS - View loading error: ' . $e->getMessage());
+                // Fallback HTML
+                echo '<!DOCTYPE html><html><head><title>Paiement Réussi</title></head><body>';
+                echo '<h1>✅ Paiement Réussi!</h1>';
+                echo '<p>Votre paiement a été traité avec succès.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p>Montant: ' . htmlspecialchars($invoice->total) . ' XOF</p>';
+                if ($transaction_id) {
+                    echo '<p>Transaction ID: ' . htmlspecialchars($transaction_id) . '</p>';
+                }
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Voir mes factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
         } else {
+            log_activity('PAYPAL CALLBACK SUCCESS - Payment capture FAILED');
+            log_activity('PAYPAL CALLBACK SUCCESS - HTTP Code: ' . $http_code . ', Status: ' . ($result['status'] ?? 'N/A'));
             log_message('error', 'PayPal Capture Error: ' . $response);
-            set_alert('danger', 'Erreur lors de la capture du paiement PayPal.');
-            redirect('dietetic/portal/invoices');
+
+            // Mark token as failed
+            dietetic_update_payment_token_status($payment_token->id, 'failed');
+
+            // Prepare data for error view
+            $data = [
+                'invoice' => $invoice,
+                'client_id' => $client_id,
+                'error_message' => 'Erreur lors de la capture du paiement PayPal.',
+                'active_page' => 'invoices',
+                'page_title' => 'Erreur de Paiement'
+            ];
+
+            log_activity('PAYPAL CALLBACK SUCCESS - Loading error view');
+
+            // Load error view with error handling
+            try {
+                $this->load->view('portal/payment_error', $data);
+                log_activity('PAYPAL CALLBACK SUCCESS - Error view loaded successfully');
+            } catch (Exception $e) {
+                log_activity('PAYPAL CALLBACK SUCCESS - Error view loading error: ' . $e->getMessage());
+                // Fallback HTML
+                echo '<!DOCTYPE html><html><head><title>Erreur de Paiement</title></head><body>';
+                echo '<h1>❌ Erreur de Paiement</h1>';
+                echo '<p>Une erreur est survenue lors du traitement de votre paiement.</p>';
+                echo '<p>Facture: #' . htmlspecialchars($invoice->id) . '</p>';
+                echo '<p><a href="' . site_url('dietetic/portal/invoices') . '">Retour aux factures</a></p>';
+                echo '<p>Erreur technique: ' . htmlspecialchars($e->getMessage()) . '</p>';
+                echo '</body></html>';
+            }
         }
     }
 
@@ -13749,6 +14272,22 @@ php index.php cron/index</pre>';
 
         // Simply call initiate_payment with parameters in the correct order
         $this->initiate_payment($gateway, $invoice_id);
+    }
+
+    /**
+     * Test PayPal Callback - Diagnostic Page
+     * URL: dietetic/portal/test_paypal_callback/{invoice_id}
+     *
+     * Page de diagnostic pour tester le callback PayPal sans redirections
+     * Affiche toutes les informations nécessaires pour debugger
+     */
+    public function test_paypal_callback($invoice_id = null)
+    {
+        // Set invoice_id in GET for the view
+        $_GET['invoice_id'] = $invoice_id;
+
+        // Load the diagnostic view
+        $this->load->view('portal/test_paypal_callback');
     }
 
     /**

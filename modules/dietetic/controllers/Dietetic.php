@@ -846,4 +846,1029 @@ class Dietetic extends AdminController
         $name = str_replace('_', ' ', $name);
         return ucwords($name);
     }
+
+    /**
+     * Apply PayPal Session Fix Migration
+     * Page admin pour appliquer la migration de correction du bug de session PayPal
+     */
+    public function apply_paypal_fix()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Migration PayPal Session Fix';
+
+        // Vérifier si la table existe déjà
+        $table_exists = $this->db->table_exists(db_prefix() . 'dietic_payment_tokens');
+        $data['table_exists'] = $table_exists;
+
+        // Si la table existe, récupérer des stats
+        if ($table_exists) {
+            // Nombre total de tokens
+            $data['total_tokens'] = $this->db->count_all(db_prefix() . 'dietic_payment_tokens');
+
+            // Tokens par statut
+            $this->db->select('status, COUNT(*) as count');
+            $this->db->from(db_prefix() . 'dietic_payment_tokens');
+            $this->db->group_by('status');
+            $data['tokens_by_status'] = $this->db->get()->result();
+
+            // Derniers tokens
+            $this->db->select('*');
+            $this->db->from(db_prefix() . 'dietic_payment_tokens');
+            $this->db->order_by('created_at', 'DESC');
+            $this->db->limit(10);
+            $data['recent_tokens'] = $this->db->get()->result();
+        }
+
+        // Traiter la soumission du formulaire (application de la migration)
+        if ($this->input->post('apply_migration')) {
+            $this->apply_migration_sql();
+            return;
+        }
+
+        $this->load->view('admin/migrations/paypal_fix', $data);
+    }
+
+    /**
+     * Execute PayPal fix migration
+     * Méthode privée pour exécuter la migration SQL
+     */
+    private function apply_migration_sql()
+    {
+        try {
+            // Charger le fichier SQL
+            $migration_file = DIETETIC_MODULE_PATH . 'migrations/fix_paypal_session_issue.sql';
+
+            if (!file_exists($migration_file)) {
+                set_alert('danger', 'Fichier de migration introuvable: ' . $migration_file);
+                redirect(admin_url('dietetic/apply_paypal_fix'));
+                return;
+            }
+
+            // Lire le contenu SQL
+            $sql_content = file_get_contents($migration_file);
+
+            // Remplacer les préfixes
+            $sql_content = str_replace('tbldietic_', db_prefix() . 'dietic_', $sql_content);
+
+            // Nettoyer les commentaires SQL
+            $sql_content = preg_replace('/^--.*$/m', '', $sql_content);
+            $sql_content = preg_replace('/\/\*.*?\*\//s', '', $sql_content);
+
+            // Séparer les instructions SQL
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql_content)),
+                function($stmt) {
+                    return !empty($stmt) && strlen($stmt) > 10;
+                }
+            );
+
+            $success_count = 0;
+            $error_count = 0;
+            $errors = [];
+
+            // Exécuter chaque instruction
+            foreach ($statements as $statement) {
+                try {
+                    $this->db->query($statement);
+                    $success_count++;
+                } catch (Exception $e) {
+                    $error_msg = $e->getMessage();
+
+                    // Ignorer les erreurs "already exists"
+                    if (
+                        strpos($error_msg, 'already exists') === false &&
+                        strpos($error_msg, 'Duplicate') === false
+                    ) {
+                        $error_count++;
+                        $errors[] = substr($error_msg, 0, 200);
+                    } else {
+                        $success_count++; // Compter comme succès si déjà existe
+                    }
+                }
+            }
+
+            if ($error_count === 0) {
+                log_activity('Migration PayPal Session Fix appliquée avec succès');
+                set_alert('success', sprintf(
+                    'Migration appliquée avec succès! %d instructions SQL exécutées.',
+                    $success_count
+                ));
+            } else {
+                log_activity('Migration PayPal Session Fix terminée avec erreurs: ' . json_encode($errors));
+                set_alert('warning', sprintf(
+                    'Migration terminée avec %d erreurs sur %d instructions. Erreurs: %s',
+                    $error_count,
+                    $success_count + $error_count,
+                    implode(', ', array_slice($errors, 0, 3))
+                ));
+            }
+
+        } catch (Exception $e) {
+            log_activity('Erreur lors de la migration PayPal Session Fix: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
+        }
+
+        redirect(admin_url('dietetic/apply_paypal_fix'));
+    }
+
+    /**
+     * Test PayPal Callback - Page de diagnostic
+     * URL: /admin/dietetic/test_paypal_callback/{invoice_id}
+     */
+    public function test_paypal_callback($invoice_id = null)
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Diagnostic PayPal Callback';
+        $data['invoice_id'] = $invoice_id;
+
+        // Load the diagnostic view
+        $this->load->view('admin/diagnostic/paypal_callback', $data);
+    }
+
+    /**
+     * My Profile - View dietitian's own profile
+     * URL: /admin/dietetic/my_profile
+     */
+    public function my_profile()
+    {
+        $staff_id = get_staff_user_id();
+
+        // Get staff member info
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!$staff_member) {
+            set_alert('danger', 'Profil introuvable');
+            redirect(admin_url('dietetic/dashboard'));
+            return;
+        }
+
+        // Get statistics for this dietitian (with error handling)
+        $stats = [];
+        try {
+            if (function_exists('dietetic_get_dietitian_stats')) {
+                $stats = dietetic_get_dietitian_stats($staff_id);
+            }
+        } catch (Exception $e) {
+            log_activity('Error getting dietitian stats: ' . $e->getMessage());
+            $stats = [
+                'total_patients' => 0,
+                'total_consultations' => 0,
+                'total_referrals' => 0,
+                'average_rating' => 0,
+                'total_reviews' => 0,
+            ];
+        }
+
+        // Get selected specialties (with error handling)
+        $selected_specialties = [];
+        if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
+            $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+            if (!is_array($selected_specialties)) {
+                $selected_specialties = [];
+            }
+        }
+
+        // Get specialty details (with error handling)
+        $specialties = [];
+        if (!empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+            try {
+                $this->db->where_in('id', $selected_specialties);
+                $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                $specialties = $query->result_array();
+            } catch (Exception $e) {
+                log_activity('Error getting specialties: ' . $e->getMessage());
+                $specialties = [];
+            }
+        }
+
+        // Parse certifications (with error handling)
+        $certifications = [];
+        if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
+            $certifications = json_decode($staff_member->dietitian_certifications, true);
+            if (!is_array($certifications)) {
+                $certifications = [];
+            }
+        }
+
+        // Convert staff object to array for view
+        $data['staff_member'] = (array) $staff_member;
+        $data['stats'] = $stats;
+        $data['specialties'] = $specialties;
+        $data['certifications'] = $certifications;
+        $data['title'] = 'Mon Profil';
+
+        $this->load->view('admin/dietitians/my_profile', $data);
+    }
+
+    /**
+     * Edit My Profile - Edit form for dietitian's own profile
+     * URL: /admin/dietetic/edit_my_profile
+     */
+    public function edit_my_profile()
+    {
+        $staff_id = get_staff_user_id();
+
+        // Get staff member info
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!$staff_member) {
+            set_alert('danger', 'Profil introuvable');
+            redirect(admin_url('dietetic/dashboard'));
+            return;
+        }
+
+        // Get all available specialties (with error handling)
+        $available_specialties = [];
+        if ($this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+            try {
+                $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                $available_specialties = $query->result_array();
+            } catch (Exception $e) {
+                log_activity('Error getting available specialties: ' . $e->getMessage());
+                set_alert('warning', 'Les spécialités ne sont pas encore configurées. Veuillez appliquer la migration du profil diététicien.');
+            }
+        } else {
+            set_alert('warning', 'Les tables du profil diététicien ne sont pas créées. Veuillez appliquer la migration.');
+        }
+
+        // Get selected specialties (with error handling)
+        $selected_specialties = [];
+        if (isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
+            $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+            if (!is_array($selected_specialties)) {
+                $selected_specialties = [];
+            }
+        }
+
+        // Parse certifications (with error handling)
+        $certifications = [];
+        if (isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
+            $certifications = json_decode($staff_member->dietitian_certifications, true);
+            if (!is_array($certifications)) {
+                $certifications = [];
+            }
+        }
+
+        // Convert staff object to array for view
+        $data['staff_member'] = (array) $staff_member;
+        $data['available_specialties'] = $available_specialties;
+        $data['selected_specialties'] = $selected_specialties;
+        $data['certifications'] = $certifications;
+        $data['title'] = 'Modifier Mon Profil';
+
+        $this->load->view('admin/dietitians/edit_my_profile', $data);
+    }
+
+    /**
+     * Update My Profile - Process profile update
+     * URL: /admin/dietetic/update_my_profile (POST)
+     */
+    public function update_my_profile()
+    {
+        header('Content-Type: application/json');
+
+        $staff_id = get_staff_user_id();
+
+        // Get form data
+        $specialties = $this->input->post('specialties');
+        $bio = $this->input->post('dietitian_bio');
+        $years_experience = $this->input->post('dietitian_years_experience');
+        $languages = $this->input->post('dietitian_languages');
+        $certifications = $this->input->post('certifications');
+
+        // Prepare data for update
+        $update_data = [
+            'dietitian_bio' => $bio,
+            'dietitian_years_experience' => (int) $years_experience,
+            'dietitian_languages' => $languages,
+            'dietitian_profile_updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        // Process specialties (store as JSON array of IDs)
+        if (!empty($specialties) && is_array($specialties)) {
+            $update_data['dietitian_specialties'] = json_encode(array_map('intval', $specialties));
+        } else {
+            $update_data['dietitian_specialties'] = null;
+        }
+
+        // Process certifications (store as JSON)
+        if (!empty($certifications) && is_array($certifications)) {
+            // Filter out empty certifications
+            $valid_certifications = array_filter($certifications, function($cert) {
+                return !empty($cert['name']);
+            });
+
+            $update_data['dietitian_certifications'] = !empty($valid_certifications)
+                ? json_encode(array_values($valid_certifications))
+                : null;
+        } else {
+            $update_data['dietitian_certifications'] = null;
+        }
+
+        // Update profile
+        $result = dietetic_update_dietitian_profile($staff_id, $update_data);
+
+        if ($result) {
+            log_activity('Dietitian Profile Updated - Staff ID: ' . $staff_id);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Profil mis à jour avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du profil'
+            ]);
+        }
+    }
+
+    /**
+     * Generate My Referral Code - Generate unique referral code
+     * URL: /admin/dietetic/generate_my_referral_code (POST)
+     */
+    public function generate_my_referral_code()
+    {
+        header('Content-Type: application/json');
+
+        $staff_id = get_staff_user_id();
+
+        // Check if code already exists
+        $staff_member = $this->staff_model->get($staff_id);
+
+        if (!empty($staff_member->dietitian_referral_code)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Vous avez déjà un code de référence'
+            ]);
+            return;
+        }
+
+        // Generate new code
+        $referral_code = dietetic_generate_referral_code($staff_id);
+
+        if ($referral_code) {
+            log_activity('Referral Code Generated - Staff ID: ' . $staff_id . ', Code: ' . $referral_code);
+
+            echo json_encode([
+                'success' => true,
+                'code' => $referral_code,
+                'message' => 'Code de référence généré avec succès'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur lors de la génération du code'
+            ]);
+        }
+    }
+
+    /**
+     * Dietitian Profile System Migration Page
+     * URL: /admin/dietetic/dietitian_profile_migration
+     */
+    public function dietitian_profile_migration()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        $data['title'] = 'Migration: Système de Profil Diététicien';
+
+        // Vérifier si la migration a été appliquée
+        $migration_applied = false;
+        $specialties_table_exists = $this->db->table_exists(db_prefix() . 'dietic_specialties');
+        $referrals_table_exists = $this->db->table_exists(db_prefix() . 'dietic_referrals');
+
+        // Vérifier si les colonnes existent dans tblstaff
+        $columns_exist = $this->db->field_exists('dietitian_referral_code', db_prefix() . 'staff');
+
+        $migration_applied = $specialties_table_exists && $referrals_table_exists && $columns_exist;
+
+        $data['migration_applied'] = $migration_applied;
+
+        // Si la migration est appliquée, récupérer les statistiques
+        if ($migration_applied) {
+            $stats = [];
+
+            // Nombre total de spécialités
+            $stats['total_specialties'] = $this->db->count_all(db_prefix() . 'dietic_specialties');
+
+            // Nombre de diététiciens avec codes générés
+            $this->db->where('dietitian_referral_code IS NOT NULL', null, false);
+            $this->db->where('dietitian_referral_code !=', '');
+            $stats['dietitians_with_codes'] = $this->db->count_all_results(db_prefix() . 'staff');
+
+            // Nombre total de références
+            if ($referrals_table_exists) {
+                $stats['total_referrals'] = $this->db->count_all(db_prefix() . 'dietic_referrals');
+            } else {
+                $stats['total_referrals'] = 0;
+            }
+
+            // Nombre de profils complets (avec bio ET spécialités)
+            $this->db->where('dietitian_bio IS NOT NULL', null, false);
+            $this->db->where('dietitian_bio !=', '');
+            $this->db->where('dietitian_specialties IS NOT NULL', null, false);
+            $this->db->where('dietitian_specialties !=', '');
+            $stats['profiles_completed'] = $this->db->count_all_results(db_prefix() . 'staff');
+
+            $data['stats'] = $stats;
+
+            // Récupérer la liste des spécialités
+            if ($specialties_table_exists) {
+                $this->db->order_by('name_fr', 'ASC');
+                $data['specialties'] = $this->db->get(db_prefix() . 'dietic_specialties')->result_array();
+            }
+
+            // Récupérer les dernières références
+            if ($referrals_table_exists) {
+                $this->db->select(db_prefix() . 'dietic_referrals.*,
+                                   CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as dietitian_name');
+                $this->db->from(db_prefix() . 'dietic_referrals');
+                $this->db->join(db_prefix() . 'staff',
+                               db_prefix() . 'staff.staffid = ' . db_prefix() . 'dietic_referrals.dietitian_staff_id',
+                               'left');
+                $this->db->order_by(db_prefix() . 'dietic_referrals.referred_at', 'DESC');
+                $this->db->limit(10);
+                $data['recent_referrals'] = $this->db->get()->result_array();
+            }
+        }
+
+        $this->load->view('admin/migrations/dietitian_profile_system', $data);
+    }
+
+    /**
+     * Apply Dietitian Profile System Migration
+     * URL: /admin/dietetic/apply_dietitian_profile_migration (POST)
+     */
+    public function apply_dietitian_profile_migration()
+    {
+        // Seuls les admins peuvent accéder
+        if (!is_admin()) {
+            access_denied('dietetic');
+        }
+
+        try {
+            // Charger le fichier SQL
+            $migration_file = DIETETIC_MODULE_PATH . 'migrations/add_dietitian_profile_system.sql';
+
+            if (!file_exists($migration_file)) {
+                set_alert('danger', 'Fichier de migration introuvable: ' . $migration_file);
+                redirect(admin_url('dietetic/dietitian_profile_migration'));
+                return;
+            }
+
+            // Lire le contenu SQL
+            $sql_content = file_get_contents($migration_file);
+
+            // Remplacer les préfixes
+            $sql_content = str_replace('tbldietic_', db_prefix() . 'dietic_', $sql_content);
+            $sql_content = str_replace('tblstaff', db_prefix() . 'staff', $sql_content);
+
+            // Nettoyer les commentaires SQL
+            $sql_content = preg_replace('/^--.*$/m', '', $sql_content);
+            $sql_content = preg_replace('/\/\*.*?\*\//s', '', $sql_content);
+
+            // Séparer les instructions SQL
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql_content)),
+                function($stmt) {
+                    return !empty($stmt) && strlen($stmt) > 10;
+                }
+            );
+
+            $success_count = 0;
+            $error_count = 0;
+            $errors = [];
+
+            // Exécuter chaque instruction
+            foreach ($statements as $statement) {
+                try {
+                    $this->db->query($statement);
+                    $success_count++;
+                } catch (Exception $e) {
+                    $error_msg = $e->getMessage();
+
+                    // Ignorer les erreurs "already exists" et "Duplicate"
+                    if (
+                        strpos($error_msg, 'already exists') === false &&
+                        strpos($error_msg, 'Duplicate column') === false &&
+                        strpos($error_msg, 'Duplicate key') === false
+                    ) {
+                        $error_count++;
+                        $errors[] = substr($error_msg, 0, 200);
+                    } else {
+                        $success_count++; // Compter comme succès si déjà existe
+                    }
+                }
+            }
+
+            if ($error_count === 0) {
+                log_activity('Migration Dietitian Profile System appliquée avec succès');
+                set_alert('success', sprintf(
+                    'Migration appliquée avec succès ! %d instructions SQL exécutées.',
+                    $success_count
+                ));
+            } else {
+                log_activity('Migration Dietitian Profile System terminée avec erreurs: ' . json_encode($errors));
+                set_alert('warning', sprintf(
+                    'Migration terminée avec %d erreurs sur %d instructions. Erreurs: %s',
+                    $error_count,
+                    $success_count + $error_count,
+                    implode(', ', array_slice($errors, 0, 3))
+                ));
+            }
+
+        } catch (Exception $e) {
+            log_activity('Erreur lors de la migration Dietitian Profile System: ' . $e->getMessage());
+            set_alert('danger', 'Erreur lors de l\'application de la migration: ' . $e->getMessage());
+        }
+
+        redirect(admin_url('dietetic/dietitian_profile_migration'));
+    }
+
+    /**
+     * Debug Profile - Diagnostic page for my_profile
+     * URL: /admin/dietetic/debug_profile
+     */
+    public function debug_profile()
+    {
+        $staff_id = get_staff_user_id();
+        $results = [];
+        $staff_member = null; // Initialize to avoid undefined variable errors
+
+        // Test 1: Get staff member info
+        $results[] = ['test' => 'Get Staff Member', 'status' => 'testing'];
+        try {
+            $staff_member = $this->staff_model->get($staff_id);
+            if ($staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Staff Member',
+                    'status' => 'success',
+                    'data' => [
+                        'staff_id' => $staff_id,
+                        'name' => $staff_member->firstname . ' ' . $staff_member->lastname,
+                        'referral_code' => isset($staff_member->dietitian_referral_code) ? $staff_member->dietitian_referral_code : 'NULL'
+                    ]
+                ];
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Staff Member',
+                    'status' => 'error',
+                    'message' => 'Staff member not found'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Staff Member',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 2: Check if helper function exists
+        $results[] = [
+            'test' => 'Function dietetic_get_dietitian_stats exists',
+            'status' => function_exists('dietetic_get_dietitian_stats') ? 'success' : 'error',
+            'message' => function_exists('dietetic_get_dietitian_stats') ? 'Function exists' : 'Function not found'
+        ];
+
+        // Test 3: Check tables existence
+        $tables_to_check = [
+            'dietic_patients',
+            'dietic_patient_dietitians',
+            'dietic_consultations',
+            'dietic_programs',
+            'dietic_referrals',
+            'dietic_ratings',
+            'dietic_specialties'
+        ];
+
+        foreach ($tables_to_check as $table) {
+            $exists = $this->db->table_exists(db_prefix() . $table);
+            $results[] = [
+                'test' => 'Table: ' . db_prefix() . $table,
+                'status' => $exists ? 'success' : 'warning',
+                'message' => $exists ? 'Exists' : 'Does not exist'
+            ];
+        }
+
+        // Test 4: Try to get stats
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            $results[] = ['test' => 'Get Dietitian Stats', 'status' => 'testing'];
+            try {
+                $stats = dietetic_get_dietitian_stats($staff_id);
+                $results[count($results)-1] = [
+                    'test' => 'Get Dietitian Stats',
+                    'status' => 'success',
+                    'data' => $stats
+                ];
+            } catch (Exception $e) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Dietitian Stats',
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ];
+            }
+        }
+
+        // Test 5: Try to get specialties
+        $results[] = ['test' => 'Get Specialties', 'status' => 'testing'];
+        try {
+            if ($staff_member && isset($staff_member->dietitian_specialties) && !empty($staff_member->dietitian_specialties)) {
+                $selected_specialties = json_decode($staff_member->dietitian_specialties, true);
+                if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $specialties = $query->result_array();
+                    $results[count($results)-1] = [
+                        'test' => 'Get Specialties',
+                        'status' => 'success',
+                        'data' => $specialties
+                    ];
+                } else {
+                    $results[count($results)-1] = [
+                        'test' => 'Get Specialties',
+                        'status' => 'warning',
+                        'message' => 'No specialties selected or table does not exist'
+                    ];
+                }
+            } elseif (!$staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Specialties',
+                    'status' => 'error',
+                    'message' => 'Staff member not found (prerequisite test failed)'
+                ];
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Specialties',
+                    'status' => 'warning',
+                    'message' => 'dietitian_specialties is empty or null'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Specialties',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 6: Try to get certifications
+        $results[] = ['test' => 'Get Certifications', 'status' => 'testing'];
+        try {
+            if ($staff_member && isset($staff_member->dietitian_certifications) && !empty($staff_member->dietitian_certifications)) {
+                $certifications = json_decode($staff_member->dietitian_certifications, true);
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => is_array($certifications) ? 'success' : 'error',
+                    'data' => $certifications,
+                    'message' => is_array($certifications) ? 'Valid JSON' : 'Invalid JSON'
+                ];
+            } elseif (!$staff_member) {
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => 'error',
+                    'message' => 'Staff member not found (prerequisite test failed)'
+                ];
+            } else {
+                $results[count($results)-1] = [
+                    'test' => 'Get Certifications',
+                    'status' => 'warning',
+                    'message' => 'dietitian_certifications is empty or null'
+                ];
+            }
+        } catch (Exception $e) {
+            $results[count($results)-1] = [
+                'test' => 'Get Certifications',
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        // Test 7: Try to load the view
+        $results[] = ['test' => 'Check View File', 'status' => 'testing'];
+        $view_path = module_dir_path('dietetic') . 'views/admin/dietitians/my_profile.php';
+        if (file_exists($view_path)) {
+            $results[count($results)-1] = [
+                'test' => 'Check View File',
+                'status' => 'success',
+                'message' => 'View file exists',
+                'path' => $view_path
+            ];
+        } else {
+            $results[count($results)-1] = [
+                'test' => 'Check View File',
+                'status' => 'error',
+                'message' => 'View file not found',
+                'path' => $view_path
+            ];
+        }
+
+        // Display results
+        $data['results'] = $results;
+        $data['title'] = 'Debug: Mon Profil';
+        $this->load->view('admin/diagnostics/debug_profile', $data);
+    }
+
+    /**
+     * Debug patient portal view - accessible from admin
+     * Usage: /admin/dietetic/debug_patient_portal/PATIENT_ID
+     */
+    public function debug_patient_portal($patient_id = null)
+    {
+        if (!is_staff_logged_in()) {
+            access_denied('Dietetic Debug');
+        }
+
+        if (!$patient_id) {
+            echo '<h1>Error</h1><p>Patient ID required. Usage: /admin/dietetic/debug_patient_portal/PATIENT_ID</p>';
+            return;
+        }
+
+        // Load models
+        $this->load->model('dietetic/dietetic_patients_model');
+        $this->load->model('staff_model');
+
+        // Get patient
+        $patient = $this->dietetic_patients_model->get($patient_id);
+
+        if (!$patient) {
+            echo '<h1>Error</h1><p>Patient not found with ID: ' . $patient_id . '</p>';
+            return;
+        }
+
+        $data = [];
+        $data['patient'] = $patient;
+
+        // Get dietitian
+        $data['dietitian'] = $this->staff_model->get($patient->dietitian_id);
+
+        // Get dietitian's specialties
+        $data['specialties'] = [];
+        if (!empty($data['dietitian']->dietitian_specialties)) {
+            $selected_specialties = json_decode($data['dietitian']->dietitian_specialties, true);
+            if (is_array($selected_specialties) && !empty($selected_specialties) && $this->db->table_exists(db_prefix() . 'dietic_specialties')) {
+                try {
+                    $this->db->where_in('id', $selected_specialties);
+                    $query = $this->db->get(db_prefix() . 'dietic_specialties');
+                    $data['specialties'] = $query->result_array();
+                } catch (Exception $e) {
+                    $data['specialties'] = [];
+                    $data['specialties_error'] = $e->getMessage();
+                }
+            }
+        }
+
+        // Get dietitian's certifications
+        $data['certifications'] = [];
+        if (!empty($data['dietitian']->dietitian_certifications)) {
+            $certifications = json_decode($data['dietitian']->dietitian_certifications, true);
+            if (is_array($certifications)) {
+                $data['certifications'] = $certifications;
+            }
+        }
+
+        // Get dietitian's languages
+        $data['languages'] = [];
+        if (!empty($data['dietitian']->dietitian_languages)) {
+            $languages = explode(',', $data['dietitian']->dietitian_languages);
+            $data['languages'] = array_map('trim', $languages);
+        }
+
+        // Get dietitian's stats
+        $data['dietitian_stats'] = null;
+        if (function_exists('dietetic_get_dietitian_stats')) {
+            try {
+                $data['dietitian_stats'] = dietetic_get_dietitian_stats($patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_stats'] = null;
+                $data['stats_error'] = $e->getMessage();
+            }
+        } else {
+            $data['stats_error'] = 'Function dietetic_get_dietitian_stats not found';
+        }
+
+        // Get dietitian's average rating
+        if ($this->db->table_exists(db_prefix() . 'dietic_ratings')) {
+            try {
+                $this->load->model('dietetic/dietetic_ratings_model');
+                $data['dietitian_rating'] = $this->dietetic_ratings_model->get_dietitian_average($patient->dietitian_id);
+                $data['my_rating'] = $this->dietetic_ratings_model->get_by_patient_dietitian($patient->id, $patient->dietitian_id);
+                $data['can_rate'] = $this->dietetic_ratings_model->can_rate($patient->id, $patient->dietitian_id);
+            } catch (Exception $e) {
+                $data['dietitian_rating'] = null;
+                $data['my_rating'] = null;
+                $data['can_rate'] = false;
+                $data['rating_error'] = $e->getMessage();
+            }
+        } else {
+            $data['rating_error'] = 'Table dietic_ratings does not exist';
+        }
+
+        // Display debug info
+        echo '<html><head><style>
+            body{font-family:monospace;padding:20px;background:#f5f5f5;}
+            pre{background:#fff;padding:10px;border-radius:5px;border:1px solid #ddd;}
+            h2{color:#01807B;border-bottom:2px solid #01807B;padding-bottom:5px;}
+            .error{color:red;background:#ffe6e6;padding:10px;border-radius:5px;border:1px solid red;}
+            .success{color:green;background:#e6ffe6;padding:10px;border-radius:5px;border:1px solid green;}
+            .info{background:#e6f3ff;padding:10px;border-radius:5px;border:1px solid #0066cc;margin-bottom:20px;}
+        </style></head><body>';
+
+        echo '<h1>🔍 Debug Patient Portal View - Patient ID: ' . $patient_id . '</h1>';
+
+        echo '<div class="info">';
+        echo '<strong>📍 URL du portail patient:</strong> ' . site_url('dietetic/portal/my_dietitians') . '<br>';
+        echo '<strong>👤 Patient:</strong> ' . htmlspecialchars($patient->first_name . ' ' . $patient->last_name) . '<br>';
+        echo '<strong>👨‍⚕️ Diététicien:</strong> ' . htmlspecialchars($data['dietitian']->firstname . ' ' . $data['dietitian']->lastname);
+        echo '</div>';
+
+        // Specialties
+        echo '<h2>🎯 Spécialités (' . count($data['specialties']) . ')</h2>';
+        if (isset($data['specialties_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['specialties_error']) . '</div>';
+        }
+        if (!empty($data['specialties'])) {
+            echo '<div class="success">✅ ' . count($data['specialties']) . ' spécialité(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['specialties'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune spécialité trouvée</div>';
+            echo '<p><strong>dietitian_specialties (JSON):</strong> ' . htmlspecialchars($data['dietitian']->dietitian_specialties) . '</p>';
+        }
+
+        // Certifications
+        echo '<h2>🎓 Certifications (' . count($data['certifications']) . ')</h2>';
+        if (!empty($data['certifications'])) {
+            echo '<div class="success">✅ ' . count($data['certifications']) . ' certification(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['certifications'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune certification trouvée</div>';
+            echo '<p><strong>dietitian_certifications (JSON):</strong> ' . htmlspecialchars($data['dietitian']->dietitian_certifications) . '</p>';
+        }
+
+        // Languages
+        echo '<h2>🌐 Langues (' . count($data['languages']) . ')</h2>';
+        if (!empty($data['languages'])) {
+            echo '<div class="success">✅ ' . count($data['languages']) . ' langue(s) trouvée(s)</div>';
+            echo '<pre>' . print_r($data['languages'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune langue trouvée</div>';
+        }
+
+        // Stats
+        echo '<h2>📊 Statistiques</h2>';
+        if (isset($data['stats_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['stats_error']) . '</div>';
+        }
+        if ($data['dietitian_stats']) {
+            echo '<div class="success">✅ Statistiques chargées</div>';
+            echo '<pre>' . print_r($data['dietitian_stats'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune statistique trouvée</div>';
+        }
+
+        // Rating
+        echo '<h2>⭐ Notations</h2>';
+        if (isset($data['rating_error'])) {
+            echo '<div class="error">❌ Erreur: ' . htmlspecialchars($data['rating_error']) . '</div>';
+        }
+
+        echo '<h3>Moyenne générale du diététicien:</h3>';
+        if ($data['dietitian_rating']) {
+            echo '<div class="success">✅ Notation moyenne chargée</div>';
+            echo '<pre>' . print_r($data['dietitian_rating'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Aucune notation moyenne trouvée</div>';
+        }
+
+        echo '<h3>Notation de ce patient:</h3>';
+        if ($data['my_rating']) {
+            echo '<div class="success">✅ Notation du patient chargée</div>';
+            echo '<pre>' . print_r($data['my_rating'], true) . '</pre>';
+        } else {
+            echo '<div class="error">⚠️ Ce patient n\'a pas encore noté le diététicien</div>';
+        }
+
+        echo '<h3>Peut noter:</h3>';
+        echo '<pre>' . ($data['can_rate'] ? 'OUI (true)' : 'NON (false)') . '</pre>';
+
+        // Full dietitian object
+        echo '<h2>👨‍⚕️ Objet Diététicien Complet</h2>';
+        echo '<pre>' . print_r($data['dietitian'], true) . '</pre>';
+
+        echo '</body></html>';
+    }
+
+    /**
+     * Run billing migration
+     * URL: admin/dietetic/run_billing_migration
+     */
+    public function run_billing_migration()
+    {
+        if (!is_admin()) {
+            access_denied('Admin access required');
+        }
+
+        $data = [];
+
+        // Check if migration is already applied
+        $columns_to_check = ['service_id', 'duration_months', 'payment_mode', 'monthly_price', 'total_price', 'billing_status'];
+        $existing_columns = [];
+
+        foreach ($columns_to_check as $column) {
+            $check = $this->db->query("SHOW COLUMNS FROM " . db_prefix() . "dietic_programs LIKE '" . $column . "'")->row();
+            if ($check) {
+                $existing_columns[] = $column;
+            }
+        }
+
+        // If all columns exist, migration is already applied
+        if (count($existing_columns) === count($columns_to_check)) {
+            $data['migration_status'] = 'already_applied';
+            $data['existing_columns'] = $existing_columns;
+            $this->load->view('admin/migrations/run_billing_migration', $data);
+            return;
+        }
+
+        // Handle POST - Execute migration
+        if ($this->input->post('confirm_migration')) {
+            try {
+                // Read migration file
+                $migration_file = FCPATH . 'modules/dietetic/migrations/add_service_billing_metadata.sql';
+
+                if (!file_exists($migration_file)) {
+                    throw new Exception('Migration file not found: ' . $migration_file);
+                }
+
+                $sql = file_get_contents($migration_file);
+
+                if (empty($sql)) {
+                    throw new Exception('Migration file is empty');
+                }
+
+                // Remove comments and split into statements
+                $sql = preg_replace('/--.*$/m', '', $sql); // Remove single-line comments
+                $sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remove multi-line comments
+
+                // Split by semicolon but not within quotes
+                $statements = array_filter(array_map('trim', explode(';', $sql)));
+
+                $executed = 0;
+                $errors = [];
+
+                // Execute each statement
+                foreach ($statements as $statement) {
+                    if (empty($statement)) {
+                        continue;
+                    }
+
+                    // Try to execute
+                    try {
+                        $this->db->query($statement);
+                        $executed++;
+                        log_activity('Billing migration statement executed: ' . substr($statement, 0, 100) . '...');
+                    } catch (Exception $e) {
+                        // Check if error is "column already exists" - that's ok
+                        if (strpos($e->getMessage(), 'Duplicate column') !== false) {
+                            log_activity('Billing migration column already exists (skipped): ' . $e->getMessage());
+                            continue;
+                        }
+                        $errors[] = $e->getMessage();
+                        log_activity('Billing migration error: ' . $e->getMessage());
+                    }
+                }
+
+                if (!empty($errors)) {
+                    throw new Exception('Migration completed with errors: ' . implode('; ', $errors));
+                }
+
+                log_activity('Billing migration completed successfully - ' . $executed . ' statements executed');
+
+                $data['migration_status'] = 'success';
+
+            } catch (Exception $e) {
+                log_activity('Billing migration failed: ' . $e->getMessage());
+                $data['migration_status'] = 'error';
+                $data['error_message'] = $e->getMessage();
+            }
+
+            $this->load->view('admin/migrations/run_billing_migration', $data);
+            return;
+        }
+
+        // Show confirmation form
+        $this->load->view('admin/migrations/run_billing_migration', $data);
+    }
 }
